@@ -1,0 +1,41 @@
+<div
+    id="finish-early-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+>
+    <div
+        class="absolute inset-0 bg-black/60 animate-modal-bg"
+        id="finish-modal-backdrop"
+    >
+    </div>
+    <div
+        class="relative bg-surface-elevated border border-border rounded-2xl p-6 max-w-md w-full animate-modal-content"
+    >
+        <div class="text-center space-y-4">
+            <div
+                class="w-14 h-14 rounded-2xl bg-amber-400/10 flex items-center justify-center mx-auto"
+            >
+                <i class="fa-solid fa-flag-checkered text-amber-400 text-xl"
+                ></i>
+            </div>
+            <h3 class="text-lg font-bold text-text-primary">
+                Finish Ranking Early?
+            </h3>
+            <p class="text-sm text-text-secondary leading-relaxed">
+                Are you sure you want to finish ranking early? The remaining
+                items will be ranked based on their current performance.
+            </p>
+            <div class="flex items-center gap-3 pt-2">
+                <button
+                    id="finish-cancel-btn"
+                    class="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                    >Cancel</button
+                >
+                <button
+                    id="finish-confirm-btn"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-amber-400 text-zinc-950 text-sm font-bold hover:bg-amber-300 transition-colors"
+                    >Finish Now</button
+                >
+            </div>
+        </div>
+    </div>
+</div>

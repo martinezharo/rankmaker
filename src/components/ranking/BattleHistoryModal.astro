@@ -1,0 +1,28 @@
+<div
+    id="history-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+>
+    <div
+        class="absolute inset-0 bg-black/60 animate-modal-bg"
+        id="history-modal-backdrop"
+    >
+    </div>
+    <div
+        class="relative bg-surface-elevated border border-border rounded-2xl max-w-lg w-full max-h-[80vh] flex flex-col animate-modal-content"
+    >
+        <div
+            class="flex items-center justify-between p-5 border-b border-border/50"
+        >
+            <h3 class="text-lg font-bold text-text-primary">Battle History</h3>
+            <button
+                id="history-close-btn"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div id="history-list" class="overflow-y-auto p-5 space-y-3 flex-1">
+            <!-- Filled dynamically -->
+        </div>
+    </div>
+</div>

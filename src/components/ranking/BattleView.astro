@@ -1,0 +1,156 @@
+---
+interface Props {
+    title: string;
+}
+const { title } = Astro.props;
+---
+
+<section id="battle-view" class="hidden min-h-[calc(100dvh-4rem)]">
+    <!-- Top Bar -->
+    <div
+        class="sticky top-16 z-30 bg-surface/90 backdrop-blur-xl border-b border-border/50"
+    >
+        <div
+            class="mx-auto max-w-4xl px-4 sm:px-6 py-3 flex items-center justify-between"
+        >
+            <!-- Progress -->
+            <div class="flex items-center gap-3">
+                <span
+                    id="battle-progress"
+                    class="text-sm font-semibold text-text-primary"
+                    >Round 1 of ~10</span
+                >
+                <div
+                    class="hidden sm:block w-32 h-1.5 rounded-full bg-border overflow-hidden"
+                >
+                    <div
+                        id="battle-progress-bar"
+                        class="h-full bg-gradient-to-r from-primary to-primary-light rounded-full transition-all duration-500"
+                        style="width: 0%"
+                    >
+                    </div>
+                </div>
+            </div>
+            <!-- Actions -->
+            <div class="flex items-center gap-2">
+                <button
+                    id="battle-undo-btn"
+                    class="px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    disabled
+                >
+                    <i class="fa-solid fa-rotate-left mr-1"></i>Undo
+                </button>
+                <button
+                    id="battle-finish-btn"
+                    class="px-3 py-2 rounded-lg text-xs font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 transition-colors"
+                >
+                    <i class="fa-solid fa-flag-checkered mr-1"></i>Finish Early
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template title in battle -->
+    <div class="text-center mt-6 mb-2 px-4">
+        <p
+            class="text-xs text-text-muted uppercase tracking-widest font-semibold"
+        >
+            Ranking
+        </p>
+        <h2
+            id="battle-title"
+            class="text-lg sm:text-xl font-bold text-text-primary mt-1"
+        >
+            {title}
+        </h2>
+    </div>
+
+    <!-- Battle Arena -->
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 py-6 flex flex-col items-center">
+        <div
+            class="w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 relative"
+        >
+            <!-- Card A -->
+            <button
+                id="battle-card-a"
+                class="battle-card group w-full sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
+            >
+                <div class="aspect-square overflow-hidden bg-surface">
+                    <img
+                        id="battle-img-a"
+                        src=""
+                        alt=""
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <!-- Fallback A -->
+                    <div
+                        id="battle-fallback-a"
+                        class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 hidden"
+                    >
+                        <span
+                            id="battle-fallback-text-a"
+                            class="font-bold text-text-primary/90 leading-tight text-xl sm:text-2xl line-clamp-3"
+                        >
+                        </span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <p
+                        id="battle-name-a"
+                        class="text-base font-bold text-text-primary text-center"
+                    >
+                    </p>
+                </div>
+            </button>
+
+            <!-- VS Badge -->
+            <div
+                class="shrink-0 z-10 sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2"
+            >
+                <div
+                    class="w-14 h-14 rounded-full bg-surface border-2 border-primary/40 flex items-center justify-center animate-vs-pulse"
+                >
+                    <span class="text-lg font-black text-gradient-gold">VS</span
+                    >
+                </div>
+            </div>
+
+            <!-- Card B -->
+            <button
+                id="battle-card-b"
+                class="battle-card group w-full sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
+            >
+                <div class="aspect-square overflow-hidden bg-surface">
+                    <img
+                        id="battle-img-b"
+                        src=""
+                        alt=""
+                        class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <!-- Fallback B -->
+                    <div
+                        id="battle-fallback-b"
+                        class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 hidden"
+                    >
+                        <span
+                            id="battle-fallback-text-b"
+                            class="font-bold text-text-primary/90 leading-tight text-xl sm:text-2xl line-clamp-3"
+                        >
+                        </span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <p
+                        id="battle-name-b"
+                        class="text-base font-bold text-text-primary text-center"
+                    >
+                    </p>
+                </div>
+            </button>
+        </div>
+
+        <p class="mt-8 text-sm text-text-muted text-center">
+            Tap the one you prefer
+        </p>
+    </div>
+</section>

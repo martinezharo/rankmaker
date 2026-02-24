@@ -1,0 +1,47 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Contact — RANKMAKER" description="Get in touch with RANKMAKER.">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
+        <h1 class="text-3xl font-bold text-text-primary mb-10 tracking-tight">
+            Contact
+        </h1>
+
+        <div class="grid gap-6 sm:grid-cols-2">
+            <!-- Email -->
+            <a
+                href="mailto:rankmaker.net@gmail.com"
+                class="group block p-6 bg-surface-elevated border border-border rounded-2xl hover:border-primary/50 transition-all hover:bg-surface-elevated/70"
+            >
+                <div
+                    class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors"
+                >
+                    <i class="fa-solid fa-envelope text-primary text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-text-primary mb-1">
+                    Email
+                </h3>
+                <p class="text-text-secondary text-sm">
+                    rankmaker.net@gmail.com
+                </p>
+            </a>
+
+            <!-- X / Twitter -->
+            <a
+                href="https://x.com/RANKMAKER_"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group block p-6 bg-surface-elevated border border-border rounded-2xl hover:border-primary/50 transition-all hover:bg-surface-elevated/70"
+            >
+                <div
+                    class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors"
+                >
+                    <i class="fa-brands fa-x-twitter text-primary text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-text-primary mb-1">X</h3>
+                <p class="text-text-secondary text-sm">@RANKMAKER_</p>
+            </a>
+        </div>
+    </div>
+</Layout>

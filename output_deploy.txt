@@ -1,0 +1,5 @@
+
+ ⛅️ wrangler 4.50.0 (update available 4.66.0)
+─────────────────────────────────────────────
+✨ Successfully created the 'rankmaker-oliver-4' project. It will be available at https://rankmaker-oliver-4.pages.dev/ once you create your first deployment.
+To deploy a folder of assets, run 'wrangler pages deploy [directory]'.

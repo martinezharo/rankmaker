@@ -1,0 +1,1569 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import templates from "../../data/templates.json";
+import SmartImage from "../../components/SmartImage.astro";
+import BattleView from "../../components/ranking/BattleView.astro";
+import ResultsView from "../../components/ranking/ResultsView.astro";
+import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
+import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
+import SEOContent from "../../components/SEOContent.astro";
+
+export async function getStaticPaths() {
+    return templates.map((template) => ({
+        params: { slug: template.slug },
+        props: { template },
+    }));
+}
+
+const { template } = Astro.props;
+const { options } = template;
+
+// Category → icon map
+const categoryIcons: Record<string, string> = {
+    Movies: "fa-film",
+    Music: "fa-music",
+    Sports: "fa-basketball-ball",
+    Games: "fa-gamepad",
+    TV: "fa-tv",
+    People: "fa-users",
+    Internet: "fa-globe",
+    Anime: "fa-dragon",
+    Lifestyle: "fa-heart",
+    Food: "fa-utensils",
+    Politics: "fa-landmark",
+    "History & Culture": "fa-book-open",
+    Geography: "fa-map-marked-alt",
+    Motor: "fa-car",
+    Books: "fa-book",
+    Technology: "fa-microchip",
+    Nature: "fa-leaf",
+    Others: "fa-ellipsis-h",
+};
+
+const icon = template.category
+    ? categoryIcons[template.category] || "fa-ellipsis-h"
+    : "fa-ellipsis-h";
+// Helper to resolve image paths (strip 'public' prefix if present)
+const resolveImg = (path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    if (path.startsWith("public/")) return path.replace("public/", "/");
+    return path;
+};
+
+const coverSrc = resolveImg(template.cover_image);
+---
+
+<Layout
+    title={`${template.title} — RANKMAKER`}
+    description={template.description || undefined}
+>
+    <!-- ═══════════════════════════════════════════════════
+         VIEW 1: TEMPLATE DETAIL (default)
+         ═══════════════════════════════════════════════════ -->
+    <article
+        id="detail-view"
+        class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 pb-28"
+    >
+        <!-- Back Navigation -->
+        <a
+            href="/"
+            class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-8 group"
+        >
+            <i
+                class="fa-solid fa-arrow-left text-xs transition-transform group-hover:-translate-x-1"
+            ></i>
+            Back to templates
+        </a>
+
+        <!-- Template Header -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <!-- Cover Image -->
+            <div
+                class="relative rounded-2xl overflow-hidden bg-surface-elevated border border-border aspect-4/3"
+            >
+                <SmartImage
+                    src={coverSrc}
+                    alt={template.title}
+                    text={template.title}
+                    className="w-full h-full object-cover"
+                />
+            </div>
+
+            <div class="flex flex-col justify-center space-y-5">
+                <div class="flex items-center justify-between">
+                    {
+                        template.category && (
+                            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider">
+                                <i class={`fa-solid ${icon} text-[10px]`} />
+                                {template.category}
+                            </span>
+                        )
+                    }
+                    <button
+                        id="share-template-btn"
+                        class="w-10 h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/50 transition-all duration-200"
+                        aria-label="Share template"
+                        data-title={template.title}
+                    >
+                        <i class="fa-solid fa-share-nodes text-sm"></i>
+                    </button>
+                </div>
+
+                <h1
+                    class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary leading-tight"
+                >
+                    {template.title}
+                </h1>
+
+                {
+                    template.description && (
+                        <p class="text-text-secondary leading-relaxed">
+                            {template.description}
+                        </p>
+                    )
+                }
+
+                <div class="flex items-center gap-6 text-sm">
+                    <div class="flex items-center gap-2 text-text-muted">
+                        <i class="fa-solid fa-fire text-primary/70 text-xs"></i>
+                        <span class="font-medium"
+                            >{template.times_ranked.toLocaleString()} ranked</span
+                        >
+                    </div>
+                    {
+                        options && (
+                            <div class="flex items-center gap-2 text-text-muted">
+                                <i class="fa-solid fa-layer-group text-primary/70 text-xs" />
+                                <span class="font-medium">
+                                    {options.length} options
+                                </span>
+                            </div>
+                        )
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Share script -->
+        <script>
+            document.addEventListener("astro:page-load", () => {
+                const shareBtn = document.getElementById("share-template-btn");
+                if (!shareBtn) return;
+                shareBtn.addEventListener("click", async () => {
+                    const title = shareBtn.dataset.title;
+                    const url = window.location.href;
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: `RANKMAKER: ${title}`,
+                                url,
+                            });
+                        } catch (err) {
+                            console.error("Error sharing:", err);
+                        }
+                    } else {
+                        try {
+                            await navigator.clipboard.writeText(url);
+                            const ic = shareBtn.querySelector("i");
+                            if (ic) {
+                                ic.className =
+                                    "fa-solid fa-check text-sm text-emerald-500";
+                                setTimeout(() => {
+                                    ic.className =
+                                        "fa-solid fa-share-nodes text-sm";
+                                }, 2000);
+                            }
+                        } catch (err) {
+                            console.error("Error copying:", err);
+                        }
+                    }
+                });
+            });
+        </script>
+
+        <!-- Options Grid -->
+        {
+            options && options.length > 0 && (
+                <section class="mt-14">
+                    <div class="flex items-center gap-3 mb-6">
+                        <h2 class="text-lg font-bold text-text-primary tracking-tight">
+                            Available Options
+                        </h2>
+                        <div class="flex-1 h-px bg-border/50" />
+                        <span class="text-xs text-text-muted font-medium">
+                            {options.length} items
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {options.map((option) => (
+                            <div class="group rounded-xl bg-surface-elevated border border-border hover:border-primary/30 transition-all overflow-hidden">
+                                <!-- Image -->
+                                <div class="aspect-square overflow-hidden bg-surface">
+                                    <SmartImage
+                                        src={resolveImg(option.image)}
+                                        alt={option.name}
+                                        text={option.name}
+                                        isOption={true}
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                </div>
+                                <div class="p-3">
+                                    <p class="text-sm font-medium text-text-primary text-center line-clamp-1">
+                                        {option.name}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )
+        }
+
+        <SEOContent />
+    </article>
+
+    <!-- Floating CTA Button -->
+    <div
+        id="start-ranking-cta"
+        class="fixed bottom-20 md:bottom-6 right-6 z-40"
+    >
+        <button
+            id="start-ranking-btn"
+            class="group flex items-center gap-3 px-7 py-4 rounded-2xl bg-gradient-gold text-zinc-950 font-black text-sm glow-gold hover:shadow-[0_8px_60px_rgba(255,215,0,0.5)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"
+        >
+            <i class="fa-solid fa-play text-xs"></i>
+            START RANKING
+            <i
+                class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"
+            ></i>
+        </button>
+    </div>
+
+    <!-- VIEW 2: BATTLE VIEW -->
+    <BattleView title={template.title} />
+
+    <FinishEarlyModal />
+
+    <!-- VIEW 3: RESULTS VIEW -->
+    <ResultsView title={template.title} />
+
+    <BattleHistoryModal />
+
+    <!-- ═══════════════════════════════════════════════════
+         EPIC TRANSITION OVERLAY
+         ═══════════════════════════════════════════════════ -->
+    <div id="transition-overlay" class="hidden transition-overlay"></div>
+
+    <!-- ═══════════════════════════════════════════════════
+         OPTIONS DATA (passed to JS)
+         ═══════════════════════════════════════════════════ -->
+    <script
+        is:inline
+        define:vars={{ options: options || [], templateTitle: template.title }}
+    >
+        window.__RANKING_OPTIONS__ = options.map((o) => ({
+            id: o.id,
+            name: o.name,
+            image:
+                (o.image
+                    ? o.image.startsWith("public/")
+                        ? o.image.replace("public/", "/")
+                        : o.image
+                    : null) ||
+                `https://placehold.co/200x200/111118/8400FF?text=${encodeURIComponent(o.name.slice(0, 8))}`,
+        }));
+        window.__TEMPLATE_TITLE__ = templateTitle;
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════
+         RANKING ENGINE + UI CONTROLLER
+         ═══════════════════════════════════════════════════ -->
+    <script is:inline>
+        // Remove previous listener if navigating via View Transitions
+        // (is:inline scripts re-execute on each navigation, stacking listeners)
+        if (window.__rankingPageLoadHandler) {
+            document.removeEventListener(
+                "astro:page-load",
+                window.__rankingPageLoadHandler,
+            );
+        }
+        window.__rankingPageLoadHandler = function rankingInit() {
+            const items = window.__RANKING_OPTIONS__;
+            if (!items || items.length < 2) return;
+
+            // ─── DOM refs ────────────────────────────────────
+            const detailView = document.getElementById("detail-view");
+            const battleView = document.getElementById("battle-view");
+            const resultsView = document.getElementById("results-view");
+            const startBtn = document.getElementById("start-ranking-btn");
+            const startCta = document.getElementById("start-ranking-cta");
+            const progressEl = document.getElementById("battle-progress");
+            const progressBar = document.getElementById("battle-progress-bar");
+            const undoBtn = document.getElementById("battle-undo-btn");
+            const actionShareTemplate = document.getElementById(
+                "action-share-template",
+            );
+            const actionShareX = document.getElementById("action-share-x");
+            const finishBtn = document.getElementById("battle-finish-btn");
+            const cardA = document.getElementById("battle-card-a");
+            const cardB = document.getElementById("battle-card-b");
+            const imgA = document.getElementById("battle-img-a");
+            const imgB = document.getElementById("battle-img-b");
+            const fallbackA = document.getElementById("battle-fallback-a");
+            const fallbackB = document.getElementById("battle-fallback-b");
+            const fallbackTextA = document.getElementById(
+                "battle-fallback-text-a",
+            );
+            const fallbackTextB = document.getElementById(
+                "battle-fallback-text-b",
+            );
+            const nameA = document.getElementById("battle-name-a");
+            const nameB = document.getElementById("battle-name-b");
+            const finishModal = document.getElementById("finish-early-modal");
+            const finishCancel = document.getElementById("finish-cancel-btn");
+            const finishConfirm = document.getElementById("finish-confirm-btn");
+            const transitionOvl = document.getElementById("transition-overlay");
+            const podiumEl = document.getElementById("results-podium");
+            const rankListEl = document.getElementById("results-list");
+            const historyModal = document.getElementById("history-modal");
+            const historyBackdrop = document.getElementById(
+                "history-modal-backdrop",
+            );
+            const historyList = document.getElementById("history-list");
+            const historyClose = document.getElementById("history-close-btn");
+            const actionHistory = document.getElementById("action-history");
+            const actionRankAgain =
+                document.getElementById("action-rank-again");
+
+            // ─── Merge Sort with Human Input & Transitive Inference ──
+            // comparisonMap: key "idA-idB" => 1 (A wins) or -1 (B wins)
+            let comparisonMap = {};
+            let battleHistory = []; // {a, b, winner, roundNum}
+            let undoStack = []; // snapshots for undo
+            let currentRound = 0;
+            let totalEstimate = 0;
+            let sortResolve = null; // resolve function for current comparison promise
+            let isProcessing = false; // prevent double-clicks
+            let lastRanked = []; // stores the final ranking for download image
+
+            function compKey(a, b) {
+                return a < b ? `${a}-${b}` : `${b}-${a}`;
+            }
+
+            // Generate a consistent color based on the text string (Client-side version)
+            const stringToColor = (str) => {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+                return "#" + "00000".substring(0, 6 - c.length) + c;
+            };
+
+            function setupImage(img, fallback, fallbackText, item) {
+                // Reset state
+                img.style.display = "block";
+                fallback.classList.add("hidden");
+                fallback.classList.remove("flex");
+
+                // Set content
+                fallbackText.textContent = item.name;
+                const color = stringToColor(item.name);
+                fallback.style.setProperty("--tw-gradient-to", color + "40"); // 40 is hex opacity
+
+                // Check for explicit "null" or placehold.co (our old placeholder)
+                // If it's the old placeholder, force fallback immediately
+                const isPlaceholder =
+                    !item.image ||
+                    item.image.includes("placehold.co") ||
+                    item.image === "null";
+
+                if (isPlaceholder) {
+                    img.style.display = "none";
+                    fallback.classList.remove("hidden");
+                    fallback.classList.add("flex");
+                } else {
+                    img.src = item.image;
+                    img.alt = item.name;
+                    img.onerror = () => {
+                        img.style.display = "none";
+                        fallback.classList.remove("hidden");
+                        fallback.classList.add("flex");
+                    };
+                }
+            }
+
+            function getKnownResult(aId, bId) {
+                const key = compKey(aId, bId);
+                if (comparisonMap[key] !== undefined) {
+                    return aId < bId ? comparisonMap[key] : -comparisonMap[key];
+                }
+                return 0; // unknown
+            }
+
+            function recordResult(aId, bId, aWins) {
+                const key = compKey(aId, bId);
+                if (aId < bId) {
+                    comparisonMap[key] = aWins ? 1 : -1;
+                } else {
+                    comparisonMap[key] = aWins ? -1 : 1;
+                }
+                // Propagate transitive results
+                propagateTransitive();
+            }
+
+            function propagateTransitive() {
+                // Floyd-Warshall-like transitive closure
+                const ids = items.map((i) => i.id);
+                let changed = true;
+                while (changed) {
+                    changed = false;
+                    for (const a of ids) {
+                        for (const b of ids) {
+                            if (a === b) continue;
+                            const ab = getKnownResult(a, b);
+                            if (ab === 0) continue;
+                            for (const c of ids) {
+                                if (c === a || c === b) continue;
+                                const bc = getKnownResult(b, c);
+                                if (bc === 0) continue;
+                                // If A>B and B>C then A>C
+                                if (ab > 0 && bc > 0) {
+                                    const ac = getKnownResult(a, c);
+                                    if (ac === 0) {
+                                        recordResultDirect(a, c, true);
+                                        changed = true;
+                                    }
+                                }
+                                // If A<B and B<C then A<C
+                                if (ab < 0 && bc < 0) {
+                                    const ac = getKnownResult(a, c);
+                                    if (ac === 0) {
+                                        recordResultDirect(a, c, false);
+                                        changed = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            function recordResultDirect(aId, bId, aWins) {
+                const key = compKey(aId, bId);
+                if (comparisonMap[key] !== undefined) return;
+                if (aId < bId) {
+                    comparisonMap[key] = aWins ? 1 : -1;
+                } else {
+                    comparisonMap[key] = aWins ? -1 : 1;
+                }
+            }
+
+            // Compare function for merge sort — returns promise that auto-resolves if known
+            function compare(aItem, bItem, generation) {
+                const known = getKnownResult(aItem.id, bItem.id);
+                if (known !== 0) {
+                    return Promise.resolve(known > 0 ? -1 : 1); // -1 = a first (wins)
+                }
+                // Need human input
+                currentRound++;
+                updateProgress();
+                return new Promise((resolve, reject) => {
+                    // If this sort run was cancelled, reject immediately
+                    if (generation !== sortGeneration) {
+                        return reject(new Error("cancelled"));
+                    }
+                    sortResolve = resolve;
+                    showBattle(aItem, bItem);
+                });
+            }
+
+            // Merge sort implementation
+            async function mergeSort(arr, generation) {
+                if (generation !== sortGeneration) throw new Error("cancelled");
+                if (arr.length <= 1) return arr;
+                const mid = Math.floor(arr.length / 2);
+                const left = await mergeSort(arr.slice(0, mid), generation);
+                const right = await mergeSort(arr.slice(mid), generation);
+                return await merge(left, right, generation);
+            }
+
+            async function merge(left, right, generation) {
+                const result = [];
+                let i = 0,
+                    j = 0;
+                while (i < left.length && j < right.length) {
+                    if (generation !== sortGeneration)
+                        throw new Error("cancelled");
+                    const cmp = await compare(left[i], right[j], generation);
+                    if (cmp <= 0) {
+                        result.push(left[i++]);
+                    } else {
+                        result.push(right[j++]);
+                    }
+                }
+                while (i < left.length) result.push(left[i++]);
+                while (j < right.length) result.push(right[j++]);
+                return result;
+            }
+
+            // ─── Progress ────────────────────────────────────
+            function updateProgress() {
+                const pct = Math.min(
+                    100,
+                    Math.round((currentRound / totalEstimate) * 100),
+                );
+                if (progressEl)
+                    progressEl.textContent = `Round ${currentRound} of ~${totalEstimate}`;
+                if (progressBar) progressBar.style.width = `${pct}%`;
+            }
+
+            // ─── Show Battle ─────────────────────────────────
+            function showBattle(a, b) {
+                // Set content with smart fallback logic
+                setupImage(imgA, fallbackA, fallbackTextA, a);
+                setupImage(imgB, fallbackB, fallbackTextB, b);
+
+                nameA.textContent = a.name;
+                nameB.textContent = b.name;
+                cardA.dataset.itemId = a.id;
+                cardB.dataset.itemId = b.id;
+
+                // Reset ALL animation classes (both in & out, both directions)
+                const allAnimClasses = [
+                    "animate-slide-left",
+                    "animate-slide-right",
+                    "animate-out-left",
+                    "animate-out-right",
+                    "battle-card-winner",
+                ];
+                cardA.classList.remove(...allAnimClasses);
+                cardB.classList.remove(...allAnimClasses);
+                // Force reflow so the browser restarts the animation
+                void cardA.offsetWidth;
+                void cardB.offsetWidth;
+                cardA.classList.add("animate-slide-left");
+                cardB.classList.add("animate-slide-right");
+
+                isProcessing = false;
+            }
+
+            // ─── Handle Pick ─────────────────────────────────
+            function handlePick(winnerSide) {
+                if (isProcessing || !sortResolve) return;
+                isProcessing = true;
+
+                const aId = parseInt(cardA.dataset.itemId);
+                const bId = parseInt(cardB.dataset.itemId);
+                const aItem = items.find((x) => x.id === aId);
+                const bItem = items.find((x) => x.id === bId);
+                const aWins = winnerSide === "a";
+
+                // Save to undo stack
+                undoStack.push({
+                    comparisonMapSnapshot: { ...comparisonMap },
+                    battleHistoryLength: battleHistory.length,
+                    round: currentRound,
+                });
+                undoBtn.disabled = false;
+
+                // Record
+                recordResult(aId, bId, aWins);
+                battleHistory.push({
+                    a: aItem,
+                    b: bItem,
+                    winner: aWins ? aItem : bItem,
+                    roundNum: currentRound,
+                });
+
+                // Animate winner glow
+                const winCard = aWins ? cardA : cardB;
+                const loseCard = aWins ? cardB : cardA;
+                winCard.classList.add("battle-card-winner");
+
+                // Short delay for visual feedback, then resolve
+                setTimeout(() => {
+                    cardA.classList.add(
+                        aWins ? "animate-out-right" : "animate-out-left",
+                    );
+                    cardB.classList.add(
+                        aWins ? "animate-out-left" : "animate-out-right",
+                    );
+
+                    setTimeout(() => {
+                        const resolve = sortResolve;
+                        sortResolve = null;
+                        resolve(aWins ? -1 : 1);
+                    }, 280);
+                }, 300);
+            }
+
+            cardA.addEventListener("click", () => handlePick("a"));
+            cardB.addEventListener("click", () => handlePick("b"));
+
+            // ─── Undo ────────────────────────────────────────
+            undoBtn.addEventListener("click", () => {
+                if (undoStack.length === 0 || !sortResolve) return;
+
+                const snapshot = undoStack.pop();
+                comparisonMap = snapshot.comparisonMapSnapshot;
+                battleHistory.length = snapshot.battleHistoryLength;
+                currentRound = snapshot.round;
+
+                if (undoStack.length === 0) undoBtn.disabled = true;
+
+                updateProgress();
+
+                // Cancel the current pending comparison and restart the sort.
+                // We keep the restored comparisonMap / battleHistory / undoStack
+                // so transitive inference will auto-skip all already-answered battles,
+                // effectively fast-forwarding to the battle we just undid.
+                sortResolve = null;
+                restartSort();
+            });
+
+            // ─── Finish Early ─────────────────────────────────
+            finishBtn.addEventListener("click", () => {
+                finishModal.classList.remove("hidden");
+            });
+
+            finishCancel.addEventListener("click", () => {
+                finishModal.classList.add("hidden");
+            });
+
+            document
+                .getElementById("finish-modal-backdrop")
+                .addEventListener("click", () => {
+                    finishModal.classList.add("hidden");
+                });
+
+            finishConfirm.addEventListener("click", () => {
+                finishModal.classList.add("hidden");
+                finishEarly();
+            });
+
+            function finishEarly() {
+                // Rank based on win rate from existing comparisons
+                const scores = {};
+                items.forEach((item) => {
+                    scores[item.id] = { wins: 0, total: 0 };
+                });
+
+                for (const [key, val] of Object.entries(comparisonMap)) {
+                    const [idA, idB] = key.split("-").map(Number);
+                    if (val > 0) {
+                        // idA wins against idB (since idA < idB by our key convention)
+                        if (scores[idA]) {
+                            scores[idA].wins++;
+                            scores[idA].total++;
+                        }
+                        if (scores[idB]) {
+                            scores[idB].total++;
+                        }
+                    } else {
+                        if (scores[idB]) {
+                            scores[idB].wins++;
+                            scores[idB].total++;
+                        }
+                        if (scores[idA]) {
+                            scores[idA].total++;
+                        }
+                    }
+                }
+
+                const ranked = [...items].sort((a, b) => {
+                    const aRate =
+                        scores[a.id].total > 0
+                            ? scores[a.id].wins / scores[a.id].total
+                            : 0.5;
+                    const bRate =
+                        scores[b.id].total > 0
+                            ? scores[b.id].wins / scores[b.id].total
+                            : 0.5;
+                    if (bRate !== aRate) return bRate - aRate;
+                    return scores[b.id].wins - scores[a.id].wins;
+                });
+
+                sortResolve = null;
+                showResults(ranked);
+            }
+
+            // ─── Start Sort (fresh — resets everything) ─────
+            let sortGeneration = 0; // incremented on each restart to cancel old runs
+            let savedShuffleOrder = []; // fixed shuffle so undo replays the exact same tree
+
+            async function startSort() {
+                const n = items.length;
+                totalEstimate = Math.ceil((n * Math.log2(n) - n + 1) * 0.8);
+                currentRound = 0;
+                comparisonMap = {};
+                battleHistory = [];
+                undoStack = [];
+                undoBtn.disabled = true;
+                // Shuffle once and save the order — undo restarts reuse this
+                savedShuffleOrder = [...items].sort(() => Math.random() - 0.5);
+                updateProgress();
+                await runSort();
+            }
+
+            // ─── Restart Sort (preserves comparisonMap/history) ──
+            async function restartSort() {
+                await runSort();
+            }
+
+            // ─── Run Sort (shared logic) ─────────────────────
+            async function runSort() {
+                sortGeneration++;
+                const myGeneration = sortGeneration;
+                try {
+                    const sorted = await mergeSort(
+                        [...savedShuffleOrder],
+                        myGeneration,
+                    );
+                    // Only show results if this run is still the active one
+                    if (myGeneration === sortGeneration) {
+                        showResults(sorted);
+                    }
+                } catch (e) {
+                    // Sort was interrupted (undo restart) — this is expected
+                }
+            }
+
+            // ─── Start Ranking ──────────────────────────────
+            startBtn.addEventListener("click", () => {
+                detailView.classList.add("hidden");
+                startCta.classList.add("hidden");
+                battleView.classList.remove("hidden");
+                battleView.classList.add("animate-battle-enter");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                startSort();
+            });
+
+            // ─── Epic Transition → Results ──────────────────
+            function showResults(ranked) {
+                // Epic transition
+                transitionOvl.classList.remove("hidden");
+                transitionOvl.innerHTML = `
+                <div class="flash animate-flash"></div>
+                ${Array.from({ length: 12 }, (_, i) => {
+                    const angle = (i / 12) * Math.PI * 2;
+                    const dist = 80 + Math.random() * 120;
+                    const x = Math.cos(angle) * dist;
+                    const y = Math.sin(angle) * dist;
+                    const delay = Math.random() * 0.3;
+                    const hue =
+                        Math.random() > 0.5 ? "132, 0, 255" : "255, 215, 0";
+                    return `<div class="particle" style="left:calc(50% + ${x}px);top:calc(50% + ${y}px);background:rgba(${hue},0.8);animation:particleGlow 0.8s ${delay}s ease-out both;"></div>`;
+                }).join("")}
+            `;
+
+                setTimeout(() => {
+                    battleView.classList.add("hidden");
+                    transitionOvl.classList.add("hidden");
+                    resultsView.classList.remove("hidden");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    renderResults(ranked);
+                }, 900);
+            }
+
+            // ─── Render Results ─────────────────────────────
+            function renderResults(ranked) {
+                lastRanked = ranked;
+                // Podium
+                const medalColors = [
+                    {
+                        bg: "from-amber-400/20 to-amber-600/10",
+                        border: "border-amber-400/60",
+                        text: "text-amber-400",
+                        icon: "fa-crown",
+                        label: "1st",
+                    },
+                    {
+                        bg: "from-gray-300/15 to-gray-400/5",
+                        border: "border-gray-400/50",
+                        text: "text-gray-300",
+                        icon: "fa-medal",
+                        label: "2nd",
+                    },
+                    {
+                        bg: "from-orange-400/15 to-orange-600/5",
+                        border: "border-orange-500/40",
+                        text: "text-orange-400",
+                        icon: "fa-award",
+                        label: "3rd",
+                    },
+                ];
+                const podiumOrder =
+                    ranked.length >= 3
+                        ? [1, 0, 2]
+                        : ranked.length === 2
+                          ? [null, 0, 1]
+                          : [null, 0, null];
+                const heights = [
+                    "h-36 sm:h-44",
+                    "h-48 sm:h-56",
+                    "h-28 sm:h-36",
+                ];
+
+                podiumEl.innerHTML = podiumOrder
+                    .map((idx, pos) => {
+                        if (idx === null || idx >= ranked.length)
+                            return `<div class="w-28 sm:w-36"></div>`;
+                        const item = ranked[idx];
+                        const medal = medalColors[idx];
+                        const height = heights[pos];
+                        const delay =
+                            pos === 1 ? "0s" : pos === 0 ? "0.2s" : "0.4s";
+
+                        return `
+                    <div class="flex flex-col items-center w-28 sm:w-36 animate-podium-rise" style="animation-delay:${delay}">
+                        ${idx === 0 ? `<i class="fa-solid fa-crown text-amber-400 text-xl mb-2 animate-crown" style="animation-delay:0.8s"></i>` : ""}
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 ${medal.border} mb-3 shadow-lg">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                        </div>
+                        <p class="text-sm font-bold text-text-primary text-center line-clamp-2 mb-2">${item.name}</p>
+                        <div class="w-full ${height} rounded-t-2xl bg-gradient-to-t ${medal.bg} border-t-2 border-x-2 ${medal.border} flex items-start justify-center pt-3">
+                            <span class="text-xs font-black ${medal.text} uppercase tracking-wider">${medal.label}</span>
+                        </div>
+                    </div>
+                `;
+                    })
+                    .join("");
+
+                // Full Ranking List
+                rankListEl.innerHTML = ranked
+                    .map((item, i) => {
+                        const delay = `${0.6 + i * 0.06}s`;
+                        const isTop3 = i < 3;
+                        const medalEmoji =
+                            i === 0
+                                ? "🥇"
+                                : i === 1
+                                  ? "🥈"
+                                  : i === 2
+                                    ? "🥉"
+                                    : "";
+                        return `
+                    <div class="rank-item flex items-center gap-4 p-3 rounded-xl ${isTop3 ? "bg-primary/5 border border-primary/15" : "bg-surface-elevated border border-border"} animate-rank-slide" style="animation-delay:${delay}" data-item-id="${item.id}">
+                        <span class="rank-drag-handle hidden items-center justify-center w-8 h-8 rounded-lg bg-border/50 text-text-muted cursor-grab active:cursor-grabbing shrink-0 touch-none"><i class="fa-solid fa-grip-vertical text-xs"></i></span>
+                        <span class="rank-badge w-8 h-8 rounded-lg ${isTop3 ? "bg-primary/15 text-primary" : "bg-border text-text-muted"} flex items-center justify-center text-xs font-black shrink-0">
+                            ${medalEmoji || i + 1}
+                        </span>
+                        <div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                        </div>
+                        <p class="text-sm font-medium text-text-primary flex-1 line-clamp-1">${item.name}</p>
+                        <span class="rank-number text-xs text-text-muted font-medium">#${i + 1}</span>
+                    </div>
+                `;
+                    })
+                    .join("");
+            }
+
+            // ─── Battle History Modal ───────────────────────
+            actionHistory.addEventListener("click", () => {
+                historyList.innerHTML =
+                    battleHistory.length === 0
+                        ? `<p class="text-sm text-text-muted text-center py-6">No battles recorded.</p>`
+                        : battleHistory
+                              .map((b, i) => {
+                                  const aWon = b.winner.id === b.a.id;
+                                  return `
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
+                            <span class="text-xs text-text-muted font-mono w-6 shrink-0">${i + 1}.</span>
+                            <div class="flex items-center gap-2 flex-1 min-w-0">
+                                <div class="flex items-center gap-2 ${aWon ? "opacity-100" : "opacity-40"} flex-1 min-w-0">
+                                    <div class="w-7 h-7 rounded-md overflow-hidden shrink-0 ${aWon ? "ring-2 ring-primary/60" : ""}">
+                                        <img src="${b.a.image}" alt="" class="w-full h-full object-cover" />
+                                    </div>
+                                    <span class="text-xs font-medium text-text-primary truncate">${b.a.name}</span>
+                                </div>
+                                <span class="text-[10px] text-text-muted font-bold shrink-0 mx-1">vs</span>
+                                <div class="flex items-center gap-2 ${!aWon ? "opacity-100" : "opacity-40"} flex-1 min-w-0 justify-end">
+                                    <span class="text-xs font-medium text-text-primary truncate">${b.b.name}</span>
+                                    <div class="w-7 h-7 rounded-md overflow-hidden shrink-0 ${!aWon ? "ring-2 ring-primary/60" : ""}">
+                                        <img src="${b.b.image}" alt="" class="w-full h-full object-cover" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                              })
+                              .join("");
+                historyModal.classList.remove("hidden");
+            });
+
+            historyClose.addEventListener("click", () =>
+                historyModal.classList.add("hidden"),
+            );
+            historyBackdrop.addEventListener("click", () =>
+                historyModal.classList.add("hidden"),
+            );
+
+            // ─── Download Image ─────────────────────────────
+            document
+                .getElementById("action-download-image")
+                .addEventListener("click", async () => {
+                    if (lastRanked.length === 0) return;
+                    const ranked = lastRanked;
+                    const title = window.__TEMPLATE_TITLE__ || "My Ranking";
+
+                    // ─── Config ───
+                    const W = 1080;
+                    const PAD = 50;
+                    const IMG_SIZE = 80;
+                    const ROW_H = 100;
+                    const COL_GAP = 24;
+                    const PODIUM_IMG = 120;
+                    const PODIUM_H = 420;
+                    const HEADER_H = 140;
+                    const FOOTER_H = 60;
+
+                    // Calculate items below podium (items from index 3+)
+                    const restItems = ranked.slice(3);
+                    const cols = 2;
+                    const restRows = Math.ceil(restItems.length / cols);
+                    const REST_H = restRows > 0 ? restRows * ROW_H + 60 : 0; // 60 for "Full Ranking" label
+
+                    const H = HEADER_H + PODIUM_H + REST_H + FOOTER_H + PAD;
+
+                    const canvas = document.createElement("canvas");
+                    canvas.width = W;
+                    canvas.height = H;
+                    const ctx = canvas.getContext("2d");
+
+                    // ─── Background ───
+                    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+                    bgGrad.addColorStop(0, "#0c0c14");
+                    bgGrad.addColorStop(0.5, "#0f0f1a");
+                    bgGrad.addColorStop(1, "#0a0a12");
+                    ctx.fillStyle = bgGrad;
+                    ctx.fillRect(0, 0, W, H);
+
+                    // Subtle purple glow at top
+                    const glowGrad = ctx.createRadialGradient(
+                        W / 2,
+                        0,
+                        0,
+                        W / 2,
+                        0,
+                        W * 0.6,
+                    );
+                    glowGrad.addColorStop(0, "rgba(132, 0, 255, 0.08)");
+                    glowGrad.addColorStop(1, "transparent");
+                    ctx.fillStyle = glowGrad;
+                    ctx.fillRect(0, 0, W, H / 2);
+
+                    // ─── Helper: load image ───
+                    function loadImg(src) {
+                        return new Promise((resolve) => {
+                            const img = new Image();
+                            img.crossOrigin = "anonymous";
+                            img.onload = () => resolve(img);
+                            img.onerror = () => resolve(null);
+                            img.src = src;
+                        });
+                    }
+
+                    // ─── Helper: draw rounded rect ───
+                    function roundRect(x, y, w, h, r) {
+                        ctx.beginPath();
+                        ctx.moveTo(x + r, y);
+                        ctx.lineTo(x + w - r, y);
+                        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                        ctx.lineTo(x + w, y + h - r);
+                        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                        ctx.lineTo(x + r, y + h);
+                        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                        ctx.lineTo(x, y + r);
+                        ctx.quadraticCurveTo(x, y, x + r, y);
+                        ctx.closePath();
+                    }
+
+                    // ─── Helper: draw rounded image ───
+                    function drawRoundedImg(img, x, y, size, radius) {
+                        if (!img) {
+                            // Placeholder
+                            roundRect(x, y, size, size, radius);
+                            ctx.fillStyle = "#1a1a2e";
+                            ctx.fill();
+                            ctx.strokeStyle = "#333";
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                            return;
+                        }
+                        ctx.save();
+                        roundRect(x, y, size, size, radius);
+                        ctx.clip();
+                        // Draw image covering the area
+                        const scale = Math.max(
+                            size / img.width,
+                            size / img.height,
+                        );
+                        const sw = img.width * scale;
+                        const sh = img.height * scale;
+                        ctx.drawImage(
+                            img,
+                            x - (sw - size) / 2,
+                            y - (sh - size) / 2,
+                            sw,
+                            sh,
+                        );
+                        ctx.restore();
+                    }
+
+                    // ─── Helper: truncate text ───
+                    function truncText(text, maxW) {
+                        let t = text;
+                        while (
+                            ctx.measureText(t).width > maxW &&
+                            t.length > 3
+                        ) {
+                            t = t.slice(0, -1);
+                        }
+                        return t.length < text.length ? t + "…" : t;
+                    }
+
+                    // ─── Load all images ───
+                    const allImages = {};
+                    await Promise.all(
+                        ranked.map(async (item) => {
+                            allImages[item.id] = await loadImg(item.image);
+                        }),
+                    );
+
+                    // ─── Header ───
+                    let curY = PAD;
+                    ctx.fillStyle = "rgba(255,255,255,0.35)";
+                    ctx.font = "600 13px -apple-system, 'Segoe UI', sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText("RESULTS", W / 2, curY + 16);
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font =
+                        "bold 32px -apple-system, 'Segoe UI', sans-serif";
+                    ctx.fillText(title, W / 2, curY + 60);
+
+                    ctx.fillStyle = "rgba(255,255,255,0.4)";
+                    ctx.font = "400 14px -apple-system, 'Segoe UI', sans-serif";
+                    ctx.fillText("", W / 2, curY + 86);
+                    curY += HEADER_H;
+
+                    // ─── Podium ───
+                    const medalColors = [
+                        {
+                            border: "#FBBF24",
+                            bg: "rgba(251,191,36,0.15)",
+                            label: "1ST",
+                            text: "#FBBF24",
+                            crown: true,
+                        },
+                        {
+                            border: "#9CA3AF",
+                            bg: "rgba(156,163,175,0.10)",
+                            label: "2ND",
+                            text: "#9CA3AF",
+                            crown: false,
+                        },
+                        {
+                            border: "#F97316",
+                            bg: "rgba(249,115,22,0.10)",
+                            label: "3RD",
+                            text: "#F97316",
+                            crown: false,
+                        },
+                    ];
+                    const podiumWidths = [180, 200, 180]; // 2nd, 1st, 3rd
+                    const podiumHeights = [160, 210, 130]; // visual column heights
+                    const podiumOrder =
+                        ranked.length >= 3
+                            ? [1, 0, 2]
+                            : ranked.length === 2
+                              ? [null, 0, 1]
+                              : [null, 0, null];
+                    const podiumCenterX = W / 2;
+                    const podiumSpacing = 12;
+                    // Position columns: [left, center, right]
+                    const colW = podiumWidths;
+                    const totalPodiumW =
+                        colW[0] + colW[1] + colW[2] + podiumSpacing * 2;
+                    const podiumStartX = podiumCenterX - totalPodiumW / 2;
+
+                    const podiumBaseY = curY + PODIUM_H - 40; // bottom of podium area
+
+                    podiumOrder.forEach((idx, pos) => {
+                        if (idx === null || idx >= ranked.length) return;
+                        const item = ranked[idx];
+                        const medal = medalColors[idx];
+                        const img = allImages[item.id];
+                        const w = colW[pos];
+                        const h = podiumHeights[pos];
+                        const x =
+                            podiumStartX +
+                            (pos === 0
+                                ? 0
+                                : pos === 1
+                                  ? colW[0] + podiumSpacing
+                                  : colW[0] + colW[1] + podiumSpacing * 2);
+
+                        const imgSize =
+                            idx === 0 ? PODIUM_IMG + 16 : PODIUM_IMG;
+                        const imgX = x + (w - imgSize) / 2;
+
+                        // Crown for 1st
+                        const crownH = medal.crown ? 30 : 0;
+                        const imgY = podiumBaseY - h - imgSize - 50 - crownH;
+
+                        if (medal.crown) {
+                            ctx.fillStyle = "#FBBF24";
+                            ctx.font = "bold 26px -apple-system, sans-serif";
+                            ctx.textAlign = "center";
+                            ctx.fillText("👑", x + w / 2, imgY + 2);
+                        }
+
+                        // Image
+                        drawRoundedImg(img, imgX, imgY + crownH, imgSize, 18);
+
+                        // Border ring
+                        roundRect(
+                            imgX - 2,
+                            imgY + crownH - 2,
+                            imgSize + 4,
+                            imgSize + 4,
+                            20,
+                        );
+                        ctx.strokeStyle = medal.border;
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+
+                        // Name
+                        ctx.fillStyle = "#ffffff";
+                        ctx.font =
+                            "bold 15px -apple-system, 'Segoe UI', sans-serif";
+                        ctx.textAlign = "center";
+                        const nameY = imgY + crownH + imgSize + 22;
+                        ctx.fillText(
+                            truncText(item.name, w - 10),
+                            x + w / 2,
+                            nameY,
+                        );
+
+                        // Podium column
+                        const colY = nameY + 14;
+                        const colH = podiumBaseY - colY;
+                        roundRect(x + 8, colY, w - 16, colH, 16);
+                        // Create gradient for column
+                        const colGrad = ctx.createLinearGradient(
+                            0,
+                            colY,
+                            0,
+                            colY + colH,
+                        );
+                        colGrad.addColorStop(0, medal.bg);
+                        colGrad.addColorStop(1, "rgba(0,0,0,0)");
+                        ctx.fillStyle = colGrad;
+                        ctx.fill();
+                        // Column border
+                        roundRect(x + 8, colY, w - 16, colH, 16);
+                        ctx.strokeStyle = medal.border + "50"; // add alpha
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        // Label inside column
+                        ctx.fillStyle = medal.text;
+                        ctx.font = "900 13px -apple-system, sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.fillText(medal.label, x + w / 2, colY + 26);
+                    });
+
+                    curY = podiumBaseY + 20;
+
+                    // ─── Full Ranking (rest, 2 columns) ───
+                    if (restItems.length > 0) {
+                        // Section label
+                        ctx.fillStyle = "#ffffff";
+                        ctx.font =
+                            "bold 17px -apple-system, 'Segoe UI', sans-serif";
+                        ctx.textAlign = "left";
+                        ctx.fillText("Full Ranking", PAD, curY + 20);
+
+                        // Separator line
+                        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+                        ctx.lineWidth = 1;
+                        const textW = ctx.measureText("Full Ranking").width;
+                        ctx.beginPath();
+                        ctx.moveTo(PAD + textW + 16, curY + 16);
+                        ctx.lineTo(W - PAD, curY + 16);
+                        ctx.stroke();
+                        curY += 50;
+
+                        const colWidth = (W - PAD * 2 - COL_GAP) / 2;
+
+                        restItems.forEach((item, i) => {
+                            const globalIdx = i + 3; // actual rank index
+                            const col = i % 2;
+                            const row = Math.floor(i / 2);
+                            const x = PAD + col * (colWidth + COL_GAP);
+                            const y = curY + row * ROW_H;
+
+                            // Card background
+                            roundRect(x, y, colWidth, ROW_H - 12, 14);
+                            ctx.fillStyle = "rgba(255,255,255,0.03)";
+                            ctx.fill();
+                            roundRect(x, y, colWidth, ROW_H - 12, 14);
+                            ctx.strokeStyle = "rgba(255,255,255,0.06)";
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+
+                            // Rank number badge
+                            const badgeSize = 32;
+                            const badgeX = x + 14;
+                            const badgeY = y + (ROW_H - 12 - badgeSize) / 2;
+                            roundRect(badgeX, badgeY, badgeSize, badgeSize, 8);
+                            ctx.fillStyle = "rgba(255,255,255,0.06)";
+                            ctx.fill();
+                            ctx.fillStyle = "rgba(255,255,255,0.4)";
+                            ctx.font = "800 13px -apple-system, sans-serif";
+                            ctx.textAlign = "center";
+                            ctx.fillText(
+                                String(globalIdx + 1),
+                                badgeX + badgeSize / 2,
+                                badgeY + badgeSize / 2 + 5,
+                            );
+
+                            // Image
+                            const imgX = badgeX + badgeSize + 12;
+                            const imgY2 = y + (ROW_H - 12 - 50) / 2;
+                            drawRoundedImg(
+                                allImages[item.id],
+                                imgX,
+                                imgY2,
+                                50,
+                                10,
+                            );
+
+                            // Name
+                            ctx.fillStyle = "#e0e0e0";
+                            ctx.font =
+                                "500 14px -apple-system, 'Segoe UI', sans-serif";
+                            ctx.textAlign = "left";
+                            const nameMaxW = colWidth - (imgX - x + 50 + 20);
+                            ctx.fillText(
+                                truncText(item.name, nameMaxW),
+                                imgX + 60,
+                                y + (ROW_H - 12) / 2 + 5,
+                            );
+                        });
+                    }
+
+                    // ─── Watermark footer ───
+                    const footerY = H - 30;
+                    ctx.fillStyle = "rgba(255,255,255,0.15)";
+                    ctx.font = "500 12px -apple-system, 'Segoe UI', sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText("Made with rankmaker.net", W / 2, footerY);
+
+                    // ─── Download ───
+                    const link = document.createElement("a");
+                    link.download = `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_ranking.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                });
+
+            // ─── Reorder Manually (drag & drop) ────────────
+            let reorderMode = false;
+            const actionReorder = document.getElementById("action-reorder");
+
+            actionReorder.addEventListener("click", () => {
+                reorderMode = !reorderMode;
+                const handles =
+                    rankListEl.querySelectorAll(".rank-drag-handle");
+                const badges = rankListEl.querySelectorAll(".rank-badge");
+
+                if (reorderMode) {
+                    actionReorder.classList.add(
+                        "!border-primary/60",
+                        "!text-primary",
+                        "!bg-primary/10",
+                    );
+                    actionReorder.querySelector("i").className =
+                        "fa-solid fa-check text-xs text-primary";
+                    actionReorder.querySelector("i").nextSibling.textContent =
+                        "Done Reordering";
+                    handles.forEach((h) => h.classList.remove("hidden"));
+                    handles.forEach((h) => h.classList.add("flex"));
+                    badges.forEach((b) => b.classList.add("hidden"));
+                } else {
+                    actionReorder.classList.remove(
+                        "!border-primary/60",
+                        "!text-primary",
+                        "!bg-primary/10",
+                    );
+                    actionReorder.querySelector("i").className =
+                        "fa-solid fa-arrows-up-down text-xs text-primary/70";
+                    actionReorder.querySelector("i").nextSibling.textContent =
+                        "Reorder Manually";
+                    handles.forEach((h) => h.classList.add("hidden"));
+                    handles.forEach((h) => h.classList.remove("flex"));
+                    badges.forEach((b) => b.classList.remove("hidden"));
+                }
+            });
+
+            // ─── Drag & Drop engine (pointer events — works mouse + touch) ──
+            let dragEl = null;
+            let dragClone = null;
+            let dragStartY = 0;
+            let dragOffsetY = 0;
+            let dragItems = [];
+            let dragPlaceholder = null;
+
+            rankListEl.addEventListener("pointerdown", (e) => {
+                if (!reorderMode) return;
+                const handle = e.target.closest(".rank-drag-handle");
+                if (!handle) return;
+
+                e.preventDefault();
+                dragEl = handle.closest(".rank-item");
+                if (!dragEl) return;
+
+                dragEl.setPointerCapture(e.pointerId);
+
+                const rect = dragEl.getBoundingClientRect();
+                dragStartY = e.clientY;
+                dragOffsetY = e.clientY - rect.top;
+
+                // Create floating clone
+                dragClone = dragEl.cloneNode(true);
+                dragClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;opacity:0.92;pointer-events:none;transition:none;box-shadow:0 8px 32px rgba(132,0,255,0.3);border:1px solid rgba(132,0,255,0.5);border-radius:12px;`;
+                document.body.appendChild(dragClone);
+
+                // Add placeholder
+                dragPlaceholder = document.createElement("div");
+                dragPlaceholder.style.cssText = `height:${rect.height}px;border:2px dashed rgba(132,0,255,0.3);border-radius:12px;margin:4px 0;transition:all 0.15s ease;`;
+                dragEl.style.opacity = "0";
+                dragEl.style.height = rect.height + "px";
+                dragEl.parentNode.insertBefore(dragPlaceholder, dragEl);
+                dragEl.style.display = "none";
+
+                dragItems = [...rankListEl.querySelectorAll(".rank-item")];
+            });
+
+            rankListEl.addEventListener("pointermove", (e) => {
+                if (!dragClone) return;
+                e.preventDefault();
+
+                const y = e.clientY - dragOffsetY;
+                dragClone.style.top = y + "px";
+
+                // Find which item we're hovering over
+                const siblings = [
+                    ...rankListEl.querySelectorAll(".rank-item"),
+                ].filter((el) => el !== dragEl);
+                let insertBefore = null;
+                for (const sib of siblings) {
+                    const sibRect = sib.getBoundingClientRect();
+                    if (e.clientY < sibRect.top + sibRect.height / 2) {
+                        insertBefore = sib;
+                        break;
+                    }
+                }
+
+                // Move placeholder
+                if (insertBefore) {
+                    rankListEl.insertBefore(dragPlaceholder, insertBefore);
+                } else {
+                    rankListEl.appendChild(dragPlaceholder);
+                }
+            });
+
+            rankListEl.addEventListener("pointerup", (e) => {
+                if (!dragClone) return;
+                finishDrag();
+            });
+
+            rankListEl.addEventListener("pointercancel", (e) => {
+                if (!dragClone) return;
+                finishDrag();
+            });
+
+            function finishDrag() {
+                if (!dragEl || !dragClone) return;
+
+                // Insert dragEl where placeholder is
+                dragPlaceholder.parentNode.insertBefore(
+                    dragEl,
+                    dragPlaceholder,
+                );
+                dragPlaceholder.remove();
+                dragEl.style.display = "";
+                dragEl.style.opacity = "";
+                dragEl.style.height = "";
+                dragClone.remove();
+
+                dragClone = null;
+                dragPlaceholder = null;
+
+                // Rebuild lastRanked from new DOM order
+                const newOrder = [...rankListEl.querySelectorAll(".rank-item")]
+                    .map((el) => {
+                        const id = el.dataset.itemId;
+                        return lastRanked.find(
+                            (item) => String(item.id) === id,
+                        );
+                    })
+                    .filter(Boolean);
+
+                lastRanked = newOrder;
+
+                // Update badges and numbers
+                rankListEl.querySelectorAll(".rank-item").forEach((el, i) => {
+                    const badge = el.querySelector(".rank-badge");
+                    const num = el.querySelector(".rank-number");
+                    const isTop3 = i < 3;
+                    const medalEmoji =
+                        i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "";
+
+                    badge.textContent = medalEmoji || String(i + 1);
+                    badge.className = `rank-badge w-8 h-8 rounded-lg ${isTop3 ? "bg-primary/15 text-primary" : "bg-border text-text-muted"} flex items-center justify-center text-xs font-black shrink-0 ${reorderMode ? "hidden" : ""}`;
+                    num.textContent = `#${i + 1}`;
+
+                    // Update row bg
+                    el.className = el.className
+                        .replace(/bg-primary\/5/g, "")
+                        .replace(/border-primary\/15/g, "")
+                        .replace(/bg-surface-elevated/g, "")
+                        .replace(/border-border/g, "");
+                    if (isTop3) {
+                        el.classList.add("bg-primary/5", "border-primary/15");
+                    } else {
+                        el.classList.add(
+                            "bg-surface-elevated",
+                            "border-border",
+                        );
+                    }
+                });
+
+                // Re-render podium with new order
+                renderPodium(newOrder);
+
+                dragEl = null;
+            }
+
+            // ─── Podium renderer (extracted for reuse) ───────
+            function renderPodium(ranked) {
+                const medalColors = [
+                    {
+                        bg: "from-amber-400/20 to-amber-600/10",
+                        border: "border-amber-400/60",
+                        text: "text-amber-400",
+                        icon: "fa-crown",
+                        label: "1st",
+                    },
+                    {
+                        bg: "from-gray-300/15 to-gray-400/5",
+                        border: "border-gray-400/50",
+                        text: "text-gray-300",
+                        icon: "fa-medal",
+                        label: "2nd",
+                    },
+                    {
+                        bg: "from-orange-400/15 to-orange-600/5",
+                        border: "border-orange-500/40",
+                        text: "text-orange-400",
+                        icon: "fa-award",
+                        label: "3rd",
+                    },
+                ];
+                const podiumOrder =
+                    ranked.length >= 3
+                        ? [1, 0, 2]
+                        : ranked.length === 2
+                          ? [null, 0, 1]
+                          : [null, 0, null];
+                const heights = [
+                    "h-36 sm:h-44",
+                    "h-48 sm:h-56",
+                    "h-28 sm:h-36",
+                ];
+
+                podiumEl.innerHTML = podiumOrder
+                    .map((idx, pos) => {
+                        if (idx === null || idx >= ranked.length)
+                            return `<div class="w-28 sm:w-36"></div>`;
+                        const item = ranked[idx];
+                        const medal = medalColors[idx];
+                        const height = heights[pos];
+                        return `
+                        <div class="flex flex-col items-center w-28 sm:w-36 animate-podium-rise" style="animation-delay:0s">
+                            ${idx === 0 ? `<i class="fa-solid fa-crown text-amber-400 text-xl mb-2"></i>` : ""}
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 ${medal.border} mb-3 shadow-lg">
+                                <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                            </div>
+                            <p class="text-sm font-bold text-text-primary text-center line-clamp-2 mb-2">${item.name}</p>
+                            <div class="w-full ${height} rounded-t-2xl bg-gradient-to-t ${medal.bg} border-t-2 border-x-2 ${medal.border} flex items-start justify-center pt-3">
+                                <span class="text-xs font-black ${medal.text} uppercase tracking-wider">${medal.label}</span>
+                            </div>
+                        </div>
+                    `;
+                    })
+                    .join("");
+            }
+
+            // ─── Rank Again ─────────────────────────────────
+            actionRankAgain.addEventListener("click", () => {
+                if (reorderMode) {
+                    actionReorder.click();
+                } // exit reorder mode
+                resultsView.classList.add("hidden");
+                battleView.classList.remove("hidden");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                startSort();
+            });
+
+            // ─── Share Template ────────────────────────────
+            actionShareTemplate.addEventListener("click", async () => {
+                const title = window.__TEMPLATE_TITLE__ || "My Ranking";
+                const url = window.location.href;
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: `RANKMAKER: ${title}`,
+                            url,
+                        });
+                    } catch (err) {
+                        console.error("Error sharing:", err);
+                    }
+                } else {
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        const ic = actionShareTemplate.querySelector("i");
+                        if (ic) {
+                            ic.className =
+                                "fa-solid fa-check text-xs text-emerald-500";
+                            setTimeout(() => {
+                                ic.className =
+                                    "fa-solid fa-share-nodes text-xs text-primary/70";
+                            }, 2000);
+                        }
+                    } catch (err) {
+                        console.error("Error copying:", err);
+                    }
+                }
+            });
+
+            // ─── Share on X ──────────────────────────────
+            actionShareX.addEventListener("click", () => {
+                const title = window.__TEMPLATE_TITLE__ || "My Ranking";
+                const url = window.location.href;
+                const text = `Take a look at this template: '${title}'`;
+                const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+                window.open(xUrl, "_blank");
+            });
+        };
+        document.addEventListener(
+            "astro:page-load",
+            window.__rankingPageLoadHandler,
+        );
+    </script>
+</Layout>

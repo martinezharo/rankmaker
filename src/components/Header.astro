@@ -1,0 +1,105 @@
+---
+// Header.astro — Fixed header with logo, nav links, and mobile hamburger menu
+---
+
+<header
+    class="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-surface/80 backdrop-blur-xl"
+>
+    <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-2 shrink-0">
+                <img
+                    src="/RANKMAKER-logo.webp"
+                    alt="RANKMAKER"
+                    class="h-8 w-auto"
+                />
+            </a>
+
+            <!-- Desktop Nav -->
+            <div class="hidden md:flex items-center gap-1">
+                <a
+                    href="/"
+                    class="flex items-center px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-white/5"
+                >
+                    <i class="fa-solid fa-house text-xs mr-2"></i>
+                    Home
+                </a>
+                <a
+                    href="/search"
+                    class="flex items-center px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-white/5"
+                >
+                    <i class="fa-solid fa-magnifying-glass text-xs mr-2"></i>
+                    Find Templates
+                </a>
+            </div>
+
+            <!-- Mobile Hamburger Button -->
+            <button
+                id="mobile-menu-toggle"
+                class="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                aria-label="Toggle menu"
+                aria-expanded="false"
+            >
+                <i class="fa-solid fa-bars text-lg" id="menu-icon-open"></i>
+                <i
+                    class="fa-solid fa-xmark text-lg"
+                    id="menu-icon-close"
+                    style="display:none;"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div
+            id="mobile-menu"
+            class="md:hidden overflow-hidden border-t border-border/50"
+            style="display:none;"
+        >
+            <div class="py-3 space-y-1">
+                <a
+                    href="/"
+                    class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"
+                >
+                    <i class="fa-solid fa-house w-5 mr-2 text-xs"></i>Home
+                </a>
+                <a
+                    href="/search"
+                    class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"
+                >
+                    <i class="fa-solid fa-magnifying-glass w-5 mr-2 text-xs"
+                    ></i>Find Templates
+                </a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Spacer to push content below fixed header -->
+<div class="h-16"></div>
+
+<script>
+    document.addEventListener("astro:page-load", () => {
+        const toggle = document.getElementById("mobile-menu-toggle");
+        const menu = document.getElementById("mobile-menu");
+        const iconOpen = document.getElementById("menu-icon-open");
+        const iconClose = document.getElementById("menu-icon-close");
+
+        if (!toggle || !menu || !iconOpen || !iconClose) return;
+
+        toggle.addEventListener("click", () => {
+            const isOpen = menu.style.display !== "none";
+
+            if (isOpen) {
+                menu.style.display = "none";
+                iconOpen.style.display = "";
+                iconClose.style.display = "none";
+                toggle.setAttribute("aria-expanded", "false");
+            } else {
+                menu.style.display = "";
+                iconOpen.style.display = "none";
+                iconClose.style.display = "";
+                toggle.setAttribute("aria-expanded", "true");
+            }
+        });
+    });
+</script>

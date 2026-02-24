@@ -1,0 +1,325 @@
+---
+import Layout from "../layouts/Layout.astro";
+import templatesRaw from "../data/templates.json";
+
+// Category → icon map (same as everywhere else)
+const categories = [
+    { name: "Movies", icon: "fa-film" },
+    { name: "Music", icon: "fa-music" },
+    { name: "Sports", icon: "fa-basketball-ball" },
+    { name: "Games", icon: "fa-gamepad" },
+    { name: "TV", icon: "fa-tv" },
+    { name: "People", icon: "fa-users" },
+    { name: "Internet", icon: "fa-globe" },
+    { name: "Anime", icon: "fa-dragon" },
+    { name: "Lifestyle", icon: "fa-heart" },
+    { name: "Food", icon: "fa-utensils" },
+    { name: "Politics", icon: "fa-landmark" },
+    { name: "History & Culture", icon: "fa-book-open" },
+    { name: "Geography", icon: "fa-map-marked-alt" },
+    { name: "Motor", icon: "fa-car" },
+    { name: "Books", icon: "fa-book" },
+    { name: "Technology", icon: "fa-microchip" },
+    { name: "Nature", icon: "fa-leaf" },
+    { name: "Others", icon: "fa-ellipsis-h" },
+];
+
+const categoryIconMap: Record<string, string> = {};
+for (const c of categories) categoryIconMap[c.name] = c.icon;
+
+// Sort by most ranked
+const templates = [...templatesRaw].sort(
+    (a, b) => b.times_ranked - a.times_ranked,
+);
+
+// Lightweight version for client — we include option names for search but strip heavy fields
+const templatesForClient = templates.map((t) => ({
+    slug: t.slug,
+    title: t.title,
+    description: t.description,
+    category: t.category,
+    cover_image: t.cover_image,
+    times_ranked: t.times_ranked,
+    optionNames: (t.options || []).map((o: any) => o.name).join(" "),
+}));
+---
+
+<Layout
+    title="Find Templates — RANKMAKER"
+    description="Search and browse all ranking templates on RANKMAKER."
+>
+    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
+        <!-- Page Header -->
+        <div class="text-center mb-10">
+            <h1
+                class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary"
+            >
+                Find Templates
+            </h1>
+            <p class="text-sm text-text-secondary mt-2 max-w-lg mx-auto">
+                Search through all available ranking templates by title,
+                description, or options.
+            </p>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-8 max-w-3xl mx-auto">
+            <!-- Search Input -->
+            <div class="relative flex-1">
+                <i
+                    class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none"
+                ></i>
+                <input
+                    id="search-input"
+                    type="text"
+                    placeholder="Search templates..."
+                    autocomplete="off"
+                    class="w-full pl-11 pr-10 py-3 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
+                />
+                <button
+                    id="search-clear"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors hidden"
+                    aria-label="Clear search"
+                >
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Category Dropdown -->
+            <div class="relative sm:w-52">
+                <select
+                    id="category-select"
+                    class="w-full appearance-none px-4 py-3 pr-10 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all cursor-pointer"
+                >
+                    <option value="">All Categories</option>
+                    {
+                        categories.map((cat) => (
+                            <option value={cat.name}>{cat.name}</option>
+                        ))
+                    }
+                </select>
+                <i
+                    class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-text-muted text-xs pointer-events-none"
+                ></i>
+            </div>
+        </div>
+
+        <!-- Results Info -->
+        <div
+            class="flex items-center justify-between mb-5 max-w-3xl mx-auto sm:max-w-none"
+        >
+            <p id="results-count" class="text-xs text-text-muted font-medium">
+                Showing {templates.length} templates
+            </p>
+            <button
+                id="reset-filters"
+                class="text-xs text-primary/70 hover:text-primary font-medium transition-colors hidden"
+            >
+                <i class="fa-solid fa-rotate-left mr-1 text-[10px]"></i>Reset
+                filters
+            </button>
+        </div>
+
+        <!-- Template Grid -->
+        <div
+            id="template-grid"
+            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+        >
+            <!-- Filled dynamically via JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20 space-y-4">
+            <div
+                class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"
+            >
+                <i class="fa-solid fa-magnifying-glass text-primary text-2xl"
+                ></i>
+            </div>
+            <h3 class="text-lg font-semibold text-text-primary">
+                No templates found
+            </h3>
+            <p class="text-sm text-text-muted max-w-md mx-auto">
+                Try adjusting your search query or changing the category filter.
+            </p>
+        </div>
+    </section>
+
+    <!-- Template Data -->
+    <script is:inline define:vars={{ templatesForClient, categoryIconMap }}>
+        window.__SEARCH_TEMPLATES__ = templatesForClient;
+        window.__CATEGORY_ICON_MAP__ = categoryIconMap;
+    </script>
+
+    <!-- Search Engine -->
+    <script>
+        document.addEventListener("astro:page-load", () => {
+            const templates: any[] = (window as any).__SEARCH_TEMPLATES__;
+            const iconMap: Record<string, string> =
+                (window as any).__CATEGORY_ICON_MAP__ || {};
+            if (!templates) return;
+
+            const searchInput = document.getElementById(
+                "search-input",
+            ) as HTMLInputElement | null;
+            const categorySelect = document.getElementById(
+                "category-select",
+            ) as HTMLSelectElement | null;
+            const grid = document.getElementById("template-grid");
+            const emptyState = document.getElementById("empty-state");
+            const resultsCount = document.getElementById("results-count");
+            const clearBtn = document.getElementById("search-clear");
+            const resetBtn = document.getElementById("reset-filters");
+
+            if (
+                !searchInput ||
+                !categorySelect ||
+                !grid ||
+                !emptyState ||
+                !resultsCount
+            )
+                return;
+
+            // Helper: resolve image path
+            function resolveImg(path: string | null): string | null {
+                if (!path) return null;
+                if (path.startsWith("http")) return path;
+                if (path.startsWith("public/"))
+                    return path.replace("public/", "/");
+                return path;
+            }
+
+            // Render a single template card (mirrors TemplateCard.astro)
+            function renderCard(t: any): string {
+                const icon = t.category
+                    ? iconMap[t.category] || "fa-ellipsis-h"
+                    : "fa-ellipsis-h";
+                const coverSrc = resolveImg(t.cover_image);
+                const imgHtml = coverSrc
+                    ? `<img src="${coverSrc}" alt="${t.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />`
+                    : `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <span class="text-text-muted text-xs text-center px-3 font-medium leading-tight">${t.title}</span>
+                       </div>`;
+
+                const descHtml = t.description
+                    ? `<p class="text-xs text-text-muted leading-relaxed line-clamp-2">${t.description}</p>`
+                    : "";
+
+                return `<a href="/template/${t.slug}" class="group block rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]">
+                    <div class="relative aspect-4/3 overflow-hidden bg-surface">
+                        ${imgHtml}
+                        ${t.category ? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>` : ""}
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <h3 class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors">${t.title}</h3>
+                        ${descHtml}
+                        <div class="flex items-center gap-1.5 pt-1">
+                            <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
+                            <span class="text-xs text-text-muted font-medium">${t.times_ranked.toLocaleString()} ranked</span>
+                        </div>
+                    </div>
+                </a>`;
+            }
+
+            // Filter & render
+            function filterAndRender() {
+                const query = (searchInput!.value || "").trim().toLowerCase();
+                const category = categorySelect!.value;
+
+                const filtered = templates.filter((t) => {
+                    // Category filter
+                    if (category && t.category !== category) return false;
+
+                    // Search filter — match title, description, or option names
+                    if (query) {
+                        const haystack = [
+                            t.title || "",
+                            t.description || "",
+                            t.optionNames || "",
+                        ]
+                            .join(" ")
+                            .toLowerCase();
+                        // All words in query must match
+                        const words = query.split(/\s+/).filter(Boolean);
+                        for (const w of words) {
+                            if (!haystack.includes(w)) return false;
+                        }
+                    }
+
+                    return true;
+                });
+
+                // Render
+                grid!.innerHTML = filtered.map(renderCard).join("");
+
+                // Update count
+                resultsCount!.textContent = `Showing ${filtered.length} template${filtered.length !== 1 ? "s" : ""}`;
+
+                // Empty state
+                if (filtered.length === 0) {
+                    emptyState!.classList.remove("hidden");
+                    grid!.classList.add("hidden");
+                } else {
+                    emptyState!.classList.add("hidden");
+                    grid!.classList.remove("hidden");
+                }
+
+                // Clear button
+                if (clearBtn) {
+                    if (query) {
+                        clearBtn.classList.remove("hidden");
+                        clearBtn.classList.add("flex");
+                    } else {
+                        clearBtn.classList.add("hidden");
+                        clearBtn.classList.remove("flex");
+                    }
+                }
+
+                // Reset button
+                if (resetBtn) {
+                    if (query || category) resetBtn.classList.remove("hidden");
+                    else resetBtn.classList.add("hidden");
+                }
+            }
+
+            // Debounce helper
+            let debounceTimer: ReturnType<typeof setTimeout>;
+            function debounced(fn: () => void, ms: number) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(fn, ms);
+            }
+
+            // Event listeners
+            searchInput.addEventListener("input", () => {
+                debounced(filterAndRender, 150);
+            });
+            categorySelect.addEventListener("change", filterAndRender);
+
+            if (clearBtn) {
+                clearBtn.addEventListener("click", () => {
+                    searchInput.value = "";
+                    filterAndRender();
+                    searchInput.focus();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener("click", () => {
+                    searchInput.value = "";
+                    categorySelect.value = "";
+                    filterAndRender();
+                });
+            }
+
+            // Check URL params for initial search/category
+            const params = new URLSearchParams(window.location.search);
+            const q = params.get("q");
+            const cat = params.get("category");
+            if (q) searchInput.value = q;
+            if (cat) categorySelect.value = cat;
+
+            // Initial render
+            filterAndRender();
+        });
+    </script>
+</Layout>

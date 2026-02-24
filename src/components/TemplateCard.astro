@@ -1,0 +1,144 @@
+---
+// TemplateCard.astro — Card component for template previews
+import SmartImage from "./SmartImage.astro";
+
+interface Props {
+    template: {
+        id: string;
+        slug: string;
+        title: string;
+        description: string | null;
+        category: string | null;
+        cover_image: string | null;
+        times_ranked: number;
+    };
+}
+
+const { template } = Astro.props;
+
+// Category → FontAwesome icon map
+const categoryIcons: Record<string, string> = {
+    Movies: "fa-film",
+    Music: "fa-music",
+    Sports: "fa-basketball-ball",
+    Games: "fa-gamepad",
+    TV: "fa-tv",
+    People: "fa-users",
+    Internet: "fa-globe",
+    Anime: "fa-dragon",
+    Lifestyle: "fa-heart",
+    Food: "fa-utensils",
+    Politics: "fa-landmark",
+    "History & Culture": "fa-book-open",
+    Geography: "fa-map-marked-alt",
+    Motor: "fa-car",
+    Books: "fa-book",
+    Technology: "fa-microchip",
+    Nature: "fa-leaf",
+    Others: "fa-ellipsis-h",
+};
+
+const icon = template.category
+    ? categoryIcons[template.category] || "fa-ellipsis-h"
+    : "fa-ellipsis-h";
+// Helper to resolve image paths
+const resolveImg = (path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    if (path.startsWith("public/")) return path.replace("public/", "/");
+    return path;
+};
+
+const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallback
+---
+
+<a
+    href={`/template/${template.slug}`}
+    class="group block rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]"
+>
+    <!-- Cover Image -->
+    <div class="relative aspect-4/3 overflow-hidden bg-surface">
+        <SmartImage
+            src={coverSrc}
+            alt={template.title}
+            text={template.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+
+        <!-- Category Badge (Icon only) -->
+        {
+            template.category && (
+                <span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80">
+                    <i class={`fa-solid ${icon} text-[12px]`} />
+                </span>
+            )
+        }
+
+        <!-- Share Button -->
+        <button
+            class="share-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100"
+            aria-label="Share template"
+            data-title={template.title}
+            data-slug={template.slug}
+        >
+            <i class="fa-solid fa-share-nodes text-xs"></i>
+        </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-4 space-y-2">
+        <h3
+            class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors"
+        >
+            {template.title}
+        </h3>
+
+        {
+            template.description && (
+                <p class="text-xs text-text-muted leading-relaxed line-clamp-2">
+                    {template.description}
+                </p>
+            )
+        }
+
+        <div class="flex items-center gap-1.5 pt-1">
+            <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
+            <span class="text-xs text-text-muted font-medium">
+                {template.times_ranked.toLocaleString()} ranked
+            </span>
+        </div>
+    </div>
+</a>
+
+<script>
+    document.addEventListener("astro:page-load", () => {
+        document.querySelectorAll(".share-btn").forEach((btn) => {
+            btn.addEventListener("click", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const el = e.currentTarget as HTMLElement;
+                const title = el.dataset.title || "";
+                const slug = el.dataset.slug || "";
+                const url = `${window.location.origin}/template/${slug}`;
+
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: `RANKMAKER: ${title}`,
+                            url,
+                        });
+                    } catch {}
+                } else {
+                    await navigator.clipboard.writeText(url);
+                    const icon = el.querySelector("i");
+                    if (icon) {
+                        icon.className = "fa-solid fa-check text-xs";
+                        setTimeout(() => {
+                            icon.className = "fa-solid fa-share-nodes text-xs";
+                        }, 1500);
+                    }
+                }
+            });
+        });
+    });
+</script>

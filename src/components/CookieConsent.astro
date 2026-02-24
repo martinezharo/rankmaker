@@ -1,0 +1,86 @@
+---
+
+---
+
+<div
+    id="cookie-banner"
+    class="fixed bottom-6 right-6 z-50 max-w-sm w-[calc(100%-3rem)] bg-surface-elevated border border-border rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-5 transform translate-y-20 opacity-0 transition-all duration-500 pointer-events-none"
+    role="alert"
+>
+    <div class="flex flex-col gap-4">
+        <div class="flex items-start gap-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+            >
+                <i class="fa-solid fa-cookie-bite text-primary text-lg"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-sm font-bold text-text-primary">
+                    We use cookies
+                </h3>
+                <p class="text-xs text-text-secondary leading-relaxed">
+                    We use cookies to improve your experience and analyze our
+                    traffic. By clicking 'Accept', you agree to our use of
+                    cookies.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-1">
+            <button
+                id="accept-cookies"
+                class="flex-1 py-2 rounded-xl bg-primary hover:bg-primary-light text-white text-xs font-bold transition-all active:scale-95"
+            >
+                Accept
+            </button>
+            <a
+                href="/cookie-policy"
+                class="px-4 py-2 rounded-xl border border-border hover:bg-white/5 text-xs text-text-muted hover:text-text-primary transition-all text-center"
+            >
+                Policy
+            </a>
+        </div>
+    </div>
+</div>
+
+<script is:inline>
+    (function () {
+        const STORAGE_KEY = "rankmaker_cookie_consent";
+
+        function initBanner() {
+            const banner = document.getElementById("cookie-banner");
+            const acceptBtn = document.getElementById("accept-cookies");
+
+            if (!banner || !acceptBtn) return;
+
+            // Check if consent already given
+            if (localStorage.getItem(STORAGE_KEY)) {
+                return;
+            }
+
+            // Show banner after a short delay
+            setTimeout(() => {
+                banner.classList.remove(
+                    "translate-y-20",
+                    "opacity-0",
+                    "pointer-events-none",
+                );
+            }, 1000);
+
+            acceptBtn.addEventListener("click", () => {
+                localStorage.setItem(STORAGE_KEY, "true");
+                banner.classList.add(
+                    "translate-y-20",
+                    "opacity-0",
+                    "pointer-events-none",
+                );
+            });
+        }
+
+        // Run on initial load
+        initBanner();
+
+        // Re-run on Astro view transitions
+        document.addEventListener("astro:page-load", initBanner);
+    })();
+</script>

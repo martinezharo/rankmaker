@@ -1,0 +1,79 @@
+---
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import CookieConsent from "../components/CookieConsent.astro";
+import { ViewTransitions } from "astro:transitions";
+
+interface Props {
+    title: string;
+    description?: string;
+}
+
+const {
+    title,
+    description = "RANKMAKER: rank your stuff. No tiers, no noise — just accurate 1v1 rankings.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="description" content={description} />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/webp" href="/favicon.webp" />
+        <meta name="generator" content={Astro.generator} />
+        <title>{title}</title>
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+            rel="stylesheet"
+        />
+
+        <!-- Font Awesome -->
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+            integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        />
+
+        <!-- Google tag (gtag.js) -->
+        <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=G-LER7ZFV5BV"
+        ></script>
+        <script is:inline>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag("js", new Date());
+
+            gtag("config", "G-LER7ZFV5BV");
+        </script>
+
+        <!-- View Transitions -->
+        <ViewTransitions />
+    </head>
+    <body class="flex flex-col min-h-dvh">
+        <!-- Background noise layer -->
+        <div class="fixed inset-0 -z-20 bg-surface"></div>
+        <div
+            class="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(132,0,255,0.08),transparent_60%)]"
+        >
+        </div>
+
+        <Header transition:persist />
+        <main class="flex-1">
+            <slot />
+        </main>
+        <Footer transition:persist />
+        <CookieConsent />
+    </body>
+</html>
