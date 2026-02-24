@@ -1,0 +1,370 @@
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #8400FF;
+    --color-primary-light: #a033ff;
+    --color-primary-dark: #6600cc;
+    --color-gold-start: #FFD700;
+    --color-gold-end: #FFBA00;
+    --color-surface: #0a0a0f;
+    --color-surface-elevated: #111118;
+    --color-surface-hover: #18181f;
+    --color-border: #1e1e2a;
+    --color-border-hover: #2a2a3a;
+    --color-text-primary: #f0f0f5;
+    --color-text-secondary: #8888a0;
+    --color-text-muted: #55556a;
+    --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Base ───────────────────────────────────────── */
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    min-height: 100dvh;
+}
+
+::selection {
+    background: rgba(132, 0, 255, 0.25);
+    color: #e0d0ff;
+}
+
+/* ── Scrollbar ──────────────────────────────────── */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(132, 0, 255, 0.25) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(132, 0, 255, 0.3);
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(132, 0, 255, 0.5);
+}
+
+/* ── View Transitions ───────────────────────────── */
+
+::view-transition-old(root) {
+    animation: slide-out 0.25s ease-in forwards;
+}
+
+::view-transition-new(root) {
+    animation: slide-in 0.25s ease-out forwards;
+}
+
+@keyframes slide-out {
+    to {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+}
+
+@keyframes slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+/* ── Utility Classes ────────────────────────────── */
+
+.text-gradient-gold {
+    background: linear-gradient(135deg, var(--color-gold-start), var(--color-gold-end));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bg-gradient-gold {
+    background: linear-gradient(135deg, var(--color-gold-start), var(--color-gold-end));
+}
+
+.glow-primary {
+    box-shadow: 0 0 20px rgba(132, 0, 255, 0.3), 0 0 60px rgba(132, 0, 255, 0.1);
+}
+
+.glow-gold {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 60px rgba(255, 215, 0, 0.1);
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── Ranking Battle Animations ─────────────────── */
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-80px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(80px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes fadeOutLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(-60px) scale(0.92);
+    }
+}
+
+@keyframes fadeOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(60px) scale(0.92);
+    }
+}
+
+@keyframes vsPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+}
+
+@keyframes battleEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Podium animations */
+@keyframes podiumRise {
+    from {
+        opacity: 0;
+        transform: translateY(60px) scale(0.85);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes crownBounce {
+    0% {
+        transform: translateY(-10px) scale(0);
+        opacity: 0;
+    }
+
+    60% {
+        transform: translateY(2px) scale(1.15);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes rankSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Epic transition */
+@keyframes flashPulse {
+    0% {
+        opacity: 0;
+    }
+
+    30% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes particleGlow {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    40% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+/* Modal */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-slide-left {
+    animation: slideInLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-right {
+    animation: slideInRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-out-left {
+    animation: fadeOutLeft 0.3s ease-in both;
+}
+
+.animate-out-right {
+    animation: fadeOutRight 0.3s ease-in both;
+}
+
+.animate-vs-pulse {
+    animation: vsPulse 1.8s ease-in-out infinite;
+}
+
+.animate-battle-enter {
+    animation: battleEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-podium-rise {
+    animation: podiumRise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-crown {
+    animation: crownBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-rank-slide {
+    animation: rankSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-flash {
+    animation: flashPulse 0.8s ease-out both;
+}
+
+.animate-modal-bg {
+    animation: modalFadeIn 0.25s ease-out both;
+}
+
+.animate-modal-content {
+    animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Winner glow on card pick */
+.battle-card-winner {
+    box-shadow: 0 0 40px rgba(132, 0, 255, 0.5), 0 0 80px rgba(132, 0, 255, 0.2);
+    border-color: var(--color-primary) !important;
+    transform: scale(1.03);
+}
+
+/* Transition overlay */
+.transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transition-overlay .flash {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(132, 0, 255, 0.4) 0%, rgba(255, 215, 0, 0.15) 40%, transparent 70%);
+}
+
+.transition-overlay .particle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: absolute;
+    background: var(--color-primary);
+}

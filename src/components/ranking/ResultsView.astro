@@ -1,0 +1,95 @@
+---
+interface Props {
+    title: string;
+}
+const { title } = Astro.props;
+---
+
+<section id="results-view" class="hidden min-h-[calc(100dvh-4rem)]">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-28">
+        <!-- Results Header -->
+        <div class="text-center mb-10">
+            <p
+                class="text-xs text-text-muted uppercase tracking-widest font-semibold"
+            >
+                Results
+            </p>
+            <h2
+                id="results-title"
+                class="text-2xl sm:text-3xl font-bold text-text-primary mt-2"
+            >
+                {title}
+            </h2>
+            <p class="text-sm text-text-secondary mt-2">
+                <br />
+            </p>
+        </div>
+
+        <!-- Podium -->
+        <div
+            id="results-podium"
+            class="flex items-end justify-center gap-3 sm:gap-5 mb-12 min-h-[280px]"
+        >
+            <!-- Filled dynamically -->
+        </div>
+
+        <!-- Full Ranking -->
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-4">
+                <h3 class="text-lg font-bold text-text-primary">
+                    Full Ranking
+                </h3>
+                <div class="flex-1 h-px bg-border/50"></div>
+            </div>
+            <div id="results-list" class="space-y-2">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <button
+                id="action-history"
+                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
+            >
+                <i class="fa-solid fa-clock-rotate-left text-xs text-primary/70"
+                ></i>Battle History
+            </button>
+            <button
+                id="action-rank-again"
+                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
+            >
+                <i class="fa-solid fa-rotate text-xs text-primary/70"></i>Rank
+                Again
+            </button>
+            <button
+                id="action-share-template"
+                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
+            >
+                <i class="fa-solid fa-share-nodes text-xs text-primary/70"
+                ></i>Share Template
+            </button>
+            <button
+                id="action-download-image"
+                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
+            >
+                <i class="fa-solid fa-image text-xs text-primary/70"
+                ></i>Download Image
+            </button>
+            <button
+                id="action-share-x"
+                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
+            >
+                <i class="fa-brands fa-x-twitter text-xs text-primary/70"
+                ></i>Share on X
+            </button>
+            <button
+                id="action-reorder"
+                class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
+            >
+                <i class="fa-solid fa-arrows-up-down text-xs text-primary/70"
+                ></i>Reorder Manually
+            </button>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,118 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CategorySection from "../components/CategorySection.astro";
+import SEOContent from "../components/SEOContent.astro";
+import templatesRaw from "../data/templates.json";
+
+// Category definitions with FA icons
+const categories = [
+	{ name: "Movies", icon: "fa-film" },
+	{ name: "Music", icon: "fa-music" },
+	{ name: "Sports", icon: "fa-basketball-ball" },
+	{ name: "Games", icon: "fa-gamepad" },
+	{ name: "TV", icon: "fa-tv" },
+	{ name: "People", icon: "fa-users" },
+	{ name: "Internet", icon: "fa-globe" },
+	{ name: "Anime", icon: "fa-dragon" },
+	{ name: "Lifestyle", icon: "fa-heart" },
+	{ name: "Food", icon: "fa-utensils" },
+	{ name: "Politics", icon: "fa-landmark" },
+	{ name: "History & Culture", icon: "fa-book-open" },
+	{ name: "Geography", icon: "fa-map-marked-alt" },
+	{ name: "Motor", icon: "fa-car" },
+	{ name: "Books", icon: "fa-book" },
+	{ name: "Technology", icon: "fa-microchip" },
+	{ name: "Nature", icon: "fa-leaf" },
+	{ name: "Others", icon: "fa-ellipsis-h" },
+];
+
+// Sort templates by times_ranked descending
+const templates = [...templatesRaw].sort(
+	(a, b) => b.times_ranked - a.times_ranked,
+);
+
+// Group by category — top 4 most ranked per category
+const grouped: Record<string, any[]> = {};
+for (const cat of categories) {
+	grouped[cat.name] = (templates || [])
+		.filter((t: any) => t.category === cat.name)
+		.slice(0, 4);
+}
+---
+
+<Layout title="RANKMAKER — Rank Your Stuff">
+	<!-- Hero Section -->
+	<section
+		class="relative flex items-center justify-center px-4 sm:px-6 lg:px-8"
+		style="min-height: 44vh;"
+	>
+		<!-- Glow Orb -->
+		<div
+			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/8 blur-[140px] rounded-full pointer-events-none"
+		>
+		</div>
+
+		<div class="relative text-center max-w-3xl mx-auto space-y-6">
+			<h1
+				class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]"
+			>
+				<span class="text-gradient-gold">RANKMAKER</span><span
+					class="text-text-primary">:</span
+				>
+				<br class="hidden sm:block" />
+				<span class="text-text-primary">rank your stuff.</span>
+			</h1>
+
+			<p
+				class="text-base sm:text-lg text-text-secondary font-light leading-relaxed max-w-xl mx-auto"
+			>
+				No tiers. No noise. RANKMAKER lets you build accurate rankings
+				through fast, decisive 1v1 battles. Pick a template and find out
+				what really comes out on top.
+			</p>
+
+			<div class="flex items-center justify-center gap-4 pt-2">
+				<a
+					href="/search"
+					class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primary-light text-white text-sm font-semibold transition-all duration-200 glow-primary hover:scale-[1.02] active:scale-[0.98]"
+				>
+					<i class="fa-solid fa-magnifying-glass text-xs"></i>
+					Explore Templates
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- Category Sections -->
+	<div id="categories" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
+		{
+			categories.map((cat) => (
+				<CategorySection
+					category={cat.name}
+					icon={cat.icon}
+					templates={grouped[cat.name] || []}
+				/>
+			))
+		}
+
+		{/* Empty state if no templates at all */}
+		{
+			(!templates || templates.length === 0) && (
+				<div class="text-center py-24 space-y-4">
+					<div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+						<i class="fa-solid fa-inbox text-primary text-2xl" />
+					</div>
+					<h3 class="text-lg font-semibold text-text-primary">
+						No templates yet
+					</h3>
+					<p class="text-sm text-text-muted max-w-md mx-auto">
+						Templates will appear here once they are added to the
+						database. Check back soon!
+					</p>
+				</div>
+			)
+		}
+	</div>
+
+	<SEOContent />
+</Layout>

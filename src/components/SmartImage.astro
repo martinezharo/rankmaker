@@ -1,0 +1,60 @@
+---
+interface Props {
+    src: string | null;
+    alt: string;
+    className?: string; // Additional classes for the container
+    text: string; // Text to display in fallback
+    isOption?: boolean; // If true, uses a smaller text size for options
+}
+
+const { src, alt, className = "", text, isOption = false } = Astro.props;
+
+// Generate a consistent color based on the text string
+const stringToColor = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+};
+
+// Check if src is a placeholder or null/empty
+// We treat "null" string or "undefined" string as invalid too, just in case
+const isValidSrc =
+    src &&
+    src !== "null" &&
+    src !== "undefined" &&
+    !src.includes("placehold.co"); // We want to replace placehold.co too
+
+// Generate specific gradient based on text to keep it consistent but varied
+// Using a dark base with a splash of color
+const seedColor = stringToColor(text);
+---
+
+<div class={`relative overflow-hidden bg-surface ${className}`}>
+    {
+        isValidSrc ? (
+            <img
+                src={src}
+                alt={alt}
+                class="w-full h-full object-cover transition-opacity duration-300"
+                loading="lazy"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+        ) : null
+    }
+
+    <!-- Fallback Container (initially hidden if img exists, visible if not) -->
+    <div
+        class={`absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 ${isValidSrc ? "hidden" : "flex"}`}
+        style={`--tw-gradient-to: ${seedColor}40;`}
+    >
+        <span
+            class={`font-bold text-text-primary/90 leading-tight ${isOption ? "text-xs line-clamp-2" : "text-xl sm:text-2xl line-clamp-3"}`}
+        >
+            {text}
+        </span>
+        {!isOption && <div class="mt-2 w-12 h-1 bg-primary/50 rounded-full" />}
+    </div>
+</div>
