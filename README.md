@@ -121,7 +121,7 @@ This fetches all templates and their options from Supabase and writes them to `s
 ```
 rankmaker/
 ├── public/                     # Static assets (logos, favicons, images)
-│   ├── images/                 # Template cover images (gitignored)
+│   ├── images/                 # Template cover images
 │   ├── RANKMAKER-logo.webp
 │   ├── robots.txt
 │   └── ...
