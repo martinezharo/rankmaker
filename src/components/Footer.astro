@@ -147,7 +147,9 @@ const categories = [
                         categories.map((cat) => (
                             <li>
                                 <a
-                                    href={`/search?category=${encodeURIComponent(cat)}`}
+                                    href={`/search?category=${encodeURIComponent(
+                                        cat
+                                    )}`}
                                     class="text-sm text-text-secondary hover:text-text-primary transition-colors"
                                 >
                                     {cat}
@@ -196,18 +198,6 @@ const categories = [
                     </li>
                 </ul>
             </div>
-        </div>
-    </div>
-
-    <!-- Bottom Bar -->
-    <div class="border-t border-border/30">
-        <div
-            class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-2"
-        >
-            <p class="text-xs text-text-muted">
-                &copy; 2026 RANKMAKER. All rights reserved.
-            </p>
-            <p class="text-xs text-text-muted font-mono">1.1.0-beta</p>
         </div>
     </div>
 </footer>
