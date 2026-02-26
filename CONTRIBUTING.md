@@ -119,7 +119,7 @@ src/
 - **Templates** are ranking topics (e.g., "Best Marvel Movies"). Each template has a list of **options** that users compare in 1v1 battles.
 - **Battle View** presents two options side by side. The user taps their preference, and the sorting algorithm determines the next matchup.
 - **Results View** shows the final ranking with a podium (top 3) and a full ordered list.
-- Template data is **pre-exported from Supabase** into a static JSON file at build time via `scripts/export-to-json.js`.
+- Template data is stored in a static JSON file at `src/data/templates.json`. To add or modify rankings, this file must be updated directly.
 
 ## Code Style
 
