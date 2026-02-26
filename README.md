@@ -56,7 +56,7 @@ Pick a template — movies, music, sports, anime, food, and many more — and le
 | **Language** | TypeScript |
 | **Fonts** | [Outfit](https://fonts.google.com/specimen/Outfit) (Google Fonts) |
 | **Icons** | [Font Awesome](https://fontawesome.com/) 6 |
-| **Data Source** | [Supabase](https://supabase.com/) (exported to static JSON at build time) |
+| **Data Source** | Local JSON file (`src/data/templates.json`) |
 | **Hosting** | [Cloudflare Pages](https://pages.cloudflare.com/) via `@astrojs/cloudflare` adapter |
 | **Package Manager** | [pnpm](https://pnpm.io/) |
 
@@ -78,17 +78,7 @@ cd rankmaker
 pnpm install
 ```
 
-### Environment Variables
-
-Create a `.env` file in the root of the project. This is only required if you want to re-export template data from Supabase:
-
-```env
-PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-> **Note:** The app ships with a pre-built `src/data/templates.json`, so you can run the project without any Supabase credentials.
-
+#
 ### Development
 
 ```bash
@@ -106,16 +96,7 @@ pnpm build
 pnpm preview
 ```
 
-### Exporting Template Data
-
-If you have Supabase credentials configured, you can refresh the template data:
-
-```bash
-node scripts/export-to-json.js
-```
-
-This fetches all templates and their options from Supabase and writes them to `src/data/templates.json`.
-
+#
 ## Project Structure
 
 ```
@@ -125,8 +106,6 @@ rankmaker/
 │   ├── RANKMAKER-logo.webp
 │   ├── robots.txt
 │   └── ...
-├── scripts/
-│   └── export-to-json.js       # Supabase → JSON export script
 ├── src/
 │   ├── components/
 │   │   ├── ranking/            # Battle & results components
