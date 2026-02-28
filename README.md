@@ -101,7 +101,7 @@ pnpm preview
 
 ```
 rankmaker/
-├── public/                     # Static assets (logos, favicons, images)
+├── public/                     # Static assets (logos, favicon, images)
 │   ├── images/                 # Template cover images
 │   ├── RANKMAKER-logo.webp
 │   ├── robots.txt
