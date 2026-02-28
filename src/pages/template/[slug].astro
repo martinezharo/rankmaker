@@ -732,6 +732,16 @@ const coverSrc = resolveImg(template.cover_image);
 
             // ─── Start Ranking ──────────────────────────────
             startBtn.addEventListener("click", () => {
+                // Track ranking start (fire-and-forget)
+                fetch("/api/track", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        url: window.location.href,
+                        date: new Date().toISOString(),
+                    }),
+                }).catch(() => {}); // Silently ignore tracking errors
+
                 detailView.classList.add("hidden");
                 startCta.classList.add("hidden");
                 battleView.classList.remove("hidden");
