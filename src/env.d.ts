@@ -9,7 +9,7 @@ type KVNamespace = {
 
 type Runtime = {
     env: {
-        KV: KVNamespace;
+        'rm-times-ranked': KVNamespace;
     };
     cf: Record<string, unknown>;
 };
