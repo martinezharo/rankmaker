@@ -31,7 +31,7 @@ export const POST: APIRoute = async (context) => {
         });
 
         // Write to KV
-        await env.KV.put(key, value);
+        await env['rm-times-ranked'].put(key, value);
 
         return new Response(JSON.stringify({ ok: true, key }), {
             status: 200,
