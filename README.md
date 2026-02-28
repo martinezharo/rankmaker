@@ -42,6 +42,7 @@ Pick a template — movies, music, sports, anime, food, and many more — and le
 - **Battle History** — Review every matchup you made during a ranking session.  
 - **Undo & Finish Early** — Changed your mind? Undo the last matchup or finish early at any time.  
 - **Manual Reorder** — Fine-tune your final ranking by dragging items into position.  
+- **Internal Tracking** — Anonymous tracking of ranking starts for internal analytics and future features.
 - **Responsive Design** — Fully responsive, looks great on phones, tablets, and desktops.  
 - **View Transitions** — Smooth page transitions powered by Astro's View Transitions API.  
 - **SEO Optimized** — Dynamic sitemap, proper meta tags, and semantic HTML.  
@@ -57,6 +58,7 @@ Pick a template — movies, music, sports, anime, food, and many more — and le
 | **Fonts** | [Outfit](https://fonts.google.com/specimen/Outfit) (Google Fonts) |
 | **Icons** | [Font Awesome](https://fontawesome.com/) 6 |
 | **Data Source** | Local JSON file (`src/data/templates.json`) |
+| **Storage** | [Cloudflare KV](https://developers.cloudflare.com/kv/) (Internal Tracking) |
 | **Hosting** | [Cloudflare Pages](https://pages.cloudflare.com/) via `@astrojs/cloudflare` adapter |
 | **Package Manager** | [pnpm](https://pnpm.io/) |
 
@@ -129,18 +131,28 @@ rankmaker/
 │   │   ├── search.astro        # Template search & filter page
 │   │   ├── about.astro         # About page
 │   │   ├── contact.astro       # Contact page
+│   │   ├── api/
+│   │   │   └── track.ts        # Server-side API for ranking tracking
 │   │   ├── template/
 │   │   │   └── [slug].astro    # Dynamic template page (battle + results)
 │   │   ├── sitemap.xml.ts      # Dynamic XML sitemap
 │   │   └── ...                 # Legal pages (privacy, terms, cookies, etc.)
-│   └── styles/
-│       └── global.css          # Global styles & Tailwind config
+│   ├── styles/
+│   │   └── global.css          # Global styles & Tailwind config
+│   └── env.d.ts                # TypeScript definitions for Cloudflare runtime
 ├── astro.config.mjs            # Astro configuration
 ├── wrangler.jsonc              # Cloudflare Workers config
 ├── tsconfig.json
 ├── package.json
-└── pnpm-lock.yaml
+├── pnpm-lock.yaml
 ```
+
+## Internal Tracking & Future Features
+
+We have implemented a **Server-Side API (`/api/track`)** that logs anonymous ranking events to **Cloudflare KV** whenever a user clicks "Start Ranking".
+
+- **Why?** This is currently used for internal control to see which templates are most popular.
+- **Future Plans:** This data will be used to implement a **real-time "Times Ranked" counter** on the frontend for each template card and detail page.
 
 ## Deployment
 
