@@ -15,7 +15,7 @@
   },
   "kv_namespaces": [
     {
-      "binding": "KV",
+      "binding": "rm-times-ranked",
       "id": "0c639d01caa544908bde56c1de3e143c"
     }
   ]
