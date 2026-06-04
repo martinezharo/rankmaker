@@ -75,5 +75,50 @@ const {
         </main>
         <Footer transition:persist />
         <CookieConsent />
+
+        <!-- Replace the static "N ranked" mockup with real counts from D1 -->
+        <script>
+            type Counts = Record<string, number>;
+
+            // Fetch the slug -> count map once per page session.
+            let countsPromise: Promise<Counts> | null = null;
+            function getCounts(): Promise<Counts> {
+                if (!countsPromise) {
+                    countsPromise = fetch("/api/counts")
+                        .then((r) => (r.ok ? r.json() : { counts: {} }))
+                        .then((data) => (data?.counts as Counts) || {})
+                        .catch(() => ({}));
+                }
+                return countsPromise;
+            }
+
+            // Apply the cached counts to every [data-count-slug] within `root`.
+            function applyRankCounts(root: ParentNode = document) {
+                const counts = (window as any).__rmCounts as Counts | undefined;
+                if (!counts) return;
+                root.querySelectorAll<HTMLElement>(
+                    "[data-count-slug]",
+                ).forEach((el) => {
+                    const slug = el.dataset.countSlug;
+                    if (!slug) return;
+                    const n = counts[slug] || 0;
+                    el.textContent = `${n.toLocaleString()} ranked`;
+                });
+            }
+
+            // Exposed so client-rendered grids (e.g. search) can re-apply counts.
+            (window as any).__applyRankCounts = applyRankCounts;
+
+            function refreshCounts() {
+                getCounts().then((counts) => {
+                    (window as any).__rmCounts = counts;
+                    applyRankCounts(document);
+                    // Let client-rendered views (e.g. search) re-sort by counts.
+                    document.dispatchEvent(new CustomEvent("rm:counts"));
+                });
+            }
+
+            document.addEventListener("astro:page-load", refreshCounts);
+        </script>
     </body>
 </html>

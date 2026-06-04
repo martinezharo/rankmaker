@@ -1,8 +1,11 @@
 ---
+export const prerender = false;
+
 import Layout from "../layouts/Layout.astro";
 import CategorySection from "../components/CategorySection.astro";
 import SEOContent from "../components/SEOContent.astro";
 import templatesRaw from "../data/templates.json";
+import { getCounts } from "../lib/counts";
 
 // Category definitions with FA icons
 const categories = [
@@ -26,18 +29,38 @@ const categories = [
 	{ name: "Others", icon: "fa-ellipsis-h" },
 ];
 
-// Sort templates by times_ranked descending
-const templates = [...templatesRaw].sort(
-	(a, b) => b.times_ranked - a.times_ranked
-);
+// Fetch real ranking counts from D1 (SSR). Fall back to the JSON
+// `times_ranked` if the binding/query is unavailable so the page never breaks.
+let counts: Record<string, number> = {};
+let haveCounts = false;
+try {
+	const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
+	if (db) {
+		counts = await getCounts(db);
+		haveCounts = true;
+	}
+} catch {
+	// keep JSON ordering as a safe fallback
+}
+
+// Use real counts (pure) when available; otherwise the JSON number.
+const templates = templatesRaw
+	.map((t: any) => ({
+		...t,
+		times_ranked: haveCounts ? (counts[t.slug] ?? 0) : t.times_ranked,
+	}))
+	.sort((a, b) => b.times_ranked - a.times_ranked);
 
 // Group by category — top 4 most ranked per category
 const grouped: Record<string, any[]> = {};
 for (const cat of categories) {
-	grouped[cat.name] = (templates || [])
+	grouped[cat.name] = templates
 		.filter((t: any) => t.category === cat.name)
 		.slice(0, 4);
 }
+
+// Short edge cache so the homepage isn't a D1 hit on every request.
+Astro.response.headers.set("Cache-Control", "public, max-age=60");
 ---
 
 <Layout title="RANKMAKER — Rank Your Stuff">

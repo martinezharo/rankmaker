@@ -215,7 +215,7 @@ const templatesForClient = templates.map((t) => ({
                         ${descHtml}
                         <div class="flex items-center gap-1.5 pt-1">
                             <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
-                            <span class="text-xs text-text-muted font-medium">${t.times_ranked.toLocaleString()} ranked</span>
+                            <span class="text-xs text-text-muted font-medium" data-count-slug="${t.slug}">${t.times_ranked.toLocaleString()} ranked</span>
                         </div>
                     </div>
                 </a>`;
@@ -249,8 +249,24 @@ const templatesForClient = templates.map((t) => ({
                     return true;
                 });
 
+                // Sort by real ranking counts (from D1) when available,
+                // falling back to the build-time order otherwise.
+                const counts = (window as any).__rmCounts as
+                    | Record<string, number>
+                    | undefined;
+                if (counts) {
+                    filtered.sort(
+                        (a, b) =>
+                            (counts[b.slug] || 0) - (counts[a.slug] || 0),
+                    );
+                }
+
                 // Render
                 grid!.innerHTML = filtered.map(renderCard).join("");
+
+                // Patch "N ranked" with real counts (results are rendered client-side
+                // after the global counts fetch, so apply them to the new cards).
+                (window as any).__applyRankCounts?.(grid!);
 
                 // Update count
                 resultsCount!.textContent = `Showing ${filtered.length} template${filtered.length !== 1 ? "s" : ""}`;
@@ -320,6 +336,9 @@ const templatesForClient = templates.map((t) => ({
 
             // Initial render
             filterAndRender();
+
+            // Re-render once real counts arrive so results sort by them.
+            document.addEventListener("rm:counts", filterAndRender);
         });
     </script>
 </Layout>

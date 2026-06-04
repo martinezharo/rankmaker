@@ -103,7 +103,10 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
 
         <div class="flex items-center gap-1.5 pt-1">
             <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
-            <span class="text-xs text-text-muted font-medium">
+            <span
+                class="text-xs text-text-muted font-medium"
+                data-count-slug={template.slug}
+            >
                 {template.times_ranked.toLocaleString()} ranked
             </span>
         </div>

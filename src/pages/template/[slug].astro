@@ -127,7 +127,7 @@ const coverSrc = resolveImg(template.cover_image);
                 <div class="flex items-center gap-6 text-sm">
                     <div class="flex items-center gap-2 text-text-muted">
                         <i class="fa-solid fa-fire text-primary/70 text-xs"></i>
-                        <span class="font-medium"
+                        <span class="font-medium" data-count-slug={template.slug}
                             >{template.times_ranked.toLocaleString()} ranked</span
                         >
                     </div>
