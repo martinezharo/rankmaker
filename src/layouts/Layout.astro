@@ -81,13 +81,21 @@ const {
             type Counts = Record<string, number>;
 
             // Fetch the slug -> count map once per page session.
-            let countsPromise: Promise<Counts> | null = null;
-            function getCounts(): Promise<Counts> {
+            // On failure resolve to null (don't clobber server-rendered
+            // numbers) and reset the cache so the next navigation retries.
+            let countsPromise: Promise<Counts | null> | null = null;
+            function getCounts(): Promise<Counts | null> {
                 if (!countsPromise) {
                     countsPromise = fetch("/api/counts")
-                        .then((r) => (r.ok ? r.json() : { counts: {} }))
+                        .then((r) => {
+                            if (!r.ok) throw new Error("counts " + r.status);
+                            return r.json();
+                        })
                         .then((data) => (data?.counts as Counts) || {})
-                        .catch(() => ({}));
+                        .catch(() => {
+                            countsPromise = null;
+                            return null;
+                        });
                 }
                 return countsPromise;
             }
@@ -111,6 +119,8 @@ const {
 
             function refreshCounts() {
                 getCounts().then((counts) => {
+                    // Fetch failed — keep the server-rendered numbers as-is.
+                    if (!counts) return;
                     (window as any).__rmCounts = counts;
                     applyRankCounts(document);
                     // Let client-rendered views (e.g. search) re-sort by counts.
