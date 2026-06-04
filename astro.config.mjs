@@ -10,7 +10,15 @@ export default defineConfig({
   output: 'static',
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    server: {
+      // Miniflare (local D1/KV) writes journal/WAL files under .wrangler/state
+      // on every query. Without this, Vite's watcher reloads the page on each
+      // write — causing an infinite refresh loop on SSR pages. Dev-only.
+      watch: {
+        ignored: ['**/.wrangler/**']
+      }
+    }
   },
 
   adapter: cloudflare()

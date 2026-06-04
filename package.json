@@ -6,7 +6,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "wrangler": "npx --yes wrangler@latest",
+    "db:create": "npx --yes wrangler@latest d1 create rankmaker",
+    "db:migrate:local": "npx --yes wrangler@latest d1 execute rankmaker --local --file=migrations/0001_init.sql",
+    "db:migrate:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0001_init.sql",
+    "db:seed:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0002_seed_from_kv.sql",
+    "db:counts:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.12",
