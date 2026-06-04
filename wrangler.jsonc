@@ -1,6 +1,7 @@
 {
   "main": "dist/_worker.js/index.js",
   "name": "rankmaker",
+  "account_id": "a0fa518f5393767beb33f26606989c9d",
   "compatibility_date": "2026-02-17",
   "compatibility_flags": [
     "nodejs_compat",
@@ -17,6 +18,13 @@
     {
       "binding": "rm-times-ranked",
       "id": "0c639d01caa544908bde56c1de3e143c"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "rankmaker",
+      "database_id": "fae5241a-0498-47d3-bbc0-fff72a1cb6f6"
     }
   ]
 }

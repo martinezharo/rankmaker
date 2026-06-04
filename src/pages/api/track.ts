@@ -1,6 +1,7 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
+import { slugFromUrl } from '../../lib/slug';
 
 export const POST: APIRoute = async (context) => {
     try {
@@ -30,8 +31,24 @@ export const POST: APIRoute = async (context) => {
             country,
         });
 
-        // Write to KV
+        // Keep the KV event log (backup / raw history)
         await env['rm-times-ranked'].put(key, value);
+
+        // Record the event in D1 so counts can be aggregated efficiently.
+        // Skip if we can't derive a slug (no valid template = no count).
+        const slug = slugFromUrl(url);
+        if (slug) {
+            try {
+                await env.DB.prepare(
+                    'INSERT INTO rankings (slug, url, date, country) VALUES (?, ?, ?, ?)'
+                )
+                    .bind(slug, url, date, country)
+                    .run();
+            } catch (dbError) {
+                // Don't fail the request if D1 write fails; KV log still captured it.
+                console.error('Track D1 insert error:', dbError);
+            }
+        }
 
         return new Response(JSON.stringify({ ok: true, key }), {
             status: 200,
