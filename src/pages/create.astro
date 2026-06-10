@@ -1,0 +1,35 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import TemplateForm from "../components/TemplateForm.astro";
+import { getSessionUser } from "../lib/auth";
+
+const user = await getSessionUser(Astro.cookies, Astro.locals.runtime.env.DB);
+if (!user) {
+    return Astro.redirect("/api/auth/login?next=/create", 302);
+}
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Layout
+    title="Create a template — RANKMAKER"
+    description="Create your own ranking template on RANKMAKER."
+>
+    <section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
+        <div class="mb-8">
+            <h1
+                class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary"
+            >
+                Create a template
+            </h1>
+            <p class="text-sm text-text-secondary mt-2">
+                Build your own ranking — everyone will be able to play it and
+                it will show up on your public profile.
+            </p>
+        </div>
+
+        <TemplateForm mode="create" />
+    </section>
+</Layout>

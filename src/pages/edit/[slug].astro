@@ -1,0 +1,68 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import TemplateForm from "../../components/TemplateForm.astro";
+import { getSessionUser } from "../../lib/auth";
+import { loadOptions } from "../../lib/templates";
+
+const db = Astro.locals.runtime.env.DB;
+const user = await getSessionUser(Astro.cookies, db);
+if (!user) {
+    return Astro.redirect(
+        `/api/auth/login?next=${encodeURIComponent(Astro.url.pathname)}`,
+        302,
+    );
+}
+
+const row = await Astro.locals.runtime.env.DB.prepare(
+    `SELECT id, creator_id, slug, title, description, category, cover_image
+     FROM templates WHERE slug = ? COLLATE NOCASE`,
+)
+    .bind(Astro.params.slug)
+    .first<{
+        id: string;
+        creator_id: string;
+        slug: string;
+        title: string;
+        description: string | null;
+        category: string;
+        cover_image: string | null;
+    }>();
+
+// Same 404 for "doesn't exist" and "not yours".
+if (!row || row.creator_id !== user.id) {
+    return new Response(null, { status: 404 });
+}
+
+const template = { ...row, options: await loadOptions(db, row.id) };
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Layout title={`Edit: ${template.title} — RANKMAKER`}>
+    <section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
+        <div class="mb-8">
+            <a
+                href="/me"
+                class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6 group"
+            >
+                <i
+                    class="fa-solid fa-arrow-left text-xs transition-transform group-hover:-translate-x-1"
+                ></i>
+                Back to my templates
+            </a>
+            <h1
+                class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary"
+            >
+                Edit template
+            </h1>
+            <p class="text-sm text-text-secondary mt-2">
+                The template URL stays the same — your share links keep
+                working.
+            </p>
+        </div>
+
+        <TemplateForm mode="edit" template={template} />
+    </section>
+</Layout>

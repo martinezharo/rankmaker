@@ -1,0 +1,374 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Avatar from "../components/Avatar.astro";
+import SmartImage from "../components/SmartImage.astro";
+import { getSessionUser } from "../lib/auth";
+import { categoryIcon } from "../lib/categories";
+import { listTemplatesByUserId } from "../lib/templates";
+
+const db = Astro.locals.runtime.env.DB;
+const user = await getSessionUser(Astro.cookies, db);
+if (!user) {
+    return Astro.redirect("/api/auth/login?next=/me", 302);
+}
+
+const templates = await listTemplatesByUserId(db, user.id);
+
+const resolveImg = (path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    if (path.startsWith("public/")) return path.replace("public/", "/");
+    return path;
+};
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Layout title="My templates — RANKMAKER">
+    <section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
+        <!-- Profile header -->
+        <div
+            class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-10"
+        >
+            <Avatar avatar={user.avatar} size="xl" verified={user.isVerified} />
+            <div class="flex-1">
+                <h1
+                    class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
+                >
+                    @{user.username}
+                </h1>
+                <a
+                    href={`/u/${encodeURIComponent(user.username)}`}
+                    class="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors mt-1"
+                >
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"
+                    ></i>
+                    View public profile
+                </a>
+            </div>
+            <a
+                href="/create"
+                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
+            >
+                <i class="fa-solid fa-plus text-xs"></i>
+                Create template
+            </a>
+        </div>
+
+        <!-- Templates -->
+        <div class="flex items-center gap-3 mb-5">
+            <h2 class="text-lg font-bold text-text-primary tracking-tight">
+                My templates
+            </h2>
+            <div class="flex-1 h-px bg-border/50"></div>
+            <span class="text-xs text-text-muted font-medium">
+                {templates.length}
+                {templates.length === 1 ? "template" : "templates"}
+            </span>
+        </div>
+
+        {
+            templates.length === 0 ? (
+                <div class="rounded-2xl border border-dashed border-border p-10 text-center space-y-3">
+                    <i class="fa-solid fa-layer-group text-2xl text-text-muted" />
+                    <p class="text-sm text-text-secondary">
+                        You haven't created any templates yet.
+                    </p>
+                    <a
+                        href="/create"
+                        class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+                    >
+                        Create your first one
+                        <i class="fa-solid fa-arrow-right text-xs" />
+                    </a>
+                </div>
+            ) : (
+                <div class="space-y-3">
+                    {templates.map((t) => (
+                        <div
+                            class="my-template-row flex items-center gap-4 p-3 rounded-xl bg-surface-elevated border border-border"
+                            data-template-id={t.id}
+                        >
+                            <a
+                                href={`/template/${t.slug}`}
+                                class="w-20 h-15 sm:w-24 sm:h-18 shrink-0 rounded-lg overflow-hidden bg-surface border border-border"
+                            >
+                                <SmartImage
+                                    src={resolveImg(t.cover_image)}
+                                    alt={t.title}
+                                    text={t.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            </a>
+                            <div class="flex-1 min-w-0">
+                                <a
+                                    href={`/template/${t.slug}`}
+                                    class="block font-semibold text-sm text-text-primary hover:text-white transition-colors truncate"
+                                >
+                                    {t.title}
+                                </a>
+                                <p class="text-xs text-text-muted mt-1 flex items-center gap-3">
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <i
+                                            class={`fa-solid ${categoryIcon(t.category)} text-[10px] text-primary/70`}
+                                        />
+                                        {t.category}
+                                    </span>
+                                    <span
+                                        class="inline-flex items-center gap-1.5"
+                                        data-count-slug={t.slug}
+                                    >
+                                        {t.times_ranked.toLocaleString()} ranked
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <a
+                                    href={`/edit/${t.slug}`}
+                                    class="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-primary border border-border hover:border-primary/50 transition-all"
+                                    aria-label="Edit template"
+                                >
+                                    <i class="fa-solid fa-pen text-xs" />
+                                </a>
+                                <button
+                                    type="button"
+                                    class="delete-template-btn w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-red-400 border border-border hover:border-red-400/50 transition-all"
+                                    data-id={t.id}
+                                    data-title={t.title}
+                                    aria-label="Delete template"
+                                >
+                                    <i class="fa-solid fa-trash text-xs" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )
+        }
+
+        <!-- Danger zone -->
+        <div class="mt-16 rounded-2xl border border-red-500/25 p-5 sm:p-6">
+            <h2
+                class="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2"
+            >
+                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                Danger zone
+            </h2>
+            <p class="text-sm text-text-secondary mt-3">
+                Deleting your account permanently removes your profile and all
+                the templates you've created. This cannot be undone.
+            </p>
+            <button
+                type="button"
+                id="delete-account-open"
+                class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 border border-red-500/40 hover:bg-red-500/10 transition-all"
+            >
+                <i class="fa-solid fa-user-xmark text-xs"></i>
+                Delete my account
+            </button>
+        </div>
+    </section>
+
+    <!-- Delete template modal -->
+    <div
+        id="delete-template-modal"
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+    >
+        <div
+            class="delete-template-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
+        >
+        </div>
+        <div
+            class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4"
+        >
+            <h3 class="text-lg font-bold text-text-primary">
+                Delete template?
+            </h3>
+            <p class="text-sm text-text-secondary">
+                "<span id="delete-template-title"></span>" will be permanently
+                deleted. This cannot be undone.
+            </p>
+            <div class="flex gap-3 pt-1">
+                <button
+                    type="button"
+                    id="delete-template-cancel"
+                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    id="delete-template-confirm"
+                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
+                >
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete account modal -->
+    <div
+        id="delete-account-modal"
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+        data-username={user.username}
+    >
+        <div
+            class="delete-account-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
+        >
+        </div>
+        <div
+            class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-red-500/30 p-6 space-y-4"
+        >
+            <h3 class="text-lg font-bold text-red-400">Delete account</h3>
+            <p class="text-sm text-text-secondary">
+                This permanently deletes your account and all your templates.
+                Type <span class="font-bold text-text-primary"
+                    >{user.username}</span
+                > to confirm.
+            </p>
+            <input
+                id="delete-account-input"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder={user.username}
+                class="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:border-red-400/60 transition-all"
+            />
+            <p id="delete-account-error" class="text-xs text-red-400 min-h-4">
+            </p>
+            <div class="flex gap-3 pt-1">
+                <button
+                    type="button"
+                    id="delete-account-cancel"
+                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    id="delete-account-confirm"
+                    disabled
+                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    Delete forever
+                </button>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    document.addEventListener("astro:page-load", () => {
+        const tplModal = document.getElementById("delete-template-modal");
+        if (!tplModal || tplModal.dataset.bound) return;
+        tplModal.dataset.bound = "1";
+
+        // ── Delete template ──────────────────────────────────────────
+        const tplTitle = document.getElementById("delete-template-title")!;
+        const tplConfirm = document.getElementById(
+            "delete-template-confirm",
+        ) as HTMLButtonElement;
+        let pendingId: string | null = null;
+
+        document
+            .querySelectorAll<HTMLButtonElement>(".delete-template-btn")
+            .forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    pendingId = btn.dataset.id || null;
+                    tplTitle.textContent = btn.dataset.title || "";
+                    tplModal.classList.remove("hidden");
+                });
+            });
+
+        const closeTplModal = () => {
+            tplModal.classList.add("hidden");
+            pendingId = null;
+        };
+        document
+            .getElementById("delete-template-cancel")!
+            .addEventListener("click", closeTplModal);
+        tplModal
+            .querySelector(".delete-template-backdrop")!
+            .addEventListener("click", closeTplModal);
+
+        tplConfirm.addEventListener("click", async () => {
+            if (!pendingId) return;
+            tplConfirm.disabled = true;
+            try {
+                const res = await fetch(`/api/templates/${pendingId}`, {
+                    method: "DELETE",
+                });
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                    document
+                        .querySelector(
+                            `.my-template-row[data-template-id="${pendingId}"]`,
+                        )
+                        ?.remove();
+                    closeTplModal();
+                }
+            } catch {
+                /* keep the modal open so the user can retry */
+            }
+            tplConfirm.disabled = false;
+        });
+
+        // ── Delete account ───────────────────────────────────────────
+        const accModal = document.getElementById("delete-account-modal")!;
+        const username = accModal.dataset.username || "";
+        const accInput = document.getElementById(
+            "delete-account-input",
+        ) as HTMLInputElement;
+        const accConfirm = document.getElementById(
+            "delete-account-confirm",
+        ) as HTMLButtonElement;
+        const accError = document.getElementById("delete-account-error")!;
+
+        document
+            .getElementById("delete-account-open")!
+            .addEventListener("click", () => {
+                accInput.value = "";
+                accConfirm.disabled = true;
+                accError.textContent = "";
+                accModal.classList.remove("hidden");
+                accInput.focus();
+            });
+
+        const closeAccModal = () => accModal.classList.add("hidden");
+        document
+            .getElementById("delete-account-cancel")!
+            .addEventListener("click", closeAccModal);
+        accModal
+            .querySelector(".delete-account-backdrop")!
+            .addEventListener("click", closeAccModal);
+
+        accInput.addEventListener("input", () => {
+            accConfirm.disabled = accInput.value !== username;
+        });
+
+        accConfirm.addEventListener("click", async () => {
+            accConfirm.disabled = true;
+            accError.textContent = "";
+            try {
+                const res = await fetch("/api/auth/delete-account", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ confirmUsername: accInput.value }),
+                });
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                    window.location.href = "/";
+                    return;
+                }
+                accError.textContent =
+                    data.error || "Something went wrong. Try again.";
+            } catch {
+                accError.textContent = "Network error. Try again.";
+            }
+            accConfirm.disabled = accInput.value !== username;
+        });
+    });
+</script>
