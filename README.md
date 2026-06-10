@@ -81,6 +81,39 @@ pnpm install
 ```
 
 #
+### Database & Auth setup (user accounts + user templates)
+
+User accounts (GitHub OAuth) and user-created templates live in **Cloudflare D1**.
+
+1. Apply the migrations to the local D1 database:
+
+```bash
+pnpm run db:migrate:local    # rankings table
+pnpm run db:migrate3:local   # users, sessions, templates, template_options (+ RANKMAKER seed)
+```
+
+2. Create a **dev GitHub OAuth App** at <https://github.com/settings/developers>:
+   - Homepage URL: `http://localhost:4321`
+   - Authorization callback URL: `http://localhost:4321/api/auth/callback`
+
+3. Create a `.dev.vars` file (gitignored) in the project root:
+
+```ini
+GITHUB_CLIENT_ID=<dev oauth app client id>
+GITHUB_CLIENT_SECRET=<dev oauth app client secret>
+SESSION_SECRET=<any random 32+ char string>
+```
+
+For production, create a second OAuth App with the live callback URL
+(`https://rankmaker.net/api/auth/callback`) and set the secrets once:
+
+```bash
+npx wrangler secret put GITHUB_CLIENT_ID
+npx wrangler secret put GITHUB_CLIENT_SECRET
+npx wrangler secret put SESSION_SECRET
+pnpm run db:migrate3:remote
+```
+
 ### Development
 
 ```bash
