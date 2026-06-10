@@ -28,3 +28,7 @@ pnpm-debug.log*
 
 # vscode settings
 .vscode/
+
+# ai agents
+.claude/
+.agents/
