@@ -34,11 +34,17 @@ export const GET: APIRoute = async (context) => {
     context.cookies.delete(OAUTH_STATE_COOKIE, { path: '/' });
 
     if (!code || !state || !statePayload || statePayload.state !== state) {
+        console.error('OAuth callback: missing/mismatched state', {
+            hasCode: !!code,
+            hasState: !!state,
+            hasCookie: !!statePayload,
+        });
         return fail();
     }
 
     try {
-        // Exchange the code for an access token.
+        // Exchange the code for an access token. GitHub requires a
+        // User-Agent header (Workers' fetch sends none by default).
         const tokenRes = await fetch(
             'https://github.com/login/oauth/access_token',
             {
@@ -46,6 +52,7 @@ export const GET: APIRoute = async (context) => {
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
+                    'User-Agent': 'rankmaker',
                 },
                 body: JSON.stringify({
                     client_id: env.GITHUB_CLIENT_ID,
@@ -57,8 +64,17 @@ export const GET: APIRoute = async (context) => {
         );
         const tokenData = (await tokenRes.json()) as {
             access_token?: string;
+            error?: string;
+            error_description?: string;
         };
-        if (!tokenData.access_token) return fail();
+        if (!tokenData.access_token) {
+            console.error('OAuth callback: token exchange failed', {
+                status: tokenRes.status,
+                error: tokenData.error,
+                description: tokenData.error_description,
+            });
+            return fail();
+        }
 
         // Fetch the GitHub user (User-Agent is mandatory for api.github.com).
         const userRes = await fetch('https://api.github.com/user', {
@@ -68,12 +84,20 @@ export const GET: APIRoute = async (context) => {
                 'User-Agent': 'rankmaker',
             },
         });
-        if (!userRes.ok) return fail();
+        if (!userRes.ok) {
+            console.error('OAuth callback: user fetch failed', {
+                status: userRes.status,
+            });
+            return fail();
+        }
         const ghUser = (await userRes.json()) as {
             id?: number;
             login?: string;
         };
-        if (typeof ghUser.id !== 'number' || !ghUser.login) return fail();
+        if (typeof ghUser.id !== 'number' || !ghUser.login) {
+            console.error('OAuth callback: unexpected user payload');
+            return fail();
+        }
 
         const db = env.DB;
         const existing = await db
