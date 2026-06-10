@@ -36,16 +36,21 @@
 
                 <a
                     href="/create"
+                    data-astro-reload
                     class="ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
                 >
                     <i class="fa-solid fa-plus text-xs"></i>
                     Create Ranking
                 </a>
 
-                <!-- Auth slot (desktop) — swapped by client JS when logged in -->
+                <!-- Auth slot (desktop) — swapped by client JS when logged in.
+                     data-astro-reload: the OAuth redirect to GitHub must be a
+                     full browser navigation (the ClientRouter fetch would be
+                     blocked by CORS). -->
                 <div class="auth-slot ml-1 relative" data-auth-slot="desktop">
                     <a
                         href="/api/auth/login"
+                        data-astro-reload
                         class="auth-login-link inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
                     >
                         <i class="fa-brands fa-github"></i>
@@ -59,6 +64,7 @@
                 <div class="auth-slot relative" data-auth-slot="mobile">
                     <a
                         href="/api/auth/login"
+                        data-astro-reload
                         class="auth-login-link inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary border border-border transition-all"
                     >
                         <i class="fa-brands fa-github"></i>
@@ -102,6 +108,7 @@
                 </a>
                 <a
                     href="/create"
+                    data-astro-reload
                     class="block px-4 py-2.5 text-sm font-bold text-gold-start hover:bg-white/5 rounded-lg transition-colors"
                 >
                     <i class="fa-solid fa-plus w-5 mr-2 text-xs"></i>Create
