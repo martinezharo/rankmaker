@@ -1,48 +1,34 @@
 ---
+export const prerender = false;
+
 import Layout from "../../layouts/Layout.astro";
-import templates from "../../data/templates.json";
 import SmartImage from "../../components/SmartImage.astro";
+import Avatar from "../../components/Avatar.astro";
 import BattleView from "../../components/ranking/BattleView.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
 import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
 import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
 import SEOContent from "../../components/SEOContent.astro";
+import { getTemplateBySlug } from "../../lib/templates";
+import { categoryIcon } from "../../lib/categories";
 
-export async function getStaticPaths() {
-    return templates.map((template) => ({
-        params: { slug: template.slug },
-        props: { template },
-    }));
+// Served on demand: official templates resolve from the bundled JSON (no D1
+// read), user templates from D1. A null body + 404 makes Astro render 404.astro.
+const db = Astro.locals.runtime.env.DB;
+const template = await getTemplateBySlug(db, Astro.params.slug as string);
+if (!template) {
+    return new Response(null, { status: 404 });
 }
 
-const { template } = Astro.props;
-const { options } = template;
+const { options, creator } = template;
 
-// Category → icon map
-const categoryIcons: Record<string, string> = {
-    Movies: "fa-film",
-    Music: "fa-music",
-    Sports: "fa-basketball-ball",
-    Games: "fa-gamepad",
-    TV: "fa-tv",
-    People: "fa-users",
-    Internet: "fa-globe",
-    Anime: "fa-dragon",
-    Lifestyle: "fa-heart",
-    Food: "fa-utensils",
-    Politics: "fa-landmark",
-    "History & Culture": "fa-book-open",
-    Geography: "fa-map-marked-alt",
-    Motor: "fa-car",
-    Books: "fa-book",
-    Technology: "fa-microchip",
-    Nature: "fa-leaf",
-    Others: "fa-ellipsis-h",
-};
+// Official pages change rarely; user templates may be edited (≤60s staleness).
+Astro.response.headers.set(
+    "Cache-Control",
+    template.source === "official" ? "public, max-age=300" : "public, max-age=60",
+);
 
-const icon = template.category
-    ? categoryIcons[template.category] || "fa-ellipsis-h"
-    : "fa-ellipsis-h";
+const icon = categoryIcon(template.category);
 // Helper to resolve image paths (strip 'public' prefix if present)
 const resolveImg = (path: string | null) => {
     if (!path) return null;
@@ -115,6 +101,29 @@ const coverSrc = resolveImg(template.cover_image);
                 >
                     {template.title}
                 </h1>
+
+                <!-- Creator -->
+                <a
+                    href={`/u/${encodeURIComponent(creator.username)}`}
+                    class="group/creator inline-flex items-center gap-2.5 w-fit"
+                >
+                    <Avatar
+                        avatar={creator.avatar}
+                        size="md"
+                        verified={creator.isVerified}
+                    />
+                    <span>
+                        <span
+                            class="block text-[10px] uppercase tracking-wider text-text-muted font-semibold"
+                            >Created by</span
+                        >
+                        <span
+                            class="text-sm font-semibold text-text-secondary group-hover/creator:text-text-primary transition-colors"
+                        >
+                            @{creator.username}
+                        </span>
+                    </span>
+                </a>
 
                 {
                     template.description && (
@@ -246,7 +255,7 @@ const coverSrc = resolveImg(template.cover_image);
     <FinishEarlyModal />
 
     <!-- VIEW 3: RESULTS VIEW -->
-    <ResultsView title={template.title} />
+    <ResultsView title={template.title} creator={creator} />
 
     <BattleHistoryModal />
 
@@ -350,6 +359,21 @@ const coverSrc = resolveImg(template.cover_image);
             function compKey(a, b) {
                 return a < b ? `${a}-${b}` : `${b}-${a}`;
             }
+
+            // Escape user-provided strings before innerHTML interpolation
+            // (option names/images can come from user-created templates).
+            const esc = (s) =>
+                String(s).replace(
+                    /[&<>"']/g,
+                    (c) =>
+                        ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#39;",
+                        })[c],
+                );
 
             // Generate a consistent color based on the text string (Client-side version)
             const stringToColor = (str) => {
@@ -830,9 +854,9 @@ const coverSrc = resolveImg(template.cover_image);
                     <div class="flex flex-col items-center w-28 sm:w-36 animate-podium-rise" style="animation-delay:${delay}">
                         ${idx === 0 ? `<i class="fa-solid fa-crown text-amber-400 text-xl mb-2 animate-crown" style="animation-delay:0.8s"></i>` : ""}
                         <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 ${medal.border} mb-3 shadow-lg">
-                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                            <img src="${esc(item.image)}" alt="${esc(item.name)}" class="w-full h-full object-cover" />
                         </div>
-                        <p class="text-sm font-bold text-text-primary text-center line-clamp-2 mb-2">${item.name}</p>
+                        <p class="text-sm font-bold text-text-primary text-center line-clamp-2 mb-2">${esc(item.name)}</p>
                         <div class="w-full ${height} rounded-t-2xl bg-gradient-to-t ${medal.bg} border-t-2 border-x-2 ${medal.border} flex items-start justify-center pt-3">
                             <span class="text-xs font-black ${medal.text} uppercase tracking-wider">${medal.label}</span>
                         </div>
@@ -861,9 +885,9 @@ const coverSrc = resolveImg(template.cover_image);
                             ${medalEmoji || i + 1}
                         </span>
                         <div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0">
-                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                            <img src="${esc(item.image)}" alt="${esc(item.name)}" class="w-full h-full object-cover" />
                         </div>
-                        <p class="text-sm font-medium text-text-primary flex-1 line-clamp-1">${item.name}</p>
+                        <p class="text-sm font-medium text-text-primary flex-1 line-clamp-1">${esc(item.name)}</p>
                         <span class="rank-number text-xs text-text-muted font-medium">#${i + 1}</span>
                     </div>
                 `;
@@ -885,15 +909,15 @@ const coverSrc = resolveImg(template.cover_image);
                             <div class="flex items-center gap-2 flex-1 min-w-0">
                                 <div class="flex items-center gap-2 ${aWon ? "opacity-100" : "opacity-40"} flex-1 min-w-0">
                                     <div class="w-7 h-7 rounded-md overflow-hidden shrink-0 ${aWon ? "ring-2 ring-primary/60" : ""}">
-                                        <img src="${b.a.image}" alt="" class="w-full h-full object-cover" />
+                                        <img src="${esc(b.a.image)}" alt="" class="w-full h-full object-cover" />
                                     </div>
-                                    <span class="text-xs font-medium text-text-primary truncate">${b.a.name}</span>
+                                    <span class="text-xs font-medium text-text-primary truncate">${esc(b.a.name)}</span>
                                 </div>
                                 <span class="text-[10px] text-text-muted font-bold shrink-0 mx-1">vs</span>
                                 <div class="flex items-center gap-2 ${!aWon ? "opacity-100" : "opacity-40"} flex-1 min-w-0 justify-end">
-                                    <span class="text-xs font-medium text-text-primary truncate">${b.b.name}</span>
+                                    <span class="text-xs font-medium text-text-primary truncate">${esc(b.b.name)}</span>
                                     <div class="w-7 h-7 rounded-md overflow-hidden shrink-0 ${!aWon ? "ring-2 ring-primary/60" : ""}">
-                                        <img src="${b.b.image}" alt="" class="w-full h-full object-cover" />
+                                        <img src="${esc(b.b.image)}" alt="" class="w-full h-full object-cover" />
                                     </div>
                                 </div>
                             </div>
@@ -1508,9 +1532,9 @@ const coverSrc = resolveImg(template.cover_image);
                         <div class="flex flex-col items-center w-28 sm:w-36 animate-podium-rise" style="animation-delay:0s">
                             ${idx === 0 ? `<i class="fa-solid fa-crown text-amber-400 text-xl mb-2"></i>` : ""}
                             <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 ${medal.border} mb-3 shadow-lg">
-                                <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+                                <img src="${esc(item.image)}" alt="${esc(item.name)}" class="w-full h-full object-cover" />
                             </div>
-                            <p class="text-sm font-bold text-text-primary text-center line-clamp-2 mb-2">${item.name}</p>
+                            <p class="text-sm font-bold text-text-primary text-center line-clamp-2 mb-2">${esc(item.name)}</p>
                             <div class="w-full ${height} rounded-t-2xl bg-gradient-to-t ${medal.bg} border-t-2 border-x-2 ${medal.border} flex items-start justify-center pt-3">
                                 <span class="text-xs font-black ${medal.text} uppercase tracking-wider">${medal.label}</span>
                             </div>

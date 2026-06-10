@@ -1,8 +1,12 @@
 ---
+import Avatar from "../Avatar.astro";
+import type { Creator } from "../../lib/templates";
+
 interface Props {
     title: string;
+    creator?: Creator;
 }
-const { title } = Astro.props;
+const { title, creator } = Astro.props;
 ---
 
 <section id="results-view" class="hidden min-h-[calc(100dvh-4rem)]">
@@ -20,9 +24,30 @@ const { title } = Astro.props;
             >
                 {title}
             </h2>
-            <p class="text-sm text-text-secondary mt-2">
-                <br />
-            </p>
+            {
+                creator ? (
+                    <a
+                        href={`/u/${encodeURIComponent(creator.username)}`}
+                        class="group/creator inline-flex items-center justify-center gap-2 mt-3"
+                    >
+                        <Avatar
+                            avatar={creator.avatar}
+                            size="sm"
+                            verified={creator.isVerified}
+                        />
+                        <span class="text-sm text-text-secondary group-hover/creator:text-text-primary transition-colors">
+                            by{" "}
+                            <span class="font-semibold">
+                                @{creator.username}
+                            </span>
+                        </span>
+                    </a>
+                ) : (
+                    <p class="text-sm text-text-secondary mt-2">
+                        <br />
+                    </p>
+                )
+            }
         </div>
 
         <!-- Podium -->

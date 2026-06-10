@@ -1,0 +1,44 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Page not found — RANKMAKER">
+    <section
+        class="relative flex items-center justify-center px-4 sm:px-6 lg:px-8"
+        style="min-height: 60vh;"
+    >
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/8 blur-[140px] rounded-full pointer-events-none"
+        >
+        </div>
+
+        <div class="relative text-center max-w-md mx-auto space-y-6">
+            <p class="text-7xl font-extrabold tracking-tight text-primary">
+                404
+            </p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-text-primary">
+                This page doesn't exist
+            </h1>
+            <p class="text-sm text-text-secondary">
+                The template or page you're looking for was moved, deleted, or
+                never existed.
+            </p>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <a
+                    href="/"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
+                >
+                    <i class="fa-solid fa-house text-xs"></i>
+                    Back to home
+                </a>
+                <a
+                    href="/search"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
+                >
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    Find templates
+                </a>
+            </div>
+        </div>
+    </section>
+</Layout>
