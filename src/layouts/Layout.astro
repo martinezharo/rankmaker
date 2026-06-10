@@ -129,6 +129,24 @@ const {
             }
 
             document.addEventListener("astro:page-load", refreshCounts);
+
+            // Creator "links" inside template cards: the card is already an
+            // <a>, so creators are spans with [data-profile-href] handled by
+            // one delegated listener (covers server- and client-rendered cards).
+            if (!(window as any).__rmProfileNav) {
+                (window as any).__rmProfileNav = true;
+                document.addEventListener("click", (e) => {
+                    const target = e.target as HTMLElement | null;
+                    const el = target?.closest?.(
+                        "[data-profile-href]",
+                    ) as HTMLElement | null;
+                    if (!el) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const href = el.getAttribute("data-profile-href");
+                    if (href) window.location.href = href;
+                });
+            }
         </script>
     </body>
 </html>

@@ -1,0 +1,133 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Avatar from "../../components/Avatar.astro";
+import TemplateCard from "../../components/TemplateCard.astro";
+import { getCounts } from "../../lib/counts";
+import { listTemplatesByUserId } from "../../lib/templates";
+
+const db = Astro.locals.runtime.env.DB;
+
+const user = await db
+    .prepare(
+        `SELECT id, username, avatar, is_verified, created_at
+         FROM users WHERE username = ? COLLATE NOCASE`,
+    )
+    .bind(Astro.params.username)
+    .first<{
+        id: string;
+        username: string;
+        avatar: string;
+        is_verified: number;
+        created_at: string;
+    }>();
+
+if (!user) {
+    return new Response(null, { status: 404 });
+}
+
+const isVerified = user.is_verified === 1;
+
+// For the official account this includes every JSON template.
+let templates = await listTemplatesByUserId(db, user.id);
+
+// Merge live counts (keep JSON numbers as fallback, like the homepage).
+try {
+    const counts = await getCounts(db);
+    templates = templates.map((t) => ({
+        ...t,
+        times_ranked: counts[t.slug] ?? 0,
+    }));
+} catch {
+    // keep fallback numbers
+}
+templates.sort((a, b) => b.times_ranked - a.times_ranked);
+
+const totalRanked = templates.reduce((sum, t) => sum + t.times_ranked, 0);
+const memberSince = new Date(
+    user.created_at.includes("T")
+        ? user.created_at
+        : user.created_at.replace(" ", "T") + "Z",
+).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+Astro.response.headers.set("Cache-Control", "public, max-age=60");
+---
+
+<Layout
+    title={`@${user.username} — RANKMAKER`}
+    description={`Ranking templates created by @${user.username} on RANKMAKER.`}
+>
+    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
+        <!-- Profile header -->
+        <div
+            class="flex flex-col sm:flex-row sm:items-center gap-5 mb-10 rounded-2xl bg-surface-elevated border border-border p-6 sm:p-8"
+        >
+            <Avatar avatar={user.avatar} size="xl" verified={isVerified} />
+            <div class="flex-1">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <h1
+                        class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
+                    >
+                        @{user.username}
+                    </h1>
+                    {
+                        isVerified && (
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-gold-start/15 to-gold-end/15 border border-gold-start/40 text-gold-start text-xs font-bold uppercase tracking-wider">
+                                <i class="fa-solid fa-circle-check text-[11px]" />
+                                Verified
+                            </span>
+                        )
+                    }
+                </div>
+                <p class="text-sm text-text-secondary mt-1.5">
+                    {
+                        isVerified
+                            ? "Official RANKMAKER account"
+                            : `Member since ${memberSince}`
+                    }
+                </p>
+                <div class="flex items-center gap-6 mt-3 text-sm">
+                    <span class="flex items-center gap-2 text-text-muted">
+                        <i class="fa-solid fa-layer-group text-primary/70 text-xs"
+                        ></i>
+                        <span class="font-medium">
+                            {templates.length}
+                            {templates.length === 1 ? "template" : "templates"}
+                        </span>
+                    </span>
+                    <span class="flex items-center gap-2 text-text-muted">
+                        <i class="fa-solid fa-fire text-primary/70 text-xs"></i>
+                        <span class="font-medium">
+                            {totalRanked.toLocaleString()} total rankings
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates -->
+        <div class="flex items-center gap-3 mb-5">
+            <h2 class="text-lg font-bold text-text-primary tracking-tight">
+                Templates by @{user.username}
+            </h2>
+            <div class="flex-1 h-px bg-border/50"></div>
+        </div>
+
+        {
+            templates.length === 0 ? (
+                <div class="rounded-2xl border border-dashed border-border p-10 text-center">
+                    <p class="text-sm text-text-secondary">
+                        @{user.username} hasn't created any templates yet.
+                    </p>
+                </div>
+            ) : (
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {templates.map((template) => (
+                        <TemplateCard template={template} />
+                    ))}
+                </div>
+            )
+        }
+    </section>
+</Layout>

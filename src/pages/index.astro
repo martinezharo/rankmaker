@@ -4,48 +4,33 @@ export const prerender = false;
 import Layout from "../layouts/Layout.astro";
 import CategorySection from "../components/CategorySection.astro";
 import SEOContent from "../components/SEOContent.astro";
-import templatesRaw from "../data/templates.json";
 import { getCounts } from "../lib/counts";
+import { CATEGORIES as categories } from "../lib/categories";
+import { getOfficialTemplates, listUserTemplates } from "../lib/templates";
 
-// Category definitions with FA icons
-const categories = [
-	{ name: "Movies", icon: "fa-film" },
-	{ name: "Music", icon: "fa-music" },
-	{ name: "Sports", icon: "fa-basketball-ball" },
-	{ name: "Games", icon: "fa-gamepad" },
-	{ name: "TV", icon: "fa-tv" },
-	{ name: "People", icon: "fa-users" },
-	{ name: "Internet", icon: "fa-globe" },
-	{ name: "Anime", icon: "fa-dragon" },
-	{ name: "Lifestyle", icon: "fa-heart" },
-	{ name: "Food", icon: "fa-utensils" },
-	{ name: "Politics", icon: "fa-landmark" },
-	{ name: "History & Culture", icon: "fa-book-open" },
-	{ name: "Geography", icon: "fa-map-marked-alt" },
-	{ name: "Motor", icon: "fa-car" },
-	{ name: "Books", icon: "fa-book" },
-	{ name: "Technology", icon: "fa-microchip" },
-	{ name: "Nature", icon: "fa-leaf" },
-	{ name: "Others", icon: "fa-ellipsis-h" },
-];
-
+// Official (JSON) + user-created (D1) templates, treated identically.
 // Fetch real ranking counts from D1 (SSR). Fall back to the JSON
-// `times_ranked` if the binding/query is unavailable so the page never breaks.
+// `times_ranked` / official-only list if the binding/query is unavailable
+// so the page never breaks.
 let counts: Record<string, number> = {};
 let haveCounts = false;
+let userTemplates: ReturnType<typeof getOfficialTemplates> = [];
 try {
 	const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
 	if (db) {
-		counts = await getCounts(db);
+		[counts, userTemplates] = await Promise.all([
+			getCounts(db),
+			listUserTemplates(db),
+		]);
 		haveCounts = true;
 	}
 } catch {
-	// keep JSON ordering as a safe fallback
+	// keep JSON ordering / official-only as a safe fallback
 }
 
 // Use real counts (pure) when available; otherwise the JSON number.
-const templates = templatesRaw
-	.map((t: any) => ({
+const templates = [...getOfficialTemplates(), ...userTemplates]
+	.map((t) => ({
 		...t,
 		times_ranked: haveCounts ? (counts[t.slug] ?? 0) : t.times_ranked,
 	}))

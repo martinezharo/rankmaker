@@ -1,6 +1,9 @@
 ---
 // TemplateCard.astro — Card component for template previews
 import SmartImage from "./SmartImage.astro";
+import Avatar from "./Avatar.astro";
+import { categoryIcon } from "../lib/categories";
+import type { Creator } from "../lib/templates";
 
 interface Props {
     template: {
@@ -11,36 +14,14 @@ interface Props {
         category: string | null;
         cover_image: string | null;
         times_ranked: number;
+        creator?: Creator;
     };
 }
 
 const { template } = Astro.props;
+const creator = template.creator;
 
-// Category → FontAwesome icon map
-const categoryIcons: Record<string, string> = {
-    Movies: "fa-film",
-    Music: "fa-music",
-    Sports: "fa-basketball-ball",
-    Games: "fa-gamepad",
-    TV: "fa-tv",
-    People: "fa-users",
-    Internet: "fa-globe",
-    Anime: "fa-dragon",
-    Lifestyle: "fa-heart",
-    Food: "fa-utensils",
-    Politics: "fa-landmark",
-    "History & Culture": "fa-book-open",
-    Geography: "fa-map-marked-alt",
-    Motor: "fa-car",
-    Books: "fa-book",
-    Technology: "fa-microchip",
-    Nature: "fa-leaf",
-    Others: "fa-ellipsis-h",
-};
-
-const icon = template.category
-    ? categoryIcons[template.category] || "fa-ellipsis-h"
-    : "fa-ellipsis-h";
+const icon = categoryIcon(template.category);
 // Helper to resolve image paths
 const resolveImg = (path: string | null) => {
     if (!path) return null;
@@ -92,6 +73,27 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
         >
             {template.title}
         </h3>
+
+        {
+            creator && (
+                // The card itself is an <a>, so the creator "link" is a span
+                // handled by the global [data-profile-href] click delegate.
+                <span
+                    class="creator-link inline-flex items-center gap-1.5 cursor-pointer"
+                    data-profile-href={`/u/${encodeURIComponent(creator.username)}`}
+                    title={`View @${creator.username}'s profile`}
+                >
+                    <Avatar
+                        avatar={creator.avatar}
+                        size="sm"
+                        verified={creator.isVerified}
+                    />
+                    <span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">
+                        @{creator.username}
+                    </span>
+                </span>
+            )
+        }
 
         {
             template.description && (

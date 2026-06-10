@@ -2,6 +2,8 @@
 // CategorySection.astro — 4-card grid per category
 import TemplateCard from "./TemplateCard.astro";
 
+import type { Creator } from "../lib/templates";
+
 interface Template {
     id: string;
     slug: string;
@@ -10,6 +12,7 @@ interface Template {
     category: string | null;
     cover_image: string | null;
     times_ranked: number;
+    creator?: Creator;
 }
 
 interface Props {
