@@ -8,12 +8,12 @@
 >
     <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
-            <!-- Logo -->
-            <a href="/" class="flex items-center gap-2 shrink-0">
+            <!-- Logo (1200x120 source: must be allowed to shrink on mobile) -->
+            <a href="/" class="flex items-center gap-2 min-w-0 mr-3">
                 <img
                     src="/RANKMAKER-logo.webp"
                     alt="RANKMAKER"
-                    class="h-8 w-auto"
+                    class="h-8 w-auto max-w-full object-contain object-left"
                 />
             </a>
 
@@ -55,7 +55,7 @@
             </div>
 
             <!-- Mobile: auth chip + hamburger -->
-            <div class="md:hidden flex items-center gap-2">
+            <div class="md:hidden flex items-center gap-2 shrink-0">
                 <div class="auth-slot relative" data-auth-slot="mobile">
                     <a
                         href="/api/auth/login"
