@@ -1,5 +1,6 @@
 ---
-// Header.astro — Fixed header with logo, nav links, and mobile hamburger menu
+// Header.astro — Fixed header with logo, nav links, Create Ranking CTA,
+// auth slot (client-rendered: pages are publicly cached) and mobile menu.
 ---
 
 <header
@@ -32,21 +33,51 @@
                     <i class="fa-solid fa-magnifying-glass text-xs mr-2"></i>
                     Find Templates
                 </a>
+
+                <a
+                    href="/create"
+                    class="ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
+                >
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    Create Ranking
+                </a>
+
+                <!-- Auth slot (desktop) — swapped by client JS when logged in -->
+                <div class="auth-slot ml-1 relative" data-auth-slot="desktop">
+                    <a
+                        href="/api/auth/login"
+                        class="auth-login-link inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
+                    >
+                        <i class="fa-brands fa-github"></i>
+                        Log in
+                    </a>
+                </div>
             </div>
 
-            <!-- Mobile Hamburger Button -->
-            <button
-                id="mobile-menu-toggle"
-                class="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
-                aria-label="Toggle menu"
-                aria-expanded="false"
-            >
-                <i class="fa-solid fa-bars text-lg" id="menu-icon-open"></i>
-                <i
-                    class="fa-solid fa-xmark text-lg"
-                    id="menu-icon-close"
-                    style="display:none;"></i>
-            </button>
+            <!-- Mobile: auth chip + hamburger -->
+            <div class="md:hidden flex items-center gap-2">
+                <div class="auth-slot relative" data-auth-slot="mobile">
+                    <a
+                        href="/api/auth/login"
+                        class="auth-login-link inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary border border-border transition-all"
+                    >
+                        <i class="fa-brands fa-github"></i>
+                        Log in
+                    </a>
+                </div>
+                <button
+                    id="mobile-menu-toggle"
+                    class="flex items-center justify-center w-10 h-10 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                    aria-label="Toggle menu"
+                    aria-expanded="false"
+                >
+                    <i class="fa-solid fa-bars text-lg" id="menu-icon-open"></i>
+                    <i
+                        class="fa-solid fa-xmark text-lg"
+                        id="menu-icon-close"
+                        style="display:none;"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Mobile Menu -->
@@ -69,6 +100,15 @@
                     <i class="fa-solid fa-magnifying-glass w-5 mr-2 text-xs"
                     ></i>Find Templates
                 </a>
+                <a
+                    href="/create"
+                    class="block px-4 py-2.5 text-sm font-bold text-gold-start hover:bg-white/5 rounded-lg transition-colors"
+                >
+                    <i class="fa-solid fa-plus w-5 mr-2 text-xs"></i>Create
+                    Ranking
+                </a>
+                <!-- Extra links injected here by JS when logged in -->
+                <div id="mobile-auth-links"></div>
             </div>
         </div>
     </nav>
@@ -78,13 +118,124 @@
 <div class="h-16"></div>
 
 <script>
+    import { avatarHtml } from "../lib/avatars";
+
+    type Me = {
+        username: string;
+        avatar: string;
+        isVerified: boolean;
+    } | null;
+
+    // Fetch the session user once per page session (header persists across
+    // view transitions, but each soft navigation re-runs astro:page-load).
+    let mePromise: Promise<Me> | null = null;
+    function getMe(): Promise<Me> {
+        if (!mePromise) {
+            mePromise = fetch("/api/auth/me")
+                .then((r) => (r.ok ? r.json() : { user: null }))
+                .then((d) => d.user as Me)
+                .catch(() => {
+                    mePromise = null;
+                    return null;
+                });
+        }
+        return mePromise;
+    }
+
+    function closeAllDropdowns() {
+        document
+            .querySelectorAll<HTMLElement>(".auth-dropdown")
+            .forEach((m) => (m.style.display = "none"));
+    }
+
+    function renderUserSlot(slot: HTMLElement, user: NonNullable<Me>) {
+        if (slot.dataset.user === user.username) return;
+        slot.dataset.user = user.username;
+        const compact = slot.dataset.authSlot === "mobile";
+        slot.innerHTML = `
+            <button type="button" class="auth-user-btn inline-flex items-center gap-2 ${compact ? "px-2 py-1.5" : "px-3 py-1.5"} rounded-xl text-sm font-medium text-text-primary border border-border hover:border-border-hover transition-all" aria-haspopup="true" aria-expanded="false">
+                ${avatarHtml(user.avatar, 24, user.isVerified)}
+                ${compact ? "" : `<span class="max-w-28 truncate">${escapeHtml(user.username)}</span><i class="fa-solid fa-chevron-down text-[10px] text-text-muted"></i>`}
+            </button>
+            <div class="auth-dropdown absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50" style="display:none;">
+                <a href="/u/${encodeURIComponent(user.username)}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-user w-5 mr-1 text-xs"></i>My profile</a>
+                <a href="/me" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-layer-group w-5 mr-1 text-xs"></i>My templates</a>
+                <button type="button" class="auth-logout-btn block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket w-5 mr-1 text-xs"></i>Log out</button>
+            </div>`;
+
+        const btn = slot.querySelector<HTMLElement>(".auth-user-btn")!;
+        const menu = slot.querySelector<HTMLElement>(".auth-dropdown")!;
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = menu.style.display !== "none";
+            closeAllDropdowns();
+            menu.style.display = isOpen ? "none" : "";
+            btn.setAttribute("aria-expanded", String(!isOpen));
+        });
+        slot.querySelector(".auth-logout-btn")!.addEventListener(
+            "click",
+            async () => {
+                try {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                } catch {
+                    /* ignore */
+                }
+                window.location.href = "/";
+            },
+        );
+    }
+
+    function escapeHtml(s: string): string {
+        return s.replace(
+            /[&<>"']/g,
+            (c) =>
+                ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;",
+                })[c]!,
+        );
+    }
+
+    function applyAuthState() {
+        // Point login links at the current page so users come back here.
+        const next = encodeURIComponent(
+            window.location.pathname + window.location.search,
+        );
+        document
+            .querySelectorAll<HTMLAnchorElement>(".auth-login-link")
+            .forEach((a) => (a.href = `/api/auth/login?next=${next}`));
+
+        getMe().then((user) => {
+            if (!user) return;
+            document
+                .querySelectorAll<HTMLElement>(".auth-slot")
+                .forEach((slot) => renderUserSlot(slot, user));
+            // Mobile menu: add profile/manage links once.
+            const mobileLinks = document.getElementById("mobile-auth-links");
+            if (mobileLinks && !mobileLinks.dataset.user) {
+                mobileLinks.dataset.user = user.username;
+                mobileLinks.innerHTML = `
+                    <a href="/u/${encodeURIComponent(user.username)}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-user w-5 mr-2 text-xs"></i>My profile</a>
+                    <a href="/me" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-layer-group w-5 mr-2 text-xs"></i>My templates</a>`;
+            }
+        });
+    }
+
     document.addEventListener("astro:page-load", () => {
+        applyAuthState();
+
         const toggle = document.getElementById("mobile-menu-toggle");
         const menu = document.getElementById("mobile-menu");
         const iconOpen = document.getElementById("menu-icon-open");
         const iconClose = document.getElementById("menu-icon-close");
 
         if (!toggle || !menu || !iconOpen || !iconClose) return;
+        // Header is transition:persist — bind these once.
+        if (toggle.dataset.bound) return;
+        toggle.dataset.bound = "1";
 
         toggle.addEventListener("click", () => {
             const isOpen = menu.style.display !== "none";
@@ -101,5 +252,7 @@
                 toggle.setAttribute("aria-expanded", "true");
             }
         });
+
+        document.addEventListener("click", closeAllDropdowns);
     });
 </script>

@@ -1,0 +1,282 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import { SIGNUP_COOKIE, USERNAME_RE, verifyPayload } from "../lib/auth";
+import {
+    AVATAR_PRESETS,
+    SELECTABLE_AVATAR_KEYS,
+    randomAvatarKey,
+} from "../lib/avatars";
+
+type SignupPayload = { ghId: number; ghLogin: string; next: string; exp: number };
+
+const { env } = Astro.locals.runtime;
+const signup = await verifyPayload<SignupPayload>(
+    env.SESSION_SECRET,
+    Astro.cookies.get(SIGNUP_COOKIE)?.value,
+);
+if (!signup) return Astro.redirect("/", 302);
+
+// Prefill with the GitHub login, sanitized to our username rules.
+let prefill = signup.ghLogin
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 30)
+    .replace(/^[_-]+|[_-]+$/g, "");
+if (!USERNAME_RE.test(prefill)) prefill = "";
+
+const initialAvatar = randomAvatarKey();
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Layout title="Finish signing up — RANKMAKER">
+    <section
+        class="mx-auto max-w-lg px-4 sm:px-6 py-12"
+        id="signup-page"
+        data-initial-avatar={initialAvatar}
+    >
+        <div class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary">
+                Almost there!
+            </h1>
+            <p class="text-sm text-text-secondary mt-2">
+                Pick a username and an avatar to finish creating your account.
+            </p>
+        </div>
+
+        <div class="rounded-2xl bg-surface-elevated border border-border p-6 sm:p-8 space-y-7">
+            <!-- Username -->
+            <div>
+                <label
+                    for="username-input"
+                    class="block text-sm font-semibold text-text-primary mb-2"
+                >
+                    Username
+                </label>
+                <div class="relative">
+                    <span
+                        class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm pointer-events-none"
+                        >@</span
+                    >
+                    <input
+                        id="username-input"
+                        type="text"
+                        value={prefill}
+                        maxlength="30"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="your_username"
+                        class="w-full pl-9 pr-10 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
+                    />
+                    <span
+                        id="username-status"
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-sm"
+                    ></span>
+                </div>
+                <p id="username-msg" class="text-xs mt-2 text-text-muted min-h-4"></p>
+                <p
+                    class="mt-2 text-xs font-medium text-gold-start flex items-center gap-1.5"
+                >
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Your username is permanent — it can never be changed.
+                </p>
+            </div>
+
+            <!-- Avatar -->
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="block text-sm font-semibold text-text-primary">
+                        Avatar
+                    </span>
+                    <button
+                        type="button"
+                        id="avatar-shuffle"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary bg-surface border border-border hover:border-border-hover transition-all"
+                    >
+                        <i class="fa-solid fa-shuffle text-[10px]"></i>
+                        Shuffle
+                    </button>
+                </div>
+                <div class="grid grid-cols-4 gap-3" id="avatar-grid">
+                    {
+                        SELECTABLE_AVATAR_KEYS.map((key) => {
+                            const p = AVATAR_PRESETS[key];
+                            return (
+                                <button
+                                    type="button"
+                                    class="avatar-option group relative flex items-center justify-center aspect-square rounded-xl bg-surface border border-border hover:border-primary/50 transition-all data-[selected]:border-primary data-[selected]:ring-2 data-[selected]:ring-primary/40"
+                                    data-key={key}
+                                    data-selected={
+                                        key === initialAvatar ? "" : undefined
+                                    }
+                                    aria-label={`Avatar ${key}`}
+                                >
+                                    <span
+                                        class="flex items-center justify-center rounded-full w-10 h-10 sm:w-12 sm:h-12"
+                                        style={`background:${p.bg};`}
+                                    >
+                                        <i
+                                            class={`fa-solid ${p.icon}`}
+                                            style={`color:${p.fg};font-size:18px;`}
+                                        />
+                                    </span>
+                                </button>
+                            );
+                        })
+                    }
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div>
+                <p
+                    id="signup-error"
+                    class="text-xs text-red-400 mb-3 min-h-4"
+                ></p>
+                <button
+                    id="signup-submit"
+                    type="button"
+                    class="w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    Create my account
+                </button>
+            </div>
+        </div>
+    </section>
+</Layout>
+
+<script>
+    document.addEventListener("astro:page-load", () => {
+        const page = document.getElementById("signup-page");
+        if (!page || page.dataset.bound) return;
+        page.dataset.bound = "1";
+
+        const input = document.getElementById(
+            "username-input",
+        ) as HTMLInputElement;
+        const status = document.getElementById("username-status")!;
+        const msg = document.getElementById("username-msg")!;
+        const errorEl = document.getElementById("signup-error")!;
+        const submit = document.getElementById(
+            "signup-submit",
+        ) as HTMLButtonElement;
+        const grid = document.getElementById("avatar-grid")!;
+        const shuffle = document.getElementById("avatar-shuffle")!;
+
+        const options = Array.from(
+            grid.querySelectorAll<HTMLButtonElement>(".avatar-option"),
+        );
+        let selectedAvatar = page.dataset.initialAvatar || "";
+        let usernameOk = false;
+        let checkTimer: ReturnType<typeof setTimeout> | undefined;
+        let checkSeq = 0;
+
+        function selectAvatar(key: string) {
+            selectedAvatar = key;
+            options.forEach((b) => {
+                if (b.dataset.key === key) b.setAttribute("data-selected", "");
+                else b.removeAttribute("data-selected");
+            });
+        }
+
+        options.forEach((b) =>
+            b.addEventListener("click", () => selectAvatar(b.dataset.key!)),
+        );
+        shuffle.addEventListener("click", () => {
+            const others = options.filter(
+                (b) => b.dataset.key !== selectedAvatar,
+            );
+            const pick = others[Math.floor(Math.random() * others.length)];
+            if (pick) selectAvatar(pick.dataset.key!);
+        });
+
+        function setState(
+            ok: boolean,
+            icon: string,
+            color: string,
+            text: string,
+        ) {
+            usernameOk = ok;
+            status.innerHTML = icon
+                ? `<i class="fa-solid ${icon}" style="color:${color};"></i>`
+                : "";
+            msg.textContent = text;
+            msg.style.color = color;
+            submit.disabled = !ok;
+        }
+
+        function checkUsername() {
+            const value = input.value.trim();
+            if (!value) {
+                setState(false, "", "", "");
+                return;
+            }
+            const seq = ++checkSeq;
+            status.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin" style="color:#8888a0;"></i>';
+            fetch(`/api/auth/username-check?u=${encodeURIComponent(value)}`)
+                .then((r) => r.json())
+                .then((data) => {
+                    if (seq !== checkSeq) return; // stale response
+                    if (data.available) {
+                        setState(
+                            true,
+                            "fa-circle-check",
+                            "#22c55e",
+                            "Username is available!",
+                        );
+                    } else {
+                        setState(
+                            false,
+                            "fa-circle-xmark",
+                            "#f87171",
+                            data.reason || "Username is not available.",
+                        );
+                    }
+                })
+                .catch(() => {
+                    if (seq !== checkSeq) return;
+                    setState(false, "", "#f87171", "Could not check username.");
+                });
+        }
+
+        input.addEventListener("input", () => {
+            usernameOk = false;
+            submit.disabled = true;
+            clearTimeout(checkTimer);
+            checkTimer = setTimeout(checkUsername, 350);
+        });
+
+        submit.addEventListener("click", async () => {
+            if (!usernameOk || !selectedAvatar) return;
+            submit.disabled = true;
+            errorEl.textContent = "";
+            try {
+                const res = await fetch("/api/auth/complete-signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username: input.value.trim(),
+                        avatar: selectedAvatar,
+                    }),
+                });
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                    window.location.href = data.next || "/";
+                    return;
+                }
+                errorEl.textContent =
+                    data.error || "Something went wrong. Try again.";
+                submit.disabled = false;
+                if (res.status === 409) checkUsername();
+            } catch {
+                errorEl.textContent = "Network error. Try again.";
+                submit.disabled = false;
+            }
+        });
+
+        // Validate the prefilled value right away.
+        checkUsername();
+    });
+</script>

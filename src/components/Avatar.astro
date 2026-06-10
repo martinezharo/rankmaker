@@ -1,0 +1,17 @@
+---
+// Avatar.astro — renders a preset icon avatar (users never upload photos).
+// Markup comes from avatarHtml() so server and client renders stay identical.
+import { avatarHtml } from "../lib/avatars";
+
+interface Props {
+    avatar: string;
+    size?: "sm" | "md" | "lg" | "xl";
+    verified?: boolean;
+}
+
+const { avatar, size = "md", verified = false } = Astro.props;
+const sizes = { sm: 20, md: 32, lg: 48, xl: 80 };
+const html = avatarHtml(avatar, sizes[size], verified);
+---
+
+<Fragment set:html={html} />
