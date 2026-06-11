@@ -8,12 +8,21 @@ import { ViewTransitions } from "astro:transitions";
 interface Props {
     title: string;
     description?: string;
+    image?: string | null;
 }
 
 const {
     title,
     description = "RANKMAKER: rank your stuff. No tiers, no noise — just accurate 1v1 rankings.",
+    image,
 } = Astro.props;
+
+const SITE_URL = "https://rankmaker.net";
+const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
+// og:image must be an absolute URL
+const ogImage = image
+    ? new URL(image, SITE_URL).toString()
+    : `${SITE_URL}/favicon.webp`;
 ---
 
 <!doctype html>
@@ -25,6 +34,19 @@ const {
         <link rel="icon" type="image/webp" href="/favicon.webp" />
         <meta name="generator" content={Astro.generator} />
         <title>{title}</title>
+        <link rel="canonical" href={canonicalURL} />
+
+        <!-- Open Graph / Twitter -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={canonicalURL} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:site_name" content="RANKMAKER" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImage} />
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />

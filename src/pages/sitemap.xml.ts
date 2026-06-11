@@ -5,8 +5,21 @@ import { getOfficialTemplates, listUserTemplates } from '../lib/templates';
 
 const SITE_URL = 'https://rankmaker.net';
 
+interface SitemapEntry {
+    loc: string;
+    lastmod?: string;
+}
+
+// Real modification date or nothing — a fake/always-now lastmod makes
+// Google distrust the whole sitemap.
+const toLastmod = (value: string | undefined): string | undefined => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
 export const GET: APIRoute = async (context) => {
-    const pages = [
+    const staticPages: SitemapEntry[] = [
         '',
         '/search',
         '/about',
@@ -15,43 +28,33 @@ export const GET: APIRoute = async (context) => {
         '/legal-notice',
         '/privacy-policy',
         '/terms-of-use',
-    ];
+    ].map((path) => ({ loc: `${SITE_URL}${path}` }));
 
     // Official + user-created templates and creator profiles.
     let userTemplates: Awaited<ReturnType<typeof listUserTemplates>> = [];
-    let profiles: string[] = ['/u/RANKMAKER'];
+    let profiles: SitemapEntry[] = [{ loc: `${SITE_URL}/u/RANKMAKER` }];
     try {
         const db = context.locals.runtime.env.DB;
         userTemplates = await listUserTemplates(db);
         const { results } = await db
             .prepare('SELECT username FROM users')
             .all<{ username: string }>();
-        profiles = results.map((r) => `/u/${encodeURIComponent(r.username)}`);
+        profiles = results.map((r) => ({
+            loc: `${SITE_URL}/u/${encodeURIComponent(r.username)}`,
+        }));
     } catch {
         // official-only fallback
     }
 
-    const templatePages = [...getOfficialTemplates(), ...userTemplates].map(
-        (t) => `/template/${t.slug}`
-    );
+    const templatePages: SitemapEntry[] = [
+        ...getOfficialTemplates(),
+        ...userTemplates,
+    ].map((t) => ({
+        loc: `${SITE_URL}/template/${t.slug}`,
+        lastmod: toLastmod(t.updated_at ?? t.created_at),
+    }));
 
-    // Helper to determine priority
-    const getPriority = (page: string) => {
-        if (page === '') return '1.0';
-        if (page.startsWith('/template/')) return '0.9';
-        if (page === '/search') return '0.8';
-        if (page.startsWith('/u/')) return '0.5';
-        return '0.3'; // Lower priority for legal/contact/info pages
-    };
-
-    // Helper to determine changefreq
-    const getChangeFreq = (page: string) => {
-        if (page === '' || page === '/search') return 'daily';
-        if (page.startsWith('/template/')) return 'weekly';
-        return 'monthly';
-    };
-
-    const allPages = [...pages, ...templatePages, ...profiles];
+    const allPages = [...staticPages, ...templatePages, ...profiles];
 
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -59,10 +62,8 @@ export const GET: APIRoute = async (context) => {
             .map(
                 (page) => `
   <url>
-    <loc>${SITE_URL}${page}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>${getChangeFreq(page)}</changefreq>
-    <priority>${getPriority(page)}</priority>
+    <loc>${page.loc}</loc>${page.lastmod ? `
+    <lastmod>${page.lastmod}</lastmod>` : ''}
   </url>`,
             )
             .join('')}

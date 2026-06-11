@@ -8,7 +8,6 @@ import BattleView from "../../components/ranking/BattleView.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
 import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
 import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
-import SEOContent from "../../components/SEOContent.astro";
 import { getTemplateBySlug } from "../../lib/templates";
 import { categoryIcon } from "../../lib/categories";
 
@@ -38,12 +37,32 @@ const resolveImg = (path: string | null) => {
 };
 
 const coverSrc = resolveImg(template.cover_image);
+
+// Structured data: each template page is a ranked list of options.
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: template.title,
+    ...(template.description && { description: template.description }),
+    url: new URL(Astro.url.pathname, "https://rankmaker.net").toString(),
+    numberOfItems: options?.length ?? 0,
+    itemListElement: (options ?? []).map((o, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: o.name,
+    })),
+};
 ---
 
 <Layout
     title={`${template.title} — RANKMAKER`}
     description={template.description || undefined}
+    image={coverSrc}
 >
+    <script
+        type="application/ld+json"
+        set:html={JSON.stringify(jsonLd)}
+        is:inline />
     <!-- ═══════════════════════════════════════════════════
          VIEW 1: TEMPLATE DETAIL (default)
          ═══════════════════════════════════════════════════ -->
@@ -229,7 +248,6 @@ const coverSrc = resolveImg(template.cover_image);
             )
         }
 
-        <SEOContent />
     </article>
 
     <!-- Floating CTA Button -->
