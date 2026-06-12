@@ -15,7 +15,7 @@ const DAILY_LIMIT = 20;
 
 // Drafts at or above this length get "polish" mode (respect the creator's
 // text) instead of a full house-style rewrite. Past the required minimum of
-// 20, whoever writes 120+ chars actually tried.
+// 15, whoever writes 120+ chars actually tried.
 const POLISH_THRESHOLD = 120;
 
 // Prompt tuning notes: the word target is deliberately ABOVE the 230-300 char

@@ -459,8 +459,8 @@ const inputClass =
         function validate(): string | null {
             if (title.value.trim().length < 3)
                 return "Title must be at least 3 characters.";
-            if (desc.value.trim().length < 20)
-                return "Description is required (at least 20 characters).";
+            if (desc.value.trim().length < 15)
+                return "Description is required (at least 15 characters).";
             if (!category.value) return "Pick a category.";
             const coverVal = cover.value.trim();
             if (!coverVal) return "Cover image is required.";
@@ -600,9 +600,9 @@ const inputClass =
 
         document.getElementById("tf-ai-use")?.addEventListener("click", () => {
             const edited = aiText!.value.trim();
-            if (edited.length < 20) {
+            if (edited.length < 15) {
                 aiError!.textContent =
-                    "Description must be at least 20 characters.";
+                    "Description must be at least 15 characters.";
                 return;
             }
             closeAiModal();

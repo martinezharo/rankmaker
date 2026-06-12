@@ -273,8 +273,8 @@ export function validateTemplateInput(
 
     const description =
         typeof body?.description === 'string' ? body.description.trim() : '';
-    if (description.length < 20) {
-        return err('Description is required (at least 20 characters).');
+    if (description.length < 15) {
+        return err('Description is required (at least 15 characters).');
     }
     if (description.length > 300) {
         return err('Description must be 300 characters or less.');
