@@ -88,7 +88,9 @@ pnpm install
 pnpm dev
 ```
 
-The dev server will be available at `http://localhost:4321`.
+The dev server will be available at `http://localhost:4321`. Local Cloudflare bindings (D1, KV, Workers AI) are emulated automatically via miniflare.
+
+If your change touches user accounts, user-created templates, or the times-ranked counters, you'll also need the local D1 migrations and a dev GitHub OAuth App — follow the [Database & Auth setup](README.md#database--auth-setup-user-accounts--user-templates) section in the README.
 
 ### Available Commands
 
@@ -98,28 +100,21 @@ The dev server will be available at `http://localhost:4321`.
 | `pnpm build` | Build for production |
 | `pnpm preview` | Preview the production build locally |
 | `pnpm astro` | Run Astro CLI commands |
+| `pnpm run db:migrate:local` | Apply the rankings table migration to local D1 |
+| `pnpm run db:migrate3:local` | Apply the users/sessions/templates migrations to local D1 |
 
 ## Project Architecture
 
-RANKMAKER is built with **Astro 5** using static site generation, styled with **Tailwind CSS 4**, and deployed on **Cloudflare Pages**.
-
-```
-src/
-├── components/         # Reusable Astro components
-│   └── ranking/        # Battle & results components
-├── data/               # Static template data (JSON)
-├── layouts/            # Base page layout
-├── pages/              # File-based routing
-│   └── template/       # Dynamic [slug] routes
-└── styles/             # Global CSS
-```
+RANKMAKER is built with **Astro 5** (prerendered pages plus SSR routes via the `@astrojs/cloudflare` adapter), styled with **Tailwind CSS 4**, and deployed on **Cloudflare Workers** with D1, KV, and Workers AI bindings.
 
 ### Key Concepts
 
 - **Templates** are ranking topics (e.g., "Best Marvel Movies"). Each template has a list of **options** that users compare in 1v1 battles.
+- Templates come from **two sources**: official ones in `src/data/templates.json`, and user-created ones stored in **Cloudflare D1**. `src/lib/templates.ts` merges both behind a single `Template` shape so pages treat them identically — keep that contract intact when changing either side.
 - **Battle View** presents two options side by side. The user taps their preference, and the sorting algorithm determines the next matchup.
 - **Results View** shows the final ranking with a podium (top 3) and a full ordered list.
-- Template data is stored in a static JSON file at `src/data/templates.json`. To add or modify rankings, this file must be updated directly.
+- Pages that read D1/KV or sessions opt into SSR with `export const prerender = false`; purely static pages (about, legal) stay prerendered.
+- Adding or modifying **official** templates still means editing `src/data/templates.json` directly. User templates are created through the app (`/create`, auth required).
 
 ## Code Style
 
