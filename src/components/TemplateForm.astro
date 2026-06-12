@@ -66,7 +66,7 @@ const inputClass =
         <div>
             <div class="flex items-center justify-between mb-2">
                 <label for="tf-description" class="text-sm font-semibold text-text-primary">
-                    Description <span class="font-normal text-text-muted">(optional)</span>
+                    Description
                 </label>
                 <span class="text-xs text-text-muted"><span id="tf-desc-count">0</span>/300</span>
             </div>
@@ -109,7 +109,7 @@ const inputClass =
         <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
             <i class="fa-solid fa-image text-primary text-xs"></i>
             Cover image
-            <span class="font-normal normal-case tracking-normal text-text-muted">(optional, by URL)</span>
+            <span class="font-normal normal-case tracking-normal text-text-muted">(by URL)</span>
         </h2>
 
         <input
@@ -395,9 +395,12 @@ const inputClass =
         function validate(): string | null {
             if (title.value.trim().length < 3)
                 return "Title must be at least 3 characters.";
+            if (desc.value.trim().length < 20)
+                return "Description is required (at least 20 characters).";
             if (!category.value) return "Pick a category.";
             const coverVal = cover.value.trim();
-            if (coverVal && !isHttpUrl(coverVal))
+            if (!coverVal) return "Cover image is required.";
+            if (!isHttpUrl(coverVal))
                 return "Cover image must be a valid http(s) URL.";
             const opts = rows();
             const named = opts.filter(
@@ -435,9 +438,9 @@ const inputClass =
 
             const payload = {
                 title: title.value.trim(),
-                description: desc.value.trim() || null,
+                description: desc.value.trim(),
                 category: category.value,
-                cover_image: cover.value.trim() || null,
+                cover_image: cover.value.trim(),
                 options: rows()
                     .map((r) => ({
                         name: r

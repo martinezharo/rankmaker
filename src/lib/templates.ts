@@ -245,9 +245,9 @@ export const MAX_TEMPLATES_PER_USER = 50;
 
 export type TemplateInput = {
     title: string;
-    description: string | null;
+    description: string;
     category: string;
-    cover_image: string | null;
+    cover_image: string;
     options: { name: string; image: string | null }[];
 };
 
@@ -271,12 +271,13 @@ export function validateTemplateInput(
         return err('Title must be between 3 and 80 characters.');
     }
 
-    let description: string | null = null;
-    if (typeof body?.description === 'string' && body.description.trim()) {
-        description = body.description.trim();
-        if (description.length > 300) {
-            return err('Description must be 300 characters or less.');
-        }
+    const description =
+        typeof body?.description === 'string' ? body.description.trim() : '';
+    if (description.length < 20) {
+        return err('Description is required (at least 20 characters).');
+    }
+    if (description.length > 300) {
+        return err('Description must be 300 characters or less.');
     }
 
     const category = typeof body?.category === 'string' ? body.category : '';
@@ -284,12 +285,13 @@ export function validateTemplateInput(
         return err('Pick a valid category.');
     }
 
-    let cover: string | null = null;
-    if (typeof body?.cover_image === 'string' && body.cover_image.trim()) {
-        cover = body.cover_image.trim();
-        if (!isHttpUrl(cover)) {
-            return err('Cover image must be a valid http(s) URL.');
-        }
+    const cover =
+        typeof body?.cover_image === 'string' ? body.cover_image.trim() : '';
+    if (!cover) {
+        return err('Cover image is required.');
+    }
+    if (!isHttpUrl(cover)) {
+        return err('Cover image must be a valid http(s) URL.');
     }
 
     if (!Array.isArray(body?.options)) return err('Options are required.');
