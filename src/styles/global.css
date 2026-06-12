@@ -15,6 +15,7 @@
     --color-text-secondary: #8888a0;
     --color-text-muted: #55556a;
     --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+    --breakpoint-xs: 22.5rem;
 }
 
 /* ── Base ───────────────────────────────────────── */

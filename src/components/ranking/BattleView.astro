@@ -21,7 +21,7 @@ const { title } = Astro.props;
                     >Round 1 of ~10</span
                 >
                 <div
-                    class="hidden sm:block w-32 h-1.5 rounded-full bg-border overflow-hidden"
+                    class="w-16 sm:w-32 h-1.5 rounded-full bg-border overflow-hidden"
                 >
                     <div
                         id="battle-progress-bar"
@@ -66,16 +66,16 @@ const { title } = Astro.props;
     </div>
 
     <!-- Battle Arena -->
-    <div class="mx-auto max-w-4xl px-4 sm:px-6 py-6 flex flex-col items-center">
+    <div class="mx-auto max-w-4xl px-4 sm:px-6 py-4 sm:py-6 flex flex-col items-center">
         <div
-            class="w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 relative"
+            class="w-full flex flex-col xs:flex-row items-center xs:items-stretch sm:items-center justify-center gap-4 xs:gap-3 sm:gap-6 relative"
         >
             <!-- Card A -->
             <button
                 id="battle-card-a"
-                class="battle-card group w-full sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
+                class="battle-card group flex flex-col w-full xs:w-auto xs:flex-1 xs:min-w-0 sm:flex-none sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
             >
-                <div class="aspect-square overflow-hidden bg-surface">
+                <div class="relative aspect-square shrink-0 overflow-hidden bg-surface">
                     <img
                         id="battle-img-a"
                         src=""
@@ -85,19 +85,19 @@ const { title } = Astro.props;
                     <!-- Fallback A -->
                     <div
                         id="battle-fallback-a"
-                        class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 hidden"
+                        class="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 hidden"
                     >
                         <span
                             id="battle-fallback-text-a"
-                            class="font-bold text-text-primary/90 leading-tight text-xl sm:text-2xl line-clamp-3"
+                            class="font-bold text-text-primary/90 leading-tight text-base xs:text-lg sm:text-2xl line-clamp-3"
                         >
                         </span>
                     </div>
                 </div>
-                <div class="p-4">
+                <div class="flex-1 flex items-center justify-center p-3 sm:p-4">
                     <p
                         id="battle-name-a"
-                        class="text-base font-bold text-text-primary text-center"
+                        class="text-sm sm:text-base font-bold text-text-primary text-center line-clamp-2"
                     >
                     </p>
                 </div>
@@ -105,12 +105,13 @@ const { title } = Astro.props;
 
             <!-- VS Badge -->
             <div
-                class="shrink-0 z-10 sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2"
+                class="shrink-0 z-10 xs:absolute xs:left-1/2 xs:top-1/2 xs:-translate-x-1/2 xs:-translate-y-1/2"
             >
                 <div
-                    class="w-14 h-14 rounded-full bg-surface border-2 border-primary/40 flex items-center justify-center animate-vs-pulse"
+                    class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-surface border-2 border-primary/40 flex items-center justify-center animate-vs-pulse"
                 >
-                    <span class="text-lg font-black text-gradient-gold">VS</span
+                    <span class="text-sm sm:text-lg font-black text-gradient-gold"
+                        >VS</span
                     >
                 </div>
             </div>
@@ -118,9 +119,9 @@ const { title } = Astro.props;
             <!-- Card B -->
             <button
                 id="battle-card-b"
-                class="battle-card group w-full sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
+                class="battle-card group flex flex-col w-full xs:w-auto xs:flex-1 xs:min-w-0 sm:flex-none sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
             >
-                <div class="aspect-square overflow-hidden bg-surface">
+                <div class="relative aspect-square shrink-0 overflow-hidden bg-surface">
                     <img
                         id="battle-img-b"
                         src=""
@@ -130,26 +131,26 @@ const { title } = Astro.props;
                     <!-- Fallback B -->
                     <div
                         id="battle-fallback-b"
-                        class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 hidden"
+                        class="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 hidden"
                     >
                         <span
                             id="battle-fallback-text-b"
-                            class="font-bold text-text-primary/90 leading-tight text-xl sm:text-2xl line-clamp-3"
+                            class="font-bold text-text-primary/90 leading-tight text-base xs:text-lg sm:text-2xl line-clamp-3"
                         >
                         </span>
                     </div>
                 </div>
-                <div class="p-4">
+                <div class="flex-1 flex items-center justify-center p-3 sm:p-4">
                     <p
                         id="battle-name-b"
-                        class="text-base font-bold text-text-primary text-center"
+                        class="text-sm sm:text-base font-bold text-text-primary text-center line-clamp-2"
                     >
                     </p>
                 </div>
             </button>
         </div>
 
-        <p class="mt-8 text-sm text-text-muted text-center">
+        <p class="mt-6 sm:mt-8 text-sm text-text-muted text-center">
             Tap the one you prefer
         </p>
     </div>
