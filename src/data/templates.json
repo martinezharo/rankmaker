@@ -29,7 +29,7 @@
       {
         "id": 561,
         "name": "X (formerly Twitter)",
-        "image": "https://logowik.com/content/images/images/twitter-x5265.logowik.com.webp",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/39c5daa4e8e14f6aa2518898e6523ab6.webp",
         "created_at": "2025-05-11T10:55:29+00:00",
         "updated_at": "2025-05-11T10:57:33+00:00",
         "template_id": "0547adbd-c259-4be5-83e3-42126d17007d"
@@ -53,7 +53,7 @@
       {
         "id": 564,
         "name": "LinkedIn",
-        "image": "https://cdn.freebiesupply.com/logos/thumbs/2x/linkedin-logo.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/7a582c0a1b2234b98a2454d0fd8166bc.webp",
         "created_at": "2025-05-11T10:55:29+00:00",
         "updated_at": "2025-05-11T10:58:33+00:00",
         "template_id": "0547adbd-c259-4be5-83e3-42126d17007d"
@@ -89,7 +89,7 @@
     "title": "🧛🏻‍♂️Most Popular Stephen King Books",
     "description": "Five decades of horror from the master of Castle Rock and Derry. Battle 20 of Stephen King's greatest novels in 1v1 matchups — The Shining, It, Misery, The Stand, Carrie, Pet Sematary, 'Salem's Lot. Rank the best Stephen King books of all time and crown his scariest masterpiece.",
     "category": "Books",
-    "cover_image": "https://sm.ign.com/t/ign_es/screenshot/default/king_c5js.1280.jpg",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/7ed5a102e3116fa49695878f1d9bec33.webp",
     "times_ranked": 343,
     "created_at": "2025-05-10T15:03:17+00:00",
     "updated_at": "2026-06-12T10:03:48.808+00:00",
@@ -98,7 +98,7 @@
       {
         "id": 350,
         "name": "Carrie (1974)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Carrie_%281974%29_front_cover%2C_first_edition.jpg/250px-Carrie_%281974%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/9e5fd0f90695b0c1c8f713a02c93045c.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:06:05+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -106,7 +106,7 @@
       {
         "id": 351,
         "name": "'Salem's Lot (1975)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/%27Salem%27s_Lot_%281975%29_front_cover%2C_first_edition.jpg/250px-%27Salem%27s_Lot_%281975%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/fae9fe06d0ec68521f15fae801374751.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:06:18+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -114,7 +114,7 @@
       {
         "id": 352,
         "name": "The Shining (1977)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/The_Shining_%281977%29_front_cover%2C_first_edition.jpg/250px-The_Shining_%281977%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/0a20fb440b3192e63e0ddb724fb7e87c.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:06:34+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -122,7 +122,7 @@
       {
         "id": 353,
         "name": "The Stand (1978)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/The_Stand_%281978%29_front_cover%2C_first_edition.png/250px-The_Stand_%281978%29_front_cover%2C_first_edition.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/1be10e7795f41d2bb972aa20160564ea.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:06:45+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -130,7 +130,7 @@
       {
         "id": 354,
         "name": "The Long Walk (1979)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/c/ca/Bachman%2C_Long_Walk.jpg/250px-Bachman%2C_Long_Walk.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/817e966b79006141f9620f75b0cd8607.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:07:02+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -138,7 +138,7 @@
       {
         "id": 355,
         "name": "Firestarter (1980)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Firestarter_%281980%29_front_cover%2C_first_edition.jpg/250px-Firestarter_%281980%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/c8c9bfc9f59888bf1664dd806e7cde50.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:07:21+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -146,7 +146,7 @@
       {
         "id": 356,
         "name": "Cujo (1981)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Cujo_%281981%29_front_cover%2C_first_edition.jpg/250px-Cujo_%281981%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/0bb3e294006d8f8a71ddef90e758dc2a.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:07:38+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -154,7 +154,7 @@
       {
         "id": 357,
         "name": "The Dark Tower: The Gunslinger (1982)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/The_Dark_Tower_%E2%80%93_The_Gunslinger_%281982%29_front_cover%2C_first_edition.jpg/250px-The_Dark_Tower_%E2%80%93_The_Gunslinger_%281982%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/3f9d417363c09394b9ed5b68bc870435.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:07:51+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -162,7 +162,7 @@
       {
         "id": 358,
         "name": "Pet Sematary (1983)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Pet_Sematary_%281983%29_front_cover%2C_first_edition.jpg/250px-Pet_Sematary_%281983%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/aef9bf93224b08a27026a942f77b8e25.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:08:03+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -170,7 +170,7 @@
       {
         "id": 359,
         "name": "Christine (1983)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/d/d3/StephenKing-Christine.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/e58c03775f5566d0628676ee2d48e681.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:09:04+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -178,7 +178,7 @@
       {
         "id": 360,
         "name": "It (1986)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/It_%281986%29_front_cover%2C_first_edition.jpg/250px-It_%281986%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/b2f2f2f3b67b963521128505aa5017be.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:09:25+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -186,7 +186,7 @@
       {
         "id": 361,
         "name": "Misery (1987)",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Misery_%281987%29_front_cover%2C_first_edition.jpg/250px-Misery_%281987%29_front_cover%2C_first_edition.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/b3e35bb6ee3ee6a3ddbd91e8412f1ba2.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:09:41+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -194,7 +194,7 @@
       {
         "id": 362,
         "name": "The Tommyknockers (1987)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/5/55/Tommyknockers.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d38bd242d83757b5ff4ac398fc51c46a.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:09:54+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -202,7 +202,7 @@
       {
         "id": 363,
         "name": "The Dark Half (1989)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/8/8e/Darkhalf.jpg/250px-Darkhalf.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/b9d29850755089dfac1ce2585609c692.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:10:10+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -210,7 +210,7 @@
       {
         "id": 364,
         "name": "Needful Things (1991)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e7/NeedfulThingsBookCover.JPG/250px-NeedfulThingsBookCover.JPG",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/7431298fac72d401b3c72cda9a881a6c.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:10:34+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -218,7 +218,7 @@
       {
         "id": 365,
         "name": "The Green Mile (1996)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/f/f7/Greenmilepart1.jpg/200px-Greenmilepart1.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/069c64eda3087a15ce7888588a70c16a.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:11:32+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -226,7 +226,7 @@
       {
         "id": 366,
         "name": "11/22/63 (2011)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/1/14/11-22-63.jpg/250px-11-22-63.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d198fc217e3ff7fbd053fff5f420caa1.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:11:55+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -234,7 +234,7 @@
       {
         "id": 367,
         "name": "Doctor Sleep (2013)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e9/Doctor_Sleep.jpg/250px-Doctor_Sleep.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/244adbd396609664e57e362cec5367dd.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:12:14+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -242,7 +242,7 @@
       {
         "id": 368,
         "name": "Mr. Mercedes (2014)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/Mrmercedes.jpg/250px-Mrmercedes.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/a8ccd10a60bf29bc2c9de1cec793b98c.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:12:26+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -250,7 +250,7 @@
       {
         "id": 369,
         "name": "The Outsider (2018)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e4/The_Outsider_by_Stephen_King.jpg/250px-The_Outsider_by_Stephen_King.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/e9eb206e32d55b33cd9a394f6d7ab550.webp",
         "created_at": "2025-05-10T15:03:17+00:00",
         "updated_at": "2025-05-10T15:12:40+00:00",
         "template_id": "06bc836d-a8f7-444d-9e63-520f43220384"
@@ -262,7 +262,7 @@
     "title": "🤖Top LLMs (May 2025)",
     "description": "The AI race, frozen in May 2025 — which model was the smartest? Battle 18 of the most powerful LLMs in 1v1 matchups: GPT-4o, o3, Claude 3.7 Sonnet, Gemini 2.5, Grok 3, Llama 4. Reasoning, coding and conversation all count: rank the top AI models of the moment.",
     "category": "Technology",
-    "cover_image": "https://events.vitap.ac.in/storage/event-images/01JTWZGQG901HYQ7SYNG8H4507.jpg",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/7a9cfcfc245a246807b99f38d7ef4553.webp",
     "times_ranked": 543,
     "created_at": "2025-05-11T11:49:29+00:00",
     "updated_at": "2026-06-12T10:03:48.808+00:00",
@@ -359,7 +359,7 @@
       {
         "id": 593,
         "name": "DeepSeek R1",
-        "image": "https://graphicsinn1.com/wp-content/images/2025/01/deepseek-AI-vector-logo-graphicsinn1-2-1024x614.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/1b2c4677812dafe43e0a9c9cddc1cbad.webp",
         "created_at": "2025-05-11T11:49:29+00:00",
         "updated_at": "2025-05-11T11:53:51+00:00",
         "template_id": "0a058fa2-22ea-4287-a3fe-05af6778f87a"
@@ -391,7 +391,7 @@
       {
         "id": 597,
         "name": "Mistral Large 2",
-        "image": "https://img.europapress.es/fotoweb/fotonoticia_20240725130214_690.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/83eacd7b895efc031bc48380ddfe234e.webp",
         "created_at": "2025-05-11T11:49:29+00:00",
         "updated_at": "2025-05-11T11:53:20+00:00",
         "template_id": "0a058fa2-22ea-4287-a3fe-05af6778f87a"
@@ -785,7 +785,7 @@
       {
         "id": 1073,
         "name": "Las Vegas Street Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2024/02/Las-Vegas-GP-768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/9e7838b27228bb92a33d91df9ce3b097.webp",
         "created_at": "2025-05-16T20:04:37+00:00",
         "updated_at": "2025-05-16T20:10:22+00:00",
         "template_id": "14c8423f-c4b6-4295-a8f6-b7a978fec518"
@@ -793,7 +793,7 @@
       {
         "id": 1074,
         "name": "Lusail International Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2023/03/GP-Qatar-768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/3d7bdfafaeaaa345fbf1af5473c595fb.webp",
         "created_at": "2025-05-16T20:04:37+00:00",
         "updated_at": "2025-05-16T20:09:54+00:00",
         "template_id": "14c8423f-c4b6-4295-a8f6-b7a978fec518"
@@ -801,7 +801,7 @@
       {
         "id": 1075,
         "name": "Yas Marina Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2022/07/Yas-Marina-Circuit--768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/8abb5fec52e3fdfb0c9a79aa7ec9522e.webp",
         "created_at": "2025-05-16T20:04:37+00:00",
         "updated_at": "2025-05-16T20:10:41+00:00",
         "template_id": "14c8423f-c4b6-4295-a8f6-b7a978fec518"
@@ -809,7 +809,7 @@
       {
         "id": 1076,
         "name": "Silverstone Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2022/07/Silverstone-Circuit--768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/ee2e48ee9391f3db6f066ce4d35d63a4.webp",
         "created_at": "2025-05-16T20:04:37+00:00",
         "updated_at": "2025-05-16T20:08:56+00:00",
         "template_id": "14c8423f-c4b6-4295-a8f6-b7a978fec518"
@@ -821,7 +821,7 @@
     "title": "🚔All Grand Theft Auto Games",
     "description": "Vice City's neon nostalgia, San Andreas' scope, Los Santos' chaos — which Grand Theft Auto is the best of all time? Battle all 7 GTA games in 1v1 matchups and rank Rockstar's open-world saga from GTA III to GTA V. Every era of the most influential crime franchise in gaming enters the ring.",
     "category": "Games",
-    "cover_image": "https://image.api.playstation.com/vulcan/ap/rnd/202505/0616/4c09a11c959eb85b6e1850fb544a3a568e8a4f0ea84413e3.jpg",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/de9801449a2b2e4155fa72ee19a17c08.webp",
     "times_ranked": 9942,
     "created_at": "2025-05-10T14:43:28+00:00",
     "updated_at": "2026-06-12T10:03:48.808+00:00",
@@ -830,7 +830,7 @@
       {
         "id": 343,
         "name": "Grand Theft Auto (1997)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/e/e7/GTA_-_Box_Front.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/211c5c880691426a921694a94e8a6f7c.webp",
         "created_at": "2025-05-10T14:43:28+00:00",
         "updated_at": "2025-05-10T14:50:41+00:00",
         "template_id": "1aebcbed-0f0b-4a7d-9284-a9181fe6e855"
@@ -838,7 +838,7 @@
       {
         "id": 344,
         "name": "Grand Theft Auto 2 (1999)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/2/2e/GTA2_Box_art.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/b6d237be109917436da985ba563c2413.webp",
         "created_at": "2025-05-10T14:43:28+00:00",
         "updated_at": "2025-05-10T14:50:59+00:00",
         "template_id": "1aebcbed-0f0b-4a7d-9284-a9181fe6e855"
@@ -846,7 +846,7 @@
       {
         "id": 345,
         "name": "Grand Theft Auto III (2001)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/b/be/GTA3boxcover.jpg/250px-GTA3boxcover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/4d7925750fec610e2ac681ea3213b82a.webp",
         "created_at": "2025-05-10T14:43:28+00:00",
         "updated_at": "2025-05-10T14:51:11+00:00",
         "template_id": "1aebcbed-0f0b-4a7d-9284-a9181fe6e855"
@@ -854,7 +854,7 @@
       {
         "id": 346,
         "name": "Grand Theft Auto: Vice City (2002)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/c/ce/Vice-city-cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/14f8e15d0b5a80f27a368ef092d995f3.webp",
         "created_at": "2025-05-10T14:43:28+00:00",
         "updated_at": "2025-05-10T14:51:23+00:00",
         "template_id": "1aebcbed-0f0b-4a7d-9284-a9181fe6e855"
@@ -862,7 +862,7 @@
       {
         "id": 347,
         "name": "Grand Theft Auto: San Andreas (2004)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/c/c4/GTASABOX.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/00a5185d6dccf7a990576b93ba465a71.webp",
         "created_at": "2025-05-10T14:43:28+00:00",
         "updated_at": "2025-05-10T14:51:36+00:00",
         "template_id": "1aebcbed-0f0b-4a7d-9284-a9181fe6e855"
@@ -870,7 +870,7 @@
       {
         "id": 348,
         "name": "Grand Theft Auto IV (2008)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/b/b7/Grand_Theft_Auto_IV_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/4ef596e6d0fe3f4129df87a38cb373f5.webp",
         "created_at": "2025-05-10T14:43:28+00:00",
         "updated_at": "2025-05-10T14:51:50+00:00",
         "template_id": "1aebcbed-0f0b-4a7d-9284-a9181fe6e855"
@@ -878,7 +878,7 @@
       {
         "id": 349,
         "name": "Grand Theft Auto V (2013)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a5/Grand_Theft_Auto_V.png/250px-Grand_Theft_Auto_V.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/9f96a4b7adbcf70aab5b59b3ce5a6d32.webp",
         "created_at": "2025-05-10T14:43:28+00:00",
         "updated_at": "2025-05-10T14:52:01+00:00",
         "template_id": "1aebcbed-0f0b-4a7d-9284-a9181fe6e855"
@@ -1221,7 +1221,7 @@
       {
         "id": 332,
         "name": "Star Wars: Episode IV - A New Hope",
-        "image": "https://upload.wikimedia.org/wikipedia/en/8/87/StarWarsMoviePoster1977.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/794b26727527386abd5f3efbbfd64b09.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:33:45+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1229,7 +1229,7 @@
       {
         "id": 333,
         "name": "Star Wars: Episode V - The Empire Strikes Back",
-        "image": "https://upload.wikimedia.org/wikipedia/en/3/3f/The_Empire_Strikes_Back_%281980_film%29.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/1599d47b110a6b17dc67e7a5be2d92f8.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:34:28+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1237,7 +1237,7 @@
       {
         "id": 334,
         "name": "Star Wars: Episode VI - Return of the Jedi",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/b/b2/ReturnOfTheJediPoster1983.jpg/250px-ReturnOfTheJediPoster1983.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/88b6a8d5d32322090e50b8a775cc2e93.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:34:45+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1245,7 +1245,7 @@
       {
         "id": 335,
         "name": "Star Wars: Episode I - The Phantom Menace",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/4/40/Star_Wars_Phantom_Menace_poster.jpg/250px-Star_Wars_Phantom_Menace_poster.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/e560861e2efb453b1122ad8894b01c5e.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:34:57+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1253,7 +1253,7 @@
       {
         "id": 336,
         "name": "Star Wars: Episode II - Attack of the Clones",
-        "image": "https://upload.wikimedia.org/wikipedia/en/3/32/Star_Wars_-_Episode_II_Attack_of_the_Clones_%28movie_poster%29.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/bec1b91d7da0968dc085e63d673e76dc.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:35:12+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1261,7 +1261,7 @@
       {
         "id": 337,
         "name": "Star Wars: Episode III - Revenge of the Sith",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/9/93/Star_Wars_Episode_III_Revenge_of_the_Sith_poster.jpg/250px-Star_Wars_Episode_III_Revenge_of_the_Sith_poster.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/ce44b7f55232593f24c90d983be35636.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:35:38+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1269,7 +1269,7 @@
       {
         "id": 338,
         "name": "Star Wars: Episode VII - The Force Awakens",
-        "image": "https://upload.wikimedia.org/wikipedia/en/a/a2/Star_Wars_The_Force_Awakens_Theatrical_Poster.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/1c56eaf488791174832ff6dedd6175fc.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:36:03+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1277,7 +1277,7 @@
       {
         "id": 339,
         "name": "Star Wars: Episode VIII - The Last Jedi",
-        "image": "https://upload.wikimedia.org/wikipedia/en/7/7f/Star_Wars_The_Last_Jedi.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/bb8ea3c554506555f3168cbfb55079e7.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:36:15+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1285,7 +1285,7 @@
       {
         "id": 340,
         "name": "Star Wars: Episode IX - The Rise of Skywalker",
-        "image": "https://upload.wikimedia.org/wikipedia/en/a/af/Star_Wars_The_Rise_of_Skywalker_poster.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/8d72d91444cb131b88738d1fec3bc4c0.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:36:32+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1293,7 +1293,7 @@
       {
         "id": 341,
         "name": "Rogue One: A Star Wars Story",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/d/d4/Rogue_One%2C_A_Star_Wars_Story_poster.png/250px-Rogue_One%2C_A_Star_Wars_Story_poster.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/6ccdb0cfdc53c99249ca421588c60d37.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:36:48+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1301,7 +1301,7 @@
       {
         "id": 342,
         "name": "Solo: A Star Wars Story",
-        "image": "https://upload.wikimedia.org/wikipedia/en/5/54/Solo_A_Star_Wars_Story_poster.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/54cef9f10712fedb481c14357398a627.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:37:29+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
@@ -1322,7 +1322,7 @@
       {
         "id": 546,
         "name": "Ford",
-        "image": "https://static.vecteezy.com/system/resources/previews/020/500/376/non_2x/ford-brand-logo-car-symbol-black-design-usa-automobile-illustration-free-vector.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/0035eb2aec0d07fa8eb824657a12acb0.webp",
         "created_at": "2025-05-11T10:22:28+00:00",
         "updated_at": "2025-05-11T10:32:56+00:00",
         "template_id": "329040bd-8ade-40e0-bbee-085594d462c7"
@@ -1362,7 +1362,7 @@
       {
         "id": 551,
         "name": "Cadillac",
-        "image": "https://logos-world.net/wp-content/images/2021/03/Cadillac-Emblem.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d5600e23cb1e2a90544b46a2aa1bdebd.webp",
         "created_at": "2025-05-11T10:22:28+00:00",
         "updated_at": "2025-05-11T10:36:14+00:00",
         "template_id": "329040bd-8ade-40e0-bbee-085594d462c7"
@@ -1511,7 +1511,7 @@
       {
         "id": 459,
         "name": "Christopher Columbus",
-        "image": "https://img.extrajaen.com/publicaciones/crist%C3%B3bal-col%C3%B3n.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/10b3295e4d8cd7f7f5fccd57d031a715.webp",
         "created_at": "2025-05-10T18:33:55+00:00",
         "updated_at": "2025-05-10T18:39:09+00:00",
         "template_id": "345b7ff0-28c8-478d-899d-777321c36a6d"
@@ -1603,7 +1603,7 @@
     "title": "🎸🤟🏻All Metallica Studio Albums",
     "description": "Master of Puppets or the Black Album? Forty years of riffs collide as all 11 Metallica studio albums battle in 1v1 matchups — from Kill 'Em All and Ride the Lightning to the Load era and Death Magnetic. Rank the greatest metal discography ever recorded and crown Metallica's definitive album.",
     "category": "Music",
-    "cover_image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Metallica_March_2024.jpg/800px-Metallica_March_2024.jpg",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/f80b1b2e38d79e538704a24cab5d7bae.webp",
     "times_ranked": 5165,
     "created_at": "2025-04-30T21:24:09+00:00",
     "updated_at": "2026-06-12T10:03:48.808+00:00",
@@ -1612,7 +1612,7 @@
       {
         "id": 209,
         "name": "Kill 'Em All",
-        "image": "https://upload.wikimedia.org/wikipedia/en/5/5c/Metallica_-_Kill_%27Em_All_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/6042fa3d4a230d459852e49fd9db46ab.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-04-30T21:25:27+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1620,7 +1620,7 @@
       {
         "id": 210,
         "name": "Ride the Lightning",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/f/f4/Ridetl.png/250px-Ridetl.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/2fc2eff3de888103d2042f84a855ce58.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:35:27+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1628,7 +1628,7 @@
       {
         "id": 211,
         "name": "Master of Puppets",
-        "image": "https://upload.wikimedia.org/wikipedia/en/b/b2/Metallica_-_Master_of_Puppets_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/abdffb147f824c9c44ad1386b5e9534f.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:35:39+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1636,7 +1636,7 @@
       {
         "id": 212,
         "name": "...And Justice for All",
-        "image": "https://upload.wikimedia.org/wikipedia/en/b/bd/Metallica_-_...And_Justice_for_All_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/ccd14cec9fa83cd00cd2443a8f26dbde.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:36:13+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1644,7 +1644,7 @@
       {
         "id": 213,
         "name": "Metallica",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/2/2c/Metallica_-_Metallica_cover.jpg/250px-Metallica_-_Metallica_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/0d02e3863d4528e933f2f2c90a6c1d51.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:36:27+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1652,7 +1652,7 @@
       {
         "id": 214,
         "name": "Load",
-        "image": "https://upload.wikimedia.org/wikipedia/en/b/b4/Metallica_-_Load_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/b35606dd42e84b8971dd72f27177a21e.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:36:40+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1660,7 +1660,7 @@
       {
         "id": 215,
         "name": "Reload",
-        "image": "https://upload.wikimedia.org/wikipedia/en/9/9b/Metallica_-_Reload_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/a00c9b01881749b7607d2d8edb69ce7b.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:36:52+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1668,7 +1668,7 @@
       {
         "id": 216,
         "name": "St. Anger",
-        "image": "https://upload.wikimedia.org/wikipedia/en/2/2f/Metallica_-_St._Anger_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/bc797150cf348cdba07fea713531d84e.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:37:06+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1676,7 +1676,7 @@
       {
         "id": 217,
         "name": "Death Magnetic",
-        "image": "https://upload.wikimedia.org/wikipedia/en/5/53/Metallica_-_Death_Magnetic_cover.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/5ea769eef9d84be16602afb9f89be46e.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:37:21+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1684,7 +1684,7 @@
       {
         "id": 218,
         "name": "Hardwired... to Self-Destruct",
-        "image": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a5/Hardwired..._To_Self-Destruct_Album_Cover.jpeg/250px-Hardwired..._To_Self-Destruct_Album_Cover.jpeg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d64d391947718cd5937da34217714fe0.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:37:34+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1692,7 +1692,7 @@
       {
         "id": 219,
         "name": "72 Seasons",
-        "image": "https://upload.wikimedia.org/wikipedia/en/0/08/72_Seasons.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/0c81cb3be99d874a7e52e5dd767c13e8.webp",
         "created_at": "2025-04-30T21:24:09+00:00",
         "updated_at": "2025-05-10T11:37:50+00:00",
         "template_id": "379ecbf4-7fdc-471c-a1ba-b84398d81dba"
@@ -1877,7 +1877,7 @@
     "title": "⚽Best Soccer Players 21st Century",
     "description": "The Messi-Ronaldo era, the midfield maestros who defined it and the stars inheriting it. Battle 30 of the greatest footballers since 2001 in 1v1 matchups — Iniesta, Xavi, Modric, Neymar, Mbappé and more. Rank the best soccer players of the 21st century, duel by duel.",
     "category": "Sports",
-    "cover_image": "https://eldoce.tv/resizer/v2/cristiano-ronaldo-levantando-a-messi-en-el-clasico-WVB5VINJN5C4ZNY2Z7VYU36G6E.png?auth=de845d2bba50392c9eaf48347c5fd3ad0ebc7ef2e39ec3ae0ca16597cf959411&width=767",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/16bec923ebadcd5f3406602c5dbf559b.webp",
     "times_ranked": 6298,
     "created_at": "2025-05-10T16:23:28+00:00",
     "updated_at": "2026-06-12T10:03:48.808+00:00",
@@ -1886,7 +1886,7 @@
       {
         "id": 400,
         "name": "Lionel Messi",
-        "image": "https://fifpro.org/media/5chb3dva/lionel-messi_imago1019567000h.jpg?rxy=0.32986930611281567,0.18704579979466449&rnd=133378758718600000",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/73bb89d0fabd18d01aa3a077ef0ab3c1.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:54:31+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1894,7 +1894,7 @@
       {
         "id": 401,
         "name": "Cristiano Ronaldo",
-        "image": "https://s.france24.com/media/display/5d9d0c5e-8ed0-11ee-80ff-005056a97e36/w:1280/p:16x9/AP23251736718316.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/f4afe106d7270a722ca390f3669ad9dd.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:54:03+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1902,7 +1902,7 @@
       {
         "id": 402,
         "name": "Andrés Iniesta",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Andr%C3%A9s_Iniesta_%28cropped%29.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/63302a861e7195427f3e74c97d751783.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:30:21+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1910,7 +1910,7 @@
       {
         "id": 403,
         "name": "Xavi Hernández",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Xavier_Hern%C3%A1ndez_-_Spain_vs._Chile%2C_10th_September_2013.jpg/800px-Xavier_Hern%C3%A1ndez_-_Spain_vs._Chile%2C_10th_September_2013.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/2144561b1ff2e0f9a807aa83c21e9b7c.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:31:08+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1918,7 +1918,7 @@
       {
         "id": 404,
         "name": "Luka Modrić",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Luka_Modri%C4%87_in_2018.jpg/330px-Luka_Modri%C4%87_in_2018.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/4d4494a6179b18266743ffece483e6f0.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:31:21+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1926,7 +1926,7 @@
       {
         "id": 405,
         "name": "Karim Benzema",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Karim_Benzema_wearing_Real_Madrid_home_kit_2021-2022.jpg/250px-Karim_Benzema_wearing_Real_Madrid_home_kit_2021-2022.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/cfa7c7b1250fa75f8416f0a26929f4f6.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:31:34+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1934,7 +1934,7 @@
       {
         "id": 406,
         "name": "Robert Lewandowski",
-        "image": "https://e00-elmundo.uecdn.es/assets/multimedia/imagenes/2022/09/07/16625847973120.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/c702659a12dc2aef0e32fbb3532efd4b.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:33:31+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1942,7 +1942,7 @@
       {
         "id": 407,
         "name": "Luis Suárez",
-        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Luis_Suarez_en_Gr%C3%AAmio.jpg/800px-Luis_Suarez_en_Gr%C3%AAmio.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/3dfe4c91880a34e74639582baf33fc3b.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:33:51+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1950,7 +1950,7 @@
       {
         "id": 408,
         "name": "Kevin De Bruyne",
-        "image": "https://ichef.bbci.co.uk/ace/standard/1008/cpsprodpb/c652/live/e7616f00-2aa8-11f0-a5e6-f95f9086d96f.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/f83b3332d8ae7bacd7fa7eec8cc2eaed.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:34:44+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1958,7 +1958,7 @@
       {
         "id": 409,
         "name": "Toni Kroos",
-        "image": "https://www.realtotal.de/wp-content/images/2024/02/2024-02-22-toni-kroos-dfb-onf.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d4c0f98bddec544c8a2f58dd822cd387.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:35:04+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1966,7 +1966,7 @@
       {
         "id": 410,
         "name": "Dani Alves",
-        "image": "https://i.eurosport.com/2015/06/09/1609972-34196892-2560-1440.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/c2dc0e8deb62e4cba077bc78848c088c.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:35:23+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1974,7 +1974,7 @@
       {
         "id": 411,
         "name": "Marcelo",
-        "image": "https://tmssl.akamaized.net/images/foto/galerie/marcelo-real-madrid-1590743419-39928.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/792993609b1b806998c4bd05455a441d.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:36:40+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1982,7 +1982,7 @@
       {
         "id": 412,
         "name": "Sergio Ramos",
-        "image": "https://img.asmedia.epimg.net/resizer/v2/FIO6XV7BL5EE3G5TWJLAHZSOVU.jpg?auth=d029df62edef2ab8ff9302054fa11939d61fe4f1fe97ed50b1f7ebc80e017698&width=375",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/b3b8c836477d095ec1d2e49328d793cd.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:36:58+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1990,7 +1990,7 @@
       {
         "id": 413,
         "name": "Virgil van Dijk",
-        "image": "https://www.fichajes.net/sites/default/files/styles/epsa_detail_thumbail/public/2025-04/Virgil-Van-Dijk.jpg?h=bb741953&itok=Qt5KDGyO",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/007a0b4168b7f55bdba2772d72f3a0d2.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:37:20+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -1998,7 +1998,7 @@
       {
         "id": 414,
         "name": "Philipp Lahm",
-        "image": "https://tmssl.akamaized.net/images/foto/galerie/lahm-bayern-1490818573-9228.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/e2be74351d3d4177779d5a934b32d263.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:37:33+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2006,7 +2006,7 @@
       {
         "id": 415,
         "name": "Manuel Neuer",
-        "image": "https://static.independentespanol.com/2023/08/07/20/MANUEL_NEUER_86113.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/180641cc24a88ab77fe64c0db2b4aebf.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:37:49+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2014,7 +2014,7 @@
       {
         "id": 416,
         "name": "Iker Casillas",
-        "image": "https://www.elespectador.com/resizer/v2/MPUVKPFSWRBZTFD5VSGZEBYU6Y.jpg?auth=5098f6467634dbc489913c1897f7b726689a133d29f36aefa5ba322337f078c5&width=920&height=613&smart=true&quality=60",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/55d1095173e62c8c12bc54ba6cb07da4.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:45:23+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2022,7 +2022,7 @@
       {
         "id": 417,
         "name": "Gianluigi Buffon",
-        "image": "https://ichef.bbci.co.uk/ace/standard/2048/cpsprodpb/8F7A/production/_101603763_buffon1.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/b0e4caba50906e97ff7955892e6c6da9.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:45:39+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2030,7 +2030,7 @@
       {
         "id": 418,
         "name": "Steven Gerrard",
-        "image": "https://media.cnn.com/api/v1/images/stellar/prod/150102091647-steven-gerrard.jpg?q=w_4694,h_3280,x_0,y_0,c_fill",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/353c09db2c24674e390fa2dfa2769e1e.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:46:14+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2038,7 +2038,7 @@
       {
         "id": 419,
         "name": "Frank Lampard",
-        "image": "https://tmssl.akamaized.net/images/foto/galerie/frank-lampard-chelsea-1599653244-46999.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/8e71287133b730f601f2d727d07c9cec.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:46:52+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2046,7 +2046,7 @@
       {
         "id": 420,
         "name": "Wayne Rooney",
-        "image": "https://static.independent.co.uk/2023/10/22/06/70a14f299b5d2bb85640b3a1d8c926d8Y29udGVudHNlYXJjaGFwaSwxNjk3OTcyNDI3-2.9324210.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/6db8287d741e116285de23185f24cae6.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:47:48+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2054,7 +2054,7 @@
       {
         "id": 421,
         "name": "Zlatan Ibrahimović",
-        "image": "https://tmssl.akamaized.net/images/foto/galerie/zlatan-ibrahimovic-1407422270-2194.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/7188848000f3005d38afba2ce0f9215a.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:48:18+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2062,7 +2062,7 @@
       {
         "id": 422,
         "name": "Arjen Robben",
-        "image": "https://tmssl.akamaized.net/images/foto/galerie/arjen-robben-bejubelt-sein-champions-league-final-tor-mit-bayern-munchen-gegen-borussia-dortmund-1562253842-23378.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/9f41bc97a8a790568bb1f637679ca9e2.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:48:34+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2070,7 +2070,7 @@
       {
         "id": 423,
         "name": "Franck Ribéry",
-        "image": "https://assets.bundesliga.com/tachyon/sites/2/2022/05/ribery.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/ed15b08f0ea067a35bda5106b956aa3a.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:48:53+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2078,7 +2078,7 @@
       {
         "id": 424,
         "name": "Neymar",
-        "image": "https://media.gq.com.mx/photos/5e94997dbb662c00085a6826/16:9/w_2560%2Cc_limit/Neymar%25201.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/8065a6a5d8b0502618f7e8ac7c5cc810.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:50:00+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2086,7 +2086,7 @@
       {
         "id": 425,
         "name": "Kylian Mbappé",
-        "image": "https://assets.goal.com/images/v3/bltb893481a9f66b6e1/crop/MM5DCNZUGQ5DSOBRHJXG653FHIYTAMR2GIYQ====/mbappe%20(1).jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/64f476689786b5ad44ee9268a5066d9f.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:50:18+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2094,7 +2094,7 @@
       {
         "id": 426,
         "name": "Mohamed Salah",
-        "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR1ah8K24Ut39NPateObyY2ipq6cRijhY8LDA&s",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d4b92a087d478251831fd77f37c4645c.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:50:43+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2102,7 +2102,7 @@
       {
         "id": 427,
         "name": "Andrea Pirlo",
-        "image": "https://external-preview.redd.it/iftv-andrea-pirlo-during-calciopoli-i-had-already-signed-v0--T7_eOjwugPbkjzfZRV-GaLoOdBEpcwVPP6KTtdo_dM.jpg?auto=webp&s=7e9c6e0fa7d17b9d4c505b45c789ce0e342d3ace",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/041d38dc30afe32771d5f2c3fe1c1bb8.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-09-16T19:45:52+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2110,7 +2110,7 @@
       {
         "id": 428,
         "name": "Thierry Henry",
-        "image": "https://tmssl.akamaized.net/images/foto/galerie/thierry-henry-1417524348-3352.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/8a58d3447bf342c9bc1f633cae45969d.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:51:49+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2118,7 +2118,7 @@
       {
         "id": 429,
         "name": "David Villa",
-        "image": "https://www.fcbarcelona.com/fcbarcelona/photo/2024/03/08/000f82fb-f1be-4bed-8e28-2d7585f47a9f/DAVID-VILLA.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/796ef63165a2a06393b17e1b907f6b90.webp",
         "created_at": "2025-05-10T16:23:28+00:00",
         "updated_at": "2025-05-10T16:51:59+00:00",
         "template_id": "3fcbf11f-f19f-43b6-a7f0-d6f1527eb445"
@@ -2139,7 +2139,7 @@
       {
         "id": 864,
         "name": "Atlanta Hawks",
-        "image": "https://1000marcas.net/wp-content/images/2020/03/Atlanta-Hawks-logo.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/5ee59e8079849c19c5379c702254fd58.webp",
         "created_at": "2025-05-13T17:04:16+00:00",
         "updated_at": "2025-05-13T17:17:37+00:00",
         "template_id": "3fdfeace-57b7-4519-ac0c-81350053f8c8"
@@ -2147,7 +2147,7 @@
       {
         "id": 865,
         "name": "Boston Celtics",
-        "image": "https://1000marcas.net/wp-content/images/2020/03/Boston-Celtics-logo.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/5ee09f076d0933b90889aac3dcada713.webp",
         "created_at": "2025-05-13T17:04:16+00:00",
         "updated_at": "2025-05-13T17:18:09+00:00",
         "template_id": "3fdfeace-57b7-4519-ac0c-81350053f8c8"
@@ -2778,7 +2778,7 @@
       {
         "id": 627,
         "name": "Fast & Furious (2009)",
-        "image": "https://s3.superluchas.com/2020/10/fast-furious-2009.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/ba39bf2be03fafd22c134b129dde31f1.webp",
         "created_at": "2025-05-11T14:03:23+00:00",
         "updated_at": "2025-05-11T14:10:11+00:00",
         "template_id": "5aafd010-273f-44d1-a614-7e7ff7137d5f"
@@ -2794,7 +2794,7 @@
       {
         "id": 629,
         "name": "Fast & Furious 6 (2013)",
-        "image": "https://natashastander.wordpress.com/wp-content/images/2016/07/furious6.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/1ebd48337869e80837ed07c9b09cd37d.webp",
         "created_at": "2025-05-11T14:03:23+00:00",
         "updated_at": "2025-05-11T14:09:35+00:00",
         "template_id": "5aafd010-273f-44d1-a614-7e7ff7137d5f"
@@ -2818,7 +2818,7 @@
       {
         "id": 632,
         "name": "Fast & Furious Presents: Hobbs & Shaw (2019)",
-        "image": "https://i0.wp.com/rockandfilms.es/wp-content/images/2019/08/banner.jpg?fit=1000%2C759&ssl=1",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/27292f06d11d7e156e91ae4fb74d3189.webp",
         "created_at": "2025-05-11T14:03:23+00:00",
         "updated_at": "2025-05-11T14:10:52+00:00",
         "template_id": "5aafd010-273f-44d1-a614-7e7ff7137d5f"
@@ -2855,7 +2855,7 @@
       {
         "id": 635,
         "name": "French",
-        "image": "https://i.pinimg.com/736x/8b/32/6f/8b326f3a060cbf4089d5a7d0bfcee77a.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/fb42aa8a8aa7b35eeaa9d310d5681d3d.webp",
         "created_at": "2025-05-11T17:05:56+00:00",
         "updated_at": "2025-05-11T17:15:28+00:00",
         "template_id": "60931a6f-e288-4e08-bcb0-bcc8310e95ef"
@@ -2879,7 +2879,7 @@
       {
         "id": 638,
         "name": "Portuguese",
-        "image": "https://minio.scielo.br/documentstore/1678-2925/ztBjgBJYKn37nPcbW77x5fz/10fd0a729c4966283928b8703dff55f6df93ef51.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/c35c26a453f7a6efe0ed8cfe312a5665.webp",
         "created_at": "2025-05-11T17:05:56+00:00",
         "updated_at": "2025-05-11T17:13:53+00:00",
         "template_id": "60931a6f-e288-4e08-bcb0-bcc8310e95ef"
@@ -2935,7 +2935,7 @@
       {
         "id": 645,
         "name": "English",
-        "image": "https://www.englishandmedia.co.uk/media/4845/rosen18.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/2a3644326635f65d3041fea22a85004e.webp",
         "created_at": "2025-05-11T17:05:56+00:00",
         "updated_at": "2025-05-11T17:16:03+00:00",
         "template_id": "60931a6f-e288-4e08-bcb0-bcc8310e95ef"
@@ -2943,7 +2943,7 @@
       {
         "id": 646,
         "name": "Hindi",
-        "image": "https://live.staticflickr.com/5115/5909725976_9a6f89dc86_b.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/e6f105e6626cf707d21d086ea536c01d.webp",
         "created_at": "2025-05-11T17:05:56+00:00",
         "updated_at": "2025-05-11T17:16:57+00:00",
         "template_id": "60931a6f-e288-4e08-bcb0-bcc8310e95ef"
@@ -5476,7 +5476,7 @@
       {
         "id": 1798,
         "name": "Las Vegas Street Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2024/02/Las-Vegas-GP-768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/9e7838b27228bb92a33d91df9ce3b097.webp",
         "created_at": "2025-06-10T17:00:47+00:00",
         "updated_at": "2025-06-10T17:00:47+00:00",
         "template_id": "165a2bbc-f12a-43ec-8f82-b22afb3bc0ba"
@@ -5484,7 +5484,7 @@
       {
         "id": 1799,
         "name": "Lusail International Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2023/03/GP-Qatar-768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/3d7bdfafaeaaa345fbf1af5473c595fb.webp",
         "created_at": "2025-06-10T17:00:48+00:00",
         "updated_at": "2025-06-10T17:00:48+00:00",
         "template_id": "165a2bbc-f12a-43ec-8f82-b22afb3bc0ba"
@@ -5492,7 +5492,7 @@
       {
         "id": 1800,
         "name": "Yas Marina Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2022/07/Yas-Marina-Circuit--768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/8abb5fec52e3fdfb0c9a79aa7ec9522e.webp",
         "created_at": "2025-06-10T17:00:48+00:00",
         "updated_at": "2025-06-10T17:00:48+00:00",
         "template_id": "165a2bbc-f12a-43ec-8f82-b22afb3bc0ba"
@@ -5500,7 +5500,7 @@
       {
         "id": 1801,
         "name": "Silverstone Circuit",
-        "image": "https://www.sportmonks.com/wp-content/images/2022/07/Silverstone-Circuit--768x432.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/ee2e48ee9391f3db6f066ce4d35d63a4.webp",
         "created_at": "2025-06-10T17:00:48+00:00",
         "updated_at": "2025-06-10T17:00:48+00:00",
         "template_id": "165a2bbc-f12a-43ec-8f82-b22afb3bc0ba"
@@ -10899,7 +10899,7 @@
     "title": "🎨Great Painters Throughout History",
     "description": "Renaissance masters against impressionists against surrealists. Battle 14 of history's greatest painters in 1v1 matchups — Leonardo da Vinci, Van Gogh, Picasso, Monet, Dalí, Rembrandt, Michelangelo. Who is the most influential artist of all time? Vote canvas against canvas.",
     "category": "History & Culture",
-    "cover_image": "https://i.blogs.es/5ac550/meninas1/1366_2000.jpg",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/ec55952c1f084622c70d6bf1a87c38c6.webp",
     "times_ranked": 356,
     "created_at": "2025-05-13T19:48:33+00:00",
     "updated_at": "2026-06-12T10:03:48.808+00:00",
@@ -12151,7 +12151,7 @@
       {
         "id": 762,
         "name": "Fat Tony",
-        "image": "https://s3.crackedcdn.com/phpimages/article/4/6/1/1197461.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/9c6eb55340518767307819e7db8f971a.webp",
         "created_at": "2025-05-13T11:18:28+00:00",
         "updated_at": "2025-05-13T11:21:01+00:00",
         "template_id": "b2b7d550-fae2-4398-9102-c1d27fe5730a"
@@ -12172,7 +12172,7 @@
       {
         "id": 275,
         "name": "Taylor Swift (2006)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/1/1f/Taylor_Swift_-_Taylor_Swift.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/820342c0b91bd2ee33e2fb4084dfacef.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-10T09:35:23+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12204,7 +12204,7 @@
       {
         "id": 279,
         "name": "1989 (2014)",
-        "image": "https://m.media-amazon.com/images/I/717DWgRftmL.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/256e6eb9f6d1c451dfa8e94304c44389.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-09T20:15:32+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12220,7 +12220,7 @@
       {
         "id": 281,
         "name": "Lover (2019)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/c/cd/Taylor_Swift_-_Lover.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/6ab48afbb22bea4e65b58e7429d3c5b0.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-10T09:39:15+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12236,7 +12236,7 @@
       {
         "id": 283,
         "name": "evermore (2020)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/0/0a/Taylor_Swift_-_Evermore.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/a4c2802a5706ccc4910567098081ffcb.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-10T09:39:42+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12244,7 +12244,7 @@
       {
         "id": 284,
         "name": "Fearless (Taylor's Version) (2021)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/5/5b/Fearless_%28Taylor%27s_Version%29_%282021_album_cover%29_by_Taylor_Swift.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/fde5c9403b7b51a09a592ebbcbb4c2bf.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-10T09:40:14+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12252,7 +12252,7 @@
       {
         "id": 285,
         "name": "Red (Taylor's Version) (2021)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/4/47/Taylor_Swift_-_Red_%28Taylor%27s_Version%29.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/f7d20f1f242951f9b244f588a0f11423.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-10T09:40:35+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12260,7 +12260,7 @@
       {
         "id": 286,
         "name": "Midnights (2022)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/9/9f/Midnights_-_Taylor_Swift.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d2ebada9a8aa33e778d682ea3ccd01d2.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-10T09:40:50+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12268,7 +12268,7 @@
       {
         "id": 287,
         "name": "Speak Now (Taylor's Version) (2023)",
-        "image": "https://upload.wikimedia.org/wikipedia/en/5/5b/Taylor_Swift_-_Speak_Now_%28Taylor%27s_Version%29.png",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/44f7adece1897ee031d931a93b11cf8d.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-10T09:41:07+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -12276,7 +12276,7 @@
       {
         "id": 288,
         "name": "1989 (Taylor's Version) (2023)",
-        "image": "https://m.media-amazon.com/images/I/81JNBy4njYL._UF894,1000_QL80_.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/dca5dbaaaa55ff83643a3edaa5a85e1a.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-09T20:18:53+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
@@ -13074,7 +13074,7 @@
       {
         "id": 608,
         "name": "Comb Over",
-        "image": "https://www.apetogentleman.com/wp-content/images/2022/06/comb-over-fade-haircut.jpg",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/5b7981dbed7de9ae79ca8f194bd6e398.webp",
         "created_at": "2025-05-11T13:37:24+00:00",
         "updated_at": "2025-05-11T13:53:27+00:00",
         "template_id": "f020b2de-fc8c-43c2-98a3-1f571318da0e"
@@ -13328,7 +13328,7 @@
     "title": "🧪Breaking Bad Main Characters",
     "description": "Heisenberg's empire against the people it destroyed. Battle all 23 main Breaking Bad characters in 1v1 matchups — Walter White, Jesse Pinkman, Saul Goodman, Mike Ehrmantraut, Gus Fring, Hank Schrader. Rank the best characters of the series many call the greatest TV drama ever made.",
     "category": "TV",
-    "cover_image": "https://static01.nyt.com/images/2019/08/26/espanol/27Pelicula/merlin_76764656_173df8df-9044-456d-9c2d-1c03f1a41042-superJumbo.jpg",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/ca4d3a4cf8c92d772a0fd5cf1a20cc19.webp",
     "times_ranked": 7819,
     "created_at": "2025-05-10T20:05:10+00:00",
     "updated_at": "2026-06-12T10:03:48.808+00:00",
