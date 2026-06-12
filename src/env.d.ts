@@ -7,7 +7,11 @@ type KVListResult = {
 };
 
 type KVNamespace = {
-    put(key: string, value: string): Promise<void>;
+    put(
+        key: string,
+        value: string,
+        options?: { expirationTtl?: number }
+    ): Promise<void>;
     get(key: string): Promise<string | null>;
     delete(key: string): Promise<void>;
     list(options?: {
@@ -37,10 +41,25 @@ type D1Database = {
     ): Promise<D1Result<T>[]>;
 };
 
+type Ai = {
+    run(
+        model: string,
+        inputs: {
+            messages: {
+                role: 'system' | 'user' | 'assistant';
+                content: string;
+            }[];
+            max_tokens?: number;
+            temperature?: number;
+        }
+    ): Promise<{ response?: string }>;
+};
+
 type Runtime = {
     env: {
         'rm-times-ranked': KVNamespace;
         DB: D1Database;
+        AI: Ai;
         GITHUB_CLIENT_ID: string;
         GITHUB_CLIENT_SECRET: string;
         SESSION_SECRET: string;

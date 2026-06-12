@@ -217,6 +217,70 @@ const inputClass =
     </div>
 </template>
 
+{
+    mode === "create" && (
+        <div
+            id="tf-ai-modal"
+            class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+            <div
+                class="absolute inset-0 bg-black/60 animate-modal-bg"
+                id="tf-ai-backdrop"
+            />
+            <div class="relative bg-surface-elevated border border-border rounded-2xl p-6 max-w-md w-full animate-modal-content">
+                <div class="space-y-4">
+                    <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                        <i class="fa-solid fa-wand-magic-sparkles text-primary text-xl" />
+                    </div>
+                    <h3 class="text-lg font-bold text-text-primary text-center">
+                        Make your ranking more popular?
+                    </h3>
+                    <p
+                        id="tf-ai-copy"
+                        class="text-sm text-text-secondary leading-relaxed text-center"
+                    >
+                        With this description your ranking will be easier to
+                        discover. Edit it if you like, or keep your original.
+                    </p>
+                    <div>
+                        <div class="flex items-center justify-end mb-2">
+                            <span class="text-xs text-text-muted">
+                                <span id="tf-ai-count">0</span>/300
+                            </span>
+                        </div>
+                        <textarea
+                            id="tf-ai-text"
+                            maxlength="300"
+                            rows="5"
+                            class={inputClass + " resize-none"}
+                        />
+                        <p
+                            id="tf-ai-error"
+                            class="text-xs text-red-400 min-h-4 mt-1"
+                        />
+                    </div>
+                    <div class="flex items-center gap-3 pt-1">
+                        <button
+                            type="button"
+                            id="tf-ai-keep"
+                            class="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                        >
+                            Keep mine
+                        </button>
+                        <button
+                            type="button"
+                            id="tf-ai-use"
+                            class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
+                        >
+                            Use this description
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 <script
     type="application/json"
     id="template-form-data"
@@ -426,41 +490,27 @@ const inputClass =
             return null;
         }
 
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            errorEl.textContent = "";
+        type Payload = {
+            title: string;
+            description: string;
+            category: string;
+            cover_image: string;
+            options: { name: string; image: string | null }[];
+        };
 
-            const problem = validate();
-            if (problem) {
-                errorEl.textContent = problem;
-                return;
-            }
+        const originalLabel = submit.textContent;
 
-            const payload = {
-                title: title.value.trim(),
-                description: desc.value.trim(),
-                category: category.value,
-                cover_image: cover.value.trim(),
-                options: rows()
-                    .map((r) => ({
-                        name: r
-                            .querySelector<HTMLInputElement>(".option-name")!
-                            .value.trim(),
-                        image:
-                            r
-                                .querySelector<HTMLInputElement>(
-                                    ".option-image",
-                                )!
-                                .value.trim() || null,
-                    }))
-                    .filter((o) => o.name),
-            };
+        function setBusy(busy: boolean) {
+            submit.disabled = busy;
+            submit.textContent = busy
+                ? data.mode === "create"
+                    ? "Creating…"
+                    : "Saving…"
+                : originalLabel;
+        }
 
-            submit.disabled = true;
-            const originalLabel = submit.textContent;
-            submit.textContent =
-                data.mode === "create" ? "Creating…" : "Saving…";
-
+        async function actuallySubmit(payload: Payload) {
+            setBusy(true);
             try {
                 const res = await fetch(
                     data.mode === "create"
@@ -482,8 +532,143 @@ const inputClass =
             } catch {
                 errorEl.textContent = "Network error. Try again.";
             }
-            submit.disabled = false;
-            submit.textContent = originalLabel;
+            setBusy(false);
+        }
+
+        // ── AI description suggestion (create mode only) ────────────
+        // Asked at most once per form session; the suggestion is cached so
+        // a cancelled modal re-opens instantly. Any failure (timeout, 429,
+        // 5xx) falls through to a normal submit — never blocks creation.
+        type Suggestion = { description: string; mode: string };
+
+        const aiModal = document.getElementById("tf-ai-modal");
+        const aiText = document.getElementById(
+            "tf-ai-text",
+        ) as HTMLTextAreaElement | null;
+        const aiCount = document.getElementById("tf-ai-count");
+        const aiCopy = document.getElementById("tf-ai-copy");
+        const aiError = document.getElementById("tf-ai-error");
+        let aiAsked = false;
+        let aiSuggestion: Suggestion | null = null;
+        let pendingPayload: Payload | null = null;
+
+        if (aiText && aiCount) bindCounter(aiText, aiCount);
+
+        async function fetchSuggestion(
+            payload: Payload,
+        ): Promise<Suggestion | null> {
+            try {
+                const res = await fetch("/api/templates/describe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: payload.title,
+                        category: payload.category,
+                        options: payload.options.map((o) => o.name),
+                        draft: payload.description,
+                    }),
+                    signal: AbortSignal.timeout(12000),
+                });
+                if (!res.ok) return null;
+                const result = await res.json();
+                return result.ok && typeof result.description === "string"
+                    ? {
+                          description: result.description,
+                          mode: result.mode === "polish" ? "polish" : "rewrite",
+                      }
+                    : null;
+            } catch {
+                return null;
+            }
+        }
+
+        function openAiModal(suggestion: Suggestion, payload: Payload) {
+            pendingPayload = payload;
+            aiCopy!.textContent =
+                suggestion.mode === "polish"
+                    ? "We polished your description to help your ranking get discovered. Edit it if you like, or keep your original."
+                    : "With this description your ranking will be easier to discover. Edit it if you like, or keep your original.";
+            aiText!.value = suggestion.description;
+            aiText!.dispatchEvent(new Event("input"));
+            aiError!.textContent = "";
+            aiModal!.classList.remove("hidden");
+        }
+
+        function closeAiModal() {
+            aiModal!.classList.add("hidden");
+        }
+
+        document.getElementById("tf-ai-use")?.addEventListener("click", () => {
+            const edited = aiText!.value.trim();
+            if (edited.length < 20) {
+                aiError!.textContent =
+                    "Description must be at least 20 characters.";
+                return;
+            }
+            closeAiModal();
+            actuallySubmit({ ...pendingPayload!, description: edited });
+        });
+
+        document
+            .getElementById("tf-ai-keep")
+            ?.addEventListener("click", () => {
+                closeAiModal();
+                actuallySubmit(pendingPayload!);
+            });
+
+        document
+            .getElementById("tf-ai-backdrop")
+            ?.addEventListener("click", () => {
+                closeAiModal();
+                setBusy(false);
+            });
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            errorEl.textContent = "";
+
+            const problem = validate();
+            if (problem) {
+                errorEl.textContent = problem;
+                return;
+            }
+
+            const payload: Payload = {
+                title: title.value.trim(),
+                description: desc.value.trim(),
+                category: category.value,
+                cover_image: cover.value.trim(),
+                options: rows()
+                    .map((r) => ({
+                        name: r
+                            .querySelector<HTMLInputElement>(".option-name")!
+                            .value.trim(),
+                        image:
+                            r
+                                .querySelector<HTMLInputElement>(
+                                    ".option-image",
+                                )!
+                                .value.trim() || null,
+                    }))
+                    .filter((o) => o.name),
+            };
+
+            if (data.mode === "create" && aiModal && aiText) {
+                setBusy(true);
+                if (!aiAsked) {
+                    aiAsked = true;
+                    aiSuggestion = await fetchSuggestion(payload);
+                }
+                if (
+                    aiSuggestion &&
+                    aiSuggestion.description !== payload.description
+                ) {
+                    openAiModal(aiSuggestion, payload);
+                    return;
+                }
+            }
+
+            await actuallySubmit(payload);
         });
     });
 </script>
