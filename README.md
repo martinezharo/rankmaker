@@ -13,7 +13,6 @@
   <a href="#demo">Demo</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#getting-started">Getting Started</a> •
-  <a href="#project-structure">Project Structure</a> •
   <a href="#deployment">Deployment</a> •
   <a href="#contributing">Contributing</a> •
   <a href="#license">License</a>
@@ -25,7 +24,7 @@
 
 RANKMAKER is a web application that lets users build precise, personalized rankings through fast **1-on-1 matchups**. Instead of dragging items into broad tiers, users are presented with head-to-head battles and their choices are compiled into an ordered ranking using an efficient sorting algorithm.
 
-Pick a template — movies, music, sports, anime, food, and many more — and let the battles decide what *really* comes out on top.
+Pick a template — movies, music, sports, anime, food, and many more — or **create your own** and let the battles decide what *really* comes out on top.
 
 ## Demo
 
@@ -36,13 +35,17 @@ Pick a template — movies, music, sports, anime, food, and many more — and le
 - **1v1 Battle System** — Fast, tap-friendly matchup interface that minimizes decision fatigue.  
 - **Smart Sorting Algorithm** — Generates accurate rankings from the fewest comparisons possible.  
 - **Pre-built Templates** — Across 18 categories: Movies, Music, Sports, Games, TV, Anime, Food, and more.  
+- **User Accounts** — Sign in with GitHub, pick a username and avatar, and manage your account.  
+- **User-created Templates** — Logged-in users can create, edit, and delete their own templates (4–50 options each).  
+- **AI Description Suggestions** — Workers AI (Llama 3.3 70B) polishes or rewrites template descriptions during creation.  
+- **Public Profiles** — Every creator gets a profile page at `/u/<username>` listing their templates.  
+- **Live "Times Ranked" Counter** — Real ranking counts per template, shown on cards, search results, and template pages.  
 - **Full-text Search** — Search templates by title, description, or individual options.  
 - **Podium & Full Results** — Animated podium for the top 3 plus a complete ordered list.  
 - **Share & Export** — Download your ranking as an image, share the template link, or post to X (Twitter).  
 - **Battle History** — Review every matchup you made during a ranking session.  
 - **Undo & Finish Early** — Changed your mind? Undo the last matchup or finish early at any time.  
 - **Manual Reorder** — Fine-tune your final ranking by dragging items into position.  
-- **Internal Tracking** — Anonymous tracking of ranking starts for internal analytics and future features.
 - **Responsive Design** — Fully responsive, looks great on phones, tablets, and desktops.  
 - **View Transitions** — Smooth page transitions powered by Astro's View Transitions API.  
 - **SEO Optimized** — Dynamic sitemap, proper meta tags, and semantic HTML.  
@@ -52,14 +55,17 @@ Pick a template — movies, music, sports, anime, food, and many more — and le
 
 | Layer | Technology |
 |---|---|
-| **Framework** | [Astro](https://astro.build/) 5 (static output) |
+| **Framework** | [Astro](https://astro.build/) 5 (hybrid: prerendered pages + SSR routes) |
 | **Styling** | [Tailwind CSS](https://tailwindcss.com/) 4 |
 | **Language** | TypeScript |
 | **Fonts** | [Outfit](https://fonts.google.com/specimen/Outfit) (Google Fonts) |
 | **Icons** | [Font Awesome](https://fontawesome.com/) 6 |
-| **Data Source** | Local JSON file (`src/data/templates.json`) |
-| **Storage** | [Cloudflare KV](https://developers.cloudflare.com/kv/) (Internal Tracking) |
-| **Hosting** | [Cloudflare Pages](https://pages.cloudflare.com/) via `@astrojs/cloudflare` adapter |
+| **Data** | Official templates in `src/data/templates.json` + user templates in [Cloudflare D1](https://developers.cloudflare.com/d1/) |
+| **Database** | Cloudflare D1 (users, sessions, templates, ranking counts) |
+| **Storage** | [Cloudflare KV](https://developers.cloudflare.com/kv/) (raw tracking event log) |
+| **AI** | [Workers AI](https://developers.cloudflare.com/workers-ai/) — Llama 3.3 70B for description suggestions |
+| **Auth** | GitHub OAuth + D1-backed sessions |
+| **Hosting** | [Cloudflare Workers](https://workers.cloudflare.com/) (static assets + SSR) via `@astrojs/cloudflare` adapter |
 | **Package Manager** | [pnpm](https://pnpm.io/) |
 
 ## Getting Started
@@ -80,7 +86,6 @@ cd rankmaker
 pnpm install
 ```
 
-#
 ### Database & Auth setup (user accounts + user templates)
 
 User accounts (GitHub OAuth) and user-created templates live in **Cloudflare D1**.
@@ -88,7 +93,7 @@ User accounts (GitHub OAuth) and user-created templates live in **Cloudflare D1*
 1. Apply the migrations to the local D1 database:
 
 ```bash
-pnpm run db:migrate:local    # rankings table
+pnpm run db:migrate:local    # rankings table (times-ranked counts)
 pnpm run db:migrate3:local   # users, sessions, templates, template_options (+ RANKMAKER seed)
 ```
 
@@ -111,6 +116,7 @@ For production, create a second OAuth App with the live callback URL
 npx wrangler secret put GITHUB_CLIENT_ID
 npx wrangler secret put GITHUB_CLIENT_SECRET
 npx wrangler secret put SESSION_SECRET
+pnpm run db:migrate:remote
 pnpm run db:migrate3:remote
 ```
 
@@ -118,6 +124,7 @@ pnpm run db:migrate3:remote
 
 ```bash
 # Start the dev server (http://localhost:4321)
+# Local D1/KV/AI bindings are emulated via miniflare automatically
 pnpm dev
 ```
 
@@ -131,82 +138,28 @@ pnpm build
 pnpm preview
 ```
 
-#
-## Project Structure
+## Ranking Tracking & Counts
 
-```
-rankmaker/
-├── public/                     # Static assets (logos, favicon, images)
-│   ├── images/                 # Template cover images
-│   ├── RANKMAKER-logo.webp
-│   ├── robots.txt
-│   └── ...
-├── src/
-│   ├── components/
-│   │   ├── ranking/            # Battle & results components
-│   │   │   ├── BattleView.astro
-│   │   │   ├── ResultsView.astro
-│   │   │   ├── FinishEarlyModal.astro
-│   │   │   └── BattleHistoryModal.astro
-│   │   ├── Header.astro
-│   │   ├── Footer.astro
-│   │   ├── TemplateCard.astro
-│   │   ├── CategorySection.astro
-│   │   ├── SEOContent.astro
-│   │   ├── SmartImage.astro
-│   │   └── CookieConsent.astro
-│   ├── data/
-│   │   └── templates.json      # All template data (auto-generated)
-│   ├── layouts/
-│   │   └── Layout.astro        # Base HTML layout
-│   ├── pages/
-│   │   ├── index.astro         # Homepage with category sections
-│   │   ├── search.astro        # Template search & filter page
-│   │   ├── about.astro         # About page
-│   │   ├── contact.astro       # Contact page
-│   │   ├── api/
-│   │   │   └── track.ts        # Server-side API for ranking tracking
-│   │   ├── template/
-│   │   │   └── [slug].astro    # Dynamic template page (battle + results)
-│   │   ├── sitemap.xml.ts      # Dynamic XML sitemap
-│   │   └── ...                 # Legal pages (privacy, terms, cookies, etc.)
-│   ├── styles/
-│   │   └── global.css          # Global styles & Tailwind config
-│   └── env.d.ts                # TypeScript definitions for Cloudflare runtime
-├── astro.config.mjs            # Astro configuration
-├── wrangler.jsonc              # Cloudflare Workers config
-├── tsconfig.json
-├── package.json
-├── pnpm-lock.yaml
-```
+Whenever a user clicks "Start Ranking", the **`/api/track`** endpoint records the event twice:
 
-## Internal Tracking & Future Features
+- A row in the **D1 `rankings` table**, which powers the live **"Times Ranked" counters** shown across the site (aggregated per template slug).
+- A raw entry in **Cloudflare KV** kept as a backup event log.
 
-We have implemented a **Server-Side API (`/api/track`)** that logs anonymous ranking events to **Cloudflare KV** whenever a user clicks "Start Ranking".
-
-- **Why?** This is currently used for internal control to see which templates are most popular.
-- **Future Plans:** This data will be used to implement a **real-time "Times Ranked" counter** on the frontend for each template card and detail page.
+Counts are read through `/api/counts` and on the SSR homepage, and templates are ordered by popularity.
 
 ## Deployment
 
-RANKMAKER is configured to deploy on **Cloudflare Pages** using the `@astrojs/cloudflare` adapter.
-
-### Deploy with Wrangler
+RANKMAKER deploys to **Cloudflare Workers** (static assets + server-side rendering) using the `@astrojs/cloudflare` adapter. Bindings for D1, KV, and Workers AI are declared in `wrangler.jsonc`.
 
 ```bash
 # Build the project
 pnpm build
 
 # Deploy to Cloudflare
-npx wrangler pages deploy dist
+npx wrangler deploy
 ```
 
-### Deploy via Cloudflare Dashboard
-
-1. Connect your GitHub repository in the Cloudflare Pages dashboard.
-2. Set the **build command** to `pnpm build`.
-3. Set the **output directory** to `dist`.
-4. Add your environment variables if needed.
+On first deploy, remember to set the production secrets and apply the remote migrations (see [Database & Auth setup](#database--auth-setup-user-accounts--user-templates)).
 
 ## Contributing
 
@@ -219,5 +172,5 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 ---
 
 <p align="center">
-  Made with ❤️ by <strong>Oli</strong>
+  Made with ❤️ by <strong><a href="https://olivermartinezharo.com">Oli</a></strong>
 </p>
