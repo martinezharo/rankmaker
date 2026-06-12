@@ -86,6 +86,18 @@ body {
     }
 }
 
+/* Header/footer persist across navigations (transition:persist) and get
+   their own snapshot groups so the root slide animation doesn't drag
+   them along. Keep those groups completely static. */
+::view-transition-group(site-header),
+::view-transition-old(site-header),
+::view-transition-new(site-header),
+::view-transition-group(site-footer),
+::view-transition-old(site-footer),
+::view-transition-new(site-footer) {
+    animation: none;
+}
+
 /* ── Utility Classes ────────────────────────────── */
 
 .text-gradient-gold {
