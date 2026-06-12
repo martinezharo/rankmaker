@@ -14,6 +14,8 @@
     "db:seed:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0002_seed_from_kv.sql",
     "db:migrate3:local": "npx --yes wrangler@latest d1 execute rankmaker --local --file=migrations/0003_users_templates.sql",
     "db:migrate3:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0003_users_templates.sql",
+    "db:migrate4:local": "npx --yes wrangler@latest d1 execute rankmaker --local --file=migrations/0004_template_visibility.sql",
+    "db:migrate4:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0004_template_visibility.sql",
     "db:counts:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
   },
   "dependencies": {

@@ -3,7 +3,7 @@
 // Images are URL-only by design (no uploads). Rows are rendered client-side
 // from #template-form-data so create and edit share one row markup source.
 import { CATEGORIES } from "../lib/categories";
-import { MAX_OPTIONS, MIN_OPTIONS } from "../lib/templates";
+import { MAX_OPTIONS, MIN_OPTIONS, type Visibility } from "../lib/templates";
 
 interface Props {
     mode: "create" | "edit";
@@ -14,11 +14,34 @@ interface Props {
         description: string | null;
         category: string | null;
         cover_image: string | null;
+        visibility?: Visibility;
         options: { name: string; image: string | null }[];
     };
 }
 
 const { mode, template } = Astro.props;
+
+const VISIBILITY_CHOICES: {
+    value: Visibility;
+    label: string;
+    hint: string;
+}[] = [
+    {
+        value: "public",
+        label: "Public — listed for everyone",
+        hint: "Shown on the homepage, search and your profile. Anyone can rank it.",
+    },
+    {
+        value: "unlisted",
+        label: "Unlisted — only people with the link",
+        hint: "Not listed anywhere and hidden from search engines. It gets a random, unguessable URL — share the link with whoever you want.",
+    },
+    {
+        value: "private",
+        label: "Private — only you",
+        hint: "Only you can see and rank this template.",
+    },
+];
 
 const initial = {
     mode,
@@ -27,6 +50,7 @@ const initial = {
     title: template?.title ?? "",
     description: template?.description ?? "",
     category: template?.category ?? "",
+    visibility: template?.visibility ?? "public",
     cover_image: template?.cover_image ?? "",
     options: template?.options?.map((o) => ({
         name: o.name,
@@ -101,6 +125,30 @@ const inputClass =
                 </select>
                 <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-text-muted text-xs pointer-events-none"></i>
             </div>
+        </div>
+
+        <div>
+            <label for="tf-visibility" class="block text-sm font-semibold text-text-primary mb-2">Visibility</label>
+            <div class="relative">
+                <select
+                    id="tf-visibility"
+                    class={inputClass + " appearance-none pr-10 cursor-pointer"}
+                >
+                    {
+                        VISIBILITY_CHOICES.map((v) => (
+                            <option
+                                value={v.value}
+                                data-hint={v.hint}
+                                selected={v.value === initial.visibility}
+                            >
+                                {v.label}
+                            </option>
+                        ))
+                    }
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-text-muted text-xs pointer-events-none"></i>
+            </div>
+            <p id="tf-visibility-hint" class="text-xs text-text-muted mt-2"></p>
         </div>
     </section>
 
@@ -308,6 +356,10 @@ const inputClass =
         const category = document.getElementById(
             "tf-category",
         ) as HTMLSelectElement;
+        const visibility = document.getElementById(
+            "tf-visibility",
+        ) as HTMLSelectElement;
+        const visibilityHint = document.getElementById("tf-visibility-hint")!;
         const cover = document.getElementById("tf-cover") as HTMLInputElement;
         const coverPreview = document.getElementById(
             "tf-cover-preview",
@@ -455,6 +507,24 @@ const inputClass =
         bindCounter(title, titleCount);
         bindCounter(desc, descCount);
 
+        // ── Visibility hint ──────────────────────────────────────────
+        function updateVisibilityHint() {
+            const selected = visibility.selectedOptions[0];
+            let hint = selected?.dataset.hint || "";
+            // Editing into unlisted regenerates the slug — warn about it,
+            // since the edit page promises the URL stays the same otherwise.
+            if (
+                data.mode === "edit" &&
+                visibility.value === "unlisted" &&
+                data.visibility !== "unlisted"
+            ) {
+                hint += " Saving will change the template URL to a new random one.";
+            }
+            visibilityHint.textContent = hint;
+        }
+        visibility.addEventListener("change", updateVisibilityHint);
+        updateVisibilityHint();
+
         // ── Submit ───────────────────────────────────────────────────
         function validate(): string | null {
             if (title.value.trim().length < 3)
@@ -495,6 +565,7 @@ const inputClass =
             description: string;
             category: string;
             cover_image: string;
+            visibility: string;
             options: { name: string; image: string | null }[];
         };
 
@@ -638,6 +709,7 @@ const inputClass =
                 description: desc.value.trim(),
                 category: category.value,
                 cover_image: cover.value.trim(),
+                visibility: visibility.value,
                 options: rows()
                     .map((r) => ({
                         name: r
@@ -653,7 +725,13 @@ const inputClass =
                     .filter((o) => o.name),
             };
 
-            if (data.mode === "create" && aiModal && aiText) {
+            // Discoverability pitch only makes sense for public templates.
+            if (
+                data.mode === "create" &&
+                aiModal &&
+                aiText &&
+                payload.visibility === "public"
+            ) {
                 setBusy(true);
                 if (!aiAsked) {
                     aiAsked = true;

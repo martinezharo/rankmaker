@@ -9,12 +9,15 @@ interface Props {
     title: string;
     description?: string;
     image?: string | null;
+    /** Ask search engines not to index this page (private/unlisted templates). */
+    noindex?: boolean;
 }
 
 const {
     title,
     description = "RANKMAKER: rank your stuff. No tiers, no noise — just accurate 1v1 rankings.",
     image,
+    noindex = false,
 } = Astro.props;
 
 const SITE_URL = "https://rankmaker.net";
@@ -34,6 +37,7 @@ const ogImage = image
         <link rel="icon" type="image/webp" href="/favicon.webp" />
         <meta name="generator" content={Astro.generator} />
         <title>{title}</title>
+        {noindex && <meta name="robots" content="noindex, nofollow" />}
         <link rel="canonical" href={canonicalURL} />
 
         <!-- Open Graph / Twitter -->

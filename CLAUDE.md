@@ -16,6 +16,7 @@ pnpm preview                # preview the production build
 # D1 migrations are plain SQL files run individually (no migration runner):
 pnpm run db:migrate:local   # migrations/0001_init.sql (rankings table)
 pnpm run db:migrate3:local  # migrations/0003_users_templates.sql (users/sessions/templates)
+pnpm run db:migrate4:local  # migrations/0004_template_visibility.sql (templates.visibility)
 # :remote variants apply to production D1
 ```
 
@@ -31,6 +32,8 @@ Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIE
 - `AI` — Workers AI, used only by `/api/templates/describe`
 
 **Two template sources, one shape.** Official templates live in `src/data/templates.json`; user-created templates live in D1. `src/lib/templates.ts` normalizes both into a single `Template` type (`source: 'official' | 'user'`) so pages treat them identically. Slug lookups check JSON first, then D1; `generateUniqueSlug` deduplicates across both sources. Shared input validation for create/update (`validateTemplateInput`) also lives here — keep server-side limits (option counts, lengths) in sync with any frontend form changes.
+
+**Template visibility** (`templates.visibility`: `public` | `private` | `unlisted`; officials are always public). List queries (`listUserTemplates`, `listTemplatesByUserId`, the sitemap) return public templates only — `/me` passes `includeHidden`. Private pages 404 for anyone but the creator; unlisted pages are reachable by URL only: the slug is random (`generateUnlistedSlug`), the page is `noindex` (meta + `X-Robots-Tag`) and `no-store`. Switching a template TO unlisted regenerates its slug (the old one was public knowledge) and moves its `rankings` rows. **Don't leak hidden slugs through public endpoints** — that's why `getCounts` excludes them by default.
 
 **Times-ranked counts** are NOT the KV log: display counts come from `SELECT slug, COUNT(*) FROM rankings GROUP BY slug` in D1 via `src/lib/counts.ts` (shared by `/api/counts` and the SSR homepage). User templates are mapped with `times_ranked: 0` and pages merge real counts in.
 

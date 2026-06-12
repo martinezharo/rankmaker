@@ -10,6 +10,7 @@ import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
 import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
 import { getTemplateBySlug } from "../../lib/templates";
 import { categoryIcon } from "../../lib/categories";
+import { getSessionUser } from "../../lib/auth";
 
 // Served on demand: official templates resolve from the bundled JSON (no D1
 // read), user templates from D1. A null body + 404 makes Astro render 404.astro.
@@ -19,13 +20,41 @@ if (!template) {
     return new Response(null, { status: 404 });
 }
 
+// Private templates: only the creator may view. Same 404 as "doesn't exist"
+// so the slug doesn't leak. Unlisted: anyone with the (random) URL.
+const isHidden = template.source === "user" && template.visibility !== "public";
+if (template.visibility === "private") {
+    const viewer = await getSessionUser(Astro.cookies, db);
+    if (!viewer || viewer.username !== template.creator.username) {
+        return new Response(null, { status: 404 });
+    }
+}
+
 const { options, creator } = template;
 
 // Official pages change rarely; user templates may be edited (≤60s staleness).
+// Hidden templates are never cached: private responses depend on the session,
+// and unlisted URLs shouldn't sit in shared caches.
 Astro.response.headers.set(
     "Cache-Control",
-    template.source === "official" ? "public, max-age=300" : "public, max-age=60",
+    isHidden
+        ? "no-store"
+        : template.source === "official"
+          ? "public, max-age=300"
+          : "public, max-age=60",
 );
+
+// Belt and braces with the <meta> robots tag in Layout.
+if (isHidden) {
+    Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    // /api/counts excludes hidden slugs (it would leak them), so fetch the
+    // real count here server-side instead of via the client counts script.
+    const row = await db
+        .prepare("SELECT COUNT(*) AS n FROM rankings WHERE slug = ?")
+        .bind(template.slug)
+        .first<{ n: number }>();
+    template.times_ranked = row?.n ?? 0;
+}
 
 const icon = categoryIcon(template.category);
 // Helper to resolve image paths (strip 'public' prefix if present)
@@ -39,6 +68,7 @@ const resolveImg = (path: string | null) => {
 const coverSrc = resolveImg(template.cover_image);
 
 // Structured data: each template page is a ranked list of options.
+// Skipped for hidden templates — they're noindex anyway.
 const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -58,11 +88,17 @@ const jsonLd = {
     title={`${template.title} — RANKMAKER`}
     description={template.description || undefined}
     image={coverSrc}
+    noindex={isHidden}
 >
-    <script
-        type="application/ld+json"
-        set:html={JSON.stringify(jsonLd)}
-        is:inline />
+    {
+        !isHidden && (
+            <script
+                type="application/ld+json"
+                set:html={JSON.stringify(jsonLd)}
+                is:inline
+            />
+        )
+    }
     <!-- ═══════════════════════════════════════════════════
          VIEW 1: TEMPLATE DETAIL (default)
          ═══════════════════════════════════════════════════ -->
@@ -97,14 +133,26 @@ const jsonLd = {
 
             <div class="flex flex-col justify-center space-y-5">
                 <div class="flex items-center justify-between">
-                    {
-                        template.category && (
-                            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider">
-                                <i class={`fa-solid ${icon} text-[10px]`} />
-                                {template.category}
-                            </span>
-                        )
-                    }
+                    <div class="flex items-center gap-2 flex-wrap">
+                        {
+                            template.category && (
+                                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider">
+                                    <i class={`fa-solid ${icon} text-[10px]`} />
+                                    {template.category}
+                                </span>
+                            )
+                        }
+                        {
+                            isHidden && (
+                                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border text-text-muted text-xs font-semibold uppercase tracking-wider">
+                                    <i
+                                        class={`fa-solid ${template.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
+                                    />
+                                    {template.visibility}
+                                </span>
+                            )
+                        }
+                    </div>
                     <button
                         id="share-template-btn"
                         class="w-10 h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/50 transition-all duration-200"
@@ -155,7 +203,9 @@ const jsonLd = {
                 <div class="flex items-center gap-6 text-sm">
                     <div class="flex items-center gap-2 text-text-muted">
                         <i class="fa-solid fa-fire text-primary/70 text-xs"></i>
-                        <span class="font-medium" data-count-slug={template.slug}
+                        <span
+                            class="font-medium"
+                            data-count-slug={isHidden ? undefined : template.slug}
                             >{template.times_ranked.toLocaleString()} ranked</span
                         >
                     </div>

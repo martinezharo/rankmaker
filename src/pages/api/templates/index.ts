@@ -5,10 +5,11 @@ import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
 import {
     MAX_TEMPLATES_PER_USER,
     generateUniqueSlug,
+    generateUnlistedSlug,
     validateTemplateInput,
 } from '../../../lib/templates';
 
-/** Create a template (auth required). Body: { title, description, category, cover_image, options }. */
+/** Create a template (auth required). Body: { title, description, category, cover_image, visibility, options }. */
 export const POST: APIRoute = async (context) => {
     if (!checkOrigin(context.request)) {
         return json({ error: 'Forbidden' }, 403);
@@ -42,13 +43,18 @@ export const POST: APIRoute = async (context) => {
         }
 
         const id = crypto.randomUUID();
-        const slug = await generateUniqueSlug(db, data.title);
+        // Unlisted templates get a random, unguessable slug — the URL is the
+        // only access control they have.
+        const slug =
+            data.visibility === 'unlisted'
+                ? await generateUnlistedSlug(db, data.title)
+                : await generateUniqueSlug(db, data.title);
 
         await db.batch([
             db
                 .prepare(
-                    `INSERT INTO templates (id, creator_id, slug, title, description, category, cover_image)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`
+                    `INSERT INTO templates (id, creator_id, slug, title, description, category, cover_image, visibility)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
                 )
                 .bind(
                     id,
@@ -57,7 +63,8 @@ export const POST: APIRoute = async (context) => {
                     data.title,
                     data.description,
                     data.category,
-                    data.cover_image
+                    data.cover_image,
+                    data.visibility
                 ),
             ...data.options.map((o, i) =>
                 db

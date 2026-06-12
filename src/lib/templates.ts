@@ -6,6 +6,9 @@
 import templatesJson from '../data/templates.json';
 import { CATEGORY_NAMES } from './categories';
 
+export const VISIBILITIES = ['public', 'private', 'unlisted'] as const;
+export type Visibility = (typeof VISIBILITIES)[number];
+
 export type Creator = {
     username: string;
     avatar: string;
@@ -31,6 +34,7 @@ export type Template = {
     options: TemplateOption[];
     creator: Creator;
     source: 'official' | 'user';
+    visibility: Visibility;
     /** Space-joined option names — only populated by list queries for search. */
     optionNames?: string;
 };
@@ -63,6 +67,7 @@ function mapOfficial(t: any): Template {
         })),
         creator: OFFICIAL_CREATOR,
         source: 'official',
+        visibility: 'public',
         optionNames: (t.options || []).map((o: any) => o.name).join(' '),
     };
 }
@@ -94,6 +99,7 @@ type TemplateRow = {
     username: string;
     avatar: string;
     is_verified: number;
+    visibility: string;
     option_names?: string | null;
 };
 
@@ -115,19 +121,22 @@ function mapRow(row: TemplateRow, options: TemplateOption[] = []): Template {
             isVerified: row.is_verified === 1,
         },
         source: 'user',
+        visibility: (VISIBILITIES as readonly string[]).includes(row.visibility)
+            ? (row.visibility as Visibility)
+            : 'public',
         optionNames: row.option_names ?? undefined,
     };
 }
 
 const TEMPLATE_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
-           t.created_at, t.updated_at,
+           t.created_at, t.updated_at, t.visibility,
            u.username, u.avatar, u.is_verified
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
 const TEMPLATE_LIST_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
-           t.created_at, t.updated_at,
+           t.created_at, t.updated_at, t.visibility,
            u.username, u.avatar, u.is_verified,
            (SELECT GROUP_CONCAT(o.name, ' ') FROM template_options o
              WHERE o.template_id = t.id) AS option_names
@@ -169,22 +178,30 @@ export async function getTemplateBySlug(
     );
 }
 
-/** All user templates (no per-option rows) for home/search list views. */
+/** Public user templates (no per-option rows) for home/search list views. */
 export async function listUserTemplates(db: D1Database): Promise<Template[]> {
     const { results } = await db
-        .prepare(`${TEMPLATE_LIST_SELECT} ORDER BY t.created_at DESC`)
+        .prepare(
+            `${TEMPLATE_LIST_SELECT} WHERE t.visibility = 'public'
+             ORDER BY t.created_at DESC`
+        )
         .all<TemplateRow>();
     return results.map((r) => mapRow(r));
 }
 
-/** Templates created by a user. RANKMAKER also owns every JSON template. */
+/**
+ * Templates created by a user. RANKMAKER also owns every JSON template.
+ * Public ones only by default; pass `includeHidden` for owner views (/me).
+ */
 export async function listTemplatesByUserId(
     db: D1Database,
-    userId: string
+    userId: string,
+    includeHidden = false
 ): Promise<Template[]> {
     const { results } = await db
         .prepare(
             `${TEMPLATE_LIST_SELECT} WHERE t.creator_id = ?
+             ${includeHidden ? '' : "AND t.visibility = 'public'"}
              ORDER BY t.created_at DESC`
         )
         .bind(userId)
@@ -237,6 +254,36 @@ export async function generateUniqueSlug(
     }
 }
 
+/** ~62 bits of crypto randomness — unguessable, the whole point of unlisted. */
+function randomToken(length = 12): string {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const bytes = crypto.getRandomValues(new Uint8Array(length));
+    let out = '';
+    for (const b of bytes) out += alphabet[b % alphabet.length];
+    return out;
+}
+
+/**
+ * Slug for unlisted templates: readable title prefix + random token, so the
+ * URL can't be guessed or enumerated. Collisions are practically impossible
+ * but uniqueness is still verified (the column is UNIQUE).
+ */
+export async function generateUnlistedSlug(
+    db: D1Database,
+    title: string
+): Promise<string> {
+    const base = slugify(title).slice(0, 40).replace(/-+$/, '') || 'ranking';
+    for (;;) {
+        const candidate = `${base}-${randomToken()}`;
+        if (getOfficialTemplateBySlug(candidate)) continue;
+        const exists = await db
+            .prepare('SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE')
+            .bind(candidate)
+            .first();
+        if (!exists) return candidate;
+    }
+}
+
 // ── Input validation (shared by POST create / PUT update) ────────────────────
 
 export const MIN_OPTIONS = 4;
@@ -248,6 +295,7 @@ export type TemplateInput = {
     description: string;
     category: string;
     cover_image: string;
+    visibility: Visibility;
     options: { name: string; image: string | null }[];
 };
 
@@ -294,6 +342,15 @@ export function validateTemplateInput(
         return err('Cover image must be a valid http(s) URL.');
     }
 
+    // Optional for older clients — missing means public (the previous behavior).
+    const visibility: Visibility =
+        body?.visibility === undefined || body?.visibility === ''
+            ? 'public'
+            : body.visibility;
+    if (!VISIBILITIES.includes(visibility)) {
+        return err('Pick a valid visibility.');
+    }
+
     if (!Array.isArray(body?.options)) return err('Options are required.');
     if (body.options.length < MIN_OPTIONS) {
         return err(`Add at least ${MIN_OPTIONS} options.`);
@@ -327,6 +384,13 @@ export function validateTemplateInput(
 
     return {
         ok: true,
-        data: { title, description, category, cover_image: cover, options },
+        data: {
+            title,
+            description,
+            category,
+            cover_image: cover,
+            visibility,
+            options,
+        },
     };
 }

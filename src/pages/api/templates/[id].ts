@@ -8,9 +8,12 @@ import {
     json,
     type SessionUser,
 } from '../../../lib/auth';
-import { validateTemplateInput } from '../../../lib/templates';
+import {
+    generateUnlistedSlug,
+    validateTemplateInput,
+} from '../../../lib/templates';
 
-type Owned = { id: string; slug: string };
+type Owned = { id: string; slug: string; visibility: string };
 
 /** Returns the template iff it exists and belongs to the session user. */
 async function getOwned(
@@ -19,11 +22,18 @@ async function getOwned(
     user: SessionUser
 ): Promise<Owned | null> {
     const row = await db
-        .prepare('SELECT id, slug, creator_id FROM templates WHERE id = ?')
+        .prepare(
+            'SELECT id, slug, creator_id, visibility FROM templates WHERE id = ?'
+        )
         .bind(templateId)
-        .first<{ id: string; slug: string; creator_id: string }>();
+        .first<{
+            id: string;
+            slug: string;
+            creator_id: string;
+            visibility: string;
+        }>();
     if (!row || row.creator_id !== user.id) return null;
-    return { id: row.id, slug: row.slug };
+    return { id: row.id, slug: row.slug, visibility: row.visibility };
 }
 
 async function authorize(context: APIContext) {
@@ -43,7 +53,12 @@ async function authorize(context: APIContext) {
     return { db, user, owned };
 }
 
-/** Update a template. The slug is preserved so share links and counts stay stable. */
+/**
+ * Update a template. The slug is preserved so share links and counts stay
+ * stable — except when switching TO unlisted: the old slug is already public
+ * knowledge, so a fresh random one is generated (and the ranking counts are
+ * moved to it).
+ */
 export const PUT: APIRoute = async (context) => {
     try {
         const auth = await authorize(context);
@@ -60,12 +75,18 @@ export const PUT: APIRoute = async (context) => {
         if (!result.ok) return json({ error: result.error }, 400);
         const data = result.data;
 
+        const becameUnlisted =
+            data.visibility === 'unlisted' && owned.visibility !== 'unlisted';
+        const slug = becameUnlisted
+            ? await generateUnlistedSlug(db, data.title)
+            : owned.slug;
+
         await db.batch([
             db
                 .prepare(
                     `UPDATE templates
                      SET title = ?, description = ?, category = ?, cover_image = ?,
-                         updated_at = datetime('now')
+                         visibility = ?, slug = ?, updated_at = datetime('now')
                      WHERE id = ?`
                 )
                 .bind(
@@ -73,8 +94,19 @@ export const PUT: APIRoute = async (context) => {
                     data.description,
                     data.category,
                     data.cover_image,
+                    data.visibility,
+                    slug,
                     owned.id
                 ),
+            ...(becameUnlisted
+                ? [
+                      db
+                          .prepare(
+                              'UPDATE rankings SET slug = ? WHERE slug = ? COLLATE NOCASE'
+                          )
+                          .bind(slug, owned.slug),
+                  ]
+                : []),
             db
                 .prepare('DELETE FROM template_options WHERE template_id = ?')
                 .bind(owned.id),
@@ -88,7 +120,7 @@ export const PUT: APIRoute = async (context) => {
             ),
         ]);
 
-        return json({ ok: true, slug: owned.slug });
+        return json({ ok: true, slug });
     } catch (error) {
         console.error('Update template error:', error);
         return json({ error: 'Internal server error' }, 500);

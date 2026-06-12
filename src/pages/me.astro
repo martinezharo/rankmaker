@@ -6,6 +6,7 @@ import Avatar from "../components/Avatar.astro";
 import SmartImage from "../components/SmartImage.astro";
 import { getSessionUser } from "../lib/auth";
 import { categoryIcon } from "../lib/categories";
+import { getCounts } from "../lib/counts";
 import { listTemplatesByUserId } from "../lib/templates";
 
 const db = Astro.locals.runtime.env.DB;
@@ -14,7 +15,19 @@ if (!user) {
     return Astro.redirect("/api/auth/login?next=/me", 302);
 }
 
-const templates = await listTemplatesByUserId(db, user.id);
+// Owner view: include private/unlisted templates. Counts are merged here
+// server-side because the public /api/counts (used by the client counts
+// script) excludes hidden slugs.
+let templates = await listTemplatesByUserId(db, user.id, true);
+try {
+    const counts = await getCounts(db, true);
+    templates = templates.map((t) => ({
+        ...t,
+        times_ranked: counts[t.slug] ?? 0,
+    }));
+} catch {
+    // keep zeros
+}
 
 const resolveImg = (path: string | null) => {
     if (!path) return null;
@@ -118,10 +131,22 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                     </span>
                                     <span
                                         class="inline-flex items-center gap-1.5"
-                                        data-count-slug={t.slug}
+                                        data-count-slug={
+                                            t.visibility === "public"
+                                                ? t.slug
+                                                : undefined
+                                        }
                                     >
                                         {t.times_ranked.toLocaleString()} ranked
                                     </span>
+                                    {t.visibility !== "public" && (
+                                        <span class="inline-flex items-center gap-1.5 uppercase tracking-wider font-semibold text-text-muted">
+                                            <i
+                                                class={`fa-solid ${t.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
+                                            />
+                                            {t.visibility}
+                                        </span>
+                                    )}
                                 </p>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">

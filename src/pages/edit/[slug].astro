@@ -16,7 +16,7 @@ if (!user) {
 }
 
 const row = await Astro.locals.runtime.env.DB.prepare(
-    `SELECT id, creator_id, slug, title, description, category, cover_image
+    `SELECT id, creator_id, slug, title, description, category, cover_image, visibility
      FROM templates WHERE slug = ? COLLATE NOCASE`,
 )
     .bind(Astro.params.slug)
@@ -28,6 +28,7 @@ const row = await Astro.locals.runtime.env.DB.prepare(
         description: string | null;
         category: string;
         cover_image: string | null;
+        visibility: import("../../lib/templates").Visibility;
     }>();
 
 // Same 404 for "doesn't exist" and "not yours".
@@ -59,7 +60,8 @@ Astro.response.headers.set("Cache-Control", "no-store");
             </h1>
             <p class="text-sm text-text-secondary mt-2">
                 The template URL stays the same — your share links keep
-                working.
+                working. (Exception: switching to unlisted gives it a new
+                random URL.)
             </p>
         </div>
 
