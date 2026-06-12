@@ -33,3 +33,6 @@ pnpm-debug.log*
 # ai agents
 .claude/
 .agents/
+
+# local scripts
+scripts/
