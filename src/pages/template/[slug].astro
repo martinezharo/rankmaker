@@ -955,14 +955,30 @@ try {
             );
 
             // ─── Download Image ─────────────────────────────
-            document
-                .getElementById("action-download-image")
-                .addEventListener("click", () =>
-                    downloadRankingImage(
+            // Loads every option image (cross-origin) and renders a large
+            // canvas — slow on poor connections, so show a busy state instead
+            // of leaving the button looking unresponsive.
+            const downloadBtn = document.getElementById(
+                "action-download-image",
+            );
+            downloadBtn.addEventListener("click", async () => {
+                if (downloadBtn.dataset.busy) return;
+                downloadBtn.dataset.busy = "1";
+                const original = downloadBtn.innerHTML;
+                downloadBtn.setAttribute("aria-busy", "true");
+                downloadBtn.innerHTML =
+                    '<i class="fa-solid fa-spinner btn-spinner text-xs text-primary/70"></i>Generating…';
+                try {
+                    await downloadRankingImage(
                         lastRanked,
                         templateTitle || "My Ranking",
-                    ),
-                );
+                    );
+                } finally {
+                    downloadBtn.innerHTML = original;
+                    downloadBtn.removeAttribute("aria-busy");
+                    delete downloadBtn.dataset.busy;
+                }
+            });
 
             // ─── Reorder Manually (drag & drop via SortableJS) ────────────
             let reorderMode = false;

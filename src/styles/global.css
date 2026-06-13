@@ -459,6 +459,17 @@ body {
     transition: width 0.1s ease-out, opacity 0.4s ease-out 0.1s;
 }
 
+/* Generic inline spinner for buttons doing async work (e.g. Download Image,
+   the create/save template submit). */
+.btn-spinner {
+    animation: btnSpin 0.7s linear infinite;
+}
+@keyframes btnSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     #nav-progress {
         transition: opacity 0.2s ease-out;
