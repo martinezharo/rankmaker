@@ -431,3 +431,36 @@ body {
 .rank-chosen {
     cursor: grabbing;
 }
+
+/* ── Navigation progress bar ───────────────────────────────────────────────
+   A thin top bar shown while the ClientRouter fetches the next page, so slow
+   connections get immediate feedback that a navigation is underway. Driven by
+   the astro:before-preparation / astro:page-load events in Layout.astro. */
+#nav-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 0;
+    z-index: 200;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-gold-start));
+    box-shadow: 0 0 10px rgba(132, 0, 255, 0.6);
+    opacity: 0;
+    transform: translateZ(0);
+    transition: width 0.2s ease-out, opacity 0.3s ease-out;
+    pointer-events: none;
+}
+#nav-progress.is-loading {
+    opacity: 1;
+}
+#nav-progress.is-done {
+    opacity: 0;
+    /* Snap to full instantly, then the opacity fade hides it. */
+    transition: width 0.1s ease-out, opacity 0.4s ease-out 0.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #nav-progress {
+        transition: opacity 0.2s ease-out;
+    }
+}

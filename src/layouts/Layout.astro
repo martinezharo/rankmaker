@@ -76,6 +76,10 @@ const ogImage = image
         <ViewTransitions />
     </head>
     <body class="flex flex-col min-h-dvh">
+        <!-- Navigation progress bar (feedback for slow connections during
+             ClientRouter page fetches) — persisted across swaps. -->
+        <div id="nav-progress" transition:persist aria-hidden="true"></div>
+
         <!-- Background noise layer -->
         <div class="fixed inset-0 -z-20 bg-surface"></div>
         <div
@@ -91,6 +95,72 @@ const ogImage = image
         </main>
         <Footer />
         <CookieConsent />
+
+        <!-- Navigation progress bar: grows toward 90% while the next page is
+             fetched, then snaps to 100% and fades out once it loads. Gives slow
+             connections immediate feedback that a click registered. -->
+        <script>
+            (function () {
+                if ((window as any).__rmNavProgress) return;
+                (window as any).__rmNavProgress = true;
+
+                const bar = () =>
+                    document.getElementById(
+                        "nav-progress",
+                    ) as HTMLElement | null;
+                let timer: ReturnType<typeof setInterval> | undefined;
+                let width = 0;
+
+                function start() {
+                    const el = bar();
+                    if (!el) return;
+                    clearInterval(timer);
+                    width = 8;
+                    el.classList.remove("is-done");
+                    el.classList.add("is-loading");
+                    el.style.width = width + "%";
+                    // Ease toward 90% so the bar keeps moving on slow fetches
+                    // without ever pretending to be finished.
+                    timer = setInterval(() => {
+                        width += (90 - width) * 0.15;
+                        el.style.width = width + "%";
+                    }, 200);
+                }
+
+                function done() {
+                    const el = bar();
+                    if (!el) return;
+                    clearInterval(timer);
+                    el.classList.remove("is-loading");
+                    el.classList.add("is-done");
+                    el.style.width = "100%";
+                    setTimeout(() => {
+                        if (el.classList.contains("is-done"))
+                            el.style.width = "0";
+                    }, 500);
+                }
+
+                document.addEventListener("astro:before-preparation", start);
+                document.addEventListener("astro:page-load", done);
+                // A failed/aborted navigation still settles the bar.
+                document.addEventListener("astro:after-swap", done);
+
+                // Links with data-astro-reload (e.g. "Create Ranking") do a
+                // full browser navigation, so the ClientRouter events above
+                // never fire. Catch the click and show the bar until the
+                // browser swaps the document. pageshow handles bfcache returns.
+                document.addEventListener("click", (e) => {
+                    const a = (e.target as HTMLElement | null)?.closest?.(
+                        "a[data-astro-reload]",
+                    ) as HTMLAnchorElement | null;
+                    if (!a || a.target === "_blank") return;
+                    if (e.defaultPrevented || e.button !== 0) return;
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                    start();
+                });
+                window.addEventListener("pageshow", done);
+            })();
+        </script>
 
         <!-- Replace the static "N ranked" mockup with real counts from D1 -->
         <script>
