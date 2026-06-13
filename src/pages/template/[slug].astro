@@ -364,6 +364,10 @@ const jsonLd = {
          RANKING ENGINE + UI CONTROLLER
          ═══════════════════════════════════════════════════ -->
     <script>
+        // @ts-nocheck — legacy client-side controller (untyped DOM glue). The
+        // build transpiles without type-checking; bundling surfaced strict-mode
+        // noise (implicit any, possibly-null getElementById). Extracted logic in
+        // src/scripts/*.ts stays fully typed and checked.
         // Bundled module: runs once, then `astro:page-load` re-runs rankingInit
         // on every View Transitions navigation (and the initial load). The
         // handler re-queries the DOM each time, so no listener-stacking guard is
@@ -374,6 +378,7 @@ const jsonLd = {
             mergeSort,
         } from "../../scripts/ranking-sort";
         import { downloadRankingImage } from "../../scripts/ranking-share-image";
+        import { createReorder } from "../../scripts/ranking-reorder";
 
         function rankingInit() {
             // Read options + title from the JSON data element in the current
@@ -470,6 +475,21 @@ const jsonLd = {
                 const c = (hash & 0x00ffffff).toString(16).toUpperCase();
                 return "#" + "00000".substring(0, 6 - c.length) + c;
             };
+
+            // ─── Rank position badge (shared by render + reorder) ──────
+            // Big, left-aligned position: medal for the podium, number otherwise.
+            const posLabel = (i) =>
+                i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+            const posClasses = (i) =>
+                i === 0
+                    ? "bg-amber-400/15 text-amber-300 text-2xl"
+                    : i === 1
+                      ? "bg-gray-300/15 text-gray-200 text-2xl"
+                      : i === 2
+                        ? "bg-orange-400/15 text-orange-300 text-2xl"
+                        : "bg-border/60 text-text-muted text-lg font-black";
+            const POS_BASE =
+                "rank-pos flex items-center justify-center w-12 h-12 rounded-xl shrink-0";
 
             function setupImage(img, fallback, fallbackText, item) {
                 // Reset state
@@ -866,25 +886,14 @@ const jsonLd = {
                     .map((item, i) => {
                         const delay = `${0.6 + i * 0.06}s`;
                         const isTop3 = i < 3;
-                        const medalEmoji =
-                            i === 0
-                                ? "🥇"
-                                : i === 1
-                                  ? "🥈"
-                                  : i === 2
-                                    ? "🥉"
-                                    : "";
                         return `
-                    <div class="rank-item flex items-center gap-4 p-3 rounded-xl ${isTop3 ? "bg-primary/5 border border-primary/15" : "bg-surface-elevated border border-border"} animate-rank-slide" style="animation-delay:${delay}" data-item-id="${item.id}">
-                        <span class="rank-drag-handle hidden items-center justify-center w-8 h-8 rounded-lg bg-border/50 text-text-muted cursor-grab active:cursor-grabbing shrink-0 touch-none"><i class="fa-solid fa-grip-vertical text-xs"></i></span>
-                        <span class="rank-badge w-8 h-8 rounded-lg ${isTop3 ? "bg-primary/15 text-primary" : "bg-border text-text-muted"} flex items-center justify-center text-xs font-black shrink-0">
-                            ${medalEmoji || i + 1}
-                        </span>
-                        <div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0">
+                    <div class="rank-item flex items-center gap-3 sm:gap-4 p-3 rounded-xl ${isTop3 ? "bg-primary/5 border border-primary/15" : "bg-surface-elevated border border-border"} animate-rank-slide" style="animation-delay:${delay}" data-item-id="${item.id}">
+                        <div class="${POS_BASE} ${posClasses(i)}">${posLabel(i)}</div>
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-surface shrink-0">
                             <img src="${esc(item.image)}" alt="${esc(item.name)}" class="w-full h-full object-cover" />
                         </div>
-                        <p class="text-sm font-medium text-text-primary flex-1 line-clamp-1">${esc(item.name)}</p>
-                        <span class="rank-number text-xs text-text-muted font-medium">#${i + 1}</span>
+                        <p class="text-base font-semibold text-text-primary flex-1 line-clamp-1">${esc(item.name)}</p>
+                        <span class="rank-drag-handle hidden items-center justify-center w-10 h-10 rounded-lg bg-border/40 text-text-secondary cursor-grab active:cursor-grabbing shrink-0 touch-none"><i class="fa-solid fa-grip-vertical"></i></span>
                     </div>
                 `;
                     })
@@ -941,164 +950,24 @@ const jsonLd = {
                     ),
                 );
 
-            // ─── Reorder Manually (drag & drop) ────────────
+            // ─── Reorder Manually (drag & drop via SortableJS) ────────────
             let reorderMode = false;
             const actionReorder = document.getElementById("action-reorder");
 
-            actionReorder.addEventListener("click", () => {
-                reorderMode = !reorderMode;
-                const handles =
-                    rankListEl.querySelectorAll(".rank-drag-handle");
-                const badges = rankListEl.querySelectorAll(".rank-badge");
-
-                if (reorderMode) {
-                    actionReorder.classList.add(
-                        "!border-primary/60",
-                        "!text-primary",
-                        "!bg-primary/10",
-                    );
-                    actionReorder.querySelector("i").className =
-                        "fa-solid fa-check text-xs text-primary";
-                    actionReorder.querySelector("i").nextSibling.textContent =
-                        "Done Reordering";
-                    handles.forEach((h) => h.classList.remove("hidden"));
-                    handles.forEach((h) => h.classList.add("flex"));
-                    badges.forEach((b) => b.classList.add("hidden"));
-                } else {
-                    actionReorder.classList.remove(
-                        "!border-primary/60",
-                        "!text-primary",
-                        "!bg-primary/10",
-                    );
-                    actionReorder.querySelector("i").className =
-                        "fa-solid fa-arrows-up-down text-xs text-primary/70";
-                    actionReorder.querySelector("i").nextSibling.textContent =
-                        "Reorder Manually";
-                    handles.forEach((h) => h.classList.add("hidden"));
-                    handles.forEach((h) => h.classList.remove("flex"));
-                    badges.forEach((b) => b.classList.remove("hidden"));
-                }
-            });
-
-            // ─── Drag & Drop engine (pointer events — works mouse + touch) ──
-            let dragEl = null;
-            let dragClone = null;
-            let dragStartY = 0;
-            let dragOffsetY = 0;
-            let dragItems = [];
-            let dragPlaceholder = null;
-
-            rankListEl.addEventListener("pointerdown", (e) => {
-                if (!reorderMode) return;
-                const handle = e.target.closest(".rank-drag-handle");
-                if (!handle) return;
-
-                e.preventDefault();
-                dragEl = handle.closest(".rank-item");
-                if (!dragEl) return;
-
-                dragEl.setPointerCapture(e.pointerId);
-
-                const rect = dragEl.getBoundingClientRect();
-                dragStartY = e.clientY;
-                dragOffsetY = e.clientY - rect.top;
-
-                // Create floating clone
-                dragClone = dragEl.cloneNode(true);
-                dragClone.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:9999;opacity:0.92;pointer-events:none;transition:none;box-shadow:0 8px 32px rgba(132,0,255,0.3);border:1px solid rgba(132,0,255,0.5);border-radius:12px;`;
-                document.body.appendChild(dragClone);
-
-                // Add placeholder
-                dragPlaceholder = document.createElement("div");
-                dragPlaceholder.style.cssText = `height:${rect.height}px;border:2px dashed rgba(132,0,255,0.3);border-radius:12px;margin:4px 0;transition:all 0.15s ease;`;
-                dragEl.style.opacity = "0";
-                dragEl.style.height = rect.height + "px";
-                dragEl.parentNode.insertBefore(dragPlaceholder, dragEl);
-                dragEl.style.display = "none";
-
-                dragItems = [...rankListEl.querySelectorAll(".rank-item")];
-            });
-
-            rankListEl.addEventListener("pointermove", (e) => {
-                if (!dragClone) return;
-                e.preventDefault();
-
-                const y = e.clientY - dragOffsetY;
-                dragClone.style.top = y + "px";
-
-                // Find which item we're hovering over
-                const siblings = [
-                    ...rankListEl.querySelectorAll(".rank-item"),
-                ].filter((el) => el !== dragEl);
-                let insertBefore = null;
-                for (const sib of siblings) {
-                    const sibRect = sib.getBoundingClientRect();
-                    if (e.clientY < sibRect.top + sibRect.height / 2) {
-                        insertBefore = sib;
-                        break;
-                    }
-                }
-
-                // Move placeholder
-                if (insertBefore) {
-                    rankListEl.insertBefore(dragPlaceholder, insertBefore);
-                } else {
-                    rankListEl.appendChild(dragPlaceholder);
-                }
-            });
-
-            rankListEl.addEventListener("pointerup", (e) => {
-                if (!dragClone) return;
-                finishDrag();
-            });
-
-            rankListEl.addEventListener("pointercancel", (e) => {
-                if (!dragClone) return;
-                finishDrag();
-            });
-
-            function finishDrag() {
-                if (!dragEl || !dragClone) return;
-
-                // Insert dragEl where placeholder is
-                dragPlaceholder.parentNode.insertBefore(
-                    dragEl,
-                    dragPlaceholder,
-                );
-                dragPlaceholder.remove();
-                dragEl.style.display = "";
-                dragEl.style.opacity = "";
-                dragEl.style.height = "";
-                dragClone.remove();
-
-                dragClone = null;
-                dragPlaceholder = null;
-
-                // Rebuild lastRanked from new DOM order
-                const newOrder = [...rankListEl.querySelectorAll(".rank-item")]
-                    .map((el) => {
-                        const id = el.dataset.itemId;
-                        return lastRanked.find(
-                            (item) => String(item.id) === id,
-                        );
-                    })
-                    .filter(Boolean);
-
-                lastRanked = newOrder;
-
-                // Update badges and numbers
+            // Renumber the position badges + restyle top-3 rows from the current
+            // DOM order. Cheap; runs live on every order shift during a drag so
+            // positions update in real time.
+            function renumberPositions() {
                 rankListEl.querySelectorAll(".rank-item").forEach((el, i) => {
-                    const badge = el.querySelector(".rank-badge");
-                    const num = el.querySelector(".rank-number");
+                    const pos = el.querySelector(".rank-pos");
                     const isTop3 = i < 3;
-                    const medalEmoji =
-                        i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "";
 
-                    badge.textContent = medalEmoji || String(i + 1);
-                    badge.className = `rank-badge w-8 h-8 rounded-lg ${isTop3 ? "bg-primary/15 text-primary" : "bg-border text-text-muted"} flex items-center justify-center text-xs font-black shrink-0 ${reorderMode ? "hidden" : ""}`;
-                    num.textContent = `#${i + 1}`;
+                    if (pos) {
+                        pos.textContent = posLabel(i);
+                        pos.className = `${POS_BASE} ${posClasses(i)}`;
+                    }
 
-                    // Update row bg
+                    // Update row bg (top-3 highlight)
                     el.className = el.className
                         .replace(/bg-primary\/5/g, "")
                         .replace(/border-primary\/15/g, "")
@@ -1113,12 +982,65 @@ const jsonLd = {
                         );
                     }
                 });
-
-                // Re-render podium with new order
-                renderPodium(newOrder);
-
-                dragEl = null;
             }
+
+            // On drop: rebuild lastRanked from the new DOM order, renumber, and
+            // re-render the podium.
+            function applyReorder(orderedIds) {
+                lastRanked = orderedIds
+                    .map((id) =>
+                        lastRanked.find((item) => String(item.id) === id),
+                    )
+                    .filter(Boolean);
+                renumberPositions();
+                renderPodium(lastRanked);
+            }
+
+            const reorder = createReorder(rankListEl, {
+                onChange: renumberPositions,
+                onEnd: applyReorder,
+            });
+
+            actionReorder.addEventListener("click", () => {
+                reorderMode = !reorderMode;
+                reorder.setEnabled(reorderMode);
+                const handles =
+                    rankListEl.querySelectorAll(".rank-drag-handle");
+
+                if (reorderMode) {
+                    actionReorder.classList.add(
+                        "!border-primary/60",
+                        "!text-primary",
+                        "!bg-primary/10",
+                    );
+                    actionReorder.querySelector("i").className =
+                        "fa-solid fa-check text-xs text-primary";
+                    actionReorder.querySelector("i").nextSibling.textContent =
+                        "Done Reordering";
+                    handles.forEach((h) => h.classList.remove("hidden"));
+                    handles.forEach((h) => h.classList.add("flex"));
+                    // Drop the one-shot entrance animation: its `both` fill-mode
+                    // pins a transform that fights SortableJS's live reorder
+                    // transforms (causing lag and rows not moving until drop).
+                    rankListEl
+                        .querySelectorAll(".rank-item")
+                        .forEach((el) =>
+                            el.classList.remove("animate-rank-slide"),
+                        );
+                } else {
+                    actionReorder.classList.remove(
+                        "!border-primary/60",
+                        "!text-primary",
+                        "!bg-primary/10",
+                    );
+                    actionReorder.querySelector("i").className =
+                        "fa-solid fa-arrows-up-down text-xs text-primary/70";
+                    actionReorder.querySelector("i").nextSibling.textContent =
+                        "Reorder Manually";
+                    handles.forEach((h) => h.classList.add("hidden"));
+                    handles.forEach((h) => h.classList.remove("flex"));
+                }
+            });
 
             // ─── Podium renderer (extracted for reuse) ───────
             function renderPodium(ranked) {

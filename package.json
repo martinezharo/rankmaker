@@ -25,10 +25,12 @@
     "@astrojs/cloudflare": "^12.6.12",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.17.1",
+    "sortablejs": "^1.15.7",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
+    "@types/sortablejs": "^1.15.9",
     "vitest": "^4.1.8",
     "wrangler": "^4.99.0"
   }

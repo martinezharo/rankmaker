@@ -381,3 +381,28 @@ body {
     position: absolute;
     background: var(--color-primary);
 }
+/* ── SortableJS results reorder ────────────────────────────────────────── */
+/* The drop-position placeholder left behind in the list: a faint dashed slot
+   so it reads as "the row will land here", not as the row itself. */
+.rank-ghost {
+    opacity: 1;
+    background: rgba(132, 0, 255, 0.08) !important;
+    border: 2px dashed rgba(132, 0, 255, 0.45) !important;
+}
+.rank-ghost > * {
+    visibility: hidden;
+}
+/* The clone that follows the cursor (appended to <body>): full, lifted, and
+   clearly "picked up" so you always see what you're dragging. */
+.rank-drag {
+    opacity: 1 !important;
+    cursor: grabbing;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+    border-color: rgba(132, 0, 255, 0.6) !important;
+    transform: scale(1.03);
+}
+/* The original row at rest once chosen — keep it solid (the ghost handles the
+   placeholder look). */
+.rank-chosen {
+    cursor: grabbing;
+}

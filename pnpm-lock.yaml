@@ -10,13 +10,16 @@ importers:
     dependencies:
       '@astrojs/cloudflare':
         specifier: ^12.6.12
-        version: 12.6.12(astro@5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@5.9.3))(jiti@2.6.1)(lightningcss@1.31.1)
+        version: 12.6.12(astro@5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@6.0.3)(yaml@2.9.0))(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)
       '@tailwindcss/vite':
         specifier: ^4.1.18
-        version: 4.2.1(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1))
+        version: 4.2.1(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0))
       astro:
         specifier: ^5.17.1
-        version: 5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@5.9.3)
+        version: 5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@6.0.3)(yaml@2.9.0)
+      sortablejs:
+        specifier: ^1.15.7
+        version: 1.15.7
       tailwindcss:
         specifier: ^4.1.18
         version: 4.2.1
@@ -24,9 +27,12 @@ importers:
       '@playwright/test':
         specifier: ^1.60.0
         version: 1.60.0
+      '@types/sortablejs':
+        specifier: ^1.15.9
+        version: 1.15.9
       vitest:
         specifier: ^4.1.8
-        version: 4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1))
+        version: 4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0))
       wrangler:
         specifier: ^4.99.0
         version: 4.99.0(@cloudflare/workers-types@4.20260302.0)
@@ -1239,6 +1245,9 @@ packages:
   '@types/nlcst@2.0.3':
     resolution: {integrity: sha512-vSYNSDe6Ix3q+6Z7ri9lyWqgGhJTmzRjZRqyq15N0Z/1/UnVsno9G/N40NBijoYx2seFDIl0+B2mgAb9mezUCA==}
 
+  '@types/sortablejs@1.15.9':
+    resolution: {integrity: sha512-7HP+rZGE2p886PKV9c9OJzLBI6BBJu1O7lJGYnPyG3fS4/duUCcngkNCjsLwIMV+WMqANe3tt4irrXHSIe68OQ==}
+
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
 
@@ -2147,6 +2156,9 @@ packages:
     resolution: {integrity: sha512-4zemZi0HvTnYwLfrpk/CF9LOd9Lt87kAt50GnqhMpyF9U3poDAP2+iukq2bZsO/ufegbYehBkqINbsWxj4l4cw==}
     engines: {node: '>= 18'}
 
+  sortablejs@1.15.7:
+    resolution: {integrity: sha512-Kk8wLQPlS+yi1ZEf48a4+fzHa4yxjC30M/Sr2AnQu+f/MPwvvX9XjZ6OWejiz8crBsLwSq8GHqaxaET7u6ux0A==}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -2240,8 +2252,8 @@ packages:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -2535,6 +2547,11 @@ packages:
   xxhash-wasm@1.1.0:
     resolution: {integrity: sha512-147y/6YNh+tlp6nd/2pWq38i9h6mz/EuQ6njIrmW8D1BS5nCqs0P6DG+m6zTGnNz5I+uhZ0SHxBs9BsPrwcKDA==}
 
+  yaml@2.9.0:
+    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
   yargs-parser@21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
@@ -2579,14 +2596,14 @@ packages:
 
 snapshots:
 
-  '@astrojs/cloudflare@12.6.12(astro@5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@5.9.3))(jiti@2.6.1)(lightningcss@1.31.1)':
+  '@astrojs/cloudflare@12.6.12(astro@5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@6.0.3)(yaml@2.9.0))(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)':
     dependencies:
       '@astrojs/internal-helpers': 0.7.5
       '@astrojs/underscore-redirects': 1.0.0
       '@cloudflare/workers-types': 4.20260302.0
-      astro: 5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@5.9.3)
+      astro: 5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@6.0.3)(yaml@2.9.0)
       tinyglobby: 0.2.15
-      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)
+      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)
       wrangler: 4.50.0(@cloudflare/workers-types@4.20260302.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -3354,12 +3371,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.2.1
       '@tailwindcss/oxide-win32-x64-msvc': 4.2.1
 
-  '@tailwindcss/vite@4.2.1(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1))':
+  '@tailwindcss/vite@4.2.1(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0))':
     dependencies:
       '@tailwindcss/node': 4.2.1
       '@tailwindcss/oxide': 4.2.1
       tailwindcss: 4.2.1
-      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)
+      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)
 
   '@types/chai@5.2.3':
     dependencies:
@@ -3388,6 +3405,8 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
+  '@types/sortablejs@1.15.9': {}
+
   '@types/unist@3.0.3': {}
 
   '@ungap/structured-clone@1.3.0': {}
@@ -3401,13 +3420,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1))':
+  '@vitest/mocker@4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.8
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)
+      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)
 
   '@vitest/pretty-format@4.1.8':
     dependencies:
@@ -3462,7 +3481,7 @@ snapshots:
 
   assertion-error@2.0.1: {}
 
-  astro@5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@5.9.3):
+  astro@5.17.3(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(typescript@6.0.3)(yaml@2.9.0):
     dependencies:
       '@astrojs/compiler': 2.13.1
       '@astrojs/internal-helpers': 0.7.5
@@ -3513,20 +3532,20 @@ snapshots:
       svgo: 4.0.0
       tinyexec: 1.0.2
       tinyglobby: 0.2.15
-      tsconfck: 3.1.6(typescript@5.9.3)
+      tsconfck: 3.1.6(typescript@6.0.3)
       ultrahtml: 1.6.0
       unifont: 0.7.4
       unist-util-visit: 5.1.0
       unstorage: 1.17.4
       vfile: 6.0.3
-      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)
-      vitefu: 1.1.2(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1))
+      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)
+      vitefu: 1.1.2(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0))
       xxhash-wasm: 1.1.0
       yargs-parser: 21.1.1
       yocto-spinner: 0.2.3
       zod: 3.25.76
       zod-to-json-schema: 3.25.1(zod@3.25.76)
-      zod-to-ts: 1.2.0(typescript@5.9.3)(zod@3.25.76)
+      zod-to-ts: 1.2.0(typescript@6.0.3)(zod@3.25.76)
     optionalDependencies:
       sharp: 0.34.5
     transitivePeerDependencies:
@@ -4732,6 +4751,8 @@ snapshots:
 
   smol-toml@1.6.0: {}
 
+  sortablejs@1.15.7: {}
+
   source-map-js@1.2.1: {}
 
   space-separated-tokens@2.0.2: {}
@@ -4800,16 +4821,16 @@ snapshots:
 
   trough@2.2.0: {}
 
-  tsconfck@3.1.6(typescript@5.9.3):
+  tsconfck@3.1.6(typescript@6.0.3):
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   tslib@2.8.1:
     optional: true
 
   type-fest@4.41.0: {}
 
-  typescript@5.9.3: {}
+  typescript@6.0.3: {}
 
   ufo@1.6.3: {}
 
@@ -4909,7 +4930,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1):
+  vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.3)
@@ -4921,15 +4942,16 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.6.1
       lightningcss: 1.31.1
+      yaml: 2.9.0
 
-  vitefu@1.1.2(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)):
+  vitefu@1.1.2(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)):
     optionalDependencies:
-      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)
+      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)
 
-  vitest@4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)):
+  vitest@4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.8
-      '@vitest/mocker': 4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1))
+      '@vitest/mocker': 4.1.8(vite@6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.8
       '@vitest/runner': 4.1.8
       '@vitest/snapshot': 4.1.8
@@ -4946,7 +4968,7 @@ snapshots:
       tinyexec: 1.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)
+      vite: 6.4.1(jiti@2.6.1)(lightningcss@1.31.1)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     transitivePeerDependencies:
       - msw
@@ -5026,6 +5048,9 @@ snapshots:
 
   xxhash-wasm@1.1.0: {}
 
+  yaml@2.9.0:
+    optional: true
+
   yargs-parser@21.1.1: {}
 
   yocto-queue@1.2.2: {}
@@ -5053,9 +5078,9 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
-  zod-to-ts@1.2.0(typescript@5.9.3)(zod@3.25.76):
+  zod-to-ts@1.2.0(typescript@6.0.3)(zod@3.25.76):
     dependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
       zod: 3.25.76
 
   zod@3.22.3: {}
