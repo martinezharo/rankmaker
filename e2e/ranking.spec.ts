@@ -20,12 +20,18 @@ async function rankToResults(page: Page, slug: string): Promise<void> {
 
 	// Answer matchups until the results view appears. Each pick has a ~600ms
 	// animation before the next pair shows, so wait for the card name to change.
+	// Track every matchup shown: the engine must never re-ask a settled pair.
+	const seenPairs = new Set<string>();
 	const results = page.locator('#results-view');
 	for (let i = 0; i < 300; i++) {
 		if (await results.isVisible().catch(() => false)) break;
 		const cardA = page.locator('#battle-card-a');
 		if (!(await cardA.isVisible().catch(() => false))) break;
 		const before = (await page.locator('#battle-name-a').textContent())?.trim();
+		const nameB = (await page.locator('#battle-name-b').textContent())?.trim();
+		const pairKey = [before, nameB].sort().join(' ⚔ ');
+		expect(seenPairs.has(pairKey), `repeated battle: ${pairKey}`).toBe(false);
+		seenPairs.add(pairKey);
 		await cardA.click();
 		await page
 			.waitForFunction(
@@ -81,6 +87,10 @@ test('ranks an official template from start to results, then downloads image', a
 
 	await expect(page.locator('#results-podium')).not.toBeEmpty();
 	await expect(page.locator('#results-list')).not.toBeEmpty();
+
+	// Every option must end up ranked exactly once — none dropped or duplicated.
+	const optionCount = (await readRankingData(page)).options.length;
+	await expect(page.locator('#results-list .rank-item')).toHaveCount(optionCount);
 
 	// The share-image module renders a canvas and triggers a PNG download.
 	// Smoke-test that it runs end to end without throwing.

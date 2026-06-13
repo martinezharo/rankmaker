@@ -125,3 +125,107 @@ describe('mergeSort', () => {
 		expect(humanAsks).toBeLessThan(totalPairs);
 	});
 });
+
+// Deterministic PRNG so a fuzz failure is reproducible from its seed.
+function mulberry32(seed: number): () => number {
+	return () => {
+		seed |= 0;
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+}
+
+function shuffle<T>(arr: T[], rnd: () => number): T[] {
+	const a = arr.slice();
+	for (let i = a.length - 1; i > 0; i--) {
+		const j = Math.floor(rnd() * (i + 1));
+		[a[i], a[j]] = [a[j], a[i]];
+	}
+	return a;
+}
+
+// These guard the core promise of the app: the battle engine must always reach
+// a correct full ranking, never re-show a settled matchup, and never balloon the
+// number of battles. They drive mergeSort exactly as the page does — consult the
+// comparison store, only "ask" (count) when the pair is unknown, record, repeat.
+// One ranking trial: a strict ground-truth order (ranks 0..n-1), an arbitrary
+// starting order, driven through mergeSort the way the page does. Asserts the
+// engine's core guarantees and returns the human-battle count.
+async function runRankingTrial(
+	rnd: () => number,
+	n: number,
+	label: string
+): Promise<void> {
+	const ranks = shuffle([...Array(n).keys()], rnd);
+	const items = ranks.map((rank, i) => ({ id: i + 1, rank }));
+	const ids = items.map((it) => it.id);
+	const input = shuffle(items, rnd);
+
+	const map: CompMap = {};
+	const asked = new Set<string>();
+	let asks = 0;
+	const compare = async (a: (typeof items)[0], b: (typeof items)[0]) => {
+		const known = getKnownResult(map, a.id, b.id);
+		if (known !== 0) return known > 0 ? -1 : 1; // auto-resolved, no battle shown
+		const key = compKey(a.id, b.id);
+		// A matchup the user already settled must never reappear.
+		expect(asked.has(key), `repeated battle ${key} (${label})`).toBe(false);
+		asked.add(key);
+		asks++;
+		const aWins = a.rank < b.rank;
+		recordResult(map, ids, a.id, b.id, aWins);
+		return aWins ? -1 : 1;
+	};
+
+	const ranked = await mergeSort(input, compare);
+
+	// Every option present exactly once, in the exact correct order.
+	expect(ranked.length, label).toBe(n);
+	expect(ranked.map((it) => it.rank), label).toEqual([...Array(n).keys()]);
+	// Transitivity must never push battles past merge sort's own comparison count.
+	expect(asks, label).toBeLessThanOrEqual(n * Math.ceil(Math.log2(n)));
+}
+
+describe('battle engine invariants', () => {
+	it('fuzz: exact ranking, no repeated/excess battles (sizes 4–16)', async () => {
+		for (let seed = 1; seed <= 200; seed++) {
+			const rnd = mulberry32(seed);
+			const n = 4 + Math.floor(rnd() * 13); // 4..16 options
+			await runRankingTrial(rnd, n, `seed ${seed}`);
+		}
+	}, 20_000);
+
+	it('holds for large rankings up to the 50-option max', async () => {
+		for (const seed of [101, 202, 303]) {
+			const rnd = mulberry32(seed);
+			const n = 40 + Math.floor(rnd() * 11); // 40..50 options
+			await runRankingTrial(rnd, n, `large seed ${seed}`);
+		}
+	}, 30_000);
+
+	it('asks zero battles when the full order is already known', async () => {
+		const items = [3, 1, 2, 5, 4].map((rank, i) => ({ id: i + 1, rank }));
+		const ids = items.map((it) => it.id);
+		const map: CompMap = {};
+		// Seed only adjacent results; transitive closure fills in the rest.
+		const byRank = [...items].sort((a, b) => a.rank - b.rank);
+		for (let i = 0; i < byRank.length - 1; i++) {
+			recordResult(map, ids, byRank[i].id, byRank[i + 1].id, true);
+		}
+
+		let asks = 0;
+		const compare = async (a: (typeof items)[0], b: (typeof items)[0]) => {
+			const known = getKnownResult(map, a.id, b.id);
+			if (known !== 0) return known > 0 ? -1 : 1;
+			asks++; // would surface a battle to the user
+			return a.rank < b.rank ? -1 : 1;
+		};
+
+		const ranked = await mergeSort(items, compare);
+		expect(asks).toBe(0);
+		// ranks are the values [3,1,2,5,4]; sorted ascending → [1,2,3,4,5].
+		expect(ranked.map((it) => it.rank)).toEqual([1, 2, 3, 4, 5]);
+	});
+});
