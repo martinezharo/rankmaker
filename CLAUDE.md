@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-RANKMAKER (rankmaker.net) — users rank things through 1v1 matchups. Astro 5 + Tailwind 4, deployed to Cloudflare (Workers runtime with static assets) via `@astrojs/cloudflare`. Package manager is **pnpm**. There is no linter; correctness is checked by `pnpm build` plus `pnpm test` (Vitest unit, `src/scripts/*.test.ts`) and `pnpm test:e2e` (Playwright, `e2e/`).
+RANKMAKER (rankmaker.net) — users rank things through 1v1 matchups. Astro 5 + Tailwind 4, deployed to Cloudflare (Workers runtime with static assets) via `@astrojs/cloudflare`. Package manager is **pnpm**. There is no linter; correctness is checked by `pnpm build`, `pnpm check` (`astro check` — type-checks frontmatter + `.ts`; the legacy `[slug].astro` controller script is `@ts-nocheck`'d), `pnpm test` (Vitest unit, `src/scripts/*.test.ts`) and `pnpm test:e2e` (Playwright, `e2e/`).
 
 ## Commands
 
@@ -12,6 +12,7 @@ RANKMAKER (rankmaker.net) — users rank things through 1v1 matchups. Astro 5 + 
 pnpm dev                    # dev server at http://localhost:4321 (local D1/KV via miniflare)
 pnpm build                  # production build — run this to verify changes
 pnpm preview                # preview the production build
+pnpm check                  # astro check — TypeScript type-check (no emit)
 pnpm test                   # Vitest unit tests (src/scripts/*.test.ts)
 pnpm test:e2e               # Playwright e2e (e2e/, drives `pnpm dev`); needs browser deps:
                             #   sudo npx playwright install-deps chromium
