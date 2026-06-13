@@ -67,6 +67,21 @@ const resolveImg = (path: string | null) => {
 
 const coverSrc = resolveImg(template.cover_image);
 
+// Ranking engine input. Embedded as a JSON <script> inside the swapped DOM
+// (not a global set by a separate inline script) so the options can never
+// desync from the title/URL during a ViewTransitions navigation — a stale
+// global previously caused "right template, wrong options" on interrupted nav.
+const rankingData = {
+    title: template.title,
+    options: (options ?? []).map((o) => ({
+        id: o.id,
+        name: o.name,
+        image:
+            resolveImg(o.image) ||
+            `https://placehold.co/200x200/111118/8400FF?text=${encodeURIComponent(o.name.slice(0, 8))}`,
+    })),
+};
+
 // Structured data: each template page is a ranked list of options.
 // Skipped for hidden templates — they're noindex anyway.
 const jsonLd = {
@@ -333,25 +348,17 @@ const jsonLd = {
     <div id="transition-overlay" class="hidden transition-overlay"></div>
 
     <!-- ═══════════════════════════════════════════════════
-         OPTIONS DATA (passed to JS)
+         OPTIONS DATA (read from the DOM by the engine)
+         A pure-data script: never executed, swapped in with the rest of the
+         page, so the engine always reads the options for the page actually
+         on screen — no global that can lag behind the swapped title/URL.
          ═══════════════════════════════════════════════════ -->
     <script
+        type="application/json"
+        id="ranking-data"
         is:inline
-        define:vars={{ options: options || [], templateTitle: template.title }}
-    >
-        window.__RANKING_OPTIONS__ = options.map((o) => ({
-            id: o.id,
-            name: o.name,
-            image:
-                (o.image
-                    ? o.image.startsWith("public/")
-                        ? o.image.replace("public/", "/")
-                        : o.image
-                    : null) ||
-                `https://placehold.co/200x200/111118/8400FF?text=${encodeURIComponent(o.name.slice(0, 8))}`,
-        }));
-        window.__TEMPLATE_TITLE__ = templateTitle;
-    </script>
+        set:html={JSON.stringify(rankingData)}
+    />
 
     <!-- ═══════════════════════════════════════════════════
          RANKING ENGINE + UI CONTROLLER
@@ -366,7 +373,18 @@ const jsonLd = {
             );
         }
         window.__rankingPageLoadHandler = function rankingInit() {
-            const items = window.__RANKING_OPTIONS__;
+            // Read options + title from the JSON data element in the current
+            // (swapped) DOM, so they can never lag behind the page on screen.
+            const dataEl = document.getElementById("ranking-data");
+            if (!dataEl) return;
+            let rankingData;
+            try {
+                rankingData = JSON.parse(dataEl.textContent);
+            } catch {
+                return;
+            }
+            const items = rankingData.options;
+            const templateTitle = rankingData.title;
             if (!items || items.length < 2) return;
 
             // ─── DOM refs ────────────────────────────────────
@@ -1009,7 +1027,7 @@ const jsonLd = {
                 .addEventListener("click", async () => {
                     if (lastRanked.length === 0) return;
                     const ranked = lastRanked;
-                    const title = window.__TEMPLATE_TITLE__ || "My Ranking";
+                    const title = templateTitle || "My Ranking";
 
                     // ─── Config ───
                     const W = 1080;
@@ -1625,7 +1643,7 @@ const jsonLd = {
 
             // ─── Share Template ────────────────────────────
             actionShareTemplate.addEventListener("click", async () => {
-                const title = window.__TEMPLATE_TITLE__ || "My Ranking";
+                const title = templateTitle || "My Ranking";
                 const url = window.location.href;
                 if (navigator.share) {
                     try {
@@ -1656,7 +1674,7 @@ const jsonLd = {
 
             // ─── Share on X ──────────────────────────────
             actionShareX.addEventListener("click", () => {
-                const title = window.__TEMPLATE_TITLE__ || "My Ranking";
+                const title = templateTitle || "My Ranking";
                 const url = window.location.href;
                 const text = `Take a look at this template: '${title}'`;
                 const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
