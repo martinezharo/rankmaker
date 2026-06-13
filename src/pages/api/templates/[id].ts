@@ -36,21 +36,31 @@ async function getOwned(
     return { id: row.id, slug: row.slug, visibility: row.visibility };
 }
 
-async function authorize(context: APIContext) {
+type AuthResult =
+    | { ok: false; response: Response }
+    | { ok: true; db: D1Database; user: SessionUser; owned: Owned };
+
+async function authorize(context: APIContext): Promise<AuthResult> {
     if (!checkOrigin(context.request)) {
-        return { response: json({ error: 'Forbidden' }, 403) };
+        return { ok: false, response: json({ error: 'Forbidden' }, 403) };
     }
     const db = context.locals.runtime.env.DB;
     const user = await getSessionUser(context.cookies, db);
     if (!user) {
-        return { response: json({ error: 'You must be logged in.' }, 401) };
+        return {
+            ok: false,
+            response: json({ error: 'You must be logged in.' }, 401),
+        };
     }
     const owned = await getOwned(db, context.params.id as string, user);
     if (!owned) {
         // Same response for "not found" and "not yours".
-        return { response: json({ error: 'Template not found.' }, 403) };
+        return {
+            ok: false,
+            response: json({ error: 'Template not found.' }, 403),
+        };
     }
-    return { db, user, owned };
+    return { ok: true, db, user, owned };
 }
 
 /**
@@ -62,7 +72,7 @@ async function authorize(context: APIContext) {
 export const PUT: APIRoute = async (context) => {
     try {
         const auth = await authorize(context);
-        if ('response' in auth) return auth.response;
+        if (!auth.ok) return auth.response;
         const { db, owned } = auth;
 
         let body: unknown;
@@ -131,7 +141,7 @@ export const PUT: APIRoute = async (context) => {
 export const DELETE: APIRoute = async (context) => {
     try {
         const auth = await authorize(context);
-        if ('response' in auth) return auth.response;
+        if (!auth.ok) return auth.response;
         const { db, owned } = auth;
 
         await db

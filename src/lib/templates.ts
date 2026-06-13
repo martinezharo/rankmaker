@@ -370,15 +370,12 @@ export function validateTemplateInput(
         if (seen.has(key)) return err(`Duplicate option: "${name}".`);
         seen.add(key);
 
-        let image: string | null = null;
-        if (typeof o?.image === 'string' && o.image.trim()) {
-            image = o.image.trim();
-            if (!isHttpUrl(image)) {
-                return err(
-                    `Option "${name}": image must be a valid http(s) URL.`
-                );
-            }
+        const rawImage =
+            typeof o?.image === 'string' ? o.image.trim() : '';
+        if (rawImage && !isHttpUrl(rawImage)) {
+            return err(`Option "${name}": image must be a valid http(s) URL.`);
         }
+        const image: string | null = rawImage || null;
         options.push({ name, image });
     }
 
