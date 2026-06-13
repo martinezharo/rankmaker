@@ -1,3 +1,0 @@
-- Implement a check for the ranked counter KV to prevent bots.
-- Enable comments on rankings.
-- Enable private template creation with URL encoding for sharing without storage.
