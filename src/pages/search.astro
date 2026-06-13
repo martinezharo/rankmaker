@@ -372,6 +372,14 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             filterAndRender();
 
             // Re-render once real counts arrive so results sort by them.
+            // `document` survives View Transitions, so register exactly once —
+            // re-binding per astro:page-load would stack listeners holding
+            // stale closures over swapped-out DOM. Dispatch the existing event
+            // to a freshly-bound renderer instead.
+            const w = window as any;
+            if (w.__rmSearchCounts)
+                document.removeEventListener("rm:counts", w.__rmSearchCounts);
+            w.__rmSearchCounts = filterAndRender;
             document.addEventListener("rm:counts", filterAndRender);
         });
     </script>
