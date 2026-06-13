@@ -1,9 +1,25 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
+import { checkOrigin } from '../../lib/auth';
 import { slugFromUrl } from '../../lib/slug';
+import { getOfficialTemplateBySlug } from '../../lib/templates';
+
+// Counts feed the public "X ranked" numbers AND the home/search ordering, so
+// this write path is abuse-sensitive: require a same-origin Origin (as every
+// other mutating route does) and only record events for slugs that actually
+// resolve to a template. Bounds on url/date keep a spammer from bloating KV/D1.
+const MAX_URL_LEN = 512;
+const MAX_DATE_LEN = 40;
 
 export const POST: APIRoute = async (context) => {
+    if (!checkOrigin(context.request)) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+        });
+    }
+
     try {
         const { env, cf } = context.locals.runtime;
 
@@ -18,9 +34,35 @@ export const POST: APIRoute = async (context) => {
             });
         }
 
-        const url = body.url || 'unknown';
-        const date = body.date || new Date().toISOString();
+        const url = (body.url || 'unknown').slice(0, MAX_URL_LEN);
+        const date = (body.date || new Date().toISOString()).slice(
+            0,
+            MAX_DATE_LEN
+        );
         const country = (cf as any)?.country || 'unknown';
+
+        // Only count events for a slug that maps to a real template (official
+        // JSON or a D1 row). Bogus/invented slugs never reach storage.
+        const slug = slugFromUrl(url);
+        if (!slug) {
+            return new Response(JSON.stringify({ ok: true, skipped: true }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+        const exists =
+            getOfficialTemplateBySlug(slug) !== null ||
+            (await env.DB.prepare(
+                'SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE'
+            )
+                .bind(slug)
+                .first()) !== null;
+        if (!exists) {
+            return new Response(JSON.stringify({ ok: true, skipped: true }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
 
         // Create a unique key based on timestamp + random suffix
         const key = `ranking_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -35,19 +77,15 @@ export const POST: APIRoute = async (context) => {
         await env['rm-times-ranked'].put(key, value);
 
         // Record the event in D1 so counts can be aggregated efficiently.
-        // Skip if we can't derive a slug (no valid template = no count).
-        const slug = slugFromUrl(url);
-        if (slug) {
-            try {
-                await env.DB.prepare(
-                    'INSERT INTO rankings (slug, url, date, country) VALUES (?, ?, ?, ?)'
-                )
-                    .bind(slug, url, date, country)
-                    .run();
-            } catch (dbError) {
-                // Don't fail the request if D1 write fails; KV log still captured it.
-                console.error('Track D1 insert error:', dbError);
-            }
+        try {
+            await env.DB.prepare(
+                'INSERT INTO rankings (slug, url, date, country) VALUES (?, ?, ?, ?)'
+            )
+                .bind(slug, url, date, country)
+                .run();
+        } catch (dbError) {
+            // Don't fail the request if D1 write fails; KV log still captured it.
+            console.error('Track D1 insert error:', dbError);
         }
 
         return new Response(JSON.stringify({ ok: true, key }), {
