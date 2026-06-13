@@ -8,7 +8,8 @@ import BattleView from "../../components/ranking/BattleView.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
 import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
 import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
-import { getTemplateBySlug } from "../../lib/templates";
+import RecommendedTemplates from "../../components/RecommendedTemplates.astro";
+import { getTemplateBySlug, getRecommendedTemplates } from "../../lib/templates";
 import { categoryIcon } from "../../lib/categories";
 import { getSessionUser } from "../../lib/auth";
 
@@ -97,6 +98,15 @@ const jsonLd = {
         name: o.name,
     })),
 };
+
+// Related templates for the "You might also like" row, shown under every view.
+// Scored in-memory; degrades to officials-only if D1 is unavailable.
+let recommendations: Awaited<ReturnType<typeof getRecommendedTemplates>> = [];
+try {
+    recommendations = await getRecommendedTemplates(db, template, 8);
+} catch {
+    // non-fatal — the page renders without the row
+}
 ---
 
 <Layout
@@ -341,6 +351,9 @@ const jsonLd = {
     <ResultsView title={template.title} creator={creator} />
 
     <BattleHistoryModal />
+
+    <!-- Related templates — visible at the foot of all three views -->
+    <RecommendedTemplates templates={recommendations} />
 
     <!-- ═══════════════════════════════════════════════════
          EPIC TRANSITION OVERLAY

@@ -5,6 +5,8 @@
  */
 import templatesJson from '../data/templates.json';
 import { CATEGORY_NAMES } from './categories';
+import { getCounts } from './counts';
+import { recommendTemplates } from '../scripts/recommend';
 
 export const VISIBILITIES = ['public', 'private', 'unlisted'] as const;
 export type Visibility = (typeof VISIBILITIES)[number];
@@ -210,6 +212,48 @@ export async function listTemplatesByUserId(
     return userId === OFFICIAL_USER_ID
         ? [...getOfficialTemplates(), ...own]
         : own;
+}
+
+// ── Recommendations ──────────────────────────────────────────────────────────
+
+/**
+ * Templates to recommend alongside the one being viewed. The candidate pool is
+ * every official template plus every PUBLIC user template (hidden ones are
+ * never surfaced — see CLAUDE.md), scored by lexical similarity in
+ * `recommendTemplates`. Real ranking counts are merged so cards show live
+ * numbers, matching the homepage. On any D1 error we degrade to officials only
+ * so the page never breaks.
+ */
+export async function getRecommendedTemplates(
+    db: D1Database,
+    target: Template,
+    limit = 8
+): Promise<Template[]> {
+    let userTemplates: Template[] = [];
+    let counts: Record<string, number> = {};
+    try {
+        [userTemplates, counts] = await Promise.all([
+            listUserTemplates(db),
+            getCounts(db),
+        ]);
+    } catch {
+        // officials-only fallback
+    }
+
+    const pool = [...getOfficialTemplates(), ...userTemplates].map((t) => ({
+        ...t,
+        times_ranked: counts[t.slug] ?? t.times_ranked,
+    }));
+
+    // User templates loaded via TEMPLATE_SELECT carry no optionNames; derive it
+    // from the loaded options so the scorer sees the option words.
+    const scored = {
+        ...target,
+        optionNames:
+            target.optionNames ?? target.options.map((o) => o.name).join(' '),
+    };
+
+    return recommendTemplates(scored, pool, limit);
 }
 
 // ── Slug generation ──────────────────────────────────────────────────────────

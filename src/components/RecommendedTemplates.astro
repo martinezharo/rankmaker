@@ -1,0 +1,42 @@
+---
+// RecommendedTemplates.astro — single blended row of similar/related templates
+// shown at the foot of a template page (visible under all three views).
+import TemplateCard from "./TemplateCard.astro";
+import type { Template } from "../lib/templates";
+
+interface Props {
+	templates: Template[];
+}
+
+const { templates } = Astro.props;
+
+if (templates.length === 0) return;
+---
+
+<section class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 border-t border-border/50">
+	<!-- Section Header -->
+	<div class="flex items-center gap-3 mb-5">
+		<div
+			class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+		>
+			<i class="fa-solid fa-wand-magic-sparkles text-primary text-sm"></i>
+		</div>
+		<h2 class="text-lg font-bold text-text-primary tracking-tight">
+			You might also like
+		</h2>
+		<div class="flex-1 h-px bg-border/50 ml-2"></div>
+	</div>
+
+	<!-- Cards: horizontal drag-scroll on mobile, wrapping grid on desktop -->
+	<div
+		class="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:grid md:grid-cols-4 md:gap-5 md:overflow-x-visible md:snap-none"
+	>
+		{
+			templates.map((template) => (
+				<div class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start">
+					<TemplateCard template={template} />
+				</div>
+			))
+		}
+	</div>
+</section>
