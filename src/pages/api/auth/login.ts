@@ -16,9 +16,13 @@ export const GET: APIRoute = async (context) => {
     const { env } = context.locals.runtime;
     const url = new URL(context.request.url);
 
-    // Only allow same-site relative paths to avoid open redirects.
+    // Only allow same-site relative paths to avoid open redirects. Reject
+    // backslashes too: browsers normalize "\" to "/" in the Location header,
+    // so "/\evil.com" would resolve to the protocol-relative "//evil.com".
     let next = url.searchParams.get('next') || '/';
-    if (!next.startsWith('/') || next.startsWith('//')) next = '/';
+    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) {
+        next = '/';
+    }
 
     const state = randomHex(16);
     const cookieValue = await signPayload(env.SESSION_SECRET, {
