@@ -270,6 +270,9 @@ const inputClass =
         <div
             id="tf-ai-modal"
             class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tf-ai-title"
         >
             <div
                 class="absolute inset-0 bg-black/60 animate-modal-bg"
@@ -280,7 +283,7 @@ const inputClass =
                     <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                         <i class="fa-solid fa-wand-magic-sparkles text-primary text-xl" />
                     </div>
-                    <h3 class="text-lg font-bold text-text-primary text-center">
+                    <h3 id="tf-ai-title" class="text-lg font-bold text-text-primary text-center">
                         Make your ranking more popular?
                     </h3>
                     <p
@@ -336,6 +339,8 @@ const inputClass =
 />
 
 <script>
+    import { openModal, closeModal } from "../scripts/modal-a11y";
+
     document.addEventListener("astro:page-load", () => {
         const form = document.getElementById(
             "template-form",
@@ -662,11 +667,12 @@ const inputClass =
             aiText!.value = suggestion.description;
             aiText!.dispatchEvent(new Event("input"));
             aiError!.textContent = "";
-            aiModal!.classList.remove("hidden");
+            // Closing by Escape/backdrop must re-enable the submit button.
+            openModal(aiModal!, { focus: aiText, onClose: () => setBusy(false) });
         }
 
         function closeAiModal() {
-            aiModal!.classList.add("hidden");
+            closeModal(aiModal!);
         }
 
         document.getElementById("tf-ai-use")?.addEventListener("click", () => {

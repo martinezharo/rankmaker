@@ -1,6 +1,9 @@
 <div
     id="finish-early-modal"
     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="finish-early-title"
 >
     <div
         class="absolute inset-0 bg-black/60 animate-modal-bg"
@@ -17,7 +20,7 @@
                 <i class="fa-solid fa-flag-checkered text-amber-400 text-xl"
                 ></i>
             </div>
-            <h3 class="text-lg font-bold text-text-primary">
+            <h3 id="finish-early-title" class="text-lg font-bold text-text-primary">
                 Finish Ranking Early?
             </h3>
             <p class="text-sm text-text-secondary leading-relaxed">

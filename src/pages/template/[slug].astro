@@ -379,6 +379,7 @@ const jsonLd = {
         } from "../../scripts/ranking-sort";
         import { downloadRankingImage } from "../../scripts/ranking-share-image";
         import { createReorder } from "../../scripts/ranking-reorder";
+        import { openModal, closeModal } from "../../scripts/modal-a11y";
 
         function rankingInit() {
             // Read options + title from the JSON data element in the current
@@ -664,21 +665,21 @@ const jsonLd = {
 
             // ─── Finish Early ─────────────────────────────────
             finishBtn.addEventListener("click", () => {
-                finishModal.classList.remove("hidden");
+                openModal(finishModal, { focus: finishCancel });
             });
 
             finishCancel.addEventListener("click", () => {
-                finishModal.classList.add("hidden");
+                closeModal(finishModal);
             });
 
             document
                 .getElementById("finish-modal-backdrop")
                 .addEventListener("click", () => {
-                    finishModal.classList.add("hidden");
+                    closeModal(finishModal);
                 });
 
             finishConfirm.addEventListener("click", () => {
-                finishModal.classList.add("hidden");
+                closeModal(finishModal);
                 finishEarly();
             });
 
@@ -930,14 +931,14 @@ const jsonLd = {
                     `;
                               })
                               .join("");
-                historyModal.classList.remove("hidden");
+                openModal(historyModal, { focus: historyClose });
             });
 
             historyClose.addEventListener("click", () =>
-                historyModal.classList.add("hidden"),
+                closeModal(historyModal),
             );
             historyBackdrop.addEventListener("click", () =>
-                historyModal.classList.add("hidden"),
+                closeModal(historyModal),
             );
 
             // ─── Download Image ─────────────────────────────
@@ -1001,6 +1002,8 @@ const jsonLd = {
                 onEnd: applyReorder,
             });
 
+            const reorderIcon = actionReorder.querySelector("i");
+            const reorderLabel = document.getElementById("action-reorder-label");
             actionReorder.addEventListener("click", () => {
                 reorderMode = !reorderMode;
                 reorder.setEnabled(reorderMode);
@@ -1013,10 +1016,11 @@ const jsonLd = {
                         "!text-primary",
                         "!bg-primary/10",
                     );
-                    actionReorder.querySelector("i").className =
-                        "fa-solid fa-check text-xs text-primary";
-                    actionReorder.querySelector("i").nextSibling.textContent =
-                        "Done Reordering";
+                    if (reorderIcon)
+                        reorderIcon.className =
+                            "fa-solid fa-check text-xs text-primary";
+                    if (reorderLabel)
+                        reorderLabel.textContent = "Done Reordering";
                     handles.forEach((h) => h.classList.remove("hidden"));
                     handles.forEach((h) => h.classList.add("flex"));
                     // Drop the one-shot entrance animation: its `both` fill-mode
@@ -1033,10 +1037,11 @@ const jsonLd = {
                         "!text-primary",
                         "!bg-primary/10",
                     );
-                    actionReorder.querySelector("i").className =
-                        "fa-solid fa-arrows-up-down text-xs text-primary/70";
-                    actionReorder.querySelector("i").nextSibling.textContent =
-                        "Reorder Manually";
+                    if (reorderIcon)
+                        reorderIcon.className =
+                            "fa-solid fa-arrows-up-down text-xs text-primary/70";
+                    if (reorderLabel)
+                        reorderLabel.textContent = "Reorder Manually";
                     handles.forEach((h) => h.classList.add("hidden"));
                     handles.forEach((h) => h.classList.remove("flex"));
                 }
@@ -1150,7 +1155,7 @@ const jsonLd = {
                 const url = window.location.href;
                 const text = `Take a look at this template: '${title}'`;
                 const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-                window.open(xUrl, "_blank");
+                window.open(xUrl, "_blank", "noopener");
             });
         }
         document.addEventListener("astro:page-load", rankingInit);

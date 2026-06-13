@@ -26,6 +26,31 @@ html {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Reduced motion ─────────────────────────────────
+   Respect the OS "reduce motion" preference: the app is animation-heavy
+   (battle slides, podium rise, particle burst, infinite VS pulse, view
+   transitions). Collapse animations/transitions to near-instant and drop
+   smooth scroll so the experience stays usable without motion. */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none !important;
+    }
+}
+
 body {
     font-family: var(--font-sans);
     background-color: var(--color-surface);

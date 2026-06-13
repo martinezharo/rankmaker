@@ -200,6 +200,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
     <div
         id="delete-template-modal"
         class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-template-modal-title"
     >
         <div
             class="delete-template-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -208,7 +211,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
         <div
             class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4"
         >
-            <h3 class="text-lg font-bold text-text-primary">
+            <h3 id="delete-template-modal-title" class="text-lg font-bold text-text-primary">
                 Delete template?
             </h3>
             <p class="text-sm text-text-secondary">
@@ -239,6 +242,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
         id="delete-account-modal"
         class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
         data-username={user.username}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-account-modal-title"
     >
         <div
             class="delete-account-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -247,7 +253,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
         <div
             class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-red-500/30 p-6 space-y-4"
         >
-            <h3 class="text-lg font-bold text-red-400">Delete account</h3>
+            <h3 id="delete-account-modal-title" class="text-lg font-bold text-red-400">Delete account</h3>
             <p class="text-sm text-text-secondary">
                 This permanently deletes your account and all your templates.
                 Type <span class="font-bold text-text-primary"
@@ -286,6 +292,8 @@ Astro.response.headers.set("Cache-Control", "no-store");
 </Layout>
 
 <script>
+    import { openModal, closeModal } from "../scripts/modal-a11y";
+
     document.addEventListener("astro:page-load", () => {
         const tplModal = document.getElementById("delete-template-modal");
         if (!tplModal || tplModal.dataset.bound) return;
@@ -304,14 +312,16 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 btn.addEventListener("click", () => {
                     pendingId = btn.dataset.id || null;
                     tplTitle.textContent = btn.dataset.title || "";
-                    tplModal.classList.remove("hidden");
+                    openModal(tplModal, {
+                        focus: tplConfirm,
+                        onClose: () => {
+                            pendingId = null;
+                        },
+                    });
                 });
             });
 
-        const closeTplModal = () => {
-            tplModal.classList.add("hidden");
-            pendingId = null;
-        };
+        const closeTplModal = () => closeModal(tplModal);
         document
             .getElementById("delete-template-cancel")!
             .addEventListener("click", closeTplModal);
@@ -358,11 +368,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 accInput.value = "";
                 accConfirm.disabled = true;
                 accError.textContent = "";
-                accModal.classList.remove("hidden");
-                accInput.focus();
+                openModal(accModal, { focus: accInput });
             });
 
-        const closeAccModal = () => accModal.classList.add("hidden");
+        const closeAccModal = () => closeModal(accModal);
         document
             .getElementById("delete-account-cancel")!
             .addEventListener("click", closeAccModal);
