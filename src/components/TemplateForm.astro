@@ -578,11 +578,15 @@ const inputClass =
 
         function setBusy(busy: boolean) {
             submit.disabled = busy;
-            submit.textContent = busy
-                ? data.mode === "create"
-                    ? "Creating…"
-                    : "Saving…"
-                : originalLabel;
+            if (busy) {
+                const label =
+                    data.mode === "create" ? "Creating…" : "Saving…";
+                // Spinner + text so a slow request shows visible motion, not
+                // just a static label.
+                submit.innerHTML = `<span class="inline-flex items-center justify-center gap-2"><i class="fa-solid fa-spinner btn-spinner"></i>${label}</span>`;
+            } else {
+                submit.textContent = originalLabel;
+            }
         }
 
         async function actuallySubmit(payload: Payload) {
