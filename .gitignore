@@ -34,5 +34,11 @@ pnpm-debug.log*
 .claude/
 .agents/
 
-# local scripts
-scripts/
+# local scripts (root-level only — must not match src/scripts/)
+/scripts/
+
+# playwright
+test-results/
+playwright-report/
+/blob-report/
+playwright/.cache/
