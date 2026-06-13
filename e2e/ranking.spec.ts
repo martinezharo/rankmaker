@@ -12,10 +12,9 @@ async function readRankingData(
 	return JSON.parse(raw ?? '{}');
 }
 
-test('ranks an official template from start to results', async ({ page }) => {
-	test.setTimeout(90_000);
-	await page.goto(`/template/${A.slug}`);
-
+/** Drive an official template through the 1v1 battles until results appear. */
+async function rankToResults(page: Page, slug: string): Promise<void> {
+	await page.goto(`/template/${slug}`);
 	await page.locator('#start-ranking-btn').click();
 	await expect(page.locator('#battle-view')).toBeVisible();
 
@@ -43,8 +42,43 @@ test('ranks an official template from start to results', async ({ page }) => {
 			)
 			.catch(() => {});
 	}
-
 	await expect(results).toBeVisible();
+}
+
+/** Pointer-drag the drag handle of one row over the top edge of another row. */
+async function dragRow(page: Page, fromIndex: number, toIndex: number) {
+	const rows = page.locator('#results-list .rank-item');
+	// mouse.* is low-level and does not auto-scroll; bring the rows into the
+	// viewport (the tall podium can push the list below the fold) before dragging.
+	await rows.nth(fromIndex).scrollIntoViewIfNeeded();
+	const handle = rows.nth(fromIndex).locator('.rank-drag-handle');
+	const hb = await handle.boundingBox();
+	const tb = await rows.nth(toIndex).boundingBox();
+	if (!hb || !tb) throw new Error('row not found for drag');
+	const hx = hb.x + hb.width / 2;
+	const hy = hb.y + hb.height / 2;
+	const tx = tb.x + tb.width / 2;
+	const ty = tb.y + 6; // just inside the top edge of the target row
+
+	await page.mouse.move(hx, hy);
+	await page.mouse.down();
+	// Cross the drag threshold, then travel over the target in small steps so
+	// SortableJS's fallback drag picks up the move via elementFromPoint.
+	await page.mouse.move(hx, hy - 6, { steps: 5 });
+	await page.waitForTimeout(50);
+	await page.mouse.move(tx, ty, { steps: 20 });
+	await page.waitForTimeout(50);
+	await page.mouse.move(tx, ty, { steps: 5 });
+	await page.mouse.up();
+	await page.waitForTimeout(100);
+}
+
+test('ranks an official template from start to results, then downloads image', async ({
+	page,
+}) => {
+	test.setTimeout(90_000);
+	await rankToResults(page, A.slug);
+
 	await expect(page.locator('#results-podium')).not.toBeEmpty();
 	await expect(page.locator('#results-list')).not.toBeEmpty();
 
@@ -54,6 +88,29 @@ test('ranks an official template from start to results', async ({ page }) => {
 	await page.locator('#action-download-image').click();
 	const download = await downloadPromise;
 	expect(download.suggestedFilename()).toMatch(/_ranking\.png$/);
+});
+
+test('manual reorder moves a row up and re-renders the podium', async ({ page }) => {
+	test.setTimeout(90_000);
+	await rankToResults(page, A.slug);
+
+	const rows = page.locator('#results-list .rank-item');
+	const namesBefore = await rows.locator('p').allInnerTexts();
+
+	// Drag the 4th item (not on the podium) to the top.
+	const draggedName = namesBefore[3];
+	await page.locator('#action-reorder').click(); // enter reorder mode
+	await expect(rows.nth(3).locator('.rank-drag-handle')).toBeVisible();
+	await dragRow(page, 3, 0);
+
+	// Order changed, the dragged item is now within the top 3, and the podium
+	// (which only shows the top 3) was re-rendered to include it.
+	await expect
+		.poll(async () => await rows.locator('p').allInnerTexts())
+		.not.toEqual(namesBefore);
+	const namesAfter = await rows.locator('p').allInnerTexts();
+	expect(namesAfter.indexOf(draggedName)).toBeLessThan(3);
+	await expect(page.locator('#results-podium')).toContainText(draggedName);
 });
 
 test('client-side navigation keeps options in sync with the template (regression)', async ({
