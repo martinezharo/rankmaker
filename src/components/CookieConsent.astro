@@ -33,6 +33,12 @@
             >
                 Accept
             </button>
+            <button
+                id="reject-cookies"
+                class="flex-1 py-2 rounded-xl border border-border hover:bg-white/5 text-xs font-medium text-text-secondary hover:text-text-primary transition-all active:scale-95"
+            >
+                Reject
+            </button>
             <a
                 href="/cookie-policy"
                 class="px-4 py-2 rounded-xl border border-border hover:bg-white/5 text-xs text-text-muted hover:text-text-primary transition-all text-center"
@@ -46,19 +52,47 @@
 <script is:inline>
     (function () {
         const STORAGE_KEY = "rankmaker_cookie_consent";
+        const GA_ID = "G-LER7ZFV5BV";
+
+        // Inject Google Analytics only after the user has accepted. Guarded on
+        // window so repeated astro:page-load runs never double-load gtag.
+        function loadAnalytics() {
+            if (window.__rmAnalyticsLoaded) return;
+            window.__rmAnalyticsLoaded = true;
+            const s = document.createElement("script");
+            s.async = true;
+            s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+            document.head.appendChild(s);
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () {
+                window.dataLayer.push(arguments);
+            };
+            window.gtag("js", new Date());
+            window.gtag("config", GA_ID);
+        }
+
+        function hide(banner) {
+            banner.classList.add(
+                "translate-y-20",
+                "opacity-0",
+                "pointer-events-none",
+            );
+        }
 
         function initBanner() {
             const banner = document.getElementById("cookie-banner");
             const acceptBtn = document.getElementById("accept-cookies");
+            const rejectBtn = document.getElementById("reject-cookies");
+            if (!banner || !acceptBtn || !rejectBtn) return;
 
-            if (!banner || !acceptBtn) return;
-
-            // Check if consent already given
-            if (localStorage.getItem(STORAGE_KEY)) {
-                return;
+            const consent = localStorage.getItem(STORAGE_KEY);
+            if (consent === "true") {
+                loadAnalytics();
+                return; // already decided — keep the banner hidden
             }
+            if (consent === "false") return;
 
-            // Show banner after a short delay
+            // No decision yet — reveal the banner after a short delay.
             setTimeout(() => {
                 banner.classList.remove(
                     "translate-y-20",
@@ -67,20 +101,22 @@
                 );
             }, 1000);
 
+            // Bind once (the banner element persists within a page session).
+            if (banner.dataset.bound) return;
+            banner.dataset.bound = "1";
             acceptBtn.addEventListener("click", () => {
                 localStorage.setItem(STORAGE_KEY, "true");
-                banner.classList.add(
-                    "translate-y-20",
-                    "opacity-0",
-                    "pointer-events-none",
-                );
+                hide(banner);
+                loadAnalytics();
+            });
+            rejectBtn.addEventListener("click", () => {
+                localStorage.setItem(STORAGE_KEY, "false");
+                hide(banner);
             });
         }
 
-        // Run on initial load
+        // Run on initial load and re-run on Astro view transitions.
         initBanner();
-
-        // Re-run on Astro view transitions
         document.addEventListener("astro:page-load", initBanner);
     })();
 </script>
