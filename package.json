@@ -6,6 +6,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "astro": "astro",
     "wrangler": "npx --yes wrangler@latest",
     "db:create": "npx --yes wrangler@latest d1 create rankmaker",
@@ -25,6 +28,8 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "vitest": "^4.1.8",
     "wrangler": "^4.99.0"
   }
 }
