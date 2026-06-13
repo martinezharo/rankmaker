@@ -531,10 +531,10 @@ const inputClass =
         updateVisibilityHint();
 
         // ── Submit ───────────────────────────────────────────────────
-        function validate(): string | null {
+        function validate(skipDescLength = false): string | null {
             if (title.value.trim().length < 3)
                 return "Title must be at least 3 characters.";
-            if (desc.value.trim().length < 15)
+            if (!skipDescLength && desc.value.trim().length < 15)
                 return "Description is required (at least 15 characters).";
             if (!category.value) return "Pick a category.";
             const coverVal = cover.value.trim();
@@ -618,15 +618,22 @@ const inputClass =
         type Suggestion = { description: string; mode: string };
 
         const aiModal = document.getElementById("tf-ai-modal");
+        const aiTitleEl = document.getElementById("tf-ai-title");
         const aiText = document.getElementById(
             "tf-ai-text",
         ) as HTMLTextAreaElement | null;
         const aiCount = document.getElementById("tf-ai-count");
         const aiCopy = document.getElementById("tf-ai-copy");
         const aiError = document.getElementById("tf-ai-error");
+        const aiKeepBtn = document.getElementById(
+            "tf-ai-keep",
+        ) as HTMLButtonElement | null;
         let aiAsked = false;
         let aiSuggestion: Suggestion | null = null;
         let pendingPayload: Payload | null = null;
+        // "discover": description is valid, we pitch a more discoverable one.
+        // "short": description is below the 15-char minimum, AI fills the gap.
+        let aiModalKind: "discover" | "short" = "discover";
 
         if (aiText && aiCount) bindCounter(aiText, aiCount);
 
@@ -658,12 +665,26 @@ const inputClass =
             }
         }
 
-        function openAiModal(suggestion: Suggestion, payload: Payload) {
+        function openAiModal(
+            suggestion: Suggestion,
+            payload: Payload,
+            kind: "discover" | "short" = "discover",
+        ) {
             pendingPayload = payload;
-            aiCopy!.textContent =
-                suggestion.mode === "polish"
-                    ? "We polished your description to help your ranking get discovered. Edit it if you like, or keep your original."
-                    : "With this description your ranking will be easier to discover. Edit it if you like, or keep your original.";
+            aiModalKind = kind;
+            if (kind === "short") {
+                aiTitleEl!.textContent = "Your description is too short";
+                aiCopy!.textContent =
+                    "A description needs at least 15 characters. Here's one we wrote from your title and options — use it, or write your own.";
+                if (aiKeepBtn) aiKeepBtn.textContent = "Write my own";
+            } else {
+                aiTitleEl!.textContent = "Make your ranking more popular?";
+                aiCopy!.textContent =
+                    suggestion.mode === "polish"
+                        ? "We polished your description to help your ranking get discovered. Edit it if you like, or keep your original."
+                        : "With this description your ranking will be easier to discover. Edit it if you like, or keep your original.";
+                if (aiKeepBtn) aiKeepBtn.textContent = "Keep mine";
+            }
             aiText!.value = suggestion.description;
             aiText!.dispatchEvent(new Event("input"));
             aiError!.textContent = "";
@@ -682,16 +703,23 @@ const inputClass =
                     "Description must be at least 15 characters.";
                 return;
             }
+            // Keep the editor in sync so the text survives a failed submit.
+            desc.value = edited;
+            desc.dispatchEvent(new Event("input"));
             closeAiModal();
             actuallySubmit({ ...pendingPayload!, description: edited });
         });
 
-        document
-            .getElementById("tf-ai-keep")
-            ?.addEventListener("click", () => {
-                closeAiModal();
-                actuallySubmit(pendingPayload!);
-            });
+        aiKeepBtn?.addEventListener("click", () => {
+            closeAiModal();
+            // Short mode: there's nothing valid to keep — send them back to
+            // the editor to write their own instead of submitting.
+            if (aiModalKind === "short") {
+                desc.focus();
+                return;
+            }
+            actuallySubmit(pendingPayload!);
+        });
 
         document
             .getElementById("tf-ai-backdrop")
@@ -704,7 +732,13 @@ const inputClass =
             e.preventDefault();
             errorEl.textContent = "";
 
-            const problem = validate();
+            // A too-short description routes to the AI modal instead of a
+            // plain error — but only in create mode, where the modal exists.
+            const descShort = desc.value.trim().length < 15;
+            const canAiAssist =
+                data.mode === "create" && !!aiModal && !!aiText;
+
+            const problem = validate(descShort && canAiAssist);
             if (problem) {
                 errorEl.textContent = problem;
                 return;
@@ -731,6 +765,25 @@ const inputClass =
                     .filter((o) => o.name),
             };
 
+            // Too-short description: offer an AI-written one (any visibility).
+            // If the AI is unavailable, fall back to the plain requirement.
+            if (descShort && canAiAssist) {
+                setBusy(true);
+                if (!aiAsked) {
+                    aiAsked = true;
+                    aiSuggestion = await fetchSuggestion(payload);
+                }
+                if (aiSuggestion) {
+                    openAiModal(aiSuggestion, payload, "short");
+                    return;
+                }
+                setBusy(false);
+                errorEl.textContent =
+                    "Description is required (at least 15 characters).";
+                desc.focus();
+                return;
+            }
+
             // Discoverability pitch only makes sense for public templates.
             if (
                 data.mode === "create" &&
@@ -747,7 +800,7 @@ const inputClass =
                     aiSuggestion &&
                     aiSuggestion.description !== payload.description
                 ) {
-                    openAiModal(aiSuggestion, payload);
+                    openAiModal(aiSuggestion, payload, "discover");
                     return;
                 }
             }
