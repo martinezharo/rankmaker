@@ -234,8 +234,24 @@
         });
     }
 
+    // The header persists across View Transitions, so an open mobile menu or
+    // auth dropdown would stay open after tapping a link and navigating. Reset
+    // them to closed on every soft navigation.
+    function resetMenus() {
+        closeAllDropdowns();
+        const menu = document.getElementById("mobile-menu");
+        const iconOpen = document.getElementById("menu-icon-open");
+        const iconClose = document.getElementById("menu-icon-close");
+        const toggle = document.getElementById("mobile-menu-toggle");
+        if (menu) menu.style.display = "none";
+        if (iconOpen) iconOpen.style.display = "";
+        if (iconClose) iconClose.style.display = "none";
+        toggle?.setAttribute("aria-expanded", "false");
+    }
+
     document.addEventListener("astro:page-load", () => {
         applyAuthState();
+        resetMenus();
 
         const toggle = document.getElementById("mobile-menu-toggle");
         const menu = document.getElementById("mobile-menu");
@@ -264,5 +280,19 @@
         });
 
         document.addEventListener("click", closeAllDropdowns);
+
+        // Close the mobile menu when clicking outside it. The toggle has its
+        // own handler, so ignore clicks on it (otherwise the opening click
+        // would immediately close the menu); clicks on menu links navigate and
+        // are reset on astro:page-load.
+        document.addEventListener("click", (e) => {
+            if (menu.style.display === "none") return;
+            const target = e.target as Node | null;
+            if (toggle.contains(target) || menu.contains(target)) return;
+            menu.style.display = "none";
+            iconOpen.style.display = "";
+            iconClose.style.display = "none";
+            toggle.setAttribute("aria-expanded", "false");
+        });
     });
 </script>
