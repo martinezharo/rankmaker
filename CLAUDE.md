@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-RANKMAKER (rankmaker.net) — users rank things through 1v1 matchups. Astro 5 + Tailwind 4, deployed to Cloudflare (Workers runtime with static assets) via `@astrojs/cloudflare`. Package manager is **pnpm**. There are no tests or linter; `pnpm build` is the correctness check.
+RANKMAKER (rankmaker.net) — users rank things through 1v1 matchups. Astro 5 + Tailwind 4, deployed to Cloudflare (Workers runtime with static assets) via `@astrojs/cloudflare`. Package manager is **pnpm**. There is no linter; correctness is checked by `pnpm build` plus `pnpm test` (Vitest unit, `src/scripts/*.test.ts`) and `pnpm test:e2e` (Playwright, `e2e/`).
 
 ## Commands
 
@@ -12,6 +12,9 @@ RANKMAKER (rankmaker.net) — users rank things through 1v1 matchups. Astro 5 + 
 pnpm dev                    # dev server at http://localhost:4321 (local D1/KV via miniflare)
 pnpm build                  # production build — run this to verify changes
 pnpm preview                # preview the production build
+pnpm test                   # Vitest unit tests (src/scripts/*.test.ts)
+pnpm test:e2e               # Playwright e2e (e2e/, drives `pnpm dev`); needs browser deps:
+                            #   sudo npx playwright install-deps chromium
 
 # D1 migrations are plain SQL files run individually (no migration runner):
 pnpm run db:migrate:local   # migrations/0001_init.sql (rankings table)
@@ -41,7 +44,7 @@ Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIE
 
 **AI description suggestions** (`src/pages/api/templates/describe.ts`): Workers AI (llama-3.3-70b), auth-required, daily per-user limit. The prompt treats all user content as data (prompt-injection hardening) and the client treats any non-200 as "no suggestion". The prompt has tuning notes inline — read them before adjusting it.
 
-**Battle/ranking logic is client-side** in `src/pages/template/[slug].astro` (~1600 lines: battle state, sorting algorithm, undo, results). Components in `src/components/ranking/` are the views it drives.
+**Battle/ranking logic is client-side** in `src/pages/template/[slug].astro` (~1200 lines: battle state, undo, results, drag-reorder). The page's `<script>` is a bundled module (re-runs `rankingInit` on every `astro:page-load`); it reads options from the inline `#ranking-data` JSON in the swapped DOM, never a global. Pure, unit-tested logic is extracted to `src/scripts/`: `ranking-sort.ts` (comparison map + transitive inference + generic merge sort) and `ranking-share-image.ts` (results PNG canvas renderer). Components in `src/components/ranking/` are the views it drives.
 
 ## Conventions
 

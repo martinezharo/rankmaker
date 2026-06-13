@@ -67,8 +67,8 @@ const resolveImg = (path: string | null) => {
 
 const coverSrc = resolveImg(template.cover_image);
 
-// Ranking engine input. Embedded as a JSON <script> inside the swapped DOM
-// (not a global set by a separate inline script) so the options can never
+// Ranking engine input. Embedded as a JSON script element inside the swapped
+// DOM (not a global set by a separate inline script) so the options can never
 // desync from the title/URL during a ViewTransitions navigation — a stale
 // global previously caused "right template, wrong options" on interrupted nav.
 const rankingData = {
@@ -363,16 +363,19 @@ const jsonLd = {
     <!-- ═══════════════════════════════════════════════════
          RANKING ENGINE + UI CONTROLLER
          ═══════════════════════════════════════════════════ -->
-    <script is:inline>
-        // Remove previous listener if navigating via View Transitions
-        // (is:inline scripts re-execute on each navigation, stacking listeners)
-        if (window.__rankingPageLoadHandler) {
-            document.removeEventListener(
-                "astro:page-load",
-                window.__rankingPageLoadHandler,
-            );
-        }
-        window.__rankingPageLoadHandler = function rankingInit() {
+    <script>
+        // Bundled module: runs once, then `astro:page-load` re-runs rankingInit
+        // on every View Transitions navigation (and the initial load). The
+        // handler re-queries the DOM each time, so no listener-stacking guard is
+        // needed — unlike the old is:inline version that re-executed per swap.
+        import {
+            getKnownResult,
+            recordResult,
+            mergeSort,
+        } from "../../scripts/ranking-sort";
+        import { downloadRankingImage } from "../../scripts/ranking-share-image";
+
+        function rankingInit() {
             // Read options + title from the JSON data element in the current
             // (swapped) DOM, so they can never lag behind the page on screen.
             const dataEl = document.getElementById("ranking-data");
@@ -434,6 +437,7 @@ const jsonLd = {
             // ─── Merge Sort with Human Input & Transitive Inference ──
             // comparisonMap: key "idA-idB" => 1 (A wins) or -1 (B wins)
             let comparisonMap = {};
+            const itemIds = items.map((i) => i.id);
             let battleHistory = []; // {a, b, winner, roundNum}
             let undoStack = []; // snapshots for undo
             let currentRound = 0;
@@ -441,10 +445,6 @@ const jsonLd = {
             let sortResolve = null; // resolve function for current comparison promise
             let isProcessing = false; // prevent double-clicks
             let lastRanked = []; // stores the final ranking for download image
-
-            function compKey(a, b) {
-                return a < b ? `${a}-${b}` : `${b}-${a}`;
-            }
 
             // Escape user-provided strings before innerHTML interpolation
             // (option names/images can come from user-created templates).
@@ -504,75 +504,13 @@ const jsonLd = {
                 }
             }
 
-            function getKnownResult(aId, bId) {
-                const key = compKey(aId, bId);
-                if (comparisonMap[key] !== undefined) {
-                    return aId < bId ? comparisonMap[key] : -comparisonMap[key];
-                }
-                return 0; // unknown
-            }
-
-            function recordResult(aId, bId, aWins) {
-                const key = compKey(aId, bId);
-                if (aId < bId) {
-                    comparisonMap[key] = aWins ? 1 : -1;
-                } else {
-                    comparisonMap[key] = aWins ? -1 : 1;
-                }
-                // Propagate transitive results
-                propagateTransitive();
-            }
-
-            function propagateTransitive() {
-                // Floyd-Warshall-like transitive closure
-                const ids = items.map((i) => i.id);
-                let changed = true;
-                while (changed) {
-                    changed = false;
-                    for (const a of ids) {
-                        for (const b of ids) {
-                            if (a === b) continue;
-                            const ab = getKnownResult(a, b);
-                            if (ab === 0) continue;
-                            for (const c of ids) {
-                                if (c === a || c === b) continue;
-                                const bc = getKnownResult(b, c);
-                                if (bc === 0) continue;
-                                // If A>B and B>C then A>C
-                                if (ab > 0 && bc > 0) {
-                                    const ac = getKnownResult(a, c);
-                                    if (ac === 0) {
-                                        recordResultDirect(a, c, true);
-                                        changed = true;
-                                    }
-                                }
-                                // If A<B and B<C then A<C
-                                if (ab < 0 && bc < 0) {
-                                    const ac = getKnownResult(a, c);
-                                    if (ac === 0) {
-                                        recordResultDirect(a, c, false);
-                                        changed = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            function recordResultDirect(aId, bId, aWins) {
-                const key = compKey(aId, bId);
-                if (comparisonMap[key] !== undefined) return;
-                if (aId < bId) {
-                    comparisonMap[key] = aWins ? 1 : -1;
-                } else {
-                    comparisonMap[key] = aWins ? -1 : 1;
-                }
-            }
-
-            // Compare function for merge sort — returns promise that auto-resolves if known
+            // Comparison bookkeeping + transitive inference + the generic merge
+            // sort live in src/scripts/ranking-sort.ts (unit-tested). This is the
+            // human-input bridge: it resolves a pair from the known results, or
+            // shows the battle and waits for a click. `generation` rejects a
+            // pending comparison when the user restarts mid-sort.
             function compare(aItem, bItem, generation) {
-                const known = getKnownResult(aItem.id, bItem.id);
+                const known = getKnownResult(comparisonMap, aItem.id, bItem.id);
                 if (known !== 0) {
                     return Promise.resolve(known > 0 ? -1 : 1); // -1 = a first (wins)
                 }
@@ -587,35 +525,6 @@ const jsonLd = {
                     sortResolve = resolve;
                     showBattle(aItem, bItem);
                 });
-            }
-
-            // Merge sort implementation
-            async function mergeSort(arr, generation) {
-                if (generation !== sortGeneration) throw new Error("cancelled");
-                if (arr.length <= 1) return arr;
-                const mid = Math.floor(arr.length / 2);
-                const left = await mergeSort(arr.slice(0, mid), generation);
-                const right = await mergeSort(arr.slice(mid), generation);
-                return await merge(left, right, generation);
-            }
-
-            async function merge(left, right, generation) {
-                const result = [];
-                let i = 0,
-                    j = 0;
-                while (i < left.length && j < right.length) {
-                    if (generation !== sortGeneration)
-                        throw new Error("cancelled");
-                    const cmp = await compare(left[i], right[j], generation);
-                    if (cmp <= 0) {
-                        result.push(left[i++]);
-                    } else {
-                        result.push(right[j++]);
-                    }
-                }
-                while (i < left.length) result.push(left[i++]);
-                while (j < right.length) result.push(right[j++]);
-                return result;
             }
 
             // ─── Progress ────────────────────────────────────
@@ -679,7 +588,7 @@ const jsonLd = {
                 undoBtn.disabled = false;
 
                 // Record
-                recordResult(aId, bId, aWins);
+                recordResult(comparisonMap, itemIds, aId, bId, aWins);
                 battleHistory.push({
                     a: aItem,
                     b: bItem,
@@ -829,7 +738,8 @@ const jsonLd = {
                 try {
                     const sorted = await mergeSort(
                         [...savedShuffleOrder],
-                        myGeneration,
+                        (a, b) => compare(a, b, myGeneration),
+                        () => myGeneration !== sortGeneration,
                     );
                     // Only show results if this run is still the active one
                     if (myGeneration === sortGeneration) {
@@ -1024,372 +934,12 @@ const jsonLd = {
             // ─── Download Image ─────────────────────────────
             document
                 .getElementById("action-download-image")
-                .addEventListener("click", async () => {
-                    if (lastRanked.length === 0) return;
-                    const ranked = lastRanked;
-                    const title = templateTitle || "My Ranking";
-
-                    // ─── Config ───
-                    const W = 1080;
-                    const PAD = 50;
-                    const IMG_SIZE = 80;
-                    const ROW_H = 100;
-                    const COL_GAP = 24;
-                    const PODIUM_IMG = 120;
-                    const PODIUM_H = 420;
-                    const HEADER_H = 140;
-                    const FOOTER_H = 60;
-
-                    // Calculate items below podium (items from index 3+)
-                    const restItems = ranked.slice(3);
-                    const cols = 2;
-                    const restRows = Math.ceil(restItems.length / cols);
-                    const REST_H = restRows > 0 ? restRows * ROW_H + 60 : 0; // 60 for "Full Ranking" label
-
-                    const H = HEADER_H + PODIUM_H + REST_H + FOOTER_H + PAD;
-
-                    const canvas = document.createElement("canvas");
-                    canvas.width = W;
-                    canvas.height = H;
-                    const ctx = canvas.getContext("2d");
-
-                    // ─── Background ───
-                    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-                    bgGrad.addColorStop(0, "#0c0c14");
-                    bgGrad.addColorStop(0.5, "#0f0f1a");
-                    bgGrad.addColorStop(1, "#0a0a12");
-                    ctx.fillStyle = bgGrad;
-                    ctx.fillRect(0, 0, W, H);
-
-                    // Subtle purple glow at top
-                    const glowGrad = ctx.createRadialGradient(
-                        W / 2,
-                        0,
-                        0,
-                        W / 2,
-                        0,
-                        W * 0.6,
-                    );
-                    glowGrad.addColorStop(0, "rgba(132, 0, 255, 0.08)");
-                    glowGrad.addColorStop(1, "transparent");
-                    ctx.fillStyle = glowGrad;
-                    ctx.fillRect(0, 0, W, H / 2);
-
-                    // ─── Helper: load image ───
-                    function loadImg(src) {
-                        return new Promise((resolve) => {
-                            const img = new Image();
-                            img.crossOrigin = "anonymous";
-                            img.onload = () => resolve(img);
-                            img.onerror = () => resolve(null);
-                            img.src = src;
-                        });
-                    }
-
-                    // ─── Helper: draw rounded rect ───
-                    function roundRect(x, y, w, h, r) {
-                        ctx.beginPath();
-                        ctx.moveTo(x + r, y);
-                        ctx.lineTo(x + w - r, y);
-                        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-                        ctx.lineTo(x + w, y + h - r);
-                        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-                        ctx.lineTo(x + r, y + h);
-                        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-                        ctx.lineTo(x, y + r);
-                        ctx.quadraticCurveTo(x, y, x + r, y);
-                        ctx.closePath();
-                    }
-
-                    // ─── Helper: draw rounded image ───
-                    function drawRoundedImg(img, x, y, size, radius) {
-                        if (!img) {
-                            // Placeholder
-                            roundRect(x, y, size, size, radius);
-                            ctx.fillStyle = "#1a1a2e";
-                            ctx.fill();
-                            ctx.strokeStyle = "#333";
-                            ctx.lineWidth = 1;
-                            ctx.stroke();
-                            return;
-                        }
-                        ctx.save();
-                        roundRect(x, y, size, size, radius);
-                        ctx.clip();
-                        // Draw image covering the area
-                        const scale = Math.max(
-                            size / img.width,
-                            size / img.height,
-                        );
-                        const sw = img.width * scale;
-                        const sh = img.height * scale;
-                        ctx.drawImage(
-                            img,
-                            x - (sw - size) / 2,
-                            y - (sh - size) / 2,
-                            sw,
-                            sh,
-                        );
-                        ctx.restore();
-                    }
-
-                    // ─── Helper: truncate text ───
-                    function truncText(text, maxW) {
-                        let t = text;
-                        while (
-                            ctx.measureText(t).width > maxW &&
-                            t.length > 3
-                        ) {
-                            t = t.slice(0, -1);
-                        }
-                        return t.length < text.length ? t + "…" : t;
-                    }
-
-                    // ─── Load all images ───
-                    const allImages = {};
-                    await Promise.all(
-                        ranked.map(async (item) => {
-                            allImages[item.id] = await loadImg(item.image);
-                        }),
-                    );
-
-                    // ─── Header ───
-                    let curY = PAD;
-                    ctx.fillStyle = "rgba(255,255,255,0.35)";
-                    ctx.font = "600 13px -apple-system, 'Segoe UI', sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.fillText("RESULTS", W / 2, curY + 16);
-
-                    ctx.fillStyle = "#ffffff";
-                    ctx.font =
-                        "bold 32px -apple-system, 'Segoe UI', sans-serif";
-                    ctx.fillText(title, W / 2, curY + 60);
-
-                    ctx.fillStyle = "rgba(255,255,255,0.4)";
-                    ctx.font = "400 14px -apple-system, 'Segoe UI', sans-serif";
-                    ctx.fillText("", W / 2, curY + 86);
-                    curY += HEADER_H;
-
-                    // ─── Podium ───
-                    const medalColors = [
-                        {
-                            border: "#FBBF24",
-                            bg: "rgba(251,191,36,0.15)",
-                            label: "1ST",
-                            text: "#FBBF24",
-                            crown: true,
-                        },
-                        {
-                            border: "#9CA3AF",
-                            bg: "rgba(156,163,175,0.10)",
-                            label: "2ND",
-                            text: "#9CA3AF",
-                            crown: false,
-                        },
-                        {
-                            border: "#F97316",
-                            bg: "rgba(249,115,22,0.10)",
-                            label: "3RD",
-                            text: "#F97316",
-                            crown: false,
-                        },
-                    ];
-                    const podiumWidths = [180, 200, 180]; // 2nd, 1st, 3rd
-                    const podiumHeights = [160, 210, 130]; // visual column heights
-                    const podiumOrder =
-                        ranked.length >= 3
-                            ? [1, 0, 2]
-                            : ranked.length === 2
-                              ? [null, 0, 1]
-                              : [null, 0, null];
-                    const podiumCenterX = W / 2;
-                    const podiumSpacing = 12;
-                    // Position columns: [left, center, right]
-                    const colW = podiumWidths;
-                    const totalPodiumW =
-                        colW[0] + colW[1] + colW[2] + podiumSpacing * 2;
-                    const podiumStartX = podiumCenterX - totalPodiumW / 2;
-
-                    const podiumBaseY = curY + PODIUM_H - 40; // bottom of podium area
-
-                    podiumOrder.forEach((idx, pos) => {
-                        if (idx === null || idx >= ranked.length) return;
-                        const item = ranked[idx];
-                        const medal = medalColors[idx];
-                        const img = allImages[item.id];
-                        const w = colW[pos];
-                        const h = podiumHeights[pos];
-                        const x =
-                            podiumStartX +
-                            (pos === 0
-                                ? 0
-                                : pos === 1
-                                  ? colW[0] + podiumSpacing
-                                  : colW[0] + colW[1] + podiumSpacing * 2);
-
-                        const imgSize =
-                            idx === 0 ? PODIUM_IMG + 16 : PODIUM_IMG;
-                        const imgX = x + (w - imgSize) / 2;
-
-                        // Crown for 1st
-                        const crownH = medal.crown ? 30 : 0;
-                        const imgY = podiumBaseY - h - imgSize - 50 - crownH;
-
-                        if (medal.crown) {
-                            ctx.fillStyle = "#FBBF24";
-                            ctx.font = "bold 26px -apple-system, sans-serif";
-                            ctx.textAlign = "center";
-                            ctx.fillText("👑", x + w / 2, imgY + 2);
-                        }
-
-                        // Image
-                        drawRoundedImg(img, imgX, imgY + crownH, imgSize, 18);
-
-                        // Border ring
-                        roundRect(
-                            imgX - 2,
-                            imgY + crownH - 2,
-                            imgSize + 4,
-                            imgSize + 4,
-                            20,
-                        );
-                        ctx.strokeStyle = medal.border;
-                        ctx.lineWidth = 3;
-                        ctx.stroke();
-
-                        // Name
-                        ctx.fillStyle = "#ffffff";
-                        ctx.font =
-                            "bold 15px -apple-system, 'Segoe UI', sans-serif";
-                        ctx.textAlign = "center";
-                        const nameY = imgY + crownH + imgSize + 22;
-                        ctx.fillText(
-                            truncText(item.name, w - 10),
-                            x + w / 2,
-                            nameY,
-                        );
-
-                        // Podium column
-                        const colY = nameY + 14;
-                        const colH = podiumBaseY - colY;
-                        roundRect(x + 8, colY, w - 16, colH, 16);
-                        // Create gradient for column
-                        const colGrad = ctx.createLinearGradient(
-                            0,
-                            colY,
-                            0,
-                            colY + colH,
-                        );
-                        colGrad.addColorStop(0, medal.bg);
-                        colGrad.addColorStop(1, "rgba(0,0,0,0)");
-                        ctx.fillStyle = colGrad;
-                        ctx.fill();
-                        // Column border
-                        roundRect(x + 8, colY, w - 16, colH, 16);
-                        ctx.strokeStyle = medal.border + "50"; // add alpha
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-
-                        // Label inside column
-                        ctx.fillStyle = medal.text;
-                        ctx.font = "900 13px -apple-system, sans-serif";
-                        ctx.textAlign = "center";
-                        ctx.fillText(medal.label, x + w / 2, colY + 26);
-                    });
-
-                    curY = podiumBaseY + 20;
-
-                    // ─── Full Ranking (rest, 2 columns) ───
-                    if (restItems.length > 0) {
-                        // Section label
-                        ctx.fillStyle = "#ffffff";
-                        ctx.font =
-                            "bold 17px -apple-system, 'Segoe UI', sans-serif";
-                        ctx.textAlign = "left";
-                        ctx.fillText("Full Ranking", PAD, curY + 20);
-
-                        // Separator line
-                        ctx.strokeStyle = "rgba(255,255,255,0.08)";
-                        ctx.lineWidth = 1;
-                        const textW = ctx.measureText("Full Ranking").width;
-                        ctx.beginPath();
-                        ctx.moveTo(PAD + textW + 16, curY + 16);
-                        ctx.lineTo(W - PAD, curY + 16);
-                        ctx.stroke();
-                        curY += 50;
-
-                        const colWidth = (W - PAD * 2 - COL_GAP) / 2;
-
-                        restItems.forEach((item, i) => {
-                            const globalIdx = i + 3; // actual rank index
-                            const col = i % 2;
-                            const row = Math.floor(i / 2);
-                            const x = PAD + col * (colWidth + COL_GAP);
-                            const y = curY + row * ROW_H;
-
-                            // Card background
-                            roundRect(x, y, colWidth, ROW_H - 12, 14);
-                            ctx.fillStyle = "rgba(255,255,255,0.03)";
-                            ctx.fill();
-                            roundRect(x, y, colWidth, ROW_H - 12, 14);
-                            ctx.strokeStyle = "rgba(255,255,255,0.06)";
-                            ctx.lineWidth = 1;
-                            ctx.stroke();
-
-                            // Rank number badge
-                            const badgeSize = 32;
-                            const badgeX = x + 14;
-                            const badgeY = y + (ROW_H - 12 - badgeSize) / 2;
-                            roundRect(badgeX, badgeY, badgeSize, badgeSize, 8);
-                            ctx.fillStyle = "rgba(255,255,255,0.06)";
-                            ctx.fill();
-                            ctx.fillStyle = "rgba(255,255,255,0.4)";
-                            ctx.font = "800 13px -apple-system, sans-serif";
-                            ctx.textAlign = "center";
-                            ctx.fillText(
-                                String(globalIdx + 1),
-                                badgeX + badgeSize / 2,
-                                badgeY + badgeSize / 2 + 5,
-                            );
-
-                            // Image
-                            const imgX = badgeX + badgeSize + 12;
-                            const imgY2 = y + (ROW_H - 12 - 50) / 2;
-                            drawRoundedImg(
-                                allImages[item.id],
-                                imgX,
-                                imgY2,
-                                50,
-                                10,
-                            );
-
-                            // Name
-                            ctx.fillStyle = "#e0e0e0";
-                            ctx.font =
-                                "500 14px -apple-system, 'Segoe UI', sans-serif";
-                            ctx.textAlign = "left";
-                            const nameMaxW = colWidth - (imgX - x + 50 + 20);
-                            ctx.fillText(
-                                truncText(item.name, nameMaxW),
-                                imgX + 60,
-                                y + (ROW_H - 12) / 2 + 5,
-                            );
-                        });
-                    }
-
-                    // ─── Watermark footer ───
-                    const footerY = H - 30;
-                    ctx.fillStyle = "rgba(255,255,255,0.15)";
-                    ctx.font = "500 12px -apple-system, 'Segoe UI', sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.fillText("Made with rankmaker.net", W / 2, footerY);
-
-                    // ─── Download ───
-                    const link = document.createElement("a");
-                    link.download = `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_ranking.png`;
-                    link.href = canvas.toDataURL("image/png");
-                    link.click();
-                });
+                .addEventListener("click", () =>
+                    downloadRankingImage(
+                        lastRanked,
+                        templateTitle || "My Ranking",
+                    ),
+                );
 
             // ─── Reorder Manually (drag & drop) ────────────
             let reorderMode = false;
@@ -1680,10 +1230,7 @@ const jsonLd = {
                 const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
                 window.open(xUrl, "_blank");
             });
-        };
-        document.addEventListener(
-            "astro:page-load",
-            window.__rankingPageLoadHandler,
-        );
+        }
+        document.addEventListener("astro:page-load", rankingInit);
     </script>
 </Layout>
