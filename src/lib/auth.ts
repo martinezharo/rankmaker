@@ -216,6 +216,7 @@ export const RESERVED_USERNAMES = [
     'create',
     'edit',
     'me',
+    'history',
     'u',
     'user',
     'users',

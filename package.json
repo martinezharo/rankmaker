@@ -20,6 +20,8 @@
     "db:migrate3:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0003_users_templates.sql",
     "db:migrate4:local": "npx --yes wrangler@latest d1 execute rankmaker --local --file=migrations/0004_template_visibility.sql",
     "db:migrate4:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0004_template_visibility.sql",
+    "db:migrate5:local": "npx --yes wrangler@latest d1 execute rankmaker --local --file=migrations/0005_ranking_history.sql",
+    "db:migrate5:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0005_ranking_history.sql",
     "db:counts:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
   },
   "dependencies": {

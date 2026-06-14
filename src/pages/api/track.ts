@@ -1,7 +1,7 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
-import { checkOrigin } from '../../lib/auth';
+import { checkOrigin, getSessionUser } from '../../lib/auth';
 import { slugFromUrl } from '../../lib/slug';
 import { getOfficialTemplateBySlug } from '../../lib/templates';
 
@@ -76,12 +76,17 @@ export const POST: APIRoute = async (context) => {
         // Keep the KV event log (backup / raw history)
         await env['rm-times-ranked'].put(key, value);
 
+        // Attribute the play to the logged-in user (NULL when anonymous). This
+        // is the "played" signal used to hide already-played templates from the
+        // "You might also like" row.
+        const user = await getSessionUser(context.cookies, env.DB);
+
         // Record the event in D1 so counts can be aggregated efficiently.
         try {
             await env.DB.prepare(
-                'INSERT INTO rankings (slug, url, date, country) VALUES (?, ?, ?, ?)'
+                'INSERT INTO rankings (slug, url, date, country, user_id) VALUES (?, ?, ?, ?, ?)'
             )
-                .bind(slug, url, date, country)
+                .bind(slug, url, date, country, user?.id ?? null)
                 .run();
         } catch (dbError) {
             // Don't fail the request if D1 write fails; KV log still captured it.

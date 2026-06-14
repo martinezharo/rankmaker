@@ -73,6 +73,7 @@ const coverSrc = resolveImg(template.cover_image);
 // desync from the title/URL during a ViewTransitions navigation — a stale
 // global previously caused "right template, wrong options" on interrupted nav.
 const rankingData = {
+    slug: template.slug,
     title: template.title,
     options: (options ?? []).map((o) => ({
         id: o.id,
@@ -103,7 +104,9 @@ const jsonLd = {
 // Scored in-memory; degrades to officials-only if D1 is unavailable.
 let recommendations: Awaited<ReturnType<typeof getRecommendedTemplates>> = [];
 try {
-    recommendations = await getRecommendedTemplates(db, template, 8);
+    // Over-fetch: the client hides already-played templates and trims to 8,
+    // so a few extra candidates keep the row full for returning users.
+    recommendations = await getRecommendedTemplates(db, template, 12);
 } catch {
     // non-fatal — the page renders without the row
 }
@@ -393,6 +396,7 @@ try {
         import { downloadRankingImage } from "../../scripts/ranking-share-image";
         import { createReorder } from "../../scripts/ranking-reorder";
         import { openModal, closeModal } from "../../scripts/modal-a11y";
+        import { recordStart, saveResult } from "../../scripts/history";
 
         function rankingInit() {
             // Read options + title from the JSON data element in the current
@@ -407,7 +411,31 @@ try {
             }
             const items = rankingData.options;
             const templateTitle = rankingData.title;
+            const templateSlug = rankingData.slug;
             if (!items || items.length < 2) return;
+
+            // Persist a completed result: localStorage for everyone (anonymous
+            // history + instant same-device recommendation filtering) and, for
+            // logged-in users, D1 via /api/me/history (the endpoint no-ops for
+            // anonymous visitors, so we can POST unconditionally).
+            function persistResult(ranked) {
+                if (!templateSlug || !ranked || ranked.length === 0) return;
+                const result = ranked.map((it) => ({
+                    id: it.id,
+                    name: it.name,
+                    image: it.image,
+                }));
+                saveResult(templateSlug, templateTitle, result);
+                fetch("/api/me/history", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        slug: templateSlug,
+                        title: templateTitle,
+                        result,
+                    }),
+                }).catch(() => {});
+            }
 
             // ─── DOM refs ────────────────────────────────────
             const detailView = document.getElementById("detail-view");
@@ -796,6 +824,10 @@ try {
                     }),
                 }).catch(() => {}); // Silently ignore tracking errors
 
+                // Mark as played locally (logged-in attribution is server-side
+                // via /api/track) so it's hidden from recommendations right away.
+                recordStart(templateSlug);
+
                 detailView.classList.add("hidden");
                 startCta.classList.add("hidden");
                 battleView.classList.remove("hidden");
@@ -828,6 +860,7 @@ try {
                     resultsView.classList.remove("hidden");
                     window.scrollTo({ top: 0, behavior: "smooth" });
                     renderResults(ranked);
+                    persistResult(ranked);
                 }, 900);
             }
 
@@ -1024,6 +1057,8 @@ try {
                     .filter(Boolean);
                 renumberPositions();
                 renderPodium(lastRanked);
+                // Save the user's manually reordered result (upsert).
+                persistResult(lastRanked);
             }
 
             const reorder = createReorder(rankListEl, {
