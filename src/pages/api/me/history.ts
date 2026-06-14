@@ -14,15 +14,39 @@ const MAX_IMAGE_LEN = 1024;
 type RankedItem = { id: number | string; name: string; image: string };
 
 /**
- * GET — the logged-in user's "played" slugs (started rankings). Drives the
- * client-side recommendation filter; returns `{ slugs: [] }` for anonymous
- * visitors (they filter from localStorage instead). Never cached — per-user.
+ * GET — two shapes, both per-user and never cached:
+ *   - `?slug=…` → `{ result: RankedItem[] | null }`, the saved result for that
+ *     template, so a logged-in user lands on their results view even on a fresh
+ *     device (where this browser's localStorage has no copy).
+ *   - no slug → `{ slugs: [] }`, the "played" slugs that drive the client-side
+ *     recommendation filter.
+ * Anonymous visitors get the empty shape (they read localStorage instead).
  */
 export const GET: APIRoute = async (context) => {
 	const headers = { 'Cache-Control': 'private, no-store' };
+	const slug = new URL(context.request.url).searchParams.get('slug');
 	try {
 		const { env } = context.locals.runtime;
 		const user = await getSessionUser(context.cookies, env.DB);
+
+		if (slug) {
+			if (!user) return json({ result: null }, 200, headers);
+			const row = await env.DB.prepare(
+				'SELECT result FROM ranking_results WHERE user_id = ? AND slug = ?'
+			)
+				.bind(user.id, slug)
+				.first<{ result: string }>();
+			let result: RankedItem[] | null = null;
+			if (row) {
+				try {
+					result = JSON.parse(row.result) as RankedItem[];
+				} catch {
+					result = null;
+				}
+			}
+			return json({ result }, 200, headers);
+		}
+
 		if (!user) return json({ slugs: [] }, 200, headers);
 
 		const { results } = await env.DB.prepare(
@@ -33,7 +57,7 @@ export const GET: APIRoute = async (context) => {
 		return json({ slugs: results.map((r) => r.slug) }, 200, headers);
 	} catch (error) {
 		console.error('History GET error:', error);
-		return json({ slugs: [] }, 200, headers);
+		return json(slug ? { result: null } : { slugs: [] }, 200, headers);
 	}
 };
 

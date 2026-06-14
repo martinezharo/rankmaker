@@ -397,7 +397,13 @@ try {
         import { downloadRankingImage } from "../../scripts/ranking-share-image";
         import { createReorder } from "../../scripts/ranking-reorder";
         import { openModal, closeModal } from "../../scripts/modal-a11y";
-        import { recordStart, saveResult } from "../../scripts/history";
+        import {
+            recordStart,
+            saveResult,
+            getLocalResult,
+            consumePendingResult,
+            consumeForceFresh,
+        } from "../../scripts/history";
 
         function rankingInit() {
             // Read options + title from the JSON data element in the current
@@ -1224,6 +1230,57 @@ try {
                 const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
                 window.open(xUrl, "_blank", "noopener");
             });
+
+            // ─── Land on saved results ──────────────────────
+            // If this user has already completed this template, open straight on
+            // the results view (podium + actions) instead of the detail/START
+            // view — "Rank Again" is the way back into a fresh ranking. Sources,
+            // in order: the /history "View details" handoff (sessionStorage),
+            // this browser's localStorage, then D1 for logged-in users on a fresh
+            // device. All client-side, so the publicly-cached HTML is untouched.
+            function showSavedResult(result) {
+                if (!result || result.length < 2) return;
+                detailView.classList.add("hidden");
+                startCta.classList.add("hidden");
+                battleView.classList.add("hidden");
+                resultsView.classList.remove("hidden");
+                renderResults(result); // already persisted — do not re-save
+            }
+
+            function maybeShowSavedResult() {
+                // "Rank again" from /history asks for a fresh ranking — keep the
+                // normal detail/START view even though a saved result exists.
+                if (consumeForceFresh(templateSlug)) return;
+                const pending = consumePendingResult(templateSlug);
+                if (pending && pending.result) {
+                    showSavedResult(pending.result);
+                    return;
+                }
+                const local = getLocalResult(templateSlug);
+                if (local && local.result) {
+                    showSavedResult(local.result);
+                    return;
+                }
+                // Fallback for logged-in users on a device without a local copy.
+                fetch(
+                    `/api/me/history?slug=${encodeURIComponent(templateSlug)}`,
+                    { headers: { Accept: "application/json" } },
+                )
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((data) => {
+                        // Bail if the user already moved off the detail view
+                        // (e.g. pressed START) while the fetch was in flight.
+                        if (
+                            data &&
+                            data.result &&
+                            !detailView.classList.contains("hidden")
+                        ) {
+                            showSavedResult(data.result);
+                        }
+                    })
+                    .catch(() => {});
+            }
+            maybeShowSavedResult();
         }
         document.addEventListener("astro:page-load", rankingInit);
     </script>

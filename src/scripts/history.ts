@@ -23,6 +23,14 @@ export type HistoryEntry = {
 
 const PLAYED_KEY = 'rankmaker_played';
 const HISTORY_KEY = 'rankmaker_history';
+// sessionStorage handoff: the /history "View details" button stows the picked
+// result here so the template page can open straight on the results view, even
+// cross-device (where this browser's localStorage has no copy). One-shot.
+const PENDING_KEY = 'rankmaker_pending_result';
+// sessionStorage flag: the /history "Rank again" button sets this so the
+// template page skips the land-on-saved-results behaviour and shows the normal
+// detail/START view for a fresh ranking. One-shot, holds the target slug.
+const FRESH_KEY = 'rankmaker_force_fresh';
 
 // Bounds so a heavy user can't bloat localStorage (5MB cap in most browsers).
 const MAX_PLAYED = 500;
@@ -112,4 +120,70 @@ export function getPlayedSlugs(): Set<string> {
 /** Saved results for this browser, newest first. */
 export function getLocalHistory(): HistoryEntry[] {
 	return historyToList(read<Record<string, HistoryEntry>>(HISTORY_KEY, {}));
+}
+
+/** This browser's saved result for `slug`, or null if it hasn't ranked it. */
+export function getLocalResult(slug: string): HistoryEntry | null {
+	if (!slug) return null;
+	const map = read<Record<string, HistoryEntry>>(HISTORY_KEY, {});
+	return map[slug] ?? null;
+}
+
+// ── sessionStorage handoff (one-shot) ─────────────────────────────────────────
+
+function sessionRead<T>(key: string, fallback: T): T {
+	try {
+		const raw = sessionStorage.getItem(key);
+		return raw ? (JSON.parse(raw) as T) : fallback;
+	} catch {
+		return fallback;
+	}
+}
+
+/** Stash a result for the next template-page load to pick up (see PENDING_KEY). */
+export function setPendingResult(entry: HistoryEntry): void {
+	if (!entry?.slug) return;
+	try {
+		sessionStorage.setItem(PENDING_KEY, JSON.stringify(entry));
+	} catch {
+		/* storage unavailable — the template page falls back to localStorage/D1 */
+	}
+}
+
+/**
+ * Read and clear the pending handoff. Returns the entry only when it matches
+ * `slug`; clears the key either way so a stale handoff can't linger.
+ */
+export function consumePendingResult(slug: string): HistoryEntry | null {
+	const entry = sessionRead<HistoryEntry | null>(PENDING_KEY, null);
+	try {
+		sessionStorage.removeItem(PENDING_KEY);
+	} catch {
+		/* ignore */
+	}
+	return entry && entry.slug === slug ? entry : null;
+}
+
+/** Flag the next load of `slug`'s template page to start a fresh ranking. */
+export function setForceFresh(slug: string): void {
+	if (!slug) return;
+	try {
+		sessionStorage.setItem(FRESH_KEY, JSON.stringify(slug));
+	} catch {
+		/* storage unavailable — template page just shows saved results instead */
+	}
+}
+
+/**
+ * Read and clear the force-fresh flag. Returns true only when it matches
+ * `slug`; clears the key either way so it can't linger.
+ */
+export function consumeForceFresh(slug: string): boolean {
+	const flagged = sessionRead<string | null>(FRESH_KEY, null);
+	try {
+		sessionStorage.removeItem(FRESH_KEY);
+	} catch {
+		/* ignore */
+	}
+	return flagged === slug;
 }

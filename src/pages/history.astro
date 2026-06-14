@@ -189,13 +189,25 @@ Astro.response.headers.set("Cache-Control", "no-store");
 												</li>
 											))}
 										</ol>
-										<div class="flex justify-end mt-4">
+										<div class="flex justify-end gap-2 mt-4">
 											<a
 												href={`/template/${e.slug}`}
-												class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-semibold text-text-secondary hover:text-text-primary transition-all"
+												data-slug={e.slug}
+												class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
 											>
 												<i class="fa-solid fa-rotate text-xs text-primary/70" />
 												Rank again
+											</a>
+											<a
+												href={`/template/${e.slug}`}
+												data-slug={e.slug}
+												data-title={e.title}
+												data-cover={e.cover}
+												data-result={JSON.stringify(e.result)}
+												class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"
+											>
+												<i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12" />
+												View details
 											</a>
 										</div>
 									</div>
@@ -234,7 +246,12 @@ Astro.response.headers.set("Cache-Control", "no-store");
 	// any local-only entries a logged-in user made before signing in). SSR-
 	// rendered slugs win, so we skip duplicates. The markup here mirrors the
 	// Astro template above so both kinds of card look and behave identically.
-	import { getLocalHistory } from "../scripts/history";
+	import {
+		getLocalHistory,
+		setPendingResult,
+		setForceFresh,
+		type RankedItem,
+	} from "../scripts/history";
 
 	function escapeHtml(s: string): string {
 		return s.replace(
@@ -336,8 +353,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
 								<div class="flex-1 h-px bg-border/60"></div>
 							</div>
 							<ol class="space-y-1.5">${rows}</ol>
-							<div class="flex justify-end mt-4">
-								<a href="/template/${encodeURIComponent(e.slug)}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-semibold text-text-secondary hover:text-text-primary transition-all"><i class="fa-solid fa-rotate text-xs text-primary/70"></i>Rank again</a>
+							<div class="flex justify-end gap-2 mt-4">
+								<a href="/template/${encodeURIComponent(e.slug)}" data-slug="${escapeHtml(e.slug)}" class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"><i class="fa-solid fa-rotate text-xs text-primary/70"></i>Rank again</a>
+								<a href="/template/${encodeURIComponent(e.slug)}" data-slug="${escapeHtml(e.slug)}" data-title="${escapeHtml(e.title)}" data-cover="${escapeHtml(e.cover || "")}" data-result="${escapeHtml(JSON.stringify(e.result))}" class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"><i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12"></i>View details</a>
 							</div>
 						</div>
 					</div>
@@ -352,6 +370,40 @@ Astro.response.headers.set("Cache-Control", "no-store");
 	// expand uses a grid-rows 0fr→1fr trick so height animates without JS
 	// measurement (and collapses to instant under prefers-reduced-motion).
 	function onClick(ev: MouseEvent) {
+		// "View details" → hand the result to the template page (via
+		// sessionStorage) so it opens straight on the results view. Then let the
+		// link navigate normally.
+		const viewBtn = (ev.target as HTMLElement)?.closest<HTMLElement>(
+			".history-view-details",
+		);
+		if (viewBtn) {
+			const slug = viewBtn.dataset.slug || "";
+			try {
+				setPendingResult({
+					slug,
+					title: viewBtn.dataset.title || slug,
+					result: JSON.parse(
+						viewBtn.dataset.result || "[]",
+					) as RankedItem[],
+					ts: Date.now(),
+					cover: viewBtn.dataset.cover || undefined,
+				});
+			} catch {
+				/* malformed data — fall back to the template page's own lookup */
+			}
+			return;
+		}
+
+		// "Rank again" → tell the template page to skip the saved-results view and
+		// show the normal detail/START flow for a fresh ranking.
+		const again = (ev.target as HTMLElement)?.closest<HTMLElement>(
+			".history-rank-again",
+		);
+		if (again) {
+			setForceFresh(again.dataset.slug || "");
+			return;
+		}
+
 		const toggle = (ev.target as HTMLElement)?.closest<HTMLElement>(
 			".history-toggle",
 		);
