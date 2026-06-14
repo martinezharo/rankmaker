@@ -53,6 +53,7 @@ Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIE
 ## Conventions
 
 - Conventional Commits (`feat(scope): ...`, `fix(scope): ...`) — see git log.
+- **Commit directly to the current branch — including `main` — unless a branch or PR is explicitly requested.** Do not auto-create a feature branch before committing just because the working branch is the default.
 - **Before committing, decide commit granularity deliberately.** Whenever asked to commit, first assess whether the changes belong in one commit or should be split into several. Split when the changes are independently revertable concerns (different features/surfaces/intents); keep as one when they serve a single coherent change. State the chosen split and the reasoning before running `git commit`.
 - Components `PascalCase.astro`, pages `kebab-case.astro`, lib/scripts `kebab-case.ts`. Tabs in `.astro` files.
 - Tailwind utility classes only; global styles/theme in `src/styles/global.css`.
