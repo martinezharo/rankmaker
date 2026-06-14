@@ -63,11 +63,24 @@ const fmtDate = (d: string | number) => {
 			});
 };
 
+// Position badge — mirrors the results page: medals + tinted pills for the top
+// three, plain numbers after. Kept in sync with the client script below.
+const posLabel = (i: number) =>
+	i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+const posCls = (i: number) =>
+	i === 0
+		? "bg-amber-400/15 text-amber-300 text-lg"
+		: i === 1
+			? "bg-gray-300/15 text-gray-200 text-lg"
+			: i === 2
+				? "bg-orange-400/15 text-orange-300 text-lg"
+				: "bg-border/60 text-text-muted text-sm font-black";
+
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
 <Layout title="My ranking history — RANKMAKER">
-	<section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
+	<section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
 		<div class="flex items-center gap-3 mb-2">
 			<div
 				class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
@@ -83,53 +96,128 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		<p class="text-sm text-text-secondary mb-8">
 			{
 				user
-					? "The rankings you've completed, with your saved results."
-					: "Rankings you've completed on this device. Log in to keep them across devices."
+					? "The rankings you've completed. Tap a card to reveal the full ranking."
+					: "Rankings you've completed on this device. Tap a card to reveal the full ranking. Log in to keep them across devices."
 			}
 		</p>
 
 		<div id="history-list" class="space-y-3">
 			{
-				serverEntries.map((e) => (
-					<a
-						href={`/template/${e.slug}`}
-						data-slug={e.slug}
-						class="flex items-center gap-4 p-3 rounded-xl bg-surface-elevated border border-border hover:border-border-hover transition-all group"
-					>
-						<div class="w-16 h-16 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
-							{e.result[0]?.image && (
-								<img
-									src={e.result[0].image}
-									alt=""
-									class="w-full h-full object-cover"
-								/>
-							)}
+				serverEntries.map((e) => {
+					const top = e.result[0];
+					return (
+						<div
+							data-slug={e.slug}
+							class="history-card group rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden"
+						>
+							<button
+								type="button"
+								class="history-toggle w-full flex items-center gap-4 p-4 text-left"
+								aria-expanded="false"
+							>
+								<div class="relative shrink-0">
+									<div class="w-16 h-16 rounded-xl overflow-hidden bg-surface border border-border ring-2 ring-amber-400/30">
+										{top?.image && (
+											<img
+												src={top.image}
+												alt=""
+												class="w-full h-full object-cover"
+											/>
+										)}
+									</div>
+									{top && (
+										<span class="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-gradient-gold flex items-center justify-center shadow-md">
+											<i class="fa-solid fa-crown text-[10px] text-zinc-900" />
+										</span>
+									)}
+								</div>
+								<div class="flex-1 min-w-0">
+									<p class="font-semibold text-base text-text-primary truncate group-hover:text-white transition-colors">
+										{e.title}
+									</p>
+									{top && (
+										<p class="text-sm mt-0.5 truncate">
+											<span class="text-xs uppercase tracking-wide text-text-muted">
+												Winner
+											</span>
+											<span class="font-semibold text-amber-300 ml-2">
+												{top.name}
+											</span>
+										</p>
+									)}
+									<div class="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
+										<span class="inline-flex items-center gap-1.5">
+											<i class="fa-solid fa-list-ol text-[10px]" />
+											{e.result.length} items
+										</span>
+										<span class="inline-flex items-center gap-1.5">
+											<i class="fa-regular fa-clock text-[10px]" />
+											{fmtDate(e.date)}
+										</span>
+									</div>
+								</div>
+								<span class="shrink-0 w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-text-primary group-hover:border-border-hover transition-colors">
+									<i class="history-chevron fa-solid fa-chevron-down text-xs transition-transform duration-300" />
+								</span>
+							</button>
+
+							<div class="history-details grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out">
+								<div class="overflow-hidden">
+									<div class="px-4 pb-4 pt-1">
+										<div class="flex items-center gap-3 mb-3">
+											<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">
+												Full ranking
+											</span>
+											<div class="flex-1 h-px bg-border/60" />
+										</div>
+										<ol class="space-y-1.5">
+											{e.result.map((item, i) => (
+												<li
+													class:list={[
+														"flex items-center gap-3 p-2 rounded-xl transition-colors",
+														i === 0
+															? "bg-amber-400/[0.06] border border-amber-400/15"
+															: "hover:bg-surface-hover",
+													]}
+												>
+													<span
+														class:list={[
+															"flex items-center justify-center w-9 h-9 rounded-lg shrink-0",
+															posCls(i),
+														]}
+													>
+														{posLabel(i)}
+													</span>
+													<div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
+														{item.image && (
+															<img
+																src={item.image}
+																alt=""
+																class="w-full h-full object-cover"
+															/>
+														)}
+													</div>
+													<span class="text-sm font-medium text-text-primary truncate flex-1">
+														{item.name}
+													</span>
+												</li>
+											))}
+										</ol>
+										<div class="flex justify-end mt-4">
+											<a
+												href={`/template/${e.slug}`}
+												class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-semibold text-text-secondary hover:text-text-primary transition-all"
+											>
+												<i class="fa-solid fa-rotate text-xs text-primary/70" />
+												Rank again
+											</a>
+										</div>
+									</div>
+								</div>
+							</div>
 						</div>
-						<div class="flex-1 min-w-0">
-							<p class="font-semibold text-sm text-text-primary group-hover:text-white transition-colors truncate">
-								{e.title}
-							</p>
-							{e.result[0] && (
-								<p class="text-xs text-text-muted mt-1 truncate">
-									<span class="text-amber-400">🥇</span>{" "}
-									{e.result[0].name}
-									<span class="text-text-muted/60">
-										{" "}
-										· {e.result.length} items
-									</span>
-								</p>
-							)}
-						</div>
-						<div class="text-right shrink-0">
-							<span class="text-xs text-text-muted">
-								{fmtDate(e.date)}
-							</span>
-							<span class="block text-xs font-semibold text-primary mt-1">
-								Rank again →
-							</span>
-						</div>
-					</a>
-				))
+					);
+				})
 			}
 		</div>
 
@@ -158,7 +246,8 @@ Astro.response.headers.set("Cache-Control", "no-store");
 <script>
 	// Merge in this device's localStorage history (covers anonymous visitors and
 	// any local-only entries a logged-in user made before signing in). SSR-
-	// rendered slugs win, so we skip duplicates.
+	// rendered slugs win, so we skip duplicates. The markup here mirrors the
+	// Astro template above so both kinds of card look and behave identically.
 	import { getLocalHistory } from "../scripts/history";
 
 	function escapeHtml(s: string): string {
@@ -186,6 +275,17 @@ Astro.response.headers.set("Cache-Control", "no-store");
 				});
 	}
 
+	const posLabel = (i: number) =>
+		i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+	const posCls = (i: number) =>
+		i === 0
+			? "bg-amber-400/15 text-amber-300 text-lg"
+			: i === 1
+				? "bg-gray-300/15 text-gray-200 text-lg"
+				: i === 2
+					? "bg-orange-400/15 text-orange-300 text-lg"
+					: "bg-border/60 text-text-muted text-sm font-black";
+
 	function renderLocal() {
 		const list = document.getElementById("history-list");
 		const empty = document.getElementById("history-empty");
@@ -208,32 +308,92 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			if (seen.has(e.slug)) continue;
 			seen.add(e.slug);
 			const top = e.result[0];
-			const a = document.createElement("a");
-			a.href = `/template/${encodeURIComponent(e.slug)}`;
-			a.dataset.slug = e.slug;
-			a.className =
-				"flex items-center gap-4 p-3 rounded-xl bg-surface-elevated border border-border hover:border-border-hover transition-all group";
-			a.innerHTML = `
-				<div class="w-16 h-16 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
-					${top?.image ? `<img src="${escapeHtml(top.image)}" alt="" class="w-full h-full object-cover" />` : ""}
-				</div>
-				<div class="flex-1 min-w-0">
-					<p class="font-semibold text-sm text-text-primary group-hover:text-white transition-colors truncate">${escapeHtml(e.title)}</p>
-					${
-						top
-							? `<p class="text-xs text-text-muted mt-1 truncate"><span class="text-amber-400">🥇</span> ${escapeHtml(top.name)}<span class="text-text-muted/60"> · ${e.result.length} items</span></p>`
-							: ""
-					}
-				</div>
-				<div class="text-right shrink-0">
-					<span class="text-xs text-text-muted">${fmtDate(e.ts)}</span>
-					<span class="block text-xs font-semibold text-primary mt-1">Rank again →</span>
+
+			const rows = e.result
+				.map(
+					(item, i) => `
+				<li class="flex items-center gap-3 p-2 rounded-xl transition-colors ${i === 0 ? "bg-amber-400/[0.06] border border-amber-400/15" : "hover:bg-surface-hover"}">
+					<span class="flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${posCls(i)}">${posLabel(i)}</span>
+					<div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
+						${item.image ? `<img src="${escapeHtml(item.image)}" alt="" class="w-full h-full object-cover" />` : ""}
+					</div>
+					<span class="text-sm font-medium text-text-primary truncate flex-1">${escapeHtml(item.name)}</span>
+				</li>`,
+				)
+				.join("");
+
+			const card = document.createElement("div");
+			card.dataset.slug = e.slug;
+			card.className =
+				"history-card group rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden";
+			card.innerHTML = `
+				<button type="button" class="history-toggle w-full flex items-center gap-4 p-4 text-left" aria-expanded="false">
+					<div class="relative shrink-0">
+						<div class="w-16 h-16 rounded-xl overflow-hidden bg-surface border border-border ring-2 ring-amber-400/30">
+							${top?.image ? `<img src="${escapeHtml(top.image)}" alt="" class="w-full h-full object-cover" />` : ""}
+						</div>
+						${top ? `<span class="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-gradient-gold flex items-center justify-center shadow-md"><i class="fa-solid fa-crown text-[10px] text-zinc-900"></i></span>` : ""}
+					</div>
+					<div class="flex-1 min-w-0">
+						<p class="font-semibold text-base text-text-primary truncate group-hover:text-white transition-colors">${escapeHtml(e.title)}</p>
+						${
+							top
+								? `<p class="text-sm mt-0.5 truncate"><span class="text-xs uppercase tracking-wide text-text-muted">Winner</span><span class="font-semibold text-amber-300 ml-2">${escapeHtml(top.name)}</span></p>`
+								: ""
+						}
+						<div class="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
+							<span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-list-ol text-[10px]"></i>${e.result.length} items</span>
+							<span class="inline-flex items-center gap-1.5"><i class="fa-regular fa-clock text-[10px]"></i>${fmtDate(e.ts)}</span>
+						</div>
+					</div>
+					<span class="shrink-0 w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-text-primary group-hover:border-border-hover transition-colors">
+						<i class="history-chevron fa-solid fa-chevron-down text-xs transition-transform duration-300"></i>
+					</span>
+				</button>
+				<div class="history-details grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out">
+					<div class="overflow-hidden">
+						<div class="px-4 pb-4 pt-1">
+							<div class="flex items-center gap-3 mb-3">
+								<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">Full ranking</span>
+								<div class="flex-1 h-px bg-border/60"></div>
+							</div>
+							<ol class="space-y-1.5">${rows}</ol>
+							<div class="flex justify-end mt-4">
+								<a href="/template/${encodeURIComponent(e.slug)}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-semibold text-text-secondary hover:text-text-primary transition-all"><i class="fa-solid fa-rotate text-xs text-primary/70"></i>Rank again</a>
+							</div>
+						</div>
+					</div>
 				</div>`;
-			list.appendChild(a);
+			list.appendChild(card);
 		}
 
 		if (empty) empty.classList.toggle("hidden", list.children.length > 0);
 	}
 
-	document.addEventListener("astro:page-load", renderLocal);
+	// One delegated handler covers both SSR- and client-rendered cards. The
+	// expand uses a grid-rows 0fr→1fr trick so height animates without JS
+	// measurement (and collapses to instant under prefers-reduced-motion).
+	function onClick(ev: MouseEvent) {
+		const toggle = (ev.target as HTMLElement)?.closest<HTMLElement>(
+			".history-toggle",
+		);
+		if (!toggle) return;
+		const card = toggle.closest<HTMLElement>(".history-card");
+		const details = card?.querySelector<HTMLElement>(".history-details");
+		const chevron = toggle.querySelector<HTMLElement>(".history-chevron");
+		if (!details) return;
+		const open = !details.classList.contains("grid-rows-[1fr]");
+		details.classList.toggle("grid-rows-[1fr]", open);
+		details.classList.toggle("grid-rows-[0fr]", !open);
+		toggle.setAttribute("aria-expanded", String(open));
+		chevron?.classList.toggle("rotate-180", open);
+	}
+
+	document.addEventListener("astro:page-load", () => {
+		renderLocal();
+		const list = document.getElementById("history-list");
+		// Re-bind per page-load; remove first so we never stack duplicate handlers.
+		list?.removeEventListener("click", onClick);
+		list?.addEventListener("click", onClick);
+	});
 </script>
