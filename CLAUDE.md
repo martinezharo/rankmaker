@@ -21,6 +21,7 @@ pnpm test:e2e               # Playwright e2e (e2e/, drives `pnpm dev`); needs br
 pnpm run db:migrate:local   # migrations/0001_init.sql (rankings table)
 pnpm run db:migrate3:local  # migrations/0003_users_templates.sql (users/sessions/templates)
 pnpm run db:migrate4:local  # migrations/0004_template_visibility.sql (templates.visibility)
+pnpm run db:migrate5:local  # migrations/0005_ranking_history.sql (rankings.user_id + ranking_results)
 # :remote variants apply to production D1
 ```
 
@@ -40,6 +41,8 @@ Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIE
 **Template visibility** (`templates.visibility`: `public` | `private` | `unlisted`; officials are always public). List queries (`listUserTemplates`, `listTemplatesByUserId`, the sitemap) return public templates only — `/me` passes `includeHidden`. Private pages 404 for anyone but the creator; unlisted pages are reachable by URL only: the slug is random (`generateUnlistedSlug`), the page is `noindex` (meta + `X-Robots-Tag`) and `no-store`. Switching a template TO unlisted regenerates its slug (the old one was public knowledge) and moves its `rankings` rows. **Don't leak hidden slugs through public endpoints** — that's why `getCounts` excludes them by default.
 
 **Times-ranked counts** are NOT the KV log: display counts come from `SELECT slug, COUNT(*) FROM rankings GROUP BY slug` in D1 via `src/lib/counts.ts` (shared by `/api/counts` and the SSR homepage). User templates are mapped with `times_ranked: 0` and pages merge real counts in.
+
+**Per-user history & "played" tracking.** A ranking is attributed to a user at two moments. On **START**, `/api/track` stamps `rankings.user_id` (logged-in) and the client adds the slug to `localStorage` (anonymous) — this is the "played" set used to hide already-played templates from the "You might also like" row (filtering is **client-side** in `RecommendedTemplates.astro` because template pages are publicly cached; the SSR over-fetches so a full row survives). On **completion**, the final ordered result is saved: logged-in users upsert into `ranking_results` (one row per user+template) via `POST /api/me/history`; anonymous users save to `localStorage`. The `/history` page renders DB results SSR for logged-in users and `localStorage` results client-side for anonymous. The shared `localStorage` helper is `src/scripts/history.ts`. `GET /api/me/history` returns the logged-in user's played slugs (for the client recommendation filter). Because `/history` is a top-level route it's in `RESERVED_USERNAMES`.
 
 **Auth** (`src/lib/auth.ts` + `src/pages/api/auth/*`): GitHub OAuth → D1-backed sessions in an httpOnly `rm_session` cookie (30 days, lazily expired). The OAuth state and the signup handoff (new GitHub user → choose username at `/signup`) use short-lived HMAC-signed cookies signed with `SESSION_SECRET`. CSRF protection on mutating endpoints is a same-origin `Origin` header check (`checkOrigin`) combined with SameSite=Lax — preserve that check on any new POST/PUT/DELETE route. Reserved usernames are listed in `auth.ts` because `/u/[username]` shares URL space with top-level routes — adding a new top-level page means adding its name there.
 

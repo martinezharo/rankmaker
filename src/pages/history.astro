@@ -1,0 +1,239 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import { getSessionUser } from "../lib/auth";
+
+// Per-user, never cached. Logged-in users get their saved results from D1
+// (cross-device); anonymous visitors get theirs from localStorage, rendered by
+// the client script below. A logged-in user may also have local-only entries
+// (e.g. ranked before logging in) — the client merges those in, de-duped.
+const db = Astro.locals.runtime.env.DB;
+const user = await getSessionUser(Astro.cookies, db);
+
+type RankedItem = { id: number | string; name: string; image: string };
+type HistoryRow = {
+	slug: string;
+	title: string;
+	result: RankedItem[];
+	date: string;
+};
+
+let serverEntries: HistoryRow[] = [];
+if (user) {
+	try {
+		const { results } = await db
+			.prepare(
+				`SELECT slug, title, result, updated_at
+				 FROM ranking_results WHERE user_id = ?
+				 ORDER BY updated_at DESC`,
+			)
+			.bind(user.id)
+			.all<{
+				slug: string;
+				title: string;
+				result: string;
+				updated_at: string;
+			}>();
+		serverEntries = results.map((r) => ({
+			slug: r.slug,
+			title: r.title,
+			date: r.updated_at,
+			result: (() => {
+				try {
+					return JSON.parse(r.result) as RankedItem[];
+				} catch {
+					return [];
+				}
+			})(),
+		}));
+	} catch {
+		// degrade to the client-rendered (localStorage) view
+	}
+}
+
+const fmtDate = (d: string | number) => {
+	const date = new Date(d);
+	return isNaN(date.getTime())
+		? ""
+		: date.toLocaleDateString(undefined, {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			});
+};
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Layout title="My ranking history — RANKMAKER">
+	<section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
+		<div class="flex items-center gap-3 mb-2">
+			<div
+				class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+			>
+				<i class="fa-solid fa-clock-rotate-left text-primary"></i>
+			</div>
+			<h1
+				class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
+			>
+				My ranking history
+			</h1>
+		</div>
+		<p class="text-sm text-text-secondary mb-8">
+			{
+				user
+					? "The rankings you've completed, with your saved results."
+					: "Rankings you've completed on this device. Log in to keep them across devices."
+			}
+		</p>
+
+		<div id="history-list" class="space-y-3">
+			{
+				serverEntries.map((e) => (
+					<a
+						href={`/template/${e.slug}`}
+						data-slug={e.slug}
+						class="flex items-center gap-4 p-3 rounded-xl bg-surface-elevated border border-border hover:border-border-hover transition-all group"
+					>
+						<div class="w-16 h-16 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
+							{e.result[0]?.image && (
+								<img
+									src={e.result[0].image}
+									alt=""
+									class="w-full h-full object-cover"
+								/>
+							)}
+						</div>
+						<div class="flex-1 min-w-0">
+							<p class="font-semibold text-sm text-text-primary group-hover:text-white transition-colors truncate">
+								{e.title}
+							</p>
+							{e.result[0] && (
+								<p class="text-xs text-text-muted mt-1 truncate">
+									<span class="text-amber-400">🥇</span>{" "}
+									{e.result[0].name}
+									<span class="text-text-muted/60">
+										{" "}
+										· {e.result.length} items
+									</span>
+								</p>
+							)}
+						</div>
+						<div class="text-right shrink-0">
+							<span class="text-xs text-text-muted">
+								{fmtDate(e.date)}
+							</span>
+							<span class="block text-xs font-semibold text-primary mt-1">
+								Rank again →
+							</span>
+						</div>
+					</a>
+				))
+			}
+		</div>
+
+		<div
+			id="history-empty"
+			class:list={[
+				"rounded-2xl border border-dashed border-border p-10 text-center space-y-3",
+				serverEntries.length > 0 && "hidden",
+			]}
+		>
+			<i class="fa-solid fa-clock-rotate-left text-2xl text-text-muted"></i>
+			<p class="text-sm text-text-secondary">
+				You haven't ranked anything yet.
+			</p>
+			<a
+				href="/"
+				class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+			>
+				Find something to rank
+				<i class="fa-solid fa-arrow-right text-xs"></i>
+			</a>
+		</div>
+	</section>
+</Layout>
+
+<script>
+	// Merge in this device's localStorage history (covers anonymous visitors and
+	// any local-only entries a logged-in user made before signing in). SSR-
+	// rendered slugs win, so we skip duplicates.
+	import { getLocalHistory } from "../scripts/history";
+
+	function escapeHtml(s: string): string {
+		return s.replace(
+			/[&<>"']/g,
+			(c) =>
+				({
+					"&": "&amp;",
+					"<": "&lt;",
+					">": "&gt;",
+					'"': "&quot;",
+					"'": "&#39;",
+				})[c]!,
+		);
+	}
+
+	function fmtDate(ts: number): string {
+		const d = new Date(ts);
+		return isNaN(d.getTime())
+			? ""
+			: d.toLocaleDateString(undefined, {
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+				});
+	}
+
+	function renderLocal() {
+		const list = document.getElementById("history-list");
+		const empty = document.getElementById("history-empty");
+		if (!list) return;
+
+		const seen = new Set(
+			Array.from(list.querySelectorAll<HTMLElement>("[data-slug]")).map(
+				(el) => el.dataset.slug,
+			),
+		);
+
+		let entries: ReturnType<typeof getLocalHistory> = [];
+		try {
+			entries = getLocalHistory();
+		} catch {
+			entries = [];
+		}
+
+		for (const e of entries) {
+			if (seen.has(e.slug)) continue;
+			seen.add(e.slug);
+			const top = e.result[0];
+			const a = document.createElement("a");
+			a.href = `/template/${encodeURIComponent(e.slug)}`;
+			a.dataset.slug = e.slug;
+			a.className =
+				"flex items-center gap-4 p-3 rounded-xl bg-surface-elevated border border-border hover:border-border-hover transition-all group";
+			a.innerHTML = `
+				<div class="w-16 h-16 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
+					${top?.image ? `<img src="${escapeHtml(top.image)}" alt="" class="w-full h-full object-cover" />` : ""}
+				</div>
+				<div class="flex-1 min-w-0">
+					<p class="font-semibold text-sm text-text-primary group-hover:text-white transition-colors truncate">${escapeHtml(e.title)}</p>
+					${
+						top
+							? `<p class="text-xs text-text-muted mt-1 truncate"><span class="text-amber-400">🥇</span> ${escapeHtml(top.name)}<span class="text-text-muted/60"> · ${e.result.length} items</span></p>`
+							: ""
+					}
+				</div>
+				<div class="text-right shrink-0">
+					<span class="text-xs text-text-muted">${fmtDate(e.ts)}</span>
+					<span class="block text-xs font-semibold text-primary mt-1">Rank again →</span>
+				</div>`;
+			list.appendChild(a);
+		}
+
+		if (empty) empty.classList.toggle("hidden", list.children.length > 0);
+	}
+
+	document.addEventListener("astro:page-load", renderLocal);
+</script>

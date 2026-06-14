@@ -13,7 +13,10 @@ const { templates } = Astro.props;
 if (templates.length === 0) return;
 ---
 
-<section class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 border-t border-border/50">
+<section
+	data-recommended
+	class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 border-t border-border/50"
+>
 	<!-- Section Header -->
 	<div class="flex items-center gap-3 mb-5">
 		<div
@@ -33,10 +36,60 @@ if (templates.length === 0) return;
 	>
 		{
 			templates.map((template) => (
-				<div class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start">
+				<div
+					data-rec-slug={template.slug}
+					class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start"
+				>
 					<TemplateCard template={template} />
 				</div>
 			))
 		}
 	</div>
 </section>
+
+<script>
+	// Hide templates this visitor has already played from the row, then trim to
+	// a full row of 8. Played set = localStorage (anonymous + same device) ∪ the
+	// logged-in user's server-side plays. The SSR over-fetches (12) so the row
+	// stays full after hiding. Fails open — show everything on error.
+	import { getPlayedSlugs } from "../scripts/history";
+
+	const VISIBLE = 8;
+
+	async function filterPlayed() {
+		const section =
+			document.querySelector<HTMLElement>("[data-recommended]");
+		if (!section) return;
+
+		const played = (() => {
+			try {
+				return getPlayedSlugs();
+			} catch {
+				return new Set<string>();
+			}
+		})();
+		try {
+			const res = await fetch("/api/me/history");
+			if (res.ok) {
+				const data = (await res.json()) as { slugs?: string[] };
+				(data.slugs ?? []).forEach((s) => played.add(s));
+			}
+		} catch {
+			/* anonymous or offline — localStorage set is enough */
+		}
+
+		let shown = 0;
+		section
+			.querySelectorAll<HTMLElement>("[data-rec-slug]")
+			.forEach((card) => {
+				const slug = card.dataset.recSlug ?? "";
+				const hide = played.has(slug) || shown >= VISIBLE;
+				card.style.display = hide ? "none" : "";
+				if (!hide) shown++;
+			});
+		// If every recommendation was played, drop the empty row entirely.
+		if (shown === 0) section.style.display = "none";
+	}
+
+	document.addEventListener("astro:page-load", filterPlayed);
+</script>
