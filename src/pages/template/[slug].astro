@@ -8,6 +8,7 @@ import BattleView from "../../components/ranking/BattleView.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
 import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
 import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
+import RankingComments from "../../components/ranking/RankingComments.astro";
 import RecommendedTemplates from "../../components/RecommendedTemplates.astro";
 import { getTemplateBySlug, getRecommendedTemplates } from "../../lib/templates";
 import { categoryIcon } from "../../lib/categories";
@@ -356,6 +357,9 @@ try {
 
     <BattleHistoryModal />
 
+    <!-- Comments — visible at the foot of all three views, above recommendations -->
+    <RankingComments slug={template.slug} />
+
     <!-- Related templates — visible at the foot of all three views -->
     <RecommendedTemplates templates={recommendations} />
 
@@ -434,6 +438,15 @@ try {
                     image: it.image,
                 }));
                 saveResult(templateSlug, templateTitle, result, templateCover);
+                // Tell the comments thread to refresh once the result is saved:
+                // the author's ranking badge is resolved live from ranking_results,
+                // so it can now appear on their comments without a page reload.
+                const notify = () =>
+                    document.dispatchEvent(
+                        new CustomEvent("rankmaker:ranking-saved", {
+                            detail: { slug: templateSlug },
+                        }),
+                    );
                 fetch("/api/me/history", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -443,7 +456,9 @@ try {
                         cover: templateCover,
                         result,
                     }),
-                }).catch(() => {});
+                })
+                    .then(notify)
+                    .catch(notify);
             }
 
             // ─── DOM refs ────────────────────────────────────
