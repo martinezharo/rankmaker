@@ -52,7 +52,12 @@ export const POST: APIRoute = async (context) => {
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ ok: true, skipped: true }, 200);
 
-		let body: { slug?: string; title?: string; result?: RankedItem[] };
+		let body: {
+			slug?: string;
+			title?: string;
+			cover?: string;
+			result?: RankedItem[];
+		};
 		try {
 			body = await context.request.json();
 		} catch {
@@ -73,6 +78,10 @@ export const POST: APIRoute = async (context) => {
 		if (!exists) return json({ ok: true, skipped: true }, 200);
 
 		const title = (body.title || slug).slice(0, MAX_TITLE_LEN);
+		const cover =
+			typeof body.cover === 'string'
+				? body.cover.slice(0, MAX_IMAGE_LEN)
+				: null;
 		const result = Array.isArray(body.result)
 			? body.result.slice(0, MAX_RESULT_ITEMS).map((it) => ({
 					id: it?.id ?? null,
@@ -83,14 +92,15 @@ export const POST: APIRoute = async (context) => {
 		if (result.length === 0) return json({ ok: true, skipped: true }, 200);
 
 		await env.DB.prepare(
-			`INSERT INTO ranking_results (user_id, slug, title, result)
-			 VALUES (?, ?, ?, ?)
+			`INSERT INTO ranking_results (user_id, slug, title, cover, result)
+			 VALUES (?, ?, ?, ?, ?)
 			 ON CONFLICT(user_id, slug) DO UPDATE SET
 			   result = excluded.result,
 			   title = excluded.title,
+			   cover = excluded.cover,
 			   updated_at = datetime('now')`
 		)
-			.bind(user.id, slug, title, JSON.stringify(result))
+			.bind(user.id, slug, title, cover, JSON.stringify(result))
 			.run();
 
 		return json({ ok: true }, 200);

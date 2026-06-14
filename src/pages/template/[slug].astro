@@ -75,6 +75,7 @@ const coverSrc = resolveImg(template.cover_image);
 const rankingData = {
     slug: template.slug,
     title: template.title,
+    cover: coverSrc,
     options: (options ?? []).map((o) => ({
         id: o.id,
         name: o.name,
@@ -412,6 +413,7 @@ try {
             const items = rankingData.options;
             const templateTitle = rankingData.title;
             const templateSlug = rankingData.slug;
+            const templateCover = rankingData.cover || "";
             if (!items || items.length < 2) return;
 
             // Persist a completed result: localStorage for everyone (anonymous
@@ -425,13 +427,14 @@ try {
                     name: it.name,
                     image: it.image,
                 }));
-                saveResult(templateSlug, templateTitle, result);
+                saveResult(templateSlug, templateTitle, result, templateCover);
                 fetch("/api/me/history", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         slug: templateSlug,
                         title: templateTitle,
+                        cover: templateCover,
                         result,
                     }),
                 }).catch(() => {});

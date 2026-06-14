@@ -16,6 +16,9 @@ export type HistoryEntry = {
 	title: string;
 	result: RankedItem[];
 	ts: number;
+	// Snapshot of the template's cover image at completion time. Optional:
+	// entries saved before covers were tracked fall back to the winner's image.
+	cover?: string;
 };
 
 const PLAYED_KEY = 'rankmaker_played';
@@ -88,10 +91,12 @@ export function recordStart(slug: string): void {
 export function saveResult(
 	slug: string,
 	title: string,
-	result: RankedItem[]
+	result: RankedItem[],
+	cover?: string
 ): void {
 	if (!slug) return;
 	const entry: HistoryEntry = { slug, title, result, ts: Date.now() };
+	if (cover) entry.cover = cover;
 	write(HISTORY_KEY, upsertHistory(read(HISTORY_KEY, {}), entry));
 	// Saving a result also counts as having played it.
 	recordStart(slug);
