@@ -6,7 +6,7 @@
  * `/fr/template/x`). See `astro.config.mjs` (`i18n` block) and
  * `src/middleware.ts` (the prefix → rewrite step that sets `locals.locale`).
  */
-export const locales = ['en', 'es', 'fr'] as const;
+export const locales = ['en', 'es', 'fr', 'zh', 'ms', 'de'] as const;
 
 export type Locale = (typeof locales)[number];
 
@@ -17,6 +17,9 @@ export const localeNames: Record<Locale, string> = {
 	en: 'English',
 	es: 'Español',
 	fr: 'Français',
+	zh: '中文',
+	ms: 'Melayu',
+	de: 'Deutsch',
 };
 
 export function isLocale(value: unknown): value is Locale {

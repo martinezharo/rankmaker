@@ -14,7 +14,7 @@ export default defineConfig({
   // to the canonical route, exposing the active locale as Astro.locals.locale.
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'es', 'fr'],
+    locales: ['en', 'es', 'fr', 'zh', 'ms', 'de'],
     routing: { prefixDefaultLocale: false },
   },
 

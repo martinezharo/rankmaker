@@ -140,7 +140,7 @@ const basePath = unlocalizePath(Astro.url.pathname);
         <!-- Mobile Menu -->
         <div
             id="mobile-menu"
-            class="md:hidden overflow-hidden border-t border-border/50"
+            class="md:hidden border-t border-border/50"
             style="display:none;"
         >
             <div class="py-3 space-y-1">
@@ -171,27 +171,48 @@ const basePath = unlocalizePath(Astro.url.pathname);
                 <!-- Extra links injected here by JS when logged in -->
                 <div id="mobile-auth-links"></div>
 
-                <!-- Language switcher (mobile) -->
+                <!-- Language switcher (mobile) — custom dropdown -->
                 <div class="px-4 pt-3 mt-2 border-t border-border/50">
                     <p
                         class="text-[10px] uppercase tracking-widest text-text-muted font-bold mb-2"
                     >
                         {t("nav.language")}
                     </p>
-                    <div class="flex gap-2">
-                        {
-                            locales.map((loc) => (
-                                <a
-                                    href={localizePath(basePath, loc)}
-                                    hreflang={loc}
-                                    data-lang={loc}
-                                    data-astro-reload
-                                    class="lang-option flex-1 text-center px-3 py-2 rounded-lg text-xs font-medium border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
-                                >
-                                    {localeNames[loc]}
-                                </a>
-                            ))
-                        }
+                    <div class="lang-switcher relative">
+                        <button
+                            type="button"
+                            class="lang-switcher-btn w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            aria-label={t("nav.language")}
+                        >
+                            <span class="flex items-center gap-2">
+                                <i class="fa-solid fa-globe text-xs"></i>
+                                <span class="lang-current-name">{localeNames[locale]}</span>
+                            </span>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-text-muted transition-transform lang-chevron"></i>
+                        </button>
+                        <div
+                            class="lang-menu absolute left-0 right-0 bottom-full mb-1 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50"
+                            style="display:none;"
+                        >
+                            {
+                                locales.map((loc) => (
+                                    <a
+                                        href={localizePath(basePath, loc)}
+                                        hreflang={loc}
+                                        data-lang={loc}
+                                        data-astro-reload
+                                        class={`lang-option flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${loc === locale ? "text-text-primary font-medium" : "text-text-secondary hover:text-text-primary"}`}
+                                    >
+                                        {localeNames[loc]}
+                                        {loc === locale && (
+                                            <i class="fa-solid fa-check text-primary text-xs"></i>
+                                        )}
+                                    </a>
+                                ))
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -205,7 +226,7 @@ const basePath = unlocalizePath(Astro.url.pathname);
 <script>
     import { avatarHtml } from "../lib/avatars";
     import { clientT, getClientLocale } from "../i18n/client";
-    import { localizePath, unlocalizePath } from "../i18n";
+    import { localizePath, unlocalizePath, localeNames } from "../i18n";
 
     type Me = {
         username: string;
@@ -233,6 +254,12 @@ const basePath = unlocalizePath(Astro.url.pathname);
         document
             .querySelectorAll<HTMLElement>(".auth-dropdown, .lang-menu")
             .forEach((m) => (m.style.display = "none"));
+        document
+            .querySelectorAll<HTMLElement>(".lang-chevron")
+            .forEach((c) => (c.style.transform = ""));
+        document
+            .querySelectorAll<HTMLElement>(".lang-switcher-btn")
+            .forEach((b) => b.setAttribute("aria-expanded", "false"));
     }
 
     // The header is transition:persist, so the language switcher links (and the
@@ -253,6 +280,9 @@ const basePath = unlocalizePath(Astro.url.pathname);
         document
             .querySelectorAll<HTMLElement>(".lang-current")
             .forEach((el) => (el.textContent = locale));
+        document
+            .querySelectorAll<HTMLElement>(".lang-current-name")
+            .forEach((el) => (el.textContent = localeNames[locale as keyof typeof localeNames] ?? locale));
     }
 
     function bindLangSwitchers() {
@@ -264,13 +294,20 @@ const basePath = unlocalizePath(Astro.url.pathname);
                 const menu = btn.parentElement?.querySelector<HTMLElement>(
                     ".lang-menu",
                 );
+                const chevron = btn.querySelector<HTMLElement>(".lang-chevron");
                 if (!menu) return;
                 btn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     const isOpen = menu.style.display !== "none";
                     closeAllDropdowns();
-                    menu.style.display = isOpen ? "none" : "";
-                    btn.setAttribute("aria-expanded", String(!isOpen));
+                    if (!isOpen) {
+                        menu.style.display = "";
+                        btn.setAttribute("aria-expanded", "true");
+                        if (chevron) chevron.style.transform = "rotate(180deg)";
+                    } else {
+                        btn.setAttribute("aria-expanded", "false");
+                        if (chevron) chevron.style.transform = "";
+                    }
                 });
             });
     }

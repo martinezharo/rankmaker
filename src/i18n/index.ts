@@ -15,11 +15,14 @@ import { defaultLocale, isLocale, localeNames, locales, type Locale } from './co
 import { en, type Dict } from './locales/en';
 import { es } from './locales/es';
 import { fr } from './locales/fr';
+import { zh } from './locales/zh';
+import { ms } from './locales/ms';
+import { de } from './locales/de';
 import type { LocaleDict } from './types';
 
 export type { Dict };
 
-const dictionaries: Record<Locale, LocaleDict> = { en, es, fr };
+const dictionaries: Record<Locale, LocaleDict> = { en, es, fr, zh, ms, de };
 
 function lookup(obj: unknown, path: string): unknown {
 	return path
