@@ -122,15 +122,14 @@ const { slug } = Astro.props;
 		return `${Math.floor(mo / 12)}y ago`;
 	}
 
-	const posLabel = (i: number) =>
-		i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+	const posLabel = (i: number) => `${i + 1}`;
 	const posCls = (i: number) =>
 		i === 0
-			? "bg-amber-400/15 text-amber-300 text-lg"
+			? "medal-gold text-base font-black"
 			: i === 1
-				? "bg-gray-300/15 text-gray-200 text-lg"
+				? "medal-silver text-base font-black"
 				: i === 2
-					? "bg-orange-400/15 text-orange-300 text-lg"
+					? "medal-bronze text-base font-black"
 					: "bg-border/60 text-text-muted text-sm font-black";
 
 	// ── markup builders ──────────────────────────────────────────────
@@ -173,7 +172,7 @@ const { slug } = Astro.props;
 		return `
 			<button type="button" data-open-ranking data-id="${c.id}"
 				class="inline-flex items-center gap-2 mt-2 mb-1 pl-2 pr-3 py-1 rounded-full bg-primary/5 border border-primary/20 hover:border-primary/50 hover:bg-primary/10 transition-all group">
-				<span class="text-sm">🥇</span>
+				<i class="fa-solid fa-crown text-xs text-amber-400"></i>
 				${img}
 				<span class="text-xs font-medium text-text-secondary group-hover:text-text-primary transition-colors">
 					${esc(c.topPick.name)}

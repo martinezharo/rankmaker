@@ -555,16 +555,16 @@ try {
             };
 
             // ─── Rank position badge (shared by render + reorder) ──────
-            // Big, left-aligned position: medal for the podium, number otherwise.
-            const posLabel = (i) =>
-                i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+            // Big, left-aligned position number. The podium top-3 get a
+            // minted gold/silver/bronze medallion (see .medal-* in global.css).
+            const posLabel = (i) => `${i + 1}`;
             const posClasses = (i) =>
                 i === 0
-                    ? "bg-amber-400/15 text-amber-300 text-2xl"
+                    ? "medal-gold text-xl font-black"
                     : i === 1
-                      ? "bg-gray-300/15 text-gray-200 text-2xl"
+                      ? "medal-silver text-xl font-black"
                       : i === 2
-                        ? "bg-orange-400/15 text-orange-300 text-2xl"
+                        ? "medal-bronze text-xl font-black"
                         : "bg-border/60 text-text-muted text-lg font-black";
             const POS_BASE =
                 "rank-pos flex items-center justify-center w-12 h-12 rounded-xl shrink-0";

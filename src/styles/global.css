@@ -145,6 +145,36 @@ body {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 60px rgba(255, 215, 0, 0.1);
 }
 
+/* ── Rank medallions ────────────────────────────── */
+/* Minted-coin position badges for the podium top-3. The number sits on a
+   solid metallic gradient with an inner highlight + drop shadow so it reads
+   as a struck medal. border-radius is forced so the coin stays circular
+   regardless of the rounded-* utility on the shared badge base. */
+.medal-gold,
+.medal-silver,
+.medal-bronze {
+    border-radius: 9999px !important;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.5),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.22),
+        0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.medal-gold {
+    background: linear-gradient(150deg, #ffe38a 0%, #ffc107 55%, #e0a100 100%);
+    color: #1a1408;
+}
+
+.medal-silver {
+    background: linear-gradient(150deg, #f2f3f7 0%, #c7ccd8 55%, #9ba1b0 100%);
+    color: #1e2129;
+}
+
+.medal-bronze {
+    background: linear-gradient(150deg, #f0b583 0%, #cd7f40 55%, #a75f26 100%);
+    color: #2a1606;
+}
+
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide {
     -ms-overflow-style: none;

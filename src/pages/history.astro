@@ -66,17 +66,16 @@ const fmtDate = (d: string | number) => {
 			});
 };
 
-// Position badge — mirrors the results page: medals + tinted pills for the top
+// Position badge — mirrors the results page: minted medallions for the top
 // three, plain numbers after. Kept in sync with the client script below.
-const posLabel = (i: number) =>
-	i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+const posLabel = (i: number) => `${i + 1}`;
 const posCls = (i: number) =>
 	i === 0
-		? "bg-amber-400/15 text-amber-300 text-lg"
+		? "medal-gold text-base font-black"
 		: i === 1
-			? "bg-gray-300/15 text-gray-200 text-lg"
+			? "medal-silver text-base font-black"
 			: i === 2
-				? "bg-orange-400/15 text-orange-300 text-lg"
+				? "medal-bronze text-base font-black"
 				: "bg-border/60 text-text-muted text-sm font-black";
 
 Astro.response.headers.set("Cache-Control", "no-store");
@@ -278,15 +277,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
 				});
 	}
 
-	const posLabel = (i: number) =>
-		i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`;
+	const posLabel = (i: number) => `${i + 1}`;
 	const posCls = (i: number) =>
 		i === 0
-			? "bg-amber-400/15 text-amber-300 text-lg"
+			? "medal-gold text-base font-black"
 			: i === 1
-				? "bg-gray-300/15 text-gray-200 text-lg"
+				? "medal-silver text-base font-black"
 				: i === 2
-					? "bg-orange-400/15 text-orange-300 text-lg"
+					? "medal-bronze text-base font-black"
 					: "bg-border/60 text-text-muted text-sm font-black";
 
 	function renderLocal() {
