@@ -669,7 +669,11 @@ try {
                 undoStack.push({
                     comparisonMapSnapshot: { ...comparisonMap },
                     battleHistoryLength: battleHistory.length,
-                    round: currentRound,
+                    // Store the round *before* this battle was shown. `compare`
+                    // increments currentRound when it re-shows the undone battle
+                    // on replay, so storing the post-increment value would drift
+                    // the counter +1 per undo (and re-introduce >100% overshoot).
+                    round: currentRound - 1,
                 });
                 undoBtn.disabled = false;
 
@@ -709,7 +713,12 @@ try {
 
             // ─── Undo ────────────────────────────────────────
             undoBtn.addEventListener("click", () => {
-                if (undoStack.length === 0 || !sortResolve) return;
+                // Ignore undo while a pick is still animating (isProcessing):
+                // sortResolve is still set during the ~580ms window, but a stale
+                // setTimeout from the in-flight pick would otherwise resolve the
+                // freshly re-shown battle with the old answer.
+                if (undoStack.length === 0 || !sortResolve || isProcessing)
+                    return;
 
                 const snapshot = undoStack.pop();
                 comparisonMap = snapshot.comparisonMapSnapshot;
