@@ -1,0 +1,435 @@
+/**
+ * German dictionary.
+ * Keys and structure must match en.ts exactly.
+ * Any key removed here falls back to English (see ../index.ts).
+ */
+import type { LocaleDict } from "../types";
+
+export const de: LocaleDict = {
+	common: {
+		save: 'Speichern',
+		cancel: 'Abbrechen',
+		delete: 'Löschen',
+		edit: 'Bearbeiten',
+		close: 'Schließen',
+		loading: 'Lädt…',
+		back: 'Zurück',
+		next: 'Weiter',
+		retry: 'Erneut versuchen',
+		confirm: 'Bestätigen',
+		genericError: 'Etwas ist schiefgelaufen. Versuche es erneut.',
+		networkError: 'Netzwerkfehler. Versuche es erneut.',
+	},
+	me: {
+		title: 'Meine Vorlagen — RANKMAKER',
+		viewPublicProfile: 'Öffentliches Profil ansehen',
+		createTemplate: 'Vorlage erstellen',
+		heading: 'Meine Vorlagen',
+		templateSingular: 'Vorlage',
+		templatePlural: 'Vorlagen',
+		emptyBody: 'Du hast noch keine Vorlagen erstellt.',
+		createFirst: 'Erstelle deine erste',
+		editTemplateAria: 'Vorlage bearbeiten',
+		deleteTemplateAria: 'Vorlage löschen',
+		visibilityPrivate: 'privat',
+		visibilityUnlisted: 'nicht gelistet',
+		dangerZone: 'Gefahrenzone',
+		dangerBody:
+			'Das Löschen deines Kontos entfernt dauerhaft dein Profil und alle deine erstellten Vorlagen. Dies kann nicht rückgängig gemacht werden.',
+		deleteMyAccount: 'Mein Konto löschen',
+		deleteTemplateTitle: 'Vorlage löschen?',
+		deleteTemplateBody:
+			'"{title}" wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.',
+		deleteAccountTitle: 'Konto löschen',
+		deleteAccountBody:
+			'Dies löscht dein Konto und alle deine Vorlagen dauerhaft. Tippe <strong class="font-bold text-text-primary">{username}</strong> zur Bestätigung.',
+		deleteForever: 'Für immer löschen',
+	},
+	nav: {
+		home: 'Startseite',
+		findTemplates: 'Vorlagen finden',
+		createRanking: 'Ranking erstellen',
+		create: 'Erstellen',
+		login: 'Anmelden',
+		logout: 'Abmelden',
+		myProfile: 'Mein Profil',
+		myTemplates: 'Meine Vorlagen',
+		myHistory: 'Mein Verlauf',
+		toggleMenu: 'Menü umschalten',
+		language: 'Sprache',
+	},
+	footer: {
+		tagline: 'Die ultimative Plattform für präzise Rankings durch 1v1-Duelle.',
+		openSource: 'Open Source',
+		contributeHere: 'Hier beitragen',
+		pages: 'Seiten',
+		information: 'Informationen',
+		aboutUs: 'Über uns',
+		contact: 'Kontakt',
+		categories: 'Kategorien',
+		legal: 'Rechtliches',
+		privacyPolicy: 'Datenschutzrichtlinie',
+		termsOfUse: 'Nutzungsbedingungen',
+		cookiePolicy: 'Cookie-Richtlinie',
+		legalNotice: 'Impressum',
+	},
+	cookie: {
+		title: 'Wir verwenden Cookies',
+		body: "Wir verwenden Cookies, um deine Erfahrung zu verbessern und unseren Datenverkehr zu analysieren. Durch Klicken auf 'Akzeptieren' stimmst du der Verwendung von Cookies zu.",
+		accept: 'Akzeptieren',
+		reject: 'Ablehnen',
+		policy: 'Richtlinie',
+	},
+	seo: {
+		defaultDescription:
+			'RANKMAKER: rank deine Sachen. Keine Stufen, kein Lärm — nur präzise 1v1-Rankings.',
+	},
+	recommended: {
+		youMightAlsoLike: 'Das könnte dir auch gefallen',
+	},
+	seoContent: {
+		howItWorks: 'So funktioniert es',
+		step1Title: 'Wähle eine Vorlage',
+		step1Body:
+			'Beginne mit der Auswahl einer Ranking-Vorlage — entweder eine, die du selbst erstellt hast, oder eine, die von anderen geteilt wurde.',
+		step2Title: 'Die Duelle beginnen!',
+		step2Body:
+			'Nimm an Eins-gegen-Eins-Duellen teil, um deine endgültige Reihenfolge zu bestimmen. Triff einfache Entscheidungen zwischen Paaren von Elementen, um dein perfektes Ranking zu erstellen.',
+		step3Title: 'Teile deine Ergebnisse',
+		step3Body:
+			'Teile dein endgültiges Ranking mit deinen Freunden und sieh ihr Feedback. Vergleiche eure Rankings und entdecke neue Perspektiven.',
+		whatIsTitle: 'Was ist RANKMAKER?',
+		whatIsP1:
+			'RANKMAKER ist das ultimative Ranking-Tool, das dir hilft, alles, was dir wichtig ist, zu organisieren und zu priorisieren. Ob du Filme, Musik, Spiele, Bücher oder andere Kategorien rankst — unser einzigartiges Eins-gegen-Eins-Vergleichssystem sorgt für genaue Ergebnisse, die deine Vorlieben wirklich widerspiegeln.',
+		whatIsP2:
+			'Im Gegensatz zu herkömmlichen Tierlisten, die willkürliche Kategoriezuordnungen erzwingen, lässt dich das Duellsystem von RANKMAKER sich jeweils auf eine einfache Frage konzentrieren: Welche Option bevorzugst du? Dieser methodische Ansatz führt zu genaueren und befriedigenderen Rankings.',
+		feature1: 'Erstelle individuelle Rankings von allem, was dir wichtig ist',
+		feature2: 'Verwende vorgefertigte Vorlagen aus beliebten Kategorien',
+		feature3: 'Teile deine Rankings mit Freunden in sozialen Medien',
+		feature4: 'Erstelle ein Profil, das deine Vorlagen präsentiert',
+	},
+	home: {
+		title: 'RANKMAKER — Rank deine Sachen',
+		heroHeadline: 'rank deine sachen.',
+		heroSubtitle:
+			'Keine Stufen. Kein Lärm. RANKMAKER ermöglicht dir, präzise Rankings durch schnelle, entschlossene 1v1-Duelle zu erstellen. Wähle eine Vorlage und finde heraus, was wirklich oben landet.',
+		exploreTemplates: 'Vorlagen erkunden',
+		emptyTitle: 'Noch keine Vorlagen',
+		emptyBody:
+			'Vorlagen erscheinen hier, sobald sie zur Datenbank hinzugefügt wurden. Schau bald wieder vorbei!',
+	},
+	create: {
+		title: 'Vorlage erstellen — RANKMAKER',
+		metaDescription: 'Erstelle deine eigene Ranking-Vorlage auf RANKMAKER.',
+		heading: 'Vorlage erstellen',
+		intro: 'Erstelle dein eigenes Ranking. Mache es öffentlich, damit jeder mitspielen kann und es in deinem Profil erscheint, oder halte es ungelistet oder privat — du wählst die Sichtbarkeit unten.',
+	},
+	editTemplate: {
+		title: 'Bearbeiten: {title} — RANKMAKER',
+		backToMyTemplates: 'Zurück zu meinen Vorlagen',
+		heading: 'Vorlage bearbeiten',
+		intro: 'Die Vorlagen-URL bleibt gleich — deine Teilen-Links funktionieren weiterhin. (Ausnahme: Das Wechseln zu „Nicht gelistet" gibt ihr eine neue zufällige URL.)',
+	},
+	card: {
+		ranked: '{n} gerankt',
+		viewProfile: "Profil von @{username} ansehen",
+		shareAria: 'Vorlage teilen',
+		shareTitle: 'RANKMAKER: {title}',
+		viewAll: 'Alle ansehen',
+	},
+	search: {
+		title: 'Vorlagen finden — RANKMAKER',
+		metaDescription: 'Suche und durchstöbere alle Ranking-Vorlagen auf RANKMAKER.',
+		heading: 'Vorlagen finden',
+		subtitle:
+			'Durchsuche alle verfügbaren Ranking-Vorlagen nach Titel, Beschreibung oder Optionen.',
+		placeholder: 'Vorlagen suchen...',
+		clear: 'Suche löschen',
+		allCategories: 'Alle Kategorien',
+		showing: '{n} Vorlagen werden angezeigt',
+		showingOne: '{n} Vorlage wird angezeigt',
+		resetFilters: 'Filter zurücksetzen',
+		emptyTitle: 'Keine Vorlagen gefunden',
+		emptyBody: 'Passe deine Suchanfrage an oder ändere den Kategoriefilter.',
+	},
+	history: {
+		title: 'Mein Ranking-Verlauf — RANKMAKER',
+		heading: 'Mein Ranking-Verlauf',
+		subtitleLoggedIn:
+			'Die Rankings, die du abgeschlossen hast. Tippe auf eine Karte, um das vollständige Ranking anzuzeigen.',
+		subtitleAnon:
+			'Rankings, die du auf diesem Gerät abgeschlossen hast. Tippe auf eine Karte, um das vollständige Ranking anzuzeigen. Melde dich an, um sie geräteübergreifend zu behalten.',
+		items: '{n} Elemente',
+		fullRanking: 'Vollständiges Ranking',
+		rankAgain: 'Erneut ranken',
+		viewDetails: 'Details ansehen',
+		emptyBody: 'Du hast noch nichts gerankt.',
+		findSomething: 'Finde etwas zum Ranken',
+	},
+	profile: {
+		title: '@{username} — RANKMAKER',
+		metaDescription: 'Ranking-Vorlagen von @{username} auf RANKMAKER.',
+		verified: 'Verifiziert',
+		officialAccount: 'Offizielles RANKMAKER-Konto',
+		memberSince: 'Mitglied seit {date}',
+		templateSingular: 'Vorlage',
+		templatePlural: 'Vorlagen',
+		totalRankings: '{n} Rankings insgesamt',
+		templatesBy: 'Vorlagen von @{username}',
+		noTemplates: '@{username} hat noch keine Vorlagen erstellt.',
+	},
+	signup: {
+		title: 'Registrierung abschließen — RANKMAKER',
+		heading: 'Fast geschafft!',
+		subtitle: 'Wähle einen Benutzernamen und einen Avatar, um dein Konto zu erstellen.',
+		usernameLabel: 'Benutzername',
+		usernamePlaceholder: 'dein_benutzername',
+		usernamePermanent: 'Dein Benutzername ist dauerhaft — er kann nie geändert werden.',
+		avatarLabel: 'Avatar',
+		avatarOptionLabel: 'Avatar {key}',
+		shuffle: 'Zufällig',
+		submit: 'Mein Konto erstellen',
+		available: 'Benutzername ist verfügbar!',
+		notAvailable: 'Benutzername ist nicht verfügbar.',
+		checkFailed: 'Benutzername konnte nicht überprüft werden.',
+		genericError: 'Etwas ist schiefgelaufen. Versuche es erneut.',
+		networkError: 'Netzwerkfehler. Versuche es erneut.',
+	},
+	form: {
+		details: 'Details',
+		titleLabel: 'Titel',
+		titlePlaceholder: 'Bestes Pizza-Belag-Ranking',
+		descriptionLabel: 'Beschreibung',
+		descriptionPlaceholder: 'Was sollen die Leute ranken, und warum macht es Spaß?',
+		categoryLabel: 'Kategorie',
+		categoryPlaceholder: 'Kategorie wählen…',
+		visibilityLabel: 'Sichtbarkeit',
+		visibilityPublicLabel: 'Öffentlich — für alle gelistet',
+		visibilityPublicHint:
+			'Wird auf der Startseite, in der Suche und in deinem Profil angezeigt. Jeder kann es ranken.',
+		visibilityUnlistedLabel: 'Nicht gelistet — nur für Personen mit dem Link',
+		visibilityUnlistedHint:
+			'Wird nirgendwo gelistet und ist für Suchmaschinen verborgen. Es erhält eine zufällige, nicht erratbare URL — teile den Link mit wem du möchtest.',
+		visibilityPrivateLabel: 'Privat — nur du',
+		visibilityPrivateHint: 'Nur du kannst diese Vorlage sehen und ranken.',
+		visibilityUnlistedSlugWarning:
+			' Beim Speichern wird die Vorlagen-URL zu einer neuen zufälligen geändert.',
+		coverImage: 'Titelbild',
+		coverImageByUrl: '(per URL)',
+		coverPlaceholder: 'https://example.com/cover.jpg',
+		coverPreviewAlt: 'Vorschau des Titelbilds',
+		previewHere: 'Vorschau erscheint hier',
+		previewLoadError: 'Dieses Bild konnte nicht geladen werden',
+		previewLoading: 'Lädt…',
+		options: 'Optionen',
+		optionsMin: 'mind. {n}',
+		optionsHelp:
+			'Die Dinge, die die Leute in 1v1-Duellen ranken werden. Bilder sind optional — füge eine Bild-URL ein und du siehst eine Vorschau.',
+		addOption: 'Option hinzufügen',
+		removeOption: 'Option entfernen',
+		optionNamePlaceholder: 'Optionsname',
+		optionImagePlaceholder: 'Bild-URL (optional)',
+		submitCreate: 'Vorlage erstellen',
+		submitSave: 'Änderungen speichern',
+		busyCreating: 'Erstelle…',
+		busySaving: 'Speichere…',
+		errTitle: 'Der Titel muss mindestens 3 Zeichen lang sein.',
+		errDescription: 'Eine Beschreibung ist erforderlich (mindestens 15 Zeichen).',
+		errCategory: 'Wähle eine Kategorie.',
+		errCoverRequired: 'Ein Titelbild ist erforderlich.',
+		errCoverUrl: 'Das Titelbild muss eine gültige http(s)-URL sein.',
+		errMinOptions: 'Füge mindestens {n} Optionen mit einem Namen hinzu.',
+		errOptionNameNeeded: 'Jede Option mit einem Bild benötigt einen Namen.',
+		errOptionImageUrl: 'Option „{name}": Das Bild muss eine gültige http(s)-URL sein.',
+		aiShortTitle: 'Deine Beschreibung ist zu kurz',
+		aiShortCopy:
+			'Eine Beschreibung benötigt mindestens 15 Zeichen. Hier ist eine, die wir aus deinem Titel und deinen Optionen geschrieben haben — verwende sie oder schreibe deine eigene.',
+		aiWriteMyOwn: 'Eigene schreiben',
+		aiDiscoverTitle: 'Dein Ranking populärer machen?',
+		aiPolishCopy:
+			'Wir haben deine Beschreibung aufpoliert, damit dein Ranking leichter entdeckt wird. Bearbeite sie nach Belieben oder behalte deine ursprüngliche.',
+		aiRewriteCopy:
+			'Mit dieser Beschreibung wird dein Ranking leichter zu finden sein. Bearbeite sie nach Belieben oder behalte deine ursprüngliche.',
+		aiKeepMine: 'Meine behalten',
+		aiUseDescription: 'Diese Beschreibung verwenden',
+		aiMinChars: 'Die Beschreibung muss mindestens 15 Zeichen lang sein.',
+	},
+	comments: {
+		heading: 'Kommentare',
+		loading: 'Kommentare werden geladen…',
+		close: 'Schließen',
+		replyPlaceholder: 'Antwort schreiben…',
+		commentPlaceholder: 'Teile deine Meinung…',
+		reply: 'Antworten',
+		comment: 'Kommentieren',
+		joinConversation: 'Nimm an der Unterhaltung teil — melde dich an, um zu kommentieren und abzustimmen.',
+		viewRanking: 'Ranking ansehen',
+		upvote: 'Hochvoten',
+		downvote: 'Runtervoten',
+		deleted: '[Kommentar gelöscht]',
+		delete: 'Löschen',
+		empty: 'Noch keine Kommentare. Sei der Erste, der seine Meinung teilt.',
+		loadError: 'Kommentare konnten nicht geladen werden.',
+		rankingTitle: "Ranking von @{username}",
+		postError: 'Etwas ist schiefgelaufen.',
+		networkError: 'Netzwerkfehler. Versuche es erneut.',
+		justNow: 'gerade eben',
+		minutesAgo: 'vor {n} Min.',
+		hoursAgo: 'vor {n} Std.',
+		daysAgo: 'vor {n} T.',
+		monthsAgo: 'vor {n} Mon.',
+		yearsAgo: 'vor {n} J.',
+	},
+	ranking: {
+		pageTitle: '{title} — RANKMAKER',
+		backToTemplates: 'Zurück zu den Vorlagen',
+		createdBy: 'Erstellt von',
+		optionsCount: '{n} Optionen',
+		availableOptions: 'Verfügbare Optionen',
+		itemsCount: '{n} Elemente',
+		startRanking: 'RANKING STARTEN',
+		roundProgress: 'Runde {current} von ~{total}',
+		undo: 'Rückgängig',
+		skipForLater: 'Für später überspringen',
+		finishEarly: 'Früh beenden',
+		rankingLabel: 'Ranking',
+		tapPreferred: 'Tippe auf das, was du bevorzugst',
+		skippedCount: '{n} übersprungen',
+		results: 'Ergebnisse',
+		by: 'von',
+		fullRanking: 'Vollständiges Ranking',
+		battleHistory: 'Duellverlauf',
+		rankAgain: 'Erneut ranken',
+		shareTemplate: 'Vorlage teilen',
+		downloadImage: 'Bild herunterladen',
+		shareOnX: 'Auf X teilen',
+		reorderManually: 'Manuell neu anordnen',
+		doneReordering: 'Fertig',
+		noSkipping: 'Jetzt kein Überspringen — vertraue deinem Instinkt',
+		suddenDeathOne: 'Sudden Death — löse {count} übersprungenes Duell',
+		suddenDeath: 'Sudden Death — löse {count} übersprungene Duelle',
+		podium1: '1.',
+		podium2: '2.',
+		podium3: '3.',
+		noBattlesRecorded: 'Keine Duelle aufgezeichnet.',
+		vs: 'vs',
+		generating: 'Wird generiert…',
+		myRanking: 'Mein Ranking',
+		shareXText: "Schau dir diese Vorlage an: '{title}'",
+		shareImgMadeWith: 'Erstellt mit rankmaker.net',
+		finishEarlyTitle: 'Ranking vorzeitig beenden?',
+		finishEarlyBody:
+			'Bist du sicher, dass du das Ranking vorzeitig beenden möchtest? Die verbleibenden Elemente werden basierend auf ihrer aktuellen Leistung eingestuft.',
+		finishNow: 'Jetzt beenden',
+	},
+	notFound: {
+		title: 'Seite nicht gefunden — RANKMAKER',
+		heading: 'Diese Seite existiert nicht',
+		body: 'Die Vorlage oder Seite, die du suchst, wurde verschoben, gelöscht oder hat nie existiert.',
+		backHome: 'Zurück zur Startseite',
+		findTemplates: 'Vorlagen finden',
+	},
+	about: {
+		title: 'Über uns — RANKMAKER',
+		metaDescription: 'Die Geschichte hinter RANKMAKER und seinem Ersteller.',
+		heading: 'Über uns',
+		p1: 'Nun, hier gibt es kein „uns" — nur mich. Mein Name ist <a href="https://olivermartinezharo.com/en" target="_blank"><strong class="text-text-primary hover:underline">Oli</strong></a>, und ich bin die einzige Person hinter RANKMAKER. Ich bin einfach ein Typ aus Spanien mit großen Ambitionen, der gerne neue Dinge ausprobiert. RANKMAKER ist eines dieser Dinge, in die ich mich entschlossen habe einzutauchen.',
+		p2: 'Eines Tages, nach einem Lauf und während ich mich zum Duschen fertigmachte, tauchte eine zufällige Erinnerung in meinem Kopf auf. Vor ein paar Jahren hatte ich ein Ranking von Formel-1-Fahrern erstellt, das jemand auf Twitter geteilt hatte. Es war etwas Faszinierendes daran: Ich musste nicht zu intensiv über die genaue Reihenfolge der Fahrer nachdenken, und es war auch keine Tierliste. Mir wurden einfach verschiedene Duelle präsentiert, und am Ende erhielt ich ein Ranking basierend auf meinen Entscheidungen.',
+		p3: 'Damals dachte ich nicht viel darüber nach, aber aus irgendeinem Grund kam es in diesem Moment zurück zu mir. Während des Duschens dachte ich immer wieder darüber nach. Ich hatte keine Ahnung, wie man programmiert, aber ich bin besessen von KI.',
+		p4: 'Sobald ich aus der Dusche kam, spielte ich ein bisschen mit ChatGPT herum, und innerhalb von Minuten hatte ich ein grundlegendes System, bei dem ich verschiedene Optionen eingeben, sie in Duellen vergleichen und ein sortiertes Ranking erhalten konnte. Mir wurde auch klar, dass keine Website genau das tat. Das war meine Chance.',
+		p5: 'Ich dachte, ich könnte das Projekt mit nur ein paar weiteren KI-Interaktionen fertigstellen… und ich hätte recht gehabt, wenn ich mit „ein paar" buchstäblich Tausende von Iterationen über verschiedene Modelle hinweg gemeint hätte. Unterwegs musste ich etwas grundlegendes Programmieren lernen, weil man offensichtlich nicht einfach ein paar ChatGPT-generierte Codes in Notepad einfügen und es dabei belassen kann.',
+		p6: 'Ehrlich gesagt hätte ich es wahrscheinlich viel schneller beenden können, indem ich jemanden auf Fiverr eingestellt hätte, und das Ergebnis wäre besser gewesen. Aber so bin ich nun mal.',
+		whyHeading: 'Warum RANKMAKER?',
+		p7: 'Die größte Inspiration für dieses Projekt war <strong class="text-text-primary">TIERMAKER</strong>, zusammen mit der F1-Ranking-Seite, die ich zuvor erwähnte — obwohl ich sie nie wieder gesehen habe (wahrscheinlich nur das Nebenprojekt von jemandem).',
+		p8: 'Ich habe immer gerne Dinge gerankt (vielleicht ist das eine Art Störung), aber manchmal fühlte sich TIERMAKER überwältigend an mit so vielen Möglichkeiten auf einmal, und die Ergebnisse spiegelten nicht immer wider, was ich wirklich dachte.',
+		finalLine: 'Also habe ich das mit RANKMAKER behoben.',
+	},
+	contact: {
+		title: 'Kontakt — RANKMAKER',
+		metaDescription: 'Kontaktiere RANKMAKER.',
+		heading: 'Kontakt',
+		emailLabel: 'E-Mail',
+	},
+	legal: {
+		legalNotice: {
+			title: 'Impressum — RANKMAKER',
+			metaDescription: 'Impressum und Unternehmensinformationen.',
+			heading: 'Impressum',
+			body: `<p>In Übereinstimmung mit den Bestimmungen des Gesetzes 34/2002 vom 11. Juli über Dienste der Informationsgesellschaft und des elektronischen Geschäftsverkehrs (LSSI-CE) werden folgende allgemeine Informationen zu dieser Website bereitgestellt:</p>
+<section class="mb-6"><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. Websitebetreiber</h2><ul class="list-none space-y-1 pl-4 border-l-2 border-primary/20"><li><strong class="text-text-primary">Betreiber:</strong> Oliver Martínez</li><li><strong class="text-text-primary">E-Mail:</strong> rankmaker.net@gmail.com</li><li><strong class="text-text-primary">Domain:</strong> rankmaker.net</li></ul></section>
+<section class="mb-6"><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Zweck</h2><p>Der Zweck dieser Website ist es, Nutzern eine Plattform zur Erstellung und Verwaltung von Rankinglisten mithilfe von Vergleichsmethoden bereitzustellen.</p></section>
+<section class="mb-6"><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Nutzerverantwortung</h2><p>Der Betreiber haftet nicht für den Missbrauch der auf der Website veröffentlichten Inhalte. Der Nutzer übernimmt die Verantwortung für jede Nutzung des Dienstes, die gegen das Gesetz oder die öffentliche Ordnung verstößt.</p></section>
+<section class="mb-6"><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. Geistiges Eigentum</h2><p>Alle Inhalte auf dieser Website, einschließlich Texte, Bilder und Code, sind Eigentum von RANKMAKER, sofern nicht anders angegeben, und durch Gesetze zum geistigen Eigentum geschützt.</p><p class="mt-2">Die Vervielfältigung, Verbreitung oder Änderung eines Teils der Website ohne ausdrückliche schriftliche Genehmigung des Betreibers ist untersagt.</p></section>
+<section class="mb-6"><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. Anwendbares Recht</h2><p>Dieses Impressum unterliegt spanischem Recht. Alle Streitigkeiten aus der Nutzung der Website unterliegen der Gerichtsbarkeit der spanischen Gerichte.</p></section>
+<section class="mb-6"><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">6. Kontakt</h2><p>Bei Fragen oder Klarstellungen zu diesem Impressum kontaktiere uns bitte unter: <a href="mailto:rankmaker.net@gmail.com" class="text-primary hover:underline">rankmaker.net@gmail.com</a>.</p></section>`,
+		},
+		cookiePolicy: {
+			title: 'Cookie-Richtlinie — RANKMAKER',
+			metaDescription: 'Unsere Richtlinie zur Verwendung von Cookies.',
+			heading: 'Cookie-Richtlinie',
+			body: `<p>Willkommen bei RANKMAKER! Diese Cookie-Richtlinie erläutert, wie wir Cookies und ähnliche Technologien verwenden, um dich zu erkennen, wenn du unsere Website besuchst. Sie erklärt, was diese Technologien sind und warum wir sie verwenden, sowie deine Rechte zur Kontrolle unserer Nutzung.</p>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">1. Was sind Cookies?</h2><p class="mb-4">Cookies sind kleine Datendateien, die auf deinem Computer oder Mobilgerät platziert werden, wenn du eine Website besuchst. Cookies werden von Websitebetreibern häufig verwendet, um ihre Websites zum Laufen zu bringen oder effizienter zu machen sowie um Berichtsinformationen bereitzustellen.</p><p>Von dem Websitebetreiber gesetzte Cookies (in diesem Fall RANKMAKER) werden als „Erstanbieter-Cookies" bezeichnet. Von anderen Parteien gesetzte Cookies werden als „Drittanbieter-Cookies" bezeichnet. Drittanbieter-Cookies ermöglichen Funktionen oder Dienste von Drittanbietern auf oder über die Website (z. B. Werbung, interaktive Inhalte und Analysen).</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">2. Warum verwenden wir Cookies?</h2><p>Wir verwenden Erst- und Drittanbieter-Cookies aus verschiedenen Gründen. Einige Cookies sind aus technischen Gründen für den Betrieb unserer Website erforderlich, die wir als „essentielle" oder „unbedingt notwendige" Cookies bezeichnen. Andere ermöglichen uns, die Interessen unserer Nutzer zu verfolgen und anzusprechen, um die Erfahrung zu verbessern. Dritte stellen Cookies über unsere Website für Analysen und andere Zwecke bereit, wie unten beschrieben.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">3. Arten von Cookies, die wir verwenden</h2><div class="space-y-4"><div><h3 class="text-lg font-medium text-text-primary mb-2">3.1. Unbedingt notwendige Cookies</h3><p>Diese Cookies sind unerlässlich, um dir die über unsere Website verfügbaren Dienste bereitzustellen und einige Funktionen zu nutzen, wie den Zugang zu sicheren Bereichen. Ohne diese Cookies können Dienste wie Einkaufswagen und sichere Benutzerkonten nicht bereitgestellt werden.</p></div><div><h3 class="text-lg font-medium text-text-primary mb-2">3.2. Funktionale Cookies</h3><p>Diese Cookies verbessern die Funktionalität unserer Website, sind aber nicht für deren Nutzung unerlässlich. Ohne sie können bestimmte Funktionen (wie das Merken von Anmeldedaten oder Website-Präferenzen) möglicherweise nicht verfügbar sein.</p></div><div><h3 class="text-lg font-medium text-text-primary mb-2">3.3. Analyse- und Leistungs-Cookies</h3><p>Diese Cookies sammeln Informationen in aggregierter Form, um uns zu verstehen, wie unsere Website genutzt wird oder wie effektiv unsere Marketingkampagnen sind, oder um die Website für dich anzupassen. Dies hilft uns, deine Erfahrung zu verbessern.</p></div></div></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">4. Spezifische Cookies, die wir installieren</h2><p class="mb-4">Unten findest du eine Liste der wichtigsten Cookies, die wir auf unserer Website verwenden:</p><div class="overflow-x-auto rounded-xl border border-border"><table class="w-full text-sm text-left"><thead class="bg-surface-elevated text-text-primary font-semibold"><tr><th class="px-4 py-3 border-b border-border">Cookie-Name</th><th class="px-4 py-3 border-b border-border">Zweck</th><th class="px-4 py-3 border-b border-border">Dauer</th><th class="px-4 py-3 border-b border-border">Verwaltet von</th><th class="px-4 py-3 border-b border-border">Typ</th></tr></thead><tbody class="divide-y divide-border"><tr><td class="px-4 py-3 font-medium">PHPSESSID (oder ähnlich)</td><td class="px-4 py-3">Behält deinen Sitzungsstatus über Seitenanfragen hinweg bei.</td><td class="px-4 py-3">Sitzung</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">Unbedingt notwendig</td></tr><tr><td class="px-4 py-3 font-medium">rankmaker_visited</td><td class="px-4 py-3">Verfolgt, ob du die Website zuvor besucht hast.</td><td class="px-4 py-3">30 Tage</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">Funktional</td></tr><tr><td class="px-4 py-3 font-medium">remember_token</td><td class="px-4 py-3">Merkt sich deine Anmeldedaten für die automatische Anmeldung.</td><td class="px-4 py-3">30 Tage</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">Funktional</td></tr><tr><td class="px-4 py-3 font-medium">cookie_consent_status</td><td class="px-4 py-3">Speichert deinen Zustimmungsstatus.</td><td class="px-4 py-3">1 Jahr</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">Funktional</td></tr><tr><td class="px-4 py-3 font-medium">_ga</td><td class="px-4 py-3">Unterscheidet Nutzer für Statistiken.</td><td class="px-4 py-3">2 Jahre</td><td class="px-4 py-3">Google</td><td class="px-4 py-3">Analytisch</td></tr><tr><td class="px-4 py-3 font-medium">_gid</td><td class="px-4 py-3">Unterscheidet Nutzer für Statistiken.</td><td class="px-4 py-3">24 Stunden</td><td class="px-4 py-3">Google</td><td class="px-4 py-3">Analytisch</td></tr></tbody></table></div></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">5. Wie kannst du Cookies kontrollieren?</h2><p class="mb-4">Du hast das Recht zu entscheiden, ob du Cookies akzeptierst oder ablehnst. Du kannst deine Cookie-Einstellungen ausüben durch:</p><ul class="list-disc pl-5 space-y-2 mb-4"><li><strong class="text-text-primary">Browsereinstellungen:</strong> Die meisten Webbrowser ermöglichen eine gewisse Kontrolle über die meisten Cookies über die Browsereinstellungen.</li><li><strong class="text-text-primary">Drittanbieter-Opt-outs:</strong> Für Google Analytics kannst du dich über das <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Google Analytics Opt-out Browser Add-on</a> abmelden.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">6. Wie du deine Einwilligung widerrufen kannst</h2><p class="mb-4">Wenn du zuvor deine Einwilligung zur Verwendung nicht wesentlicher Cookies gegeben hast, kannst du diese widerrufen, indem du die Cookies für unsere Website aus deinem Browser löschst. Dadurch wird das Cookie <code>cookie_consent_status</code> entfernt.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">7. Änderungen an dieser Cookie-Richtlinie</h2><p>Wir können diese Cookie-Richtlinie von Zeit zu Zeit aktualisieren, um z. B. Änderungen an den von uns verwendeten Cookies oder anderen betrieblichen, rechtlichen oder regulatorischen Gründen widerzuspiegeln. Bitte besuche diese Cookie-Richtlinie regelmäßig, um über unsere Verwendung von Cookies und verwandten Technologien informiert zu bleiben.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-4">8. Kontaktiere uns</h2><p>Wenn du Fragen zur Verwendung von Cookies oder anderen Technologien hast, sende uns bitte eine E-Mail an <a href="mailto:rankmaker.net@gmail.com" class="text-primary hover:underline">rankmaker.net@gmail.com</a>.</p></section>`,
+		},
+		privacyPolicy: {
+			title: 'Datenschutzrichtlinie — RANKMAKER',
+			metaDescription: 'Wie wir deine Daten sammeln, verwenden und schützen.',
+			heading: 'Datenschutzrichtlinie',
+			body: `<p>Willkommen bei RANKMAKER! Diese Datenschutzrichtlinie erläutert, wie wir Informationen über dich sammeln, verwenden und offenlegen, wenn du unsere Website und Dienste (gemeinsam „der Dienst") nutzt. Durch die Nutzung des Dienstes stimmst du den Bedingungen dieser Datenschutzrichtlinie zu.</p>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. Informationen, die wir sammeln</h2><p class="mb-3">Wir können die folgenden Informationen sammeln:</p><ul class="list-disc pl-5 space-y-2"><li><strong class="text-text-primary">Persönliche Informationen:</strong> Deine E-Mail-Adresse, Benutzername und andere Details, die du bei der Erstellung eines Kontos angibst.</li><li><strong class="text-text-primary">Nutzungsinformationen:</strong> Seiten, die du besuchst, Zeit auf Seiten, Interaktionen mit dem Dienst.</li><li><strong class="text-text-primary">Geräteinformationen:</strong> IP-Adresse, Browsertyp, Gerätekennungen und Betriebssystem.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Wie wir deine Informationen verwenden</h2><p class="mb-3">Wir verwenden deine Informationen, um:</p><ul class="list-disc pl-5 space-y-2"><li>Den Dienst bereitzustellen, zu pflegen und zu verbessern.</li><li>Mit dir zu kommunizieren.</li><li>Sicherheit zu gewährleisten und Betrug zu verhindern.</li><li>Die Nutzung zu analysieren und die Benutzererfahrung zu verbessern.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Cookies und Tracking-Technologien</h2><p>Wir können Cookies und ähnliche Technologien verwenden, um die Funktionalität und Leistung zu verbessern. Du kannst deine Cookie-Einstellungen über deine Browsereinstellungen verwalten.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. Weitergabe von Informationen</h2><p class="mb-3">Wir verkaufen deine persönlichen Daten nicht. Wir können Informationen weitergeben an:</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>Dienstleister (z. B. Hosting, Analysen, Werbung).</li><li>Behörden, wenn gesetzlich vorgeschrieben.</li></ul><p>Insbesondere können wir deine Daten teilen mit:</p><ul class="list-disc pl-5 space-y-2 mt-2"><li><strong>Hostinger:</strong> Unser Website-Hosting-Anbieter.</li><li><strong>Google (Analytics, Ads):</strong> Wir verwenden Google Analytics zur Überwachung und Analyse des Webverkehrs und Google Ads für Werbezwecke.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. Datenspeicherung</h2><p>Wir speichern deine Daten so lange, wie es zur Bereitstellung des Dienstes und zur Erfüllung rechtlicher Verpflichtungen erforderlich ist.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">6. Deine Rechte</h2><p class="mb-3">Du kannst:</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>Auf deine persönlichen Informationen zugreifen oder sie aktualisieren.</li><li>Die Löschung deiner Daten beantragen.</li><li>Der Verarbeitung deiner Daten widersprechen.</li></ul><p class="mb-3">Wenn du im Europäischen Wirtschaftsraum (EWR) oder in Spanien wohnhaft bist, hast du bestimmte Datenschutzrechte nach der DSGVO und dem spanischen Recht, einschließlich:</p><ul class="list-disc pl-5 space-y-2"><li>Das Recht auf Zugang, Aktualisierung oder Löschung der Informationen, die wir über dich haben.</li><li>Das Recht auf Berichtigung.</li><li>Das Widerspruchsrecht.</li><li>Das Recht auf Einschränkung.</li><li>Das Recht auf Datenübertragbarkeit.</li><li>Das Recht, die Einwilligung zu widerrufen.</li></ul><p class="mt-3 text-sm text-text-muted">Bitte beachte, dass wir möglicherweise deine Identität überprüfen, bevor wir auf solche Anfragen reagieren.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">7. Datenschutz für Kinder</h2><p>Unser Dienst richtet sich nicht an Kinder unter 13 Jahren. Wir sammeln nicht wissentlich persönliche Informationen von Kindern unter 13 Jahren.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">8. Datensicherheit</h2><p>Die Sicherheit deiner Daten ist uns wichtig, aber denke daran, dass keine Methode der Übertragung über das Internet oder der elektronischen Speicherung 100 % sicher ist. Obwohl wir uns bemühen, kommerziell akzeptable Mittel zum Schutz deiner persönlichen Daten zu verwenden, können wir deren absolute Sicherheit nicht garantieren.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">9. Änderungen dieser Richtlinie</h2><p>Wir können diese Datenschutzrichtlinie aktualisieren. Wir benachrichtigen dich über wesentliche Änderungen per E-Mail oder über den Dienst.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">10. Kontaktiere uns</h2><p>Wenn du Fragen zu dieser Datenschutzrichtlinie hast, kontaktiere uns bitte unter <a href="mailto:rankmaker.net@gmail.com" class="text-primary hover:underline">rankmaker.net@gmail.com</a>.</p></section>`,
+		},
+		termsOfUse: {
+			title: 'Nutzungsbedingungen — RANKMAKER',
+			metaDescription: 'Allgemeine Geschäftsbedingungen für die Nutzung von RANKMAKER.',
+			heading: 'Nutzungsbedingungen',
+			body: `<p>Willkommen bei RANKMAKER! Diese Nutzungsbedingungen („Bedingungen") regeln deinen Zugang zu und die Nutzung der Website rankmaker.net und der Dienste (gemeinsam „der Dienst"), die von RANKMAKER bereitgestellt werden. Bitte lese diese Bedingungen sorgfältig durch, bevor du den Dienst nutzt.</p>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. Annahme der Bedingungen</h2><p>Durch den Zugang zu oder die Nutzung des Dienstes stimmst du zu, an diese Bedingungen und unsere Datenschutzrichtlinie gebunden zu sein. Wenn du nicht zustimmst, nutze den Dienst nicht.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Benutzerkonten</h2><p>Um auf bestimmte Funktionen zuzugreifen, musst du möglicherweise ein Konto erstellen. Du musst genaue Informationen angeben und bist für die Aufrechterhaltung der Vertraulichkeit und alle Aktivitäten auf deinem Konto verantwortlich.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Nutzung des Dienstes</h2><p>Du stimmst zu, den Dienst rechtmäßig und im Einklang mit diesen Bedingungen zu nutzen. Der Dienst ist dafür konzipiert, dass Nutzer Rankinglisten über ein Vergleichssystem erstellen, teilen und verwalten können.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. Nutzerinhalte und -verhalten</h2><p class="mb-3">Du bist für alle Inhalte verantwortlich, die du hochlädst. Du stimmst zu, keine Inhalte zu posten, die illegal, beleidigend, schädlich oder die Rechte anderer verletzend sind.</p><p>Wir können Inhalte, die gegen diese Bedingungen verstoßen, überwachen, entfernen oder den Zugang dazu deaktivieren. Wir können deinen Zugang zum Dienst bei Verstößen sperren oder beenden.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. Dienste von Drittanbietern</h2><p>Der Dienst kann Links zu Drittanbieter-Websites enthalten. Wir sind nicht für deren Inhalte, Datenschutzpraktiken oder Dienste verantwortlich.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">6. Cookies</h2><p>Wir können Cookies und ähnliche Technologien verwenden, wie in unserer Datenschutzrichtlinie beschrieben.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">7. Altersbeschränkung</h2><p>Du musst mindestens 13 Jahre alt sein, um den Dienst zu nutzen.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">8. Haftungsausschluss</h2><p>Der Dienst wird „wie besehen" und ohne Garantie bereitgestellt. Wir lehnen alle Garantien im gesetzlich zulässigen Höchstmaß ab.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">9. Haftungsbeschränkung</h2><p>Wir haften nicht für indirekte, zufällige oder Folgeschäden, die aus deiner Nutzung des Dienstes entstehen.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">10. Anwendbares Recht</h2><p>Diese Bedingungen unterliegen spanischem Recht.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">11. Änderungen der Bedingungen</h2><p>Wir können diese Bedingungen ändern. Die fortgesetzte Nutzung des Dienstes nach Änderungen bedeutet, dass du die neuen Bedingungen akzeptierst.</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">12. Kontakt</h2><p>Bei Fragen kontaktiere: <a href="mailto:rankmaker.net@gmail.com" class="text-primary hover:underline">rankmaker.net@gmail.com</a>.</p></section>`,
+		},
+	},
+	categories: {
+		Movies: 'Filme',
+		Music: 'Musik',
+		Sports: 'Sport',
+		Games: 'Spiele',
+		TV: 'TV',
+		People: 'Personen',
+		Internet: 'Internet',
+		Anime: 'Anime',
+		Lifestyle: 'Lifestyle',
+		Food: 'Essen',
+		Politics: 'Politik',
+		'History & Culture': 'Geschichte & Kultur',
+		Geography: 'Geografie',
+		Motor: 'Motor',
+		Books: 'Bücher',
+		Technology: 'Technologie',
+		Nature: 'Natur',
+		Others: 'Sonstiges',
+	},
+};
