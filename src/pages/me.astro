@@ -8,11 +8,20 @@ import { getSessionUser } from "../lib/auth";
 import { categoryIcon } from "../lib/categories";
 import { getCounts } from "../lib/counts";
 import { listTemplatesByUserId } from "../lib/templates";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+// `tr` (not `t`): the templates .map((t) => …) below binds `t` to a template.
+const tr = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
 
 const db = Astro.locals.runtime.env.DB;
 const user = await getSessionUser(Astro.cookies, db);
 if (!user) {
-    return Astro.redirect("/api/auth/login?next=/me", 302);
+    return Astro.redirect(
+        `/api/auth/login?next=${encodeURIComponent(localizePath("/me", locale))}`,
+        302,
+    );
 }
 
 // Owner view: include private/unlisted templates. Counts are merged here
@@ -39,7 +48,7 @@ const resolveImg = (path: string | null) => {
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title="My templates — RANKMAKER">
+<Layout title={tr("me.title")}>
     <section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
         <!-- Profile header -->
         <div
@@ -53,32 +62,34 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     @{user.username}
                 </h1>
                 <a
-                    href={`/u/${encodeURIComponent(user.username)}`}
+                    href={L(`/u/${encodeURIComponent(user.username)}`)}
                     class="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors mt-1"
                 >
                     <i class="fa-solid fa-arrow-up-right-from-square text-xs"
                     ></i>
-                    View public profile
+                    {tr("me.viewPublicProfile")}
                 </a>
             </div>
             <a
-                href="/create"
+                href={L("/create")}
                 class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
             >
                 <i class="fa-solid fa-plus text-xs"></i>
-                Create template
+                {tr("me.createTemplate")}
             </a>
         </div>
 
         <!-- Templates -->
         <div class="flex items-center gap-3 mb-5">
             <h2 class="text-lg font-bold text-text-primary tracking-tight">
-                My templates
+                {tr("me.heading")}
             </h2>
             <div class="flex-1 h-px bg-border/50"></div>
             <span class="text-xs text-text-muted font-medium">
-                {templates.length}
-                {templates.length === 1 ? "template" : "templates"}
+                {templates.length}{" "}
+                {templates.length === 1
+                    ? tr("me.templateSingular")
+                    : tr("me.templatePlural")}
             </span>
         </div>
 
@@ -87,13 +98,13 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 <div class="rounded-2xl border border-dashed border-border p-10 text-center space-y-3">
                     <i class="fa-solid fa-layer-group text-2xl text-text-muted" />
                     <p class="text-sm text-text-secondary">
-                        You haven't created any templates yet.
+                        {tr("me.emptyBody")}
                     </p>
                     <a
-                        href="/create"
+                        href={L("/create")}
                         class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
                     >
-                        Create your first one
+                        {tr("me.createFirst")}
                         <i class="fa-solid fa-arrow-right text-xs" />
                     </a>
                 </div>
@@ -105,7 +116,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                             data-template-id={t.id}
                         >
                             <a
-                                href={`/template/${t.slug}`}
+                                href={L(`/template/${t.slug}`)}
                                 class="w-20 h-15 sm:w-24 sm:h-18 shrink-0 rounded-lg overflow-hidden bg-surface border border-border"
                             >
                                 <SmartImage
@@ -117,7 +128,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                             </a>
                             <div class="flex-1 min-w-0">
                                 <a
-                                    href={`/template/${t.slug}`}
+                                    href={L(`/template/${t.slug}`)}
                                     class="block font-semibold text-sm text-text-primary hover:text-white transition-colors truncate"
                                 >
                                     {t.title}
@@ -127,7 +138,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                         <i
                                             class={`fa-solid ${categoryIcon(t.category)} text-[10px] text-primary/70`}
                                         />
-                                        {t.category}
+                                        {tr(`categories.${t.category}`)}
                                     </span>
                                     <span
                                         class="inline-flex items-center gap-1.5"
@@ -137,23 +148,27 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                                 : undefined
                                         }
                                     >
-                                        {t.times_ranked.toLocaleString()} ranked
+                                        {tr("card.ranked", {
+                                            n: t.times_ranked.toLocaleString(),
+                                        })}
                                     </span>
                                     {t.visibility !== "public" && (
                                         <span class="inline-flex items-center gap-1.5 uppercase tracking-wider font-semibold text-text-muted">
                                             <i
                                                 class={`fa-solid ${t.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
                                             />
-                                            {t.visibility}
+                                            {t.visibility === "private"
+                                                ? tr("me.visibilityPrivate")
+                                                : tr("me.visibilityUnlisted")}
                                         </span>
                                     )}
                                 </p>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
                                 <a
-                                    href={`/edit/${t.slug}`}
+                                    href={L(`/edit/${t.slug}`)}
                                     class="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-primary border border-border hover:border-primary/50 transition-all"
-                                    aria-label="Edit template"
+                                    aria-label={tr("me.editTemplateAria")}
                                 >
                                     <i class="fa-solid fa-pen text-xs" />
                                 </a>
@@ -162,7 +177,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                     class="delete-template-btn w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-red-400 border border-border hover:border-red-400/50 transition-all"
                                     data-id={t.id}
                                     data-title={t.title}
-                                    aria-label="Delete template"
+                                    aria-label={tr("me.deleteTemplateAria")}
                                 >
                                     <i class="fa-solid fa-trash text-xs" />
                                 </button>
@@ -179,11 +194,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 class="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2"
             >
                 <i class="fa-solid fa-triangle-exclamation text-xs"></i>
-                Danger zone
+                {tr("me.dangerZone")}
             </h2>
             <p class="text-sm text-text-secondary mt-3">
-                Deleting your account permanently removes your profile and all
-                the templates you've created. This cannot be undone.
+                {tr("me.dangerBody")}
             </p>
             <button
                 type="button"
@@ -191,7 +205,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 border border-red-500/40 hover:bg-red-500/10 transition-all"
             >
                 <i class="fa-solid fa-user-xmark text-xs"></i>
-                Delete my account
+                {tr("me.deleteMyAccount")}
             </button>
         </div>
     </section>
@@ -212,26 +226,23 @@ Astro.response.headers.set("Cache-Control", "no-store");
             class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4"
         >
             <h3 id="delete-template-modal-title" class="text-lg font-bold text-text-primary">
-                Delete template?
+                {tr("me.deleteTemplateTitle")}
             </h3>
-            <p class="text-sm text-text-secondary">
-                "<span id="delete-template-title"></span>" will be permanently
-                deleted. This cannot be undone.
-            </p>
+            <p id="delete-template-body" class="text-sm text-text-secondary"></p>
             <div class="flex gap-3 pt-1">
                 <button
                     type="button"
                     id="delete-template-cancel"
                     class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
                 >
-                    Cancel
+                    {tr("common.cancel")}
                 </button>
                 <button
                     type="button"
                     id="delete-template-confirm"
                     class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
                 >
-                    Delete
+                    {tr("common.delete")}
                 </button>
             </div>
         </div>
@@ -253,13 +264,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
         <div
             class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-red-500/30 p-6 space-y-4"
         >
-            <h3 id="delete-account-modal-title" class="text-lg font-bold text-red-400">Delete account</h3>
-            <p class="text-sm text-text-secondary">
-                This permanently deletes your account and all your templates.
-                Type <span class="font-bold text-text-primary"
-                    >{user.username}</span
-                > to confirm.
-            </p>
+            <h3 id="delete-account-modal-title" class="text-lg font-bold text-red-400">
+                {tr("me.deleteAccountTitle")}
+            </h3>
+            <p
+                class="text-sm text-text-secondary"
+                set:html={tr("me.deleteAccountBody", {
+                    username: user.username,
+                })}
+            />
             <input
                 id="delete-account-input"
                 type="text"
@@ -276,7 +289,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     id="delete-account-cancel"
                     class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
                 >
-                    Cancel
+                    {tr("common.cancel")}
                 </button>
                 <button
                     type="button"
@@ -284,7 +297,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     disabled
                     class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    Delete forever
+                    {tr("me.deleteForever")}
                 </button>
             </div>
         </div>
@@ -293,14 +306,18 @@ Astro.response.headers.set("Cache-Control", "no-store");
 
 <script>
     import { openModal, closeModal } from "../scripts/modal-a11y";
+    import { clientT, getClientLocale } from "../i18n/client";
+    import { localizePath } from "../i18n";
 
     document.addEventListener("astro:page-load", () => {
         const tplModal = document.getElementById("delete-template-modal");
         if (!tplModal || tplModal.dataset.bound) return;
         tplModal.dataset.bound = "1";
 
+        const t = clientT();
+
         // ── Delete template ──────────────────────────────────────────
-        const tplTitle = document.getElementById("delete-template-title")!;
+        const tplBody = document.getElementById("delete-template-body")!;
         const tplConfirm = document.getElementById(
             "delete-template-confirm",
         ) as HTMLButtonElement;
@@ -311,7 +328,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
             .forEach((btn) => {
                 btn.addEventListener("click", () => {
                     pendingId = btn.dataset.id || null;
-                    tplTitle.textContent = btn.dataset.title || "";
+                    tplBody.textContent = t("me.deleteTemplateBody", {
+                        title: btn.dataset.title || "",
+                    });
                     openModal(tplModal, {
                         focus: tplConfirm,
                         onClose: () => {
@@ -394,13 +413,12 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 });
                 const data = await res.json();
                 if (res.ok && data.ok) {
-                    window.location.href = "/";
+                    window.location.href = localizePath("/", getClientLocale());
                     return;
                 }
-                accError.textContent =
-                    data.error || "Something went wrong. Try again.";
+                accError.textContent = data.error || t("common.genericError");
             } catch {
-                accError.textContent = "Network error. Try again.";
+                accError.textContent = t("common.networkError");
             }
             accConfirm.disabled = accInput.value !== username;
         });

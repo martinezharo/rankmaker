@@ -3,6 +3,11 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import { getSessionUser } from "../lib/auth";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
 
 // Per-user, never cached. Logged-in users get their saved results from D1
 // (cross-device); anonymous visitors get theirs from localStorage, rendered by
@@ -59,7 +64,7 @@ const fmtDate = (d: string | number) => {
 	const date = new Date(d);
 	return isNaN(date.getTime())
 		? ""
-		: date.toLocaleDateString(undefined, {
+		: date.toLocaleDateString(locale, {
 				year: "numeric",
 				month: "short",
 				day: "numeric",
@@ -81,7 +86,7 @@ const posCls = (i: number) =>
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title="My ranking history — RANKMAKER">
+<Layout title={t("history.title")}>
 	<section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
 		<div class="flex items-center gap-3 mb-2">
 			<div
@@ -92,14 +97,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			<h1
 				class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
 			>
-				My ranking history
+				{t("history.heading")}
 			</h1>
 		</div>
 		<p class="text-sm text-text-secondary mb-8">
 			{
 				user
-					? "The rankings you've completed. Tap a card to reveal the full ranking."
-					: "Rankings you've completed on this device. Tap a card to reveal the full ranking. Log in to keep them across devices."
+					? t("history.subtitleLoggedIn")
+					: t("history.subtitleAnon")
 			}
 		</p>
 
@@ -133,7 +138,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 									<div class="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
 										<span class="inline-flex items-center gap-1.5">
 											<i class="fa-solid fa-list-ol text-[10px]" />
-											{e.result.length} items
+											{t("history.items", { n: e.result.length })}
 										</span>
 										<span class="inline-flex items-center gap-1.5">
 											<i class="fa-regular fa-clock text-[10px]" />
@@ -151,7 +156,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 									<div class="px-4 pb-4 pt-1">
 										<div class="flex items-center gap-3 mb-3">
 											<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">
-												Full ranking
+												{t("history.fullRanking")}
 											</span>
 											<div class="flex-1 h-px bg-border/60" />
 										</div>
@@ -190,15 +195,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
 										</ol>
 										<div class="flex justify-end gap-2 mt-4">
 											<a
-												href={`/template/${e.slug}`}
+												href={L(`/template/${e.slug}`)}
 												data-slug={e.slug}
 												class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
 											>
 												<i class="fa-solid fa-rotate text-xs text-primary/70" />
-												Rank again
+												{t("history.rankAgain")}
 											</a>
 											<a
-												href={`/template/${e.slug}`}
+												href={L(`/template/${e.slug}`)}
 												data-slug={e.slug}
 												data-title={e.title}
 												data-cover={e.cover}
@@ -206,7 +211,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 												class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"
 											>
 												<i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12" />
-												View details
+												{t("history.viewDetails")}
 											</a>
 										</div>
 									</div>
@@ -227,13 +232,13 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		>
 			<i class="fa-solid fa-clock-rotate-left text-2xl text-text-muted"></i>
 			<p class="text-sm text-text-secondary">
-				You haven't ranked anything yet.
+				{t("history.emptyBody")}
 			</p>
 			<a
-				href="/"
+				href={L("/")}
 				class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
 			>
-				Find something to rank
+				{t("history.findSomething")}
 				<i class="fa-solid fa-arrow-right text-xs"></i>
 			</a>
 		</div>
@@ -251,6 +256,12 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		setForceFresh,
 		type RankedItem,
 	} from "../scripts/history";
+	import { clientT, getClientLocale } from "../i18n/client";
+	import { localizePath } from "../i18n";
+
+	const t = clientT();
+	const locale = getClientLocale();
+	const L = (p: string) => localizePath(p, locale);
 
 	function escapeHtml(s: string): string {
 		return s.replace(
@@ -270,7 +281,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		const d = new Date(ts);
 		return isNaN(d.getTime())
 			? ""
-			: d.toLocaleDateString(undefined, {
+			: d.toLocaleDateString(locale, {
 					year: "numeric",
 					month: "short",
 					day: "numeric",
@@ -335,7 +346,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 					<div class="flex-1 min-w-0">
 						<p class="font-semibold text-base text-text-primary truncate group-hover:text-white transition-colors">${escapeHtml(e.title)}</p>
 						<div class="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
-							<span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-list-ol text-[10px]"></i>${e.result.length} items</span>
+							<span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-list-ol text-[10px]"></i>${escapeHtml(t("history.items", { n: e.result.length }))}</span>
 							<span class="inline-flex items-center gap-1.5"><i class="fa-regular fa-clock text-[10px]"></i>${fmtDate(e.ts)}</span>
 						</div>
 					</div>
@@ -347,13 +358,13 @@ Astro.response.headers.set("Cache-Control", "no-store");
 					<div class="overflow-hidden">
 						<div class="px-4 pb-4 pt-1">
 							<div class="flex items-center gap-3 mb-3">
-								<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">Full ranking</span>
+								<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">${escapeHtml(t("history.fullRanking"))}</span>
 								<div class="flex-1 h-px bg-border/60"></div>
 							</div>
 							<ol class="space-y-1.5">${rows}</ol>
 							<div class="flex justify-end gap-2 mt-4">
-								<a href="/template/${encodeURIComponent(e.slug)}" data-slug="${escapeHtml(e.slug)}" class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"><i class="fa-solid fa-rotate text-xs text-primary/70"></i>Rank again</a>
-								<a href="/template/${encodeURIComponent(e.slug)}" data-slug="${escapeHtml(e.slug)}" data-title="${escapeHtml(e.title)}" data-cover="${escapeHtml(e.cover || "")}" data-result="${escapeHtml(JSON.stringify(e.result))}" class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"><i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12"></i>View details</a>
+								<a href="${escapeHtml(L(`/template/${encodeURIComponent(e.slug)}`))}" data-slug="${escapeHtml(e.slug)}" class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"><i class="fa-solid fa-rotate text-xs text-primary/70"></i>${escapeHtml(t("history.rankAgain"))}</a>
+								<a href="${escapeHtml(L(`/template/${encodeURIComponent(e.slug)}`))}" data-slug="${escapeHtml(e.slug)}" data-title="${escapeHtml(e.title)}" data-cover="${escapeHtml(e.cover || "")}" data-result="${escapeHtml(JSON.stringify(e.result))}" class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"><i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12"></i>${escapeHtml(t("history.viewDetails"))}</a>
 							</div>
 						</div>
 					</div>

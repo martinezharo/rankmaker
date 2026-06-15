@@ -8,6 +8,10 @@ import {
     SELECTABLE_AVATAR_KEYS,
     randomAvatarKey,
 } from "../lib/avatars";
+import { defaultLocale, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 
 type SignupPayload = { ghId: number; ghLogin: string; next: string; exp: number };
 
@@ -30,7 +34,7 @@ const initialAvatar = randomAvatarKey();
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title="Finish signing up — RANKMAKER">
+<Layout title={t("signup.title")}>
     <section
         class="mx-auto max-w-lg px-4 sm:px-6 py-12"
         id="signup-page"
@@ -38,10 +42,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
     >
         <div class="text-center mb-8">
             <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary">
-                Almost there!
+                {t("signup.heading")}
             </h1>
             <p class="text-sm text-text-secondary mt-2">
-                Pick a username and an avatar to finish creating your account.
+                {t("signup.subtitle")}
             </p>
         </div>
 
@@ -52,7 +56,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     for="username-input"
                     class="block text-sm font-semibold text-text-primary mb-2"
                 >
-                    Username
+                    {t("signup.usernameLabel")}
                 </label>
                 <div class="relative">
                     <span
@@ -66,7 +70,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                         maxlength="30"
                         autocomplete="off"
                         spellcheck="false"
-                        placeholder="your_username"
+                        placeholder={t("signup.usernamePlaceholder")}
                         class="w-full pl-9 pr-10 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
                     />
                     <span
@@ -79,7 +83,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     class="mt-2 text-xs font-medium text-gold-start flex items-center gap-1.5"
                 >
                     <i class="fa-solid fa-triangle-exclamation"></i>
-                    Your username is permanent — it can never be changed.
+                    {t("signup.usernamePermanent")}
                 </p>
             </div>
 
@@ -87,7 +91,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
             <div>
                 <div class="flex items-center justify-between mb-3">
                     <span class="block text-sm font-semibold text-text-primary">
-                        Avatar
+                        {t("signup.avatarLabel")}
                     </span>
                     <button
                         type="button"
@@ -95,7 +99,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary bg-surface border border-border hover:border-border-hover transition-all"
                     >
                         <i class="fa-solid fa-shuffle text-[10px]"></i>
-                        Shuffle
+                        {t("signup.shuffle")}
                     </button>
                 </div>
                 <div class="grid grid-cols-4 gap-3" id="avatar-grid">
@@ -110,7 +114,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                     data-selected={
                                         key === initialAvatar ? "" : undefined
                                     }
-                                    aria-label={`Avatar ${key}`}
+                                    aria-label={t("signup.avatarOptionLabel", { key })}
                                 >
                                     <span
                                         class="flex items-center justify-center rounded-full w-10 h-10 sm:w-12 sm:h-12"
@@ -139,7 +143,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     type="button"
                     class="w-full py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    Create my account
+                    {t("signup.submit")}
                 </button>
             </div>
         </div>
@@ -147,10 +151,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
 </Layout>
 
 <script>
+    import { clientT } from "../i18n/client";
+
     document.addEventListener("astro:page-load", () => {
         const page = document.getElementById("signup-page");
         if (!page || page.dataset.bound) return;
         page.dataset.bound = "1";
+
+        const t = clientT();
 
         const input = document.getElementById(
             "username-input",
@@ -224,20 +232,20 @@ Astro.response.headers.set("Cache-Control", "no-store");
                             true,
                             "fa-circle-check",
                             "#22c55e",
-                            "Username is available!",
+                            t("signup.available"),
                         );
                     } else {
                         setState(
                             false,
                             "fa-circle-xmark",
                             "#f87171",
-                            data.reason || "Username is not available.",
+                            data.reason || t("signup.notAvailable"),
                         );
                     }
                 })
                 .catch(() => {
                     if (seq !== checkSeq) return;
-                    setState(false, "", "#f87171", "Could not check username.");
+                    setState(false, "", "#f87171", t("signup.checkFailed"));
                 });
         }
 
@@ -266,12 +274,11 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     window.location.href = data.next || "/";
                     return;
                 }
-                errorEl.textContent =
-                    data.error || "Something went wrong. Try again.";
+                errorEl.textContent = data.error || t("signup.genericError");
                 submit.disabled = false;
                 if (res.status === 409) checkUsername();
             } catch {
-                errorEl.textContent = "Network error. Try again.";
+                errorEl.textContent = t("signup.networkError");
                 submit.disabled = false;
             }
         });

@@ -1,8 +1,12 @@
 ---
 // CategorySection.astro — 4-card grid per category
 import TemplateCard from "./TemplateCard.astro";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 import type { Creator } from "../lib/templates";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 
 interface Template {
     id: string;
@@ -37,14 +41,17 @@ const anchorId = `cat-${category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
             <i class={`fa-solid ${icon} text-primary text-sm`}></i>
         </div>
         <h2 class="text-lg font-bold text-text-primary tracking-tight">
-            {category}
+            {t(`categories.${category}`)}
         </h2>
         <div class="flex-1 h-px bg-border/50 ml-2"></div>
         <a
-            href={`/search?category=${encodeURIComponent(category)}`}
+            href={localizePath(
+                `/search?category=${encodeURIComponent(category)}`,
+                locale,
+            )}
             class="text-xs font-semibold text-text-secondary hover:text-primary transition-colors whitespace-nowrap ml-2 group"
         >
-            View all <i
+            {t("card.viewAll")} <i
                 class="fa-solid fa-arrow-right ml-1 text-[10px] transition-transform group-hover:translate-x-0.5"
             ></i>
         </a>

@@ -1,5 +1,8 @@
 ---
+import { defaultLocale, useTranslations } from "../i18n";
 
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 ---
 
 <section
@@ -8,7 +11,7 @@
     <!-- How It Works -->
     <div class="mb-20">
         <h2 class="text-3xl font-bold text-text-primary text-center mb-12">
-            How It Works
+            {t("seoContent.howItWorks")}
         </h2>
         <div class="grid md:grid-cols-3 gap-8">
             <!-- Step 1 -->
@@ -27,11 +30,10 @@
                         <i class="fa-solid fa-list-check text-xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-text-primary mb-3">
-                        Select a Template
+                        {t("seoContent.step1Title")}
                     </h3>
                     <p class="text-text-secondary leading-relaxed text-sm">
-                        Start by choosing a ranking template—either one you
-                        created or one shared by others—to get started.
+                        {t("seoContent.step1Body")}
                     </p>
                 </div>
             </div>
@@ -51,12 +53,10 @@
                         <i class="fa-solid fa-gavel text-xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-text-primary mb-3">
-                        The Match-ups Begin!
+                        {t("seoContent.step2Title")}
                     </h3>
                     <p class="text-text-secondary leading-relaxed text-sm">
-                        Participate in head-to-head match-ups to determine your
-                        final order. Make simple choices between pairs of items
-                        to build your perfect ranking.
+                        {t("seoContent.step2Body")}
                     </p>
                 </div>
             </div>
@@ -76,12 +76,10 @@
                         <i class="fa-solid fa-share-nodes text-xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-text-primary mb-3">
-                        Share Your Results
+                        {t("seoContent.step3Title")}
                     </h3>
                     <p class="text-text-secondary leading-relaxed text-sm">
-                        Share your final ranking results with your friends and
-                        see their feedback. Compare your rankings and discover
-                        new perspectives.
+                        {t("seoContent.step3Body")}
                     </p>
                 </div>
             </div>
@@ -99,22 +97,13 @@
         <div class="relative z-10 md:flex gap-12 items-start">
             <div class="flex-1 space-y-6">
                 <h2 class="text-3xl font-bold text-text-primary">
-                    What is RANKMAKER?
+                    {t("seoContent.whatIsTitle")}
                 </h2>
                 <p class="text-text-secondary leading-relaxed">
-                    RANKMAKER is the ultimate ranking tool that helps you
-                    organize and prioritize anything that matters to you.
-                    Whether you're ranking movies, music, games, books, or any
-                    other category, our unique head-to-head comparison system
-                    ensures accurate results that truly reflect your
-                    preferences.
+                    {t("seoContent.whatIsP1")}
                 </p>
                 <p class="text-text-secondary leading-relaxed">
-                    Unlike traditional tier lists that force you to make
-                    arbitrary category assignments, RANKMAKER's battle system
-                    lets you focus on one simple question at a time: which
-                    option do you prefer? This methodical approach leads to more
-                    accurate and satisfying rankings.
+                    {t("seoContent.whatIsP2")}
                 </p>
             </div>
             <div
@@ -130,7 +119,7 @@
                             ></i>
                         </div>
                         <span class="text-text-muted text-sm"
-                            >Create custom rankings of anything you care about</span
+                            >{t("seoContent.feature1")}</span
                         >
                     </li>
                     <li class="flex items-start gap-3">
@@ -142,7 +131,7 @@
                             ></i>
                         </div>
                         <span class="text-text-muted text-sm"
-                            >Use pre-made templates from popular categories</span
+                            >{t("seoContent.feature2")}</span
                         >
                     </li>
                     <li class="flex items-start gap-3">
@@ -154,7 +143,7 @@
                             ></i>
                         </div>
                         <span class="text-text-muted text-sm"
-                            >Share your rankings with friends on social media</span
+                            >{t("seoContent.feature3")}</span
                         >
                     </li>
                     <li class="flex items-start gap-3">
@@ -166,7 +155,7 @@
                             ></i>
                         </div>
                         <span class="text-text-muted text-sm"
-                            >Build a profile showcasing your templates</span
+                            >{t("seoContent.feature4")}</span
                         >
                     </li>
                 </ul>

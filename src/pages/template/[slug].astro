@@ -13,6 +13,11 @@ import RecommendedTemplates from "../../components/RecommendedTemplates.astro";
 import { getTemplateBySlug, getRecommendedTemplates } from "../../lib/templates";
 import { categoryIcon } from "../../lib/categories";
 import { getSessionUser } from "../../lib/auth";
+import { defaultLocale, localizePath, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
 
 // Served on demand: official templates resolve from the bundled JSON (no D1
 // read), user templates from D1. A null body + 404 makes Astro render 404.astro.
@@ -115,7 +120,7 @@ try {
 ---
 
 <Layout
-    title={`${template.title} — RANKMAKER`}
+    title={t("ranking.pageTitle", { title: template.title })}
     description={template.description || undefined}
     image={coverSrc}
     noindex={isHidden}
@@ -138,13 +143,13 @@ try {
     >
         <!-- Back Navigation -->
         <a
-            href="/"
+            href={L("/")}
             class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-8 group"
         >
             <i
                 class="fa-solid fa-arrow-left text-xs transition-transform group-hover:-translate-x-1"
             ></i>
-            Back to templates
+            {t("ranking.backToTemplates")}
         </a>
 
         <!-- Template Header -->
@@ -168,7 +173,7 @@ try {
                             template.category && (
                                 <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider">
                                     <i class={`fa-solid ${icon} text-[10px]`} />
-                                    {template.category}
+                                    {t(`categories.${template.category}`)}
                                 </span>
                             )
                         }
@@ -178,7 +183,9 @@ try {
                                     <i
                                         class={`fa-solid ${template.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
                                     />
-                                    {template.visibility}
+                                    {template.visibility === "private"
+                                        ? t("me.visibilityPrivate")
+                                        : t("me.visibilityUnlisted")}
                                 </span>
                             )
                         }
@@ -186,7 +193,7 @@ try {
                     <button
                         id="share-template-btn"
                         class="w-10 h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/50 transition-all duration-200"
-                        aria-label="Share template"
+                        aria-label={t("card.shareAria")}
                         data-title={template.title}
                     >
                         <i class="fa-solid fa-share-nodes text-sm"></i>
@@ -201,7 +208,7 @@ try {
 
                 <!-- Creator -->
                 <a
-                    href={`/u/${encodeURIComponent(creator.username)}`}
+                    href={L(`/u/${encodeURIComponent(creator.username)}`)}
                     class="group/creator inline-flex items-center gap-2.5 w-fit"
                 >
                     <Avatar
@@ -212,7 +219,7 @@ try {
                     <span>
                         <span
                             class="block text-[10px] uppercase tracking-wider text-text-muted font-semibold"
-                            >Created by</span
+                            >{t("ranking.createdBy")}</span
                         >
                         <span
                             class="text-sm font-semibold text-text-secondary group-hover/creator:text-text-primary transition-colors"
@@ -236,7 +243,7 @@ try {
                         <span
                             class="font-medium"
                             data-count-slug={isHidden ? undefined : template.slug}
-                            >{template.times_ranked.toLocaleString()} ranked</span
+                            >{t("card.ranked", { n: template.times_ranked.toLocaleString() })}</span
                         >
                     </div>
                     {
@@ -244,7 +251,7 @@ try {
                             <div class="flex items-center gap-2 text-text-muted">
                                 <i class="fa-solid fa-layer-group text-primary/70 text-xs" />
                                 <span class="font-medium">
-                                    {options.length} options
+                                    {t("ranking.optionsCount", { n: options.length })}
                                 </span>
                             </div>
                         )
@@ -255,16 +262,19 @@ try {
 
         <!-- Share script -->
         <script>
+            import { clientT } from "../../i18n/client";
+
             document.addEventListener("astro:page-load", () => {
                 const shareBtn = document.getElementById("share-template-btn");
                 if (!shareBtn) return;
+                const t = clientT();
                 shareBtn.addEventListener("click", async () => {
                     const title = shareBtn.dataset.title;
                     const url = window.location.href;
                     if (navigator.share) {
                         try {
                             await navigator.share({
-                                title: `RANKMAKER: ${title}`,
+                                title: t("card.shareTitle", { title: title || "" }),
                                 url,
                             });
                         } catch (err) {
@@ -296,11 +306,11 @@ try {
                 <section class="mt-14">
                     <div class="flex items-center gap-3 mb-6">
                         <h2 class="text-lg font-bold text-text-primary tracking-tight">
-                            Available Options
+                            {t("ranking.availableOptions")}
                         </h2>
                         <div class="flex-1 h-px bg-border/50" />
                         <span class="text-xs text-text-muted font-medium">
-                            {options.length} items
+                            {t("ranking.itemsCount", { n: options.length })}
                         </span>
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -340,7 +350,7 @@ try {
             class="group flex items-center gap-3 px-7 py-4 rounded-2xl bg-gradient-gold text-zinc-950 font-black text-sm glow-gold hover:shadow-[0_8px_60px_rgba(255,215,0,0.5)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"
         >
             <i class="fa-solid fa-play text-xs"></i>
-            START RANKING
+            {t("ranking.startRanking")}
             <i
                 class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"
             ></i>
@@ -409,8 +419,10 @@ try {
             consumePendingResult,
             consumeForceFresh,
         } from "../../scripts/history";
+        import { clientT } from "../../i18n/client";
 
         function rankingInit() {
+            const t = clientT();
             // Read options + title from the JSON data element in the current
             // (swapped) DOM, so they can never lag behind the page on screen.
             const dataEl = document.getElementById("ranking-data");
@@ -651,12 +663,17 @@ try {
                     Math.round((currentRound / denom) * 100),
                 );
                 if (progressEl)
-                    progressEl.textContent = `Round ${currentRound} of ~${denom}`;
+                    progressEl.textContent = t("ranking.roundProgress", {
+                        current: currentRound,
+                        total: denom,
+                    });
                 if (progressBar) progressBar.style.width = `${pct}%`;
                 if (skippedCountEl) {
                     const pending = pendingSkipKeys().length;
                     if (pending > 0) {
-                        skippedCountEl.textContent = `${pending} skipped`;
+                        skippedCountEl.textContent = t("ranking.skippedCount", {
+                            n: pending,
+                        });
                         skippedCountEl.classList.remove("hidden");
                     } else {
                         skippedCountEl.classList.add("hidden");
@@ -670,8 +687,8 @@ try {
                 if (battleView) battleView.classList.toggle("final-round", active);
                 if (battleHint)
                     battleHint.textContent = active
-                        ? "No skipping now — trust your gut"
-                        : "Tap the one you prefer";
+                        ? t("ranking.noSkipping")
+                        : t("ranking.tapPreferred");
             }
 
             // ─── Show Battle ─────────────────────────────────
@@ -967,7 +984,7 @@ try {
                     setFinalRoundUI(true);
                     const banner = document.createElement("div");
                     banner.className = "final-round-banner";
-                    banner.innerHTML = `<i class="fa-solid fa-bolt"></i> Sudden death — settle ${count} skipped ${count === 1 ? "duel" : "duels"}`;
+                    banner.innerHTML = `<i class="fa-solid fa-bolt"></i> ${t(count === 1 ? "ranking.suddenDeathOne" : "ranking.suddenDeath", { count })}`;
                     battleView.appendChild(banner);
                     setTimeout(() => {
                         banner.classList.add("final-round-banner-out");
@@ -1041,21 +1058,21 @@ try {
                         border: "border-amber-400/60",
                         text: "text-amber-400",
                         icon: "fa-crown",
-                        label: "1st",
+                        label: t("ranking.podium1"),
                     },
                     {
                         bg: "from-gray-300/15 to-gray-400/5",
                         border: "border-gray-400/50",
                         text: "text-gray-300",
                         icon: "fa-medal",
-                        label: "2nd",
+                        label: t("ranking.podium2"),
                     },
                     {
                         bg: "from-orange-400/15 to-orange-600/5",
                         border: "border-orange-500/40",
                         text: "text-orange-400",
                         icon: "fa-award",
-                        label: "3rd",
+                        label: t("ranking.podium3"),
                     },
                 ];
                 const podiumOrder =
@@ -1118,7 +1135,7 @@ try {
             actionHistory.addEventListener("click", () => {
                 historyList.innerHTML =
                     battleHistory.length === 0
-                        ? `<p class="text-sm text-text-muted text-center py-6">No battles recorded.</p>`
+                        ? `<p class="text-sm text-text-muted text-center py-6">${esc(t("ranking.noBattlesRecorded"))}</p>`
                         : battleHistory
                               .map((b, i) => {
                                   const aWon = b.winner.id === b.a.id;
@@ -1132,7 +1149,7 @@ try {
                                     </div>
                                     <span class="text-xs font-medium text-text-primary truncate">${esc(b.a.name)}</span>
                                 </div>
-                                <span class="text-[10px] text-text-muted font-bold shrink-0 mx-1">vs</span>
+                                <span class="text-[10px] text-text-muted font-bold shrink-0 mx-1">${esc(t("ranking.vs"))}</span>
                                 <div class="flex items-center gap-2 ${!aWon ? "opacity-100" : "opacity-40"} flex-1 min-w-0 justify-end">
                                     <span class="text-xs font-medium text-text-primary truncate">${esc(b.b.name)}</span>
                                     <div class="w-7 h-7 rounded-md overflow-hidden shrink-0 ${!aWon ? "ring-2 ring-primary/60" : ""}">
@@ -1166,12 +1183,21 @@ try {
                 downloadBtn.dataset.busy = "1";
                 const original = downloadBtn.innerHTML;
                 downloadBtn.setAttribute("aria-busy", "true");
-                downloadBtn.innerHTML =
-                    '<i class="fa-solid fa-spinner btn-spinner text-xs text-primary/70"></i>Generating…';
+                downloadBtn.innerHTML = `<i class="fa-solid fa-spinner btn-spinner text-xs text-primary/70"></i>${t("ranking.generating")}`;
                 try {
                     await downloadRankingImage(
                         lastRanked,
-                        templateTitle || "My Ranking",
+                        templateTitle || t("ranking.myRanking"),
+                        {
+                            results: t("ranking.results").toUpperCase(),
+                            fullRanking: t("ranking.fullRanking"),
+                            madeWith: t("ranking.shareImgMadeWith"),
+                            podium: [
+                                t("ranking.podium1").toUpperCase(),
+                                t("ranking.podium2").toUpperCase(),
+                                t("ranking.podium3").toUpperCase(),
+                            ],
+                        },
                     );
                 } finally {
                     downloadBtn.innerHTML = original;
@@ -1251,7 +1277,7 @@ try {
                         reorderIcon.className =
                             "fa-solid fa-check text-xs text-primary";
                     if (reorderLabel)
-                        reorderLabel.textContent = "Done Reordering";
+                        reorderLabel.textContent = t("ranking.doneReordering");
                     handles.forEach((h) => h.classList.remove("hidden"));
                     handles.forEach((h) => h.classList.add("flex"));
                     // Drop the one-shot entrance animation: its `both` fill-mode
@@ -1272,7 +1298,7 @@ try {
                         reorderIcon.className =
                             "fa-solid fa-arrows-up-down text-xs text-primary/70";
                     if (reorderLabel)
-                        reorderLabel.textContent = "Reorder Manually";
+                        reorderLabel.textContent = t("ranking.reorderManually");
                     handles.forEach((h) => h.classList.add("hidden"));
                     handles.forEach((h) => h.classList.remove("flex"));
                 }
@@ -1286,21 +1312,21 @@ try {
                         border: "border-amber-400/60",
                         text: "text-amber-400",
                         icon: "fa-crown",
-                        label: "1st",
+                        label: t("ranking.podium1"),
                     },
                     {
                         bg: "from-gray-300/15 to-gray-400/5",
                         border: "border-gray-400/50",
                         text: "text-gray-300",
                         icon: "fa-medal",
-                        label: "2nd",
+                        label: t("ranking.podium2"),
                     },
                     {
                         bg: "from-orange-400/15 to-orange-600/5",
                         border: "border-orange-500/40",
                         text: "text-orange-400",
                         icon: "fa-award",
-                        label: "3rd",
+                        label: t("ranking.podium3"),
                     },
                 ];
                 const podiumOrder =
@@ -1351,12 +1377,12 @@ try {
 
             // ─── Share Template ────────────────────────────
             actionShareTemplate.addEventListener("click", async () => {
-                const title = templateTitle || "My Ranking";
+                const title = templateTitle || t("ranking.myRanking");
                 const url = window.location.href;
                 if (navigator.share) {
                     try {
                         await navigator.share({
-                            title: `RANKMAKER: ${title}`,
+                            title: t("card.shareTitle", { title }),
                             url,
                         });
                     } catch (err) {
@@ -1382,9 +1408,9 @@ try {
 
             // ─── Share on X ──────────────────────────────
             actionShareX.addEventListener("click", () => {
-                const title = templateTitle || "My Ranking";
+                const title = templateTitle || t("ranking.myRanking");
                 const url = window.location.href;
-                const text = `Take a look at this template: '${title}'`;
+                const text = t("ranking.shareXText", { title });
                 const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
                 window.open(xUrl, "_blank", "noopener");
             });

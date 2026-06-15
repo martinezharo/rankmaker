@@ -9,6 +9,15 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   output: 'static',
 
+  // English at the root (/template/x), Spanish/French prefixed (/es/…, /fr/…).
+  // No pages are duplicated: src/middleware.ts strips the prefix and rewrites
+  // to the canonical route, exposing the active locale as Astro.locals.locale.
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'es', 'fr'],
+    routing: { prefixDefaultLocale: false },
+  },
+
   vite: {
     plugins: [tailwindcss()],
     server: {

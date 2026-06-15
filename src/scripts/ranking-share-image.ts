@@ -51,12 +51,33 @@ export function truncate(
 	return t.length < text.length ? t + '…' : t;
 }
 
+/**
+ * Localized labels baked into the canvas. Optional so existing callers/tests
+ * keep working; the page passes translated strings (see template/[slug].astro).
+ */
+export interface ShareImageLabels {
+	results: string;
+	fullRanking: string;
+	madeWith: string;
+	podium: [string, string, string];
+}
+
+const DEFAULT_LABELS: ShareImageLabels = {
+	results: 'RESULTS',
+	fullRanking: 'Full Ranking',
+	madeWith: 'Made with rankmaker.net',
+	podium: ['1ST', '2ND', '3RD'],
+};
+
 /** Render the ranking to a PNG and trigger a browser download. */
 export async function downloadRankingImage(
 	ranked: RankedItem[],
-	title: string
+	title: string,
+	labels: Partial<ShareImageLabels> = {}
 ): Promise<void> {
 	if (ranked.length === 0) return;
+
+	const L: ShareImageLabels = { ...DEFAULT_LABELS, ...labels };
 
 	const restItems = ranked.slice(3);
 	const H = computeCanvasHeight(ranked.length);
@@ -152,7 +173,7 @@ export async function downloadRankingImage(
 	ctx.fillStyle = 'rgba(255,255,255,0.35)';
 	ctx.font = "600 13px -apple-system, 'Segoe UI', sans-serif";
 	ctx.textAlign = 'center';
-	ctx.fillText('RESULTS', W / 2, curY + 16);
+	ctx.fillText(L.results, W / 2, curY + 16);
 
 	ctx.fillStyle = '#ffffff';
 	ctx.font = "bold 32px -apple-system, 'Segoe UI', sans-serif";
@@ -168,21 +189,21 @@ export async function downloadRankingImage(
 		{
 			border: '#FBBF24',
 			bg: 'rgba(251,191,36,0.15)',
-			label: '1ST',
+			label: L.podium[0],
 			text: '#FBBF24',
 			crown: true,
 		},
 		{
 			border: '#9CA3AF',
 			bg: 'rgba(156,163,175,0.10)',
-			label: '2ND',
+			label: L.podium[1],
 			text: '#9CA3AF',
 			crown: false,
 		},
 		{
 			border: '#F97316',
 			bg: 'rgba(249,115,22,0.10)',
-			label: '3RD',
+			label: L.podium[2],
 			text: '#F97316',
 			crown: false,
 		},
@@ -280,12 +301,12 @@ export async function downloadRankingImage(
 		ctx.fillStyle = '#ffffff';
 		ctx.font = "bold 17px -apple-system, 'Segoe UI', sans-serif";
 		ctx.textAlign = 'left';
-		ctx.fillText('Full Ranking', PAD, curY + 20);
+		ctx.fillText(L.fullRanking, PAD, curY + 20);
 
 		// Separator line
 		ctx.strokeStyle = 'rgba(255,255,255,0.08)';
 		ctx.lineWidth = 1;
-		const textW = ctx.measureText('Full Ranking').width;
+		const textW = ctx.measureText(L.fullRanking).width;
 		ctx.beginPath();
 		ctx.moveTo(PAD + textW + 16, curY + 16);
 		ctx.lineTo(W - PAD, curY + 16);
@@ -349,7 +370,7 @@ export async function downloadRankingImage(
 	ctx.fillStyle = 'rgba(255,255,255,0.15)';
 	ctx.font = "500 12px -apple-system, 'Segoe UI', sans-serif";
 	ctx.textAlign = 'center';
-	ctx.fillText('Made with rankmaker.net', W / 2, footerY);
+	ctx.fillText(L.madeWith, W / 2, footerY);
 
 	// ─── Download ───
 	const link = document.createElement('a');

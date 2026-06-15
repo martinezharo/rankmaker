@@ -1,5 +1,8 @@
 ---
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 ---
 
 <div
@@ -16,12 +19,10 @@
             </div>
             <div class="space-y-1">
                 <h3 class="text-sm font-bold text-text-primary">
-                    We use cookies
+                    {t("cookie.title")}
                 </h3>
                 <p class="text-xs text-text-secondary leading-relaxed">
-                    We use cookies to improve your experience and analyze our
-                    traffic. By clicking 'Accept', you agree to our use of
-                    cookies.
+                    {t("cookie.body")}
                 </p>
             </div>
         </div>
@@ -31,19 +32,19 @@
                 id="accept-cookies"
                 class="flex-1 py-2 rounded-xl bg-primary hover:bg-primary-light text-white text-xs font-bold transition-all active:scale-95"
             >
-                Accept
+                {t("cookie.accept")}
             </button>
             <button
                 id="reject-cookies"
                 class="flex-1 py-2 rounded-xl border border-border hover:bg-white/5 text-xs font-medium text-text-secondary hover:text-text-primary transition-all active:scale-95"
             >
-                Reject
+                {t("cookie.reject")}
             </button>
             <a
-                href="/cookie-policy"
+                href={localizePath("/cookie-policy", locale)}
                 class="px-4 py-2 rounded-xl border border-border hover:bg-white/5 text-xs text-text-muted hover:text-text-primary transition-all text-center"
             >
-                Policy
+                {t("cookie.policy")}
             </a>
         </div>
     </div>

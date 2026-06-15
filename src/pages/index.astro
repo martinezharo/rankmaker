@@ -7,6 +7,10 @@ import SEOContent from "../components/SEOContent.astro";
 import { getCounts } from "../lib/counts";
 import { CATEGORIES as categories } from "../lib/categories";
 import { getOfficialTemplates, listUserTemplates } from "../lib/templates";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 
 // Official (JSON) + user-created (D1) templates, treated identically.
 // Fetch real ranking counts from D1 (SSR). Fall back to the JSON
@@ -48,7 +52,7 @@ for (const cat of categories) {
 Astro.response.headers.set("Cache-Control", "public, max-age=60");
 ---
 
-<Layout title="RANKMAKER — Rank Your Stuff">
+<Layout title={t("home.title")}>
 	<!-- Hero Section -->
 	<section
 		class="relative flex items-center justify-center px-4 sm:px-6 lg:px-8"
@@ -68,24 +72,22 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
 					class="text-text-primary">:</span
 				>
 				<br class="hidden sm:block" />
-				<span class="text-text-primary">rank your stuff.</span>
+				<span class="text-text-primary">{t("home.heroHeadline")}</span>
 			</h1>
 
 			<p
 				class="text-base sm:text-lg text-text-secondary font-light leading-relaxed max-w-xl mx-auto"
 			>
-				No tiers. No noise. RANKMAKER lets you build accurate rankings
-				through fast, decisive 1v1 battles. Pick a template and find out
-				what really comes out on top.
+				{t("home.heroSubtitle")}
 			</p>
 
 			<div class="flex items-center justify-center gap-4 pt-2">
 				<a
-					href="/search"
+					href={localizePath("/search", locale)}
 					class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primary-light text-white text-sm font-semibold transition-all duration-200 glow-primary hover:scale-[1.02] active:scale-[0.98]"
 				>
 					<i class="fa-solid fa-magnifying-glass text-xs"></i>
-					Explore Templates
+					{t("home.exploreTemplates")}
 				</a>
 			</div>
 		</div>
@@ -111,11 +113,10 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
 						<i class="fa-solid fa-inbox text-primary text-2xl" />
 					</div>
 					<h3 class="text-lg font-semibold text-text-primary">
-						No templates yet
+						{t("home.emptyTitle")}
 					</h3>
 					<p class="text-sm text-text-muted max-w-md mx-auto">
-						Templates will appear here once they are added to the
-						database. Check back soon!
+						{t("home.emptyBody")}
 					</p>
 				</div>
 			)

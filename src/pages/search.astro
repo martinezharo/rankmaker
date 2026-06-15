@@ -12,6 +12,13 @@ import {
     type Template,
 } from "../lib/templates";
 import { avatarHtml } from "../lib/avatars";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+// Named `tr` (not `t`) because several .map((t) => …) callbacks below bind `t`
+// to a template item — the translation fn must not be shadowed.
+const tr = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
 
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
@@ -53,27 +60,23 @@ const templatesForClient = templates.map((t) => ({
     cover_image: t.cover_image,
     times_ranked: t.times_ranked,
     optionNames: t.optionNames ?? "",
-    creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="/u/${encodeURIComponent(t.creator.username)}" title="View @${escapeHtml(t.creator.username)}'s profile">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified)}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
+    creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${L(`/u/${encodeURIComponent(t.creator.username)}`)}" title="${escapeHtml(tr("card.viewProfile", { username: t.creator.username }))}">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified)}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
 }));
 
 Astro.response.headers.set("Cache-Control", "public, max-age=60");
 ---
 
-<Layout
-    title="Find Templates — RANKMAKER"
-    description="Search and browse all ranking templates on RANKMAKER."
->
+<Layout title={tr("search.title")} description={tr("search.metaDescription")}>
     <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
         <!-- Page Header -->
         <div class="text-center mb-10">
             <h1
                 class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary"
             >
-                Find Templates
+                {tr("search.heading")}
             </h1>
             <p class="text-sm text-text-secondary mt-2 max-w-lg mx-auto">
-                Search through all available ranking templates by title,
-                description, or options.
+                {tr("search.subtitle")}
             </p>
         </div>
 
@@ -87,14 +90,14 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                 <input
                     id="search-input"
                     type="text"
-                    placeholder="Search templates..."
+                    placeholder={tr("search.placeholder")}
                     autocomplete="off"
                     class="w-full pl-11 pr-10 py-3 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
                 />
                 <button
                     id="search-clear"
                     class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors hidden"
-                    aria-label="Clear search"
+                    aria-label={tr("search.clear")}
                 >
                     <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
@@ -106,10 +109,12 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                     id="category-select"
                     class="w-full appearance-none px-4 py-3 pr-10 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all cursor-pointer"
                 >
-                    <option value="">All Categories</option>
+                    <option value="">{tr("search.allCategories")}</option>
                     {
                         categories.map((cat) => (
-                            <option value={cat.name}>{cat.name}</option>
+                            <option value={cat.name}>
+                                {tr(`categories.${cat.name}`)}
+                            </option>
                         ))
                     }
                 </select>
@@ -124,14 +129,15 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             class="flex items-center justify-between mb-5 max-w-3xl mx-auto sm:max-w-none"
         >
             <p id="results-count" class="text-xs text-text-muted font-medium">
-                Showing {templates.length} templates
+                {tr("search.showing", { n: templates.length })}
             </p>
             <button
                 id="reset-filters"
                 class="text-xs text-primary/70 hover:text-primary font-medium transition-colors hidden"
             >
-                <i class="fa-solid fa-rotate-left mr-1 text-[10px]"></i>Reset
-                filters
+                <i class="fa-solid fa-rotate-left mr-1 text-[10px]"></i>{
+                    tr("search.resetFilters")
+                }
             </button>
         </div>
 
@@ -152,10 +158,10 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                 ></i>
             </div>
             <h3 class="text-lg font-semibold text-text-primary">
-                No templates found
+                {tr("search.emptyTitle")}
             </h3>
             <p class="text-sm text-text-muted max-w-md mx-auto">
-                Try adjusting your search query or changing the category filter.
+                {tr("search.emptyBody")}
             </p>
         </div>
     </section>
@@ -168,11 +174,19 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
 
     <!-- Search Engine -->
     <script>
+        import { clientT, getClientLocale } from "../i18n/client";
+        import { localizePath } from "../i18n";
+
         document.addEventListener("astro:page-load", () => {
             const templates: any[] = (window as any).__SEARCH_TEMPLATES__;
             const iconMap: Record<string, string> =
                 (window as any).__CATEGORY_ICON_MAP__ || {};
             if (!templates) return;
+
+            // `tt` (not `t`): renderCard(t) below binds `t` to a template item.
+            const tt = clientT();
+            const locale = getClientLocale();
+            const L = (p: string) => localizePath(p, locale);
 
             const searchInput = document.getElementById(
                 "search-input",
@@ -238,7 +252,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                     ? `<p class="text-xs text-text-muted leading-relaxed line-clamp-2">${esc(t.description)}</p>`
                     : "";
 
-                return `<a href="/template/${esc(t.slug)}" class="group block rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]">
+                return `<a href="${L(`/template/${esc(t.slug)}`)}" class="group block rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]">
                     <div class="relative aspect-4/3 overflow-hidden bg-surface">
                         ${imgHtml}
                         ${t.category ? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>` : ""}
@@ -249,7 +263,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                         ${descHtml}
                         <div class="flex items-center gap-1.5 pt-1">
                             <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
-                            <span class="text-xs text-text-muted font-medium" data-count-slug="${esc(t.slug)}">${t.times_ranked.toLocaleString()} ranked</span>
+                            <span class="text-xs text-text-muted font-medium" data-count-slug="${esc(t.slug)}">${esc(tt("card.ranked", { n: t.times_ranked.toLocaleString() }))}</span>
                         </div>
                     </div>
                 </a>`;
@@ -303,7 +317,10 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                 (window as any).__applyRankCounts?.(grid!);
 
                 // Update count
-                resultsCount!.textContent = `Showing ${filtered.length} template${filtered.length !== 1 ? "s" : ""}`;
+                resultsCount!.textContent =
+                    filtered.length === 1
+                        ? tt("search.showingOne", { n: filtered.length })
+                        : tt("search.showing", { n: filtered.length });
 
                 // Empty state
                 if (filtered.length === 0) {

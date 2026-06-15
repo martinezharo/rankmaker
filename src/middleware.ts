@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
+import { defaultLocale, isLocale } from './i18n/config';
 
 /**
  * Security headers for all on-demand (SSR) responses — which is every page
@@ -25,9 +26,7 @@ const CSP = [
 	"object-src 'none'",
 ].join('; ');
 
-export const onRequest = defineMiddleware(async (_context, next) => {
-	const response = await next();
-
+function applySecurityHeaders(response: Response): Response {
 	// Don't rewrite non-HTML/redirect bodies (e.g. the sitemap sets its own
 	// content-type and never needs these), but the headers are harmless there
 	// too — apply broadly and let per-route Cache-Control etc. stand.
@@ -38,6 +37,37 @@ export const onRequest = defineMiddleware(async (_context, next) => {
 	headers.set('X-Content-Type-Options', 'nosniff');
 	headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 	headers.set('X-Frame-Options', 'DENY');
-
 	return response;
+}
+
+/**
+ * Single middleware: resolve the locale from the URL prefix, then apply the
+ * security headers to the rendered response.
+ *
+ * URL-prefix i18n — the first path segment selects the language (`/es/…`,
+ * `/fr/…`); English is the unprefixed default. The locale is exposed as
+ * `locals.locale` and the request is rewritten to the canonical (unprefixed)
+ * route so one set of pages serves every language. We do the rewrite + headers
+ * in a single middleware because `context.rewrite()` does NOT re-run the
+ * middleware chain — splitting them would leave prefixed pages without a CSP.
+ */
+export const onRequest = defineMiddleware(async (context, next) => {
+	const { pathname } = context.url;
+	const seg = pathname.split('/')[1];
+
+	let response: Response;
+	if (isLocale(seg) && seg !== defaultLocale) {
+		context.locals.locale = seg;
+		const rest = pathname.slice(seg.length + 1) || '/';
+		// Preserve the query string; rewrite to the unprefixed route.
+		response = await context.rewrite(rest + context.url.search);
+	} else {
+		// `context.rewrite()` re-runs this middleware for the unprefixed path,
+		// where `seg` is no longer a locale — don't clobber a locale already
+		// resolved on the first pass.
+		if (!context.locals.locale) context.locals.locale = defaultLocale;
+		response = await next();
+	}
+
+	return applySecurityHeaders(response);
 });

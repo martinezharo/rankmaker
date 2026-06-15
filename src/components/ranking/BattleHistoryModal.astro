@@ -1,3 +1,10 @@
+---
+import { defaultLocale, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+---
+
 <div
     id="history-modal"
     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -16,7 +23,7 @@
         <div
             class="flex items-center justify-between p-5 border-b border-border/50"
         >
-            <h3 id="history-modal-title" class="text-lg font-bold text-text-primary">Battle History</h3>
+            <h3 id="history-modal-title" class="text-lg font-bold text-text-primary">{t("ranking.battleHistory")}</h3>
             <button
                 id="history-close-btn"
                 class="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"

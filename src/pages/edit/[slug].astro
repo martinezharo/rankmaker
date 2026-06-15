@@ -5,12 +5,16 @@ import Layout from "../../layouts/Layout.astro";
 import TemplateForm from "../../components/TemplateForm.astro";
 import { getSessionUser } from "../../lib/auth";
 import { loadOptions } from "../../lib/templates";
+import { defaultLocale, localizePath, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 
 const db = Astro.locals.runtime.env.DB;
 const user = await getSessionUser(Astro.cookies, db);
 if (!user) {
     return Astro.redirect(
-        `/api/auth/login?next=${encodeURIComponent(Astro.url.pathname)}`,
+        `/api/auth/login?next=${encodeURIComponent(localizePath(Astro.url.pathname, locale))}`,
         302,
     );
 }
@@ -41,27 +45,25 @@ const template = { ...row, options: await loadOptions(db, row.id) };
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title={`Edit: ${template.title} — RANKMAKER`}>
+<Layout title={t("editTemplate.title", { title: template.title })}>
     <section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
         <div class="mb-8">
             <a
-                href="/me"
+                href={localizePath("/me", locale)}
                 class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6 group"
             >
                 <i
                     class="fa-solid fa-arrow-left text-xs transition-transform group-hover:-translate-x-1"
                 ></i>
-                Back to my templates
+                {t("editTemplate.backToMyTemplates")}
             </a>
             <h1
                 class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary"
             >
-                Edit template
+                {t("editTemplate.heading")}
             </h1>
             <p class="text-sm text-text-secondary mt-2">
-                The template URL stays the same — your share links keep
-                working. (Exception: switching to unlisted gives it a new
-                random URL.)
+                {t("editTemplate.intro")}
             </p>
         </div>
 

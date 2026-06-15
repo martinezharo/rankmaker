@@ -1,8 +1,13 @@
 ---
+import { defaultLocale, useTranslations } from "../../i18n";
+
 interface Props {
     title: string;
 }
 const { title } = Astro.props;
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 ---
 
 <section id="battle-view" class="hidden min-h-[calc(100dvh-4rem)]">
@@ -18,7 +23,7 @@ const { title } = Astro.props;
                 <span
                     id="battle-progress"
                     class="text-sm font-semibold text-text-primary whitespace-nowrap"
-                    >Round 1 of ~10</span
+                    >{t("ranking.roundProgress", { current: 1, total: 10 })}</span
                 >
                 <div
                     class="flex-1 sm:flex-none sm:w-32 h-1.5 rounded-full bg-border overflow-hidden"
@@ -44,19 +49,19 @@ const { title } = Astro.props;
                     class="px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled
                 >
-                    <i class="fa-solid fa-rotate-left mr-1"></i>Undo
+                    <i class="fa-solid fa-rotate-left mr-1"></i>{t("ranking.undo")}
                 </button>
                 <button
                     id="battle-skip-btn"
                     class="px-3 py-2 rounded-lg text-xs font-medium text-sky-400 hover:text-sky-300 hover:bg-sky-400/10 transition-colors"
                 >
-                    <i class="fa-solid fa-forward mr-1"></i>Skip for later
+                    <i class="fa-solid fa-forward mr-1"></i>{t("ranking.skipForLater")}
                 </button>
                 <button
                     id="battle-finish-btn"
                     class="px-3 py-2 rounded-lg text-xs font-medium text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 transition-colors"
                 >
-                    <i class="fa-solid fa-flag-checkered mr-1"></i>Finish Early
+                    <i class="fa-solid fa-flag-checkered mr-1"></i>{t("ranking.finishEarly")}
                 </button>
             </div>
         </div>
@@ -67,7 +72,7 @@ const { title } = Astro.props;
         <p
             class="text-xs text-text-muted uppercase tracking-widest font-semibold"
         >
-            Ranking
+            {t("ranking.rankingLabel")}
         </p>
         <h2
             id="battle-title"
@@ -164,7 +169,7 @@ const { title } = Astro.props;
             id="battle-hint"
             class="mt-6 sm:mt-8 text-sm text-text-muted text-center"
         >
-            Tap the one you prefer
+            {t("ranking.tapPreferred")}
         </p>
     </div>
 </section>

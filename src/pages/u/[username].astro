@@ -6,6 +6,10 @@ import Avatar from "../../components/Avatar.astro";
 import TemplateCard from "../../components/TemplateCard.astro";
 import { getCounts } from "../../lib/counts";
 import { listTemplatesByUserId } from "../../lib/templates";
+import { defaultLocale, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 
 const db = Astro.locals.runtime.env.DB;
 
@@ -49,14 +53,14 @@ const memberSince = new Date(
     user.created_at.includes("T")
         ? user.created_at
         : user.created_at.replace(" ", "T") + "Z",
-).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+).toLocaleDateString(locale, { month: "long", year: "numeric" });
 
 Astro.response.headers.set("Cache-Control", "public, max-age=60");
 ---
 
 <Layout
-    title={`@${user.username} — RANKMAKER`}
-    description={`Ranking templates created by @${user.username} on RANKMAKER.`}
+    title={t("profile.title", { username: user.username })}
+    description={t("profile.metaDescription", { username: user.username })}
 >
     <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
         <!-- Profile header -->
@@ -75,7 +79,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                         isVerified && (
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-gold-start/15 to-gold-end/15 border border-gold-start/40 text-gold-start text-xs font-bold uppercase tracking-wider">
                                 <i class="fa-solid fa-circle-check text-[11px]" />
-                                Verified
+                                {t("profile.verified")}
                             </span>
                         )
                     }
@@ -83,8 +87,8 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                 <p class="text-sm text-text-secondary mt-1.5">
                     {
                         isVerified
-                            ? "Official RANKMAKER account"
-                            : `Member since ${memberSince}`
+                            ? t("profile.officialAccount")
+                            : t("profile.memberSince", { date: memberSince })
                     }
                 </p>
                 <div class="flex items-center gap-6 mt-3 text-sm">
@@ -92,14 +96,18 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                         <i class="fa-solid fa-layer-group text-primary/70 text-xs"
                         ></i>
                         <span class="font-medium">
-                            {templates.length}
-                            {templates.length === 1 ? "template" : "templates"}
+                            {templates.length}{" "}
+                            {templates.length === 1
+                                ? t("profile.templateSingular")
+                                : t("profile.templatePlural")}
                         </span>
                     </span>
                     <span class="flex items-center gap-2 text-text-muted">
                         <i class="fa-solid fa-fire text-primary/70 text-xs"></i>
                         <span class="font-medium">
-                            {totalRanked.toLocaleString()} total rankings
+                            {t("profile.totalRankings", {
+                                n: totalRanked.toLocaleString(),
+                            })}
                         </span>
                     </span>
                 </div>
@@ -109,7 +117,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
         <!-- Templates -->
         <div class="flex items-center gap-3 mb-5">
             <h2 class="text-lg font-bold text-text-primary tracking-tight">
-                Templates by @{user.username}
+                {t("profile.templatesBy", { username: user.username })}
             </h2>
             <div class="flex-1 h-px bg-border/50"></div>
         </div>
@@ -118,7 +126,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             templates.length === 0 ? (
                 <div class="rounded-2xl border border-dashed border-border p-10 text-center">
                     <p class="text-sm text-text-secondary">
-                        @{user.username} hasn't created any templates yet.
+                        {t("profile.noTemplates", { username: user.username })}
                     </p>
                 </div>
             ) : (

@@ -70,5 +70,7 @@ type Runtime = {
 declare namespace App {
     interface Locals {
         runtime: Runtime;
+        /** Active UI locale, resolved from the URL prefix in middleware. */
+        locale: import('./i18n/config').Locale;
     }
 }

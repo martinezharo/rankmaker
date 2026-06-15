@@ -1,26 +1,13 @@
 ---
 // Footer.astro — Full footer with social, pages, categories, legal sections
+import { CATEGORY_NAMES } from "../lib/categories";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
-const categories = [
-    "Movies",
-    "Music",
-    "Sports",
-    "Games",
-    "TV",
-    "People",
-    "Internet",
-    "Anime",
-    "Lifestyle",
-    "Food",
-    "Politics",
-    "History & Culture",
-    "Geography",
-    "Motor",
-    "Books",
-    "Technology",
-    "Nature",
-    "Others",
-];
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
+
+const categories = CATEGORY_NAMES;
 ---
 
 <footer
@@ -33,7 +20,7 @@ const categories = [
         <div class="grid grid-cols-2 md:grid-cols-4 gap-10 lg:gap-16">
             <!-- Col 1: Brand + Social -->
             <div class="col-span-2 md:col-span-1 space-y-6">
-                <a href="/" class="inline-block max-w-full">
+                <a href={L("/")} class="inline-block max-w-full">
                     <img
                         src="/RANKMAKER-logo.webp"
                         alt="RANKMAKER"
@@ -41,8 +28,7 @@ const categories = [
                     />
                 </a>
                 <p class="text-sm text-text-muted leading-relaxed">
-                    The definitive platform for building accurate rankings
-                    through 1v1 battles.
+                    {t("footer.tagline")}
                 </p>
                 <div class="flex items-center justify-between">
                     <a
@@ -104,11 +90,11 @@ const categories = [
                         <div class="flex flex-col">
                             <span
                                 class="text-[10px] uppercase tracking-widest text-text-muted font-bold"
-                                >Open Source</span
+                                >{t("footer.openSource")}</span
                             >
                             <span
                                 class="text-xs text-text-secondary group-hover:text-text-primary transition-colors"
-                                >Contribute here</span
+                                >{t("footer.contributeHere")}</span
                             >
                         </div>
                     </a>
@@ -120,21 +106,21 @@ const categories = [
                 <h4
                     class="text-xs font-semibold uppercase tracking-widest text-text-muted"
                 >
-                    Pages
+                    {t("footer.pages")}
                 </h4>
                 <ul class="space-y-2.5">
                     <li>
                         <a
-                            href="/"
+                            href={L("/")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >Home</a
+                            >{t("nav.home")}</a
                         >
                     </li>
                     <li>
                         <a
-                            href="/search"
+                            href={L("/search")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >Find Templates</a
+                            >{t("nav.findTemplates")}</a
                         >
                     </li>
                 </ul>
@@ -142,21 +128,21 @@ const categories = [
                 <h4
                     class="text-xs font-semibold uppercase tracking-widest text-text-muted pt-4"
                 >
-                    Information
+                    {t("footer.information")}
                 </h4>
                 <ul class="space-y-2.5">
                     <li>
                         <a
-                            href="/about"
+                            href={L("/about")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >About Us</a
+                            >{t("footer.aboutUs")}</a
                         >
                     </li>
                     <li>
                         <a
-                            href="/contact"
+                            href={L("/contact")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >Contact</a
+                            >{t("footer.contact")}</a
                         >
                     </li>
                 </ul>
@@ -167,19 +153,19 @@ const categories = [
                 <h4
                     class="text-xs font-semibold uppercase tracking-widest text-text-muted"
                 >
-                    Categories
+                    {t("footer.categories")}
                 </h4>
                 <ul class="space-y-2">
                     {
                         categories.map((cat) => (
                             <li>
                                 <a
-                                    href={`/search?category=${encodeURIComponent(
-                                        cat
-                                    )}`}
+                                    href={L(
+                                        `/search?category=${encodeURIComponent(cat)}`
+                                    )}
                                     class="text-sm text-text-secondary hover:text-text-primary transition-colors"
                                 >
-                                    {cat}
+                                    {t(`categories.${cat}`)}
                                 </a>
                             </li>
                         ))
@@ -192,35 +178,35 @@ const categories = [
                 <h4
                     class="text-xs font-semibold uppercase tracking-widest text-text-muted"
                 >
-                    Legal
+                    {t("footer.legal")}
                 </h4>
                 <ul class="space-y-2.5">
                     <li>
                         <a
-                            href="/privacy-policy"
+                            href={L("/privacy-policy")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >Privacy Policy</a
+                            >{t("footer.privacyPolicy")}</a
                         >
                     </li>
                     <li>
                         <a
-                            href="/terms-of-use"
+                            href={L("/terms-of-use")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >Terms of Use</a
+                            >{t("footer.termsOfUse")}</a
                         >
                     </li>
                     <li>
                         <a
-                            href="/cookie-policy"
+                            href={L("/cookie-policy")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >Cookie Policy</a
+                            >{t("footer.cookiePolicy")}</a
                         >
                     </li>
                     <li>
                         <a
-                            href="/legal-notice"
+                            href={L("/legal-notice")}
                             class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                            >Legal Notice</a
+                            >{t("footer.legalNotice")}</a
                         >
                     </li>
                 </ul>

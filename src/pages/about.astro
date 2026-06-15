@@ -1,89 +1,39 @@
 ---
+export const prerender = false;
+
 import Layout from "../layouts/Layout.astro";
+import { defaultLocale, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
+// Static content — cache at the edge so it isn't an SSR hit every time.
+Astro.response.headers.set("Cache-Control", "public, max-age=3600");
 ---
 
-<Layout
-    title="About — RANKMAKER"
-    description="The story behind RANKMAKER and its creator."
->
+<Layout title={t("about.title")} description={t("about.metaDescription")}>
     <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
         <h1 class="text-4xl font-bold text-text-primary mb-8 tracking-tight">
-            About
+            {t("about.heading")}
         </h1>
 
         <div class="space-y-6 text-text-secondary leading-relaxed text-lg">
-            <p>
-                Well, there is no "us" here, really—just me. My name is <a
-                    href="https://olivermartinezharo.com/en"
-                    target="_blank"
-                    ><strong class="text-text-primary hover:underline"
-                        >Oli</strong
-                    >
-                </a>, and I'm the only person behind RANKMAKER. I'm just a guy
-                from Spain with big ambitions who loves trying new things.
-                RANKMAKER is one of those things I decided to dive into.
-            </p>
-
-            <p>
-                One day, after a run, while getting ready to shower, a random
-                memory popped into my head. A couple of years ago, I made a
-                ranking of Formula 1 drivers that someone had shared on Twitter.
-                There was something fascinating about it: I didn't have to think
-                too hard about the exact order of the drivers, nor was it a tier
-                list. I was just given different matchups, and in the end, I got
-                a ranking based on my choices.
-            </p>
-
-            <p>
-                At the time, I didn't think much of it, but for some reason, at
-                that very moment, it came back to me. While in the shower, I
-                kept thinking about it. I had no idea how to code, but I'm
-                obsessed with AI.
-            </p>
-
-            <p>
-                As soon as I got out of the shower, I played around with ChatGPT
-                for a bit, and within minutes, I had a basic system where I
-                could enter different options, compare them in matchups, and get
-                a sorted ranking. I also realized that no website was doing
-                exactly this. That was my chance.
-            </p>
-
-            <p>
-                I thought I could finish the project with just a few more AI
-                interactions… and I would've been right if by "a few" I meant
-                literally thousands of iterations across different models. I had
-                to learn some basic programming along the way because,
-                apparently, you can't just copy-paste a couple of
-                ChatGPT-generated codes into Notepad and call it a day.
-            </p>
-
-            <p>
-                Honestly, I probably could've finished much faster by hiring
-                someone on Fiverr, and the result would've been better. But
-                that's just how I am.
-            </p>
+            <p set:html={t("about.p1")} />
+            <p set:html={t("about.p2")} />
+            <p set:html={t("about.p3")} />
+            <p set:html={t("about.p4")} />
+            <p set:html={t("about.p5")} />
+            <p set:html={t("about.p6")} />
 
             <h2 class="text-2xl font-bold text-text-primary pt-8 pb-4">
-                Why RANKMAKER?
+                {t("about.whyHeading")}
             </h2>
 
-            <p>
-                The biggest inspiration for this project was <strong
-                    class="text-text-primary">TIERMAKER</strong
-                >, along with that F1 ranking site I mentioned earlier—though I
-                never saw it again (probably just someone's side project).
-            </p>
-
-            <p>
-                I've always loved ranking things (maybe that's some kind of
-                disorder), but sometimes TIERMAKER felt overwhelming with so
-                many choices at once, and the results didn't always reflect what
-                I truly thought.
-            </p>
+            <p set:html={t("about.p7")} />
+            <p set:html={t("about.p8")} />
 
             <p class="text-xl font-medium text-primary pt-2">
-                So I fixed that with RANKMAKER.
+                {t("about.finalLine")}
             </p>
         </div>
     </div>

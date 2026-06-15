@@ -3,12 +3,16 @@
 // shown at the foot of a template page (visible under all three views).
 import TemplateCard from "./TemplateCard.astro";
 import type { Template } from "../lib/templates";
+import { defaultLocale, useTranslations } from "../i18n";
 
 interface Props {
 	templates: Template[];
 }
 
 const { templates } = Astro.props;
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 
 if (templates.length === 0) return;
 ---
@@ -25,7 +29,7 @@ if (templates.length === 0) return;
 			<i class="fa-solid fa-wand-magic-sparkles text-primary text-sm"></i>
 		</div>
 		<h2 class="text-lg font-bold text-text-primary tracking-tight">
-			You might also like
+			{t("recommended.youMightAlsoLike")}
 		</h2>
 		<div class="flex-1 h-px bg-border/50 ml-2"></div>
 	</div>

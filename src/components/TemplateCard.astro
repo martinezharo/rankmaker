@@ -4,6 +4,11 @@ import SmartImage from "./SmartImage.astro";
 import Avatar from "./Avatar.astro";
 import { categoryIcon } from "../lib/categories";
 import type { Creator } from "../lib/templates";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
 
 interface Props {
     template: {
@@ -34,7 +39,7 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
 ---
 
 <a
-    href={`/template/${template.slug}`}
+    href={L(`/template/${template.slug}`)}
     class="group flex flex-col h-full rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]"
 >
     <!-- Cover Image -->
@@ -58,7 +63,7 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
         <!-- Share Button -->
         <button
             class="share-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100"
-            aria-label="Share template"
+            aria-label={t("card.shareAria")}
             data-title={template.title}
             data-slug={template.slug}
         >
@@ -80,8 +85,8 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
                 // handled by the global [data-profile-href] click delegate.
                 <span
                     class="creator-link inline-flex items-center gap-1.5 cursor-pointer"
-                    data-profile-href={`/u/${encodeURIComponent(creator.username)}`}
-                    title={`View @${creator.username}'s profile`}
+                    data-profile-href={L(`/u/${encodeURIComponent(creator.username)}`)}
+                    title={t("card.viewProfile", { username: creator.username })}
                 >
                     <Avatar
                         avatar={creator.avatar}
@@ -109,14 +114,19 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
                 class="text-xs text-text-muted font-medium"
                 data-count-slug={template.slug}
             >
-                {template.times_ranked.toLocaleString()} ranked
+                {t("card.ranked", { n: template.times_ranked.toLocaleString() })}
             </span>
         </div>
     </div>
 </a>
 
 <script>
+    import { clientT, getClientLocale } from "../i18n/client";
+    import { localizePath } from "../i18n";
+
     document.addEventListener("astro:page-load", () => {
+        const t = clientT();
+        const locale = getClientLocale();
         document.querySelectorAll(".share-btn").forEach((btn) => {
             btn.addEventListener("click", async (e) => {
                 e.preventDefault();
@@ -124,12 +134,12 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
                 const el = e.currentTarget as HTMLElement;
                 const title = el.dataset.title || "";
                 const slug = el.dataset.slug || "";
-                const url = `${window.location.origin}/template/${slug}`;
+                const url = `${window.location.origin}${localizePath(`/template/${slug}`, locale)}`;
 
                 if (navigator.share) {
                     try {
                         await navigator.share({
-                            title: `RANKMAKER: ${title}`,
+                            title: t("card.shareTitle", { title }),
                             url,
                         });
                     } catch {}

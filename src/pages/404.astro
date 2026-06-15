@@ -1,8 +1,14 @@
 ---
+export const prerender = false;
+
 import Layout from "../layouts/Layout.astro";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 ---
 
-<Layout title="Page not found — RANKMAKER">
+<Layout title={t("notFound.title")}>
     <section
         class="relative flex items-center justify-center px-4 sm:px-6 lg:px-8"
         style="min-height: 60vh;"
@@ -17,26 +23,25 @@ import Layout from "../layouts/Layout.astro";
                 404
             </p>
             <h1 class="text-2xl sm:text-3xl font-bold text-text-primary">
-                This page doesn't exist
+                {t("notFound.heading")}
             </h1>
             <p class="text-sm text-text-secondary">
-                The template or page you're looking for was moved, deleted, or
-                never existed.
+                {t("notFound.body")}
             </p>
             <div class="flex items-center justify-center gap-3 pt-2">
                 <a
-                    href="/"
+                    href={localizePath("/", locale)}
                     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
                 >
                     <i class="fa-solid fa-house text-xs"></i>
-                    Back to home
+                    {t("notFound.backHome")}
                 </a>
                 <a
-                    href="/search"
+                    href={localizePath("/search", locale)}
                     class="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
                 >
                     <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                    Find templates
+                    {t("notFound.findTemplates")}
                 </a>
             </div>
         </div>

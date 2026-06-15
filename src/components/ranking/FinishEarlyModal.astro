@@ -1,3 +1,10 @@
+---
+import { defaultLocale, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+---
+
 <div
     id="finish-early-modal"
     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -21,22 +28,21 @@
                 ></i>
             </div>
             <h3 id="finish-early-title" class="text-lg font-bold text-text-primary">
-                Finish Ranking Early?
+                {t("ranking.finishEarlyTitle")}
             </h3>
             <p class="text-sm text-text-secondary leading-relaxed">
-                Are you sure you want to finish ranking early? The remaining
-                items will be ranked based on their current performance.
+                {t("ranking.finishEarlyBody")}
             </p>
             <div class="flex items-center gap-3 pt-2">
                 <button
                     id="finish-cancel-btn"
                     class="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
-                    >Cancel</button
+                    >{t("common.cancel")}</button
                 >
                 <button
                     id="finish-confirm-btn"
                     class="flex-1 px-4 py-2.5 rounded-xl bg-amber-400 text-zinc-950 text-sm font-bold hover:bg-amber-300 transition-colors"
-                    >Finish Now</button
+                    >{t("ranking.finishNow")}</button
                 >
             </div>
         </div>

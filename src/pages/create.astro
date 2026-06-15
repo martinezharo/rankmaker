@@ -4,30 +4,32 @@ export const prerender = false;
 import Layout from "../layouts/Layout.astro";
 import TemplateForm from "../components/TemplateForm.astro";
 import { getSessionUser } from "../lib/auth";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
 
 const user = await getSessionUser(Astro.cookies, Astro.locals.runtime.env.DB);
 if (!user) {
-    return Astro.redirect("/api/auth/login?next=/create", 302);
+    return Astro.redirect(
+        `/api/auth/login?next=${encodeURIComponent(localizePath("/create", locale))}`,
+        302,
+    );
 }
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout
-    title="Create a template — RANKMAKER"
-    description="Create your own ranking template on RANKMAKER."
->
+<Layout title={t("create.title")} description={t("create.metaDescription")}>
     <section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
         <div class="mb-8">
             <h1
                 class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary"
             >
-                Create a template
+                {t("create.heading")}
             </h1>
             <p class="text-sm text-text-secondary mt-2">
-                Build your own ranking. Make it public so anyone can play it and
-                it shows on your profile, or keep it unlisted or private — you
-                choose the visibility below.
+                {t("create.intro")}
             </p>
         </div>
 

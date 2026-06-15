@@ -4,6 +4,13 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import CookieConsent from "../components/CookieConsent.astro";
 import { ViewTransitions } from "astro:transitions";
+import {
+    defaultLocale,
+    localizePath,
+    locales,
+    unlocalizePath,
+    useTranslations,
+} from "../i18n";
 
 interface Props {
     title: string;
@@ -13,15 +20,25 @@ interface Props {
     noindex?: boolean;
 }
 
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
 const {
     title,
-    description = "RANKMAKER: rank your stuff. No tiers, no noise — just accurate 1v1 rankings.",
+    description = t("seo.defaultDescription"),
     image,
     noindex = false,
 } = Astro.props;
 
 const SITE_URL = "https://rankmaker.net";
-const canonicalURL = new URL(Astro.url.pathname, SITE_URL);
+// After the i18n middleware rewrite, Astro.url.pathname is the canonical
+// (unprefixed) path. Build per-locale URLs from it for canonical + hreflang.
+const basePath = unlocalizePath(Astro.url.pathname);
+const canonicalURL = new URL(localizePath(basePath, locale), SITE_URL);
+const alternates = locales.map((loc) => ({
+    hreflang: loc,
+    href: new URL(localizePath(basePath, loc), SITE_URL).toString(),
+}));
 // og:image must be an absolute URL
 const ogImage = image
     ? new URL(image, SITE_URL).toString()
@@ -29,7 +46,7 @@ const ogImage = image
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
     <head>
         <meta charset="UTF-8" />
         <meta name="description" content={description} />
@@ -39,6 +56,27 @@ const ogImage = image
         <title>{title}</title>
         {noindex && <meta name="robots" content="noindex, nofollow" />}
         <link rel="canonical" href={canonicalURL} />
+
+        <!-- hreflang alternates: one per locale + x-default (English). -->
+        {
+            !noindex &&
+                alternates.map((alt) => (
+                    <link
+                        rel="alternate"
+                        hreflang={alt.hreflang}
+                        href={alt.href}
+                    />
+                ))
+        }
+        {
+            !noindex && (
+                <link
+                    rel="alternate"
+                    hreflang="x-default"
+                    href={new URL(localizePath(basePath, defaultLocale), SITE_URL).toString()}
+                />
+            )
+        }
 
         <!-- Open Graph / Twitter -->
         <meta property="og:type" content="website" />
@@ -164,6 +202,8 @@ const ogImage = image
 
         <!-- Replace the static "N ranked" mockup with real counts from D1 -->
         <script>
+            import { clientT } from "../i18n/client";
+
             type Counts = Record<string, number>;
 
             // Fetch the slug -> count map once per page session.
@@ -190,13 +230,16 @@ const ogImage = image
             function applyRankCounts(root: ParentNode = document) {
                 const counts = (window as any).__rmCounts as Counts | undefined;
                 if (!counts) return;
+                const t = clientT();
                 root.querySelectorAll<HTMLElement>(
                     "[data-count-slug]",
                 ).forEach((el) => {
                     const slug = el.dataset.countSlug;
                     if (!slug) return;
                     const n = counts[slug] || 0;
-                    el.textContent = `${n.toLocaleString()} ranked`;
+                    el.textContent = t("card.ranked", {
+                        n: n.toLocaleString(),
+                    });
                 });
             }
 

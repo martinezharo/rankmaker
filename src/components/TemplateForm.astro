@@ -4,6 +4,7 @@
 // from #template-form-data so create and edit share one row markup source.
 import { CATEGORIES } from "../lib/categories";
 import { MAX_OPTIONS, MIN_OPTIONS, type Visibility } from "../lib/templates";
+import { defaultLocale, useTranslations } from "../i18n";
 
 interface Props {
     mode: "create" | "edit";
@@ -21,6 +22,9 @@ interface Props {
 
 const { mode, template } = Astro.props;
 
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
 const VISIBILITY_CHOICES: {
     value: Visibility;
     label: string;
@@ -28,18 +32,18 @@ const VISIBILITY_CHOICES: {
 }[] = [
     {
         value: "public",
-        label: "Public — listed for everyone",
-        hint: "Shown on the homepage, search and your profile. Anyone can rank it.",
+        label: t("form.visibilityPublicLabel"),
+        hint: t("form.visibilityPublicHint"),
     },
     {
         value: "unlisted",
-        label: "Unlisted — only people with the link",
-        hint: "Not listed anywhere and hidden from search engines. It gets a random, unguessable URL — share the link with whoever you want.",
+        label: t("form.visibilityUnlistedLabel"),
+        hint: t("form.visibilityUnlistedHint"),
     },
     {
         value: "private",
-        label: "Private — only you",
-        hint: "Only you can see and rank this template.",
+        label: t("form.visibilityPrivateLabel"),
+        hint: t("form.visibilityPrivateHint"),
     },
 ];
 
@@ -69,19 +73,19 @@ const inputClass =
     <section class="rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6 space-y-5">
         <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
             <i class="fa-solid fa-pen text-primary text-xs"></i>
-            Details
+            {t("form.details")}
         </h2>
 
         <div>
             <div class="flex items-center justify-between mb-2">
-                <label for="tf-title" class="text-sm font-semibold text-text-primary">Title</label>
+                <label for="tf-title" class="text-sm font-semibold text-text-primary">{t("form.titleLabel")}</label>
                 <span class="text-xs text-text-muted"><span id="tf-title-count">0</span>/80</span>
             </div>
             <input
                 id="tf-title"
                 type="text"
                 maxlength="80"
-                placeholder="Best Pizza Toppings Ranking"
+                placeholder={t("form.titlePlaceholder")}
                 class={inputClass}
                 value={initial.title}
             />
@@ -90,7 +94,7 @@ const inputClass =
         <div>
             <div class="flex items-center justify-between mb-2">
                 <label for="tf-description" class="text-sm font-semibold text-text-primary">
-                    Description
+                    {t("form.descriptionLabel")}
                 </label>
                 <span class="text-xs text-text-muted"><span id="tf-desc-count">0</span>/300</span>
             </div>
@@ -98,19 +102,19 @@ const inputClass =
                 id="tf-description"
                 maxlength="300"
                 rows="3"
-                placeholder="What should people rank, and why is it fun?"
+                placeholder={t("form.descriptionPlaceholder")}
                 class={inputClass + " resize-none"}>{initial.description}</textarea>
         </div>
 
         <div>
-            <label for="tf-category" class="block text-sm font-semibold text-text-primary mb-2">Category</label>
+            <label for="tf-category" class="block text-sm font-semibold text-text-primary mb-2">{t("form.categoryLabel")}</label>
             <div class="relative">
                 <select
                     id="tf-category"
                     class={inputClass + " appearance-none pr-10 cursor-pointer"}
                 >
                     <option value="" disabled selected={!initial.category}>
-                        Pick a category…
+                        {t("form.categoryPlaceholder")}
                     </option>
                     {
                         CATEGORIES.map((c) => (
@@ -118,7 +122,7 @@ const inputClass =
                                 value={c.name}
                                 selected={c.name === initial.category}
                             >
-                                {c.name}
+                                {t(`categories.${c.name}`)}
                             </option>
                         ))
                     }
@@ -128,7 +132,7 @@ const inputClass =
         </div>
 
         <div>
-            <label for="tf-visibility" class="block text-sm font-semibold text-text-primary mb-2">Visibility</label>
+            <label for="tf-visibility" class="block text-sm font-semibold text-text-primary mb-2">{t("form.visibilityLabel")}</label>
             <div class="relative">
                 <select
                     id="tf-visibility"
@@ -156,14 +160,14 @@ const inputClass =
     <section class="rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6 space-y-4">
         <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
             <i class="fa-solid fa-image text-primary text-xs"></i>
-            Cover image
-            <span class="font-normal normal-case tracking-normal text-text-muted">(by URL)</span>
+            {t("form.coverImage")}
+            <span class="font-normal normal-case tracking-normal text-text-muted">{t("form.coverImageByUrl")}</span>
         </h2>
 
         <input
             id="tf-cover"
             type="url"
-            placeholder="https://example.com/cover.jpg"
+            placeholder={t("form.coverPlaceholder")}
             class={inputClass}
             value={initial.cover_image}
         />
@@ -171,7 +175,7 @@ const inputClass =
         <div class="relative aspect-4/3 max-w-sm rounded-xl overflow-hidden bg-surface border border-border">
             <img
                 id="tf-cover-preview"
-                alt="Cover preview"
+                alt={t("form.coverPreviewAlt")}
                 class="w-full h-full object-cover"
                 style="display:none;"
             />
@@ -180,7 +184,7 @@ const inputClass =
                 class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted"
             >
                 <i class="fa-regular fa-image text-2xl"></i>
-                <span class="text-xs" id="tf-cover-placeholder-text">Preview appears here</span>
+                <span class="text-xs" id="tf-cover-placeholder-text">{t("form.previewHere")}</span>
             </div>
         </div>
     </section>
@@ -190,16 +194,15 @@ const inputClass =
         <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-layer-group text-primary text-xs"></i>
-                Options
+                {t("form.options")}
             </h2>
             <span class="text-xs font-medium text-text-muted">
                 <span id="tf-option-count">0</span>/{MAX_OPTIONS}
-                <span class="ml-2 text-text-muted/70">min {MIN_OPTIONS}</span>
+                <span class="ml-2 text-text-muted/70">{t("form.optionsMin", { n: MIN_OPTIONS })}</span>
             </span>
         </div>
         <p class="text-xs text-text-muted -mt-2">
-            The things people will rank in 1v1 battles. Images are optional —
-            paste an image URL and you'll see a preview.
+            {t("form.optionsHelp")}
         </p>
 
         <div id="tf-options" class="space-y-3">
@@ -212,7 +215,7 @@ const inputClass =
             class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border hover:border-primary/50 text-sm font-medium text-text-secondary hover:text-primary transition-all"
         >
             <i class="fa-solid fa-plus text-xs"></i>
-            Add option
+            {t("form.addOption")}
         </button>
     </section>
 
@@ -224,7 +227,7 @@ const inputClass =
             id="tf-submit"
             class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
-            {mode === "create" ? "Create template" : "Save changes"}
+            {mode === "create" ? t("form.submitCreate") : t("form.submitSave")}
         </button>
     </div>
 </form>
@@ -246,19 +249,19 @@ const inputClass =
             <input
                 type="text"
                 maxlength="80"
-                placeholder="Option name"
+                placeholder={t("form.optionNamePlaceholder")}
                 class="option-name w-full px-3 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 transition-all"
             />
             <input
                 type="url"
-                placeholder="Image URL (optional)"
+                placeholder={t("form.optionImagePlaceholder")}
                 class="option-image w-full px-3 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 transition-all"
             />
         </div>
         <button
             type="button"
             class="option-remove w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
-            aria-label="Remove option"
+            aria-label={t("form.removeOption")}
         >
             <i class="fa-solid fa-xmark text-sm"></i>
         </button>
@@ -284,14 +287,13 @@ const inputClass =
                         <i class="fa-solid fa-wand-magic-sparkles text-primary text-xl" />
                     </div>
                     <h3 id="tf-ai-title" class="text-lg font-bold text-text-primary text-center">
-                        Make your ranking more popular?
+                        {t("form.aiDiscoverTitle")}
                     </h3>
                     <p
                         id="tf-ai-copy"
                         class="text-sm text-text-secondary leading-relaxed text-center"
                     >
-                        With this description your ranking will be easier to
-                        discover. Edit it if you like, or keep your original.
+                        {t("form.aiRewriteCopy")}
                     </p>
                     <div>
                         <div class="flex items-center justify-end mb-2">
@@ -316,14 +318,14 @@ const inputClass =
                             id="tf-ai-keep"
                             class="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
                         >
-                            Keep mine
+                            {t("form.aiKeepMine")}
                         </button>
                         <button
                             type="button"
                             id="tf-ai-use"
                             class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
                         >
-                            Use this description
+                            {t("form.aiUseDescription")}
                         </button>
                     </div>
                 </div>
@@ -340,6 +342,8 @@ const inputClass =
 
 <script>
     import { openModal, closeModal } from "../scripts/modal-a11y";
+    import { clientT, getClientLocale } from "../i18n/client";
+    import { localizePath } from "../i18n";
 
     document.addEventListener("astro:page-load", () => {
         const form = document.getElementById(
@@ -347,6 +351,8 @@ const inputClass =
         ) as HTMLFormElement | null;
         if (!form || form.dataset.bound) return;
         form.dataset.bound = "1";
+
+        const t = clientT();
 
         const data = JSON.parse(
             document.getElementById("template-form-data")!.textContent || "{}",
@@ -432,10 +438,10 @@ const inputClass =
             coverPlaceholder.style.display = state === "ok" ? "none" : "";
             coverPlaceholderText.textContent =
                 state === "error"
-                    ? "Couldn't load that image"
+                    ? t("form.previewLoadError")
                     : state === "loading"
-                      ? "Loading…"
-                      : "Preview appears here";
+                      ? t("form.previewLoading")
+                      : t("form.previewHere");
         });
 
         // ── Option rows ──────────────────────────────────────────────
@@ -523,7 +529,7 @@ const inputClass =
                 visibility.value === "unlisted" &&
                 data.visibility !== "unlisted"
             ) {
-                hint += " Saving will change the template URL to a new random one.";
+                hint += t("form.visibilityUnlistedSlugWarning");
             }
             visibilityHint.textContent = hint;
         }
@@ -532,15 +538,13 @@ const inputClass =
 
         // ── Submit ───────────────────────────────────────────────────
         function validate(skipDescLength = false): string | null {
-            if (title.value.trim().length < 3)
-                return "Title must be at least 3 characters.";
+            if (title.value.trim().length < 3) return t("form.errTitle");
             if (!skipDescLength && desc.value.trim().length < 15)
-                return "Description is required (at least 15 characters).";
-            if (!category.value) return "Pick a category.";
+                return t("form.errDescription");
+            if (!category.value) return t("form.errCategory");
             const coverVal = cover.value.trim();
-            if (!coverVal) return "Cover image is required.";
-            if (!isHttpUrl(coverVal))
-                return "Cover image must be a valid http(s) URL.";
+            if (!coverVal) return t("form.errCoverRequired");
+            if (!isHttpUrl(coverVal)) return t("form.errCoverUrl");
             const opts = rows();
             const named = opts.filter(
                 (r) =>
@@ -549,7 +553,7 @@ const inputClass =
                         .value.trim().length > 0,
             );
             if (named.length < data.minOptions)
-                return `Add at least ${data.minOptions} options with a name.`;
+                return t("form.errMinOptions", { n: data.minOptions });
             for (const r of opts) {
                 const name = r
                     .querySelector<HTMLInputElement>(".option-name")!
@@ -557,10 +561,9 @@ const inputClass =
                 const image = r
                     .querySelector<HTMLInputElement>(".option-image")!
                     .value.trim();
-                if (!name && image)
-                    return "Every option with an image needs a name.";
+                if (!name && image) return t("form.errOptionNameNeeded");
                 if (image && !isHttpUrl(image))
-                    return `Option "${name}": image must be a valid http(s) URL.`;
+                    return t("form.errOptionImageUrl", { name });
             }
             return null;
         }
@@ -580,7 +583,9 @@ const inputClass =
             submit.disabled = busy;
             if (busy) {
                 const label =
-                    data.mode === "create" ? "Creating…" : "Saving…";
+                    data.mode === "create"
+                        ? t("form.busyCreating")
+                        : t("form.busySaving");
                 // Spinner + text so a slow request shows visible motion, not
                 // just a static label.
                 submit.innerHTML = `<span class="inline-flex items-center justify-center gap-2"><i class="fa-solid fa-spinner btn-spinner"></i>${label}</span>`;
@@ -604,13 +609,15 @@ const inputClass =
                 );
                 const result = await res.json();
                 if (res.ok && result.ok) {
-                    window.location.href = `/template/${result.slug}`;
+                    window.location.href = localizePath(
+                        `/template/${result.slug}`,
+                        getClientLocale(),
+                    );
                     return;
                 }
-                errorEl.textContent =
-                    result.error || "Something went wrong. Try again.";
+                errorEl.textContent = result.error || t("common.genericError");
             } catch {
-                errorEl.textContent = "Network error. Try again.";
+                errorEl.textContent = t("common.networkError");
             }
             setBusy(false);
         }
@@ -677,17 +684,16 @@ const inputClass =
             pendingPayload = payload;
             aiModalKind = kind;
             if (kind === "short") {
-                aiTitleEl!.textContent = "Your description is too short";
-                aiCopy!.textContent =
-                    "A description needs at least 15 characters. Here's one we wrote from your title and options — use it, or write your own.";
-                if (aiKeepBtn) aiKeepBtn.textContent = "Write my own";
+                aiTitleEl!.textContent = t("form.aiShortTitle");
+                aiCopy!.textContent = t("form.aiShortCopy");
+                if (aiKeepBtn) aiKeepBtn.textContent = t("form.aiWriteMyOwn");
             } else {
-                aiTitleEl!.textContent = "Make your ranking more popular?";
+                aiTitleEl!.textContent = t("form.aiDiscoverTitle");
                 aiCopy!.textContent =
                     suggestion.mode === "polish"
-                        ? "We polished your description to help your ranking get discovered. Edit it if you like, or keep your original."
-                        : "With this description your ranking will be easier to discover. Edit it if you like, or keep your original.";
-                if (aiKeepBtn) aiKeepBtn.textContent = "Keep mine";
+                        ? t("form.aiPolishCopy")
+                        : t("form.aiRewriteCopy");
+                if (aiKeepBtn) aiKeepBtn.textContent = t("form.aiKeepMine");
             }
             aiText!.value = suggestion.description;
             aiText!.dispatchEvent(new Event("input"));
@@ -703,8 +709,7 @@ const inputClass =
         document.getElementById("tf-ai-use")?.addEventListener("click", () => {
             const edited = aiText!.value.trim();
             if (edited.length < 15) {
-                aiError!.textContent =
-                    "Description must be at least 15 characters.";
+                aiError!.textContent = t("form.aiMinChars");
                 return;
             }
             // Keep the editor in sync so the text survives a failed submit.
@@ -782,8 +787,7 @@ const inputClass =
                     return;
                 }
                 setBusy(false);
-                errorEl.textContent =
-                    "Description is required (at least 15 characters).";
+                errorEl.textContent = t("form.errDescription");
                 desc.focus();
                 return;
             }
