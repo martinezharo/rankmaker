@@ -382,6 +382,110 @@ body {
     transform: scale(1.03);
 }
 
+/* Skip (defer a duel) — neutral exit, both cards drift away, no winner glow */
+@keyframes skipOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(24px) scale(0.94);
+    }
+}
+
+.animate-skip-out {
+    animation: skipOut 0.26s ease-in both;
+}
+
+/* Forced final round ("sudden death") — intensify the battle UI in red.
+   The vignette is pointer-events:none and transparent where the cards sit,
+   so it never blocks taps. */
+#battle-view.final-round {
+    position: relative;
+}
+
+#battle-view.final-round::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        120% 60% at 50% 0%,
+        rgba(239, 68, 68, 0.16),
+        transparent 70%
+    );
+    animation: finalPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes finalPulse {
+    0%,
+    100% {
+        opacity: 0.55;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+#battle-view.final-round #battle-progress-bar {
+    background: linear-gradient(to right, #ef4444, #f87171);
+}
+
+#battle-view.final-round #battle-hint {
+    color: #f87171;
+    font-weight: 600;
+}
+
+.final-round-banner {
+    position: fixed;
+    top: 5.25rem;
+    left: 50%;
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #dc2626, #f87171);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    box-shadow: 0 10px 45px rgba(239, 68, 68, 0.5);
+    animation: finalBannerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.final-round-banner-out {
+    animation: finalBannerOut 0.36s ease-in both;
+}
+
+@keyframes finalBannerIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -24px) scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+@keyframes finalBannerOut {
+    from {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(-50%, -16px) scale(0.96);
+    }
+}
+
 /* Transition overlay */
 .transition-overlay {
     position: fixed;

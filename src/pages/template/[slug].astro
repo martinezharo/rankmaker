@@ -397,6 +397,7 @@ try {
             getKnownResult,
             recordResult,
             mergeSort,
+            compKey,
         } from "../../scripts/ranking-sort";
         import { downloadRankingImage } from "../../scripts/ranking-share-image";
         import { createReorder } from "../../scripts/ranking-reorder";
@@ -470,6 +471,11 @@ try {
             const progressEl = document.getElementById("battle-progress");
             const progressBar = document.getElementById("battle-progress-bar");
             const undoBtn = document.getElementById("battle-undo-btn");
+            const skipBtn = document.getElementById("battle-skip-btn");
+            const skippedCountEl = document.getElementById(
+                "battle-skipped-count",
+            );
+            const battleHint = document.getElementById("battle-hint");
             const actionShareTemplate = document.getElementById(
                 "action-share-template",
             );
@@ -516,6 +522,12 @@ try {
             let sortResolve = null; // resolve function for current comparison promise
             let isProcessing = false; // prevent double-clicks
             let lastRanked = []; // stores the final ranking for download image
+            // Pairs the user deferred ("skip for later"): compKey -> {aItem,bItem}.
+            // Resolved provisionally (keep order) WITHOUT touching comparisonMap, so
+            // they never pollute transitive inference. Re-asked in a forced final
+            // round (see runSort reconciliation) unless transitivity settled them.
+            let skipped = {};
+            let skipAllowed = true; // false during the forced final round
 
             // Escape user-provided strings before innerHTML interpolation
             // (option names/images can come from user-created templates).
@@ -613,15 +625,53 @@ try {
                 });
             }
 
+            // ─── Skip bookkeeping ────────────────────────────
+            // A skipped pair is "settled" once transitivity from real picks has
+            // since determined it — those never need re-asking (the opportunistic
+            // win). The rest come back in the forced final round.
+            function isSkipSettled(key) {
+                const [a, b] = key.split("-").map(Number);
+                return getKnownResult(comparisonMap, a, b) !== 0;
+            }
+            function pendingSkipKeys() {
+                return Object.keys(skipped).filter((k) => !isSkipSettled(k));
+            }
+
             // ─── Progress ────────────────────────────────────
             function updateProgress() {
+                // Skipped pairs are comparisons the sort already counted in the
+                // estimate, so they don't inflate the denominator — currentRound
+                // only counts real decisions (skips decrement it back out). The
+                // max() guards the rare case where deferring causes the forced
+                // final round to need a few extra duels, so the text never reads
+                // "Round 18 of ~17".
+                const denom = Math.max(totalEstimate, currentRound);
                 const pct = Math.min(
                     100,
-                    Math.round((currentRound / totalEstimate) * 100),
+                    Math.round((currentRound / denom) * 100),
                 );
                 if (progressEl)
-                    progressEl.textContent = `Round ${currentRound} of ~${totalEstimate}`;
+                    progressEl.textContent = `Round ${currentRound} of ~${denom}`;
                 if (progressBar) progressBar.style.width = `${pct}%`;
+                if (skippedCountEl) {
+                    const pending = pendingSkipKeys().length;
+                    if (pending > 0) {
+                        skippedCountEl.textContent = `${pending} skipped`;
+                        skippedCountEl.classList.remove("hidden");
+                    } else {
+                        skippedCountEl.classList.add("hidden");
+                    }
+                }
+            }
+
+            // Toggle the forced final-round look: hide skip, intensify the UI red.
+            function setFinalRoundUI(active) {
+                if (skipBtn) skipBtn.classList.toggle("hidden", active);
+                if (battleView) battleView.classList.toggle("final-round", active);
+                if (battleHint)
+                    battleHint.textContent = active
+                        ? "No skipping now — trust your gut"
+                        : "Tap the one you prefer";
             }
 
             // ─── Show Battle ─────────────────────────────────
@@ -641,6 +691,7 @@ try {
                     "animate-slide-right",
                     "animate-out-left",
                     "animate-out-right",
+                    "animate-skip-out",
                     "battle-card-winner",
                 ];
                 cardA.classList.remove(...allAnimClasses);
@@ -674,6 +725,7 @@ try {
                     // on replay, so storing the post-increment value would drift
                     // the counter +1 per undo (and re-introduce >100% overshoot).
                     round: currentRound - 1,
+                    skippedSnapshot: { ...skipped },
                 });
                 undoBtn.disabled = false;
 
@@ -711,6 +763,49 @@ try {
             cardA.addEventListener("click", () => handlePick("a"));
             cardB.addEventListener("click", () => handlePick("b"));
 
+            // ─── Skip (defer this duel) ──────────────────────
+            // Resolve provisionally (keep order) WITHOUT recording, so merge sort
+            // proceeds but transitivity stays clean. The pair is parked in
+            // `skipped` and re-surfaces in the forced final round (runSort) unless
+            // a later real pick settles it by transitivity.
+            function handleSkip() {
+                if (isProcessing || !sortResolve || !skipAllowed) return;
+                isProcessing = true;
+
+                const aId = parseInt(cardA.dataset.itemId);
+                const bId = parseInt(cardB.dataset.itemId);
+                const aItem = items.find((x) => x.id === aId);
+                const bItem = items.find((x) => x.id === bId);
+
+                // Skipping is undoable too.
+                undoStack.push({
+                    comparisonMapSnapshot: { ...comparisonMap },
+                    battleHistoryLength: battleHistory.length,
+                    round: currentRound - 1,
+                    skippedSnapshot: { ...skipped },
+                });
+                undoBtn.disabled = false;
+
+                skipped[compKey(aId, bId)] = { aItem, bItem };
+                // A skip is not a decision — undo the round bump `compare` made so
+                // the progress counter tracks real decisions only.
+                currentRound--;
+                updateProgress();
+
+                // Neutral exit: both cards drift away together, no winner glow.
+                setTimeout(() => {
+                    cardA.classList.add("animate-skip-out");
+                    cardB.classList.add("animate-skip-out");
+                    setTimeout(() => {
+                        const resolve = sortResolve;
+                        sortResolve = null;
+                        resolve(-1); // provisional, unrecorded (keep order)
+                    }, 260);
+                }, 120);
+            }
+
+            if (skipBtn) skipBtn.addEventListener("click", handleSkip);
+
             // ─── Undo ────────────────────────────────────────
             undoBtn.addEventListener("click", () => {
                 // Ignore undo while a pick is still animating (isProcessing):
@@ -724,6 +819,7 @@ try {
                 comparisonMap = snapshot.comparisonMapSnapshot;
                 battleHistory.length = snapshot.battleHistoryLength;
                 currentRound = snapshot.round;
+                skipped = { ...snapshot.skippedSnapshot };
 
                 if (undoStack.length === 0) undoBtn.disabled = true;
 
@@ -820,7 +916,9 @@ try {
                 comparisonMap = {};
                 battleHistory = [];
                 undoStack = [];
+                skipped = {};
                 undoBtn.disabled = true;
+                setFinalRoundUI(false);
                 // Shuffle once and save the order — undo restarts reuse this
                 savedShuffleOrder = [...items].sort(() => Math.random() - 0.5);
                 updateProgress();
@@ -833,22 +931,52 @@ try {
             }
 
             // ─── Run Sort (shared logic) ─────────────────────
-            async function runSort() {
+            // allowSkip=false runs the forced final round: skipping is disabled so
+            // every still-unsettled deferred pair gets a real answer and the sort
+            // terminates with a clean total order.
+            async function runSort(allowSkip = true) {
                 sortGeneration++;
                 const myGeneration = sortGeneration;
+                skipAllowed = allowSkip;
+                setFinalRoundUI(!allowSkip);
                 try {
                     const sorted = await mergeSort(
                         [...savedShuffleOrder],
                         (a, b) => compare(a, b, myGeneration),
                         () => myGeneration !== sortGeneration,
                     );
-                    // Only show results if this run is still the active one
-                    if (myGeneration === sortGeneration) {
-                        showResults(sorted);
+                    if (myGeneration !== sortGeneration) return; // superseded
+                    const pending = pendingSkipKeys();
+                    if (allowSkip && pending.length > 0) {
+                        // Deferred duels remain — re-run with skipping disabled.
+                        // The fast-forward replays every real pick, so only the
+                        // unsettled skips (plus any divergence they cause) resurface.
+                        await enterFinalRound(pending.length);
+                        if (myGeneration !== sortGeneration) return;
+                        return runSort(false);
                     }
+                    showResults(sorted);
                 } catch (e) {
                     // Sort was interrupted (undo restart) — this is expected
                 }
+            }
+
+            // Brief, non-invasive transition into the forced final round.
+            function enterFinalRound(count) {
+                return new Promise((resolve) => {
+                    setFinalRoundUI(true);
+                    const banner = document.createElement("div");
+                    banner.className = "final-round-banner";
+                    banner.innerHTML = `<i class="fa-solid fa-bolt"></i> Sudden death — settle ${count} skipped ${count === 1 ? "duel" : "duels"}`;
+                    battleView.appendChild(banner);
+                    setTimeout(() => {
+                        banner.classList.add("final-round-banner-out");
+                        setTimeout(() => {
+                            banner.remove();
+                            resolve();
+                        }, 360);
+                    }, 1150);
+                });
             }
 
             // ─── Start Ranking ──────────────────────────────

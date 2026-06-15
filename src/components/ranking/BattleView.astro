@@ -11,17 +11,17 @@ const { title } = Astro.props;
         class="sticky top-16 z-30 bg-surface/90 backdrop-blur-xl border-b border-border/50"
     >
         <div
-            class="mx-auto max-w-4xl px-4 sm:px-6 py-3 flex items-center justify-between"
+            class="mx-auto max-w-4xl px-4 sm:px-6 py-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between"
         >
             <!-- Progress -->
             <div class="flex items-center gap-3">
                 <span
                     id="battle-progress"
-                    class="text-sm font-semibold text-text-primary"
+                    class="text-sm font-semibold text-text-primary whitespace-nowrap"
                     >Round 1 of ~10</span
                 >
                 <div
-                    class="w-16 sm:w-32 h-1.5 rounded-full bg-border overflow-hidden"
+                    class="flex-1 sm:flex-none sm:w-32 h-1.5 rounded-full bg-border overflow-hidden"
                 >
                     <div
                         id="battle-progress-bar"
@@ -30,15 +30,27 @@ const { title } = Astro.props;
                     >
                     </div>
                 </div>
+                <span
+                    id="battle-skipped-count"
+                    class="hidden whitespace-nowrap text-[11px] font-semibold text-sky-400"
+                ></span>
             </div>
             <!-- Actions -->
-            <div class="flex items-center gap-2">
+            <div
+                class="flex items-center justify-between gap-1 sm:justify-end sm:gap-2"
+            >
                 <button
                     id="battle-undo-btn"
                     class="px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     disabled
                 >
                     <i class="fa-solid fa-rotate-left mr-1"></i>Undo
+                </button>
+                <button
+                    id="battle-skip-btn"
+                    class="px-3 py-2 rounded-lg text-xs font-medium text-sky-400 hover:text-sky-300 hover:bg-sky-400/10 transition-colors"
+                >
+                    <i class="fa-solid fa-forward mr-1"></i>Skip for later
                 </button>
                 <button
                     id="battle-finish-btn"
@@ -148,7 +160,10 @@ const { title } = Astro.props;
             </button>
         </div>
 
-        <p class="mt-6 sm:mt-8 text-sm text-text-muted text-center">
+        <p
+            id="battle-hint"
+            class="mt-6 sm:mt-8 text-sm text-text-muted text-center"
+        >
             Tap the one you prefer
         </p>
     </div>
