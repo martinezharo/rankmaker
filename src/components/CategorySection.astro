@@ -56,7 +56,7 @@ const anchorId = `cat-${category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
     >
         {
             templates.map((template) => (
-                <div class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start">
+                <div class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start h-full">
                     <TemplateCard template={template} />
                 </div>
             ))
