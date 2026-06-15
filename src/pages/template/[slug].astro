@@ -800,7 +800,13 @@ try {
 
             async function startSort() {
                 const n = items.length;
-                totalEstimate = Math.ceil((n * Math.log2(n) - n + 1) * 0.8);
+                // Worst-case merge sort comparison count. Transitive inference
+                // almost never short-circuits a comparison on a fresh run (merge
+                // only ever pits not-yet-connected halves against each other), so
+                // the old optimistic *0.8 factor under-estimated and the bar
+                // overshot 100% ("Round 16 of ~14"). This is an upper bound, so
+                // the bar fills toward 100% without exceeding it.
+                totalEstimate = Math.ceil(n * Math.log2(n) - n + 1);
                 currentRound = 0;
                 comparisonMap = {};
                 battleHistory = [];
