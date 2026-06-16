@@ -55,7 +55,7 @@ export const zh: LocaleDict = {
 		create: '创建',
 		login: '登录',
 		logout: '退出登录',
-		myProfile: '我的主页',
+		myProfile: '我',
 		myTemplates: '我的模板',
 		myHistory: '我的历史',
 		toggleMenu: '切换菜单',

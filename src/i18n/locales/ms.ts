@@ -56,7 +56,7 @@ export const ms: LocaleDict = {
 		create: 'Buat',
 		login: 'Log masuk',
 		logout: 'Log keluar',
-		myProfile: 'Profil saya',
+		myProfile: 'Saya',
 		myTemplates: 'Templat saya',
 		myHistory: 'Sejarah saya',
 		toggleMenu: 'Togol menu',

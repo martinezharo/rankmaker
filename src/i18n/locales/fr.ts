@@ -57,7 +57,7 @@ export const fr: LocaleDict = {
 		create: 'Créer',
 		login: 'Connexion',
 		logout: 'Déconnexion',
-		myProfile: 'Mon profil',
+		myProfile: 'Moi',
 		myTemplates: 'Mes modèles',
 		myHistory: 'Mon historique',
 		toggleMenu: 'Ouvrir le menu',

@@ -57,7 +57,7 @@ export const es: LocaleDict = {
 		create: 'Crear',
 		login: 'Iniciar sesión',
 		logout: 'Cerrar sesión',
-		myProfile: 'Mi perfil',
+		myProfile: 'Yo',
 		myTemplates: 'Mis plantillas',
 		myHistory: 'Mi historial',
 		toggleMenu: 'Abrir menú',

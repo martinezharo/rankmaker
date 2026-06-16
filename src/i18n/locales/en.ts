@@ -60,7 +60,7 @@ export const en = {
 		create: 'Create',
 		login: 'Log in',
 		logout: 'Log out',
-		myProfile: 'My profile',
+		myProfile: 'Me',
 		myTemplates: 'My templates',
 		myHistory: 'My history',
 		toggleMenu: 'Toggle menu',
