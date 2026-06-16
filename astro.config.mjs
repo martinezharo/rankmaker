@@ -12,8 +12,11 @@ export default defineConfig({
   // Permanent (301) redirects for renamed routes.
   // F1 drivers template was made year-agnostic; its old 2025 slug lives on in
   // links/search results, so point it at the new canonical slug.
+  // /explore was the PHP-era browse page (still in Bing's index → 404 on
+  // click); it's /search now.
   redirects: {
     '/template/bestfavorite-f1-drivers-of-2025-season': '/template/bestfavorite-f1-drivers',
+    '/explore': '/search',
   },
 
   // English at the root (/template/x), Spanish/French prefixed (/es/…, /fr/…).
