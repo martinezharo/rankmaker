@@ -9,6 +9,13 @@ import cloudflare from '@astrojs/cloudflare';
 export default defineConfig({
   output: 'static',
 
+  // Permanent (301) redirects for renamed routes.
+  // F1 drivers template was made year-agnostic; its old 2025 slug lives on in
+  // links/search results, so point it at the new canonical slug.
+  redirects: {
+    '/template/bestfavorite-f1-drivers-of-2025-season': '/template/bestfavorite-f1-drivers',
+  },
+
   // English at the root (/template/x), Spanish/French prefixed (/es/…, /fr/…).
   // No pages are duplicated: src/middleware.ts strips the prefix and rewrites
   // to the canonical route, exposing the active locale as Astro.locals.locale.
