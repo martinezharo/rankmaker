@@ -888,12 +888,12 @@
   {
     "id": "20c70463-d011-4781-a2aa-053834d23fa0",
     "title": "🎸Olivia Rodrigo's Non-Disney Songs Ranked",
-    "description": "Heartbreak ballads against pop-punk rage — what is Olivia Rodrigo's best song? Battle all 29 of her non-Disney tracks in 1v1 matchups, covering Sour, Guts and her Hunger Games single: Drivers License, Brutal, Good 4 U, Vampire and more. Rank every Olivia song and settle it.",
+    "description": "Heartbreak ballads against pop-punk rage — what is Olivia Rodrigo's best song? Battle all 42 of her non-Disney tracks in 1v1 matchups, covering Sour, Guts, You Seem Pretty Sad for a Girl So in Love and her Hunger Games single: Drivers License, Vampire, Good 4 U, Drop Dead and more. Rank every Olivia song and settle it.",
     "category": "Music",
     "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/287f966192155a494a8a325f24acda8b.webp",
     "times_ranked": 1189,
     "created_at": "2025-05-15T17:16:08+00:00",
-    "updated_at": "2026-06-12T10:03:48.808+00:00",
+    "updated_at": "2026-06-16T12:00:00+00:00",
     "slug": "olivia-rodrigos-non-disney-songs-ranked",
     "options": [
       {
@@ -1127,6 +1127,110 @@
         "created_at": "2025-05-15T17:16:08+00:00",
         "updated_at": "2025-05-15T17:17:44+00:00",
         "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1031,
+        "name": "Drop Dead",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1032,
+        "name": "Stupid Song",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1033,
+        "name": "Honeybee",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1034,
+        "name": "Maggots for Brains",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1035,
+        "name": "U + Me = <3",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1036,
+        "name": "My Way",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1037,
+        "name": "Purple",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1038,
+        "name": "The Cure",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1039,
+        "name": "Begged",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1040,
+        "name": "What's Wrong with Me",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1041,
+        "name": "Less",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1042,
+        "name": "Expectations",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
+      },
+      {
+        "id": 1043,
+        "name": "Cigarette Smoke",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/you-seem-pretty-sad-for-a-girl-so-in-love.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "20c70463-d011-4781-a2aa-053834d23fa0"
       }
     ]
   },
@@ -1210,12 +1314,12 @@
   {
     "id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a",
     "title": "🌌All Star Wars Movies",
-    "description": "Which Star Wars movie is truly the best? Battle all 11 films in quick 1v1 matchups — the original trilogy, the prequels, the sequels, Rogue One and Solo — and build your definitive Star Wars ranking. Saga purists and prequel defenders never agree: is The Empire Strikes Back untouchable, or does Revenge of the Sith deserve the crown? Vote battle by battle and settle it.",
+    "description": "Which Star Wars movie is truly the best? Battle all 12 films in quick 1v1 matchups — the original trilogy, the prequels, the sequels, Rogue One, Solo and The Mandalorian and Grogu — and build your definitive Star Wars ranking. Saga purists and prequel defenders never agree: is The Empire Strikes Back untouchable, or does Revenge of the Sith deserve the crown? Vote battle by battle and settle it.",
     "category": "Movies",
     "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/Star_Wars_Logo.svg.webp",
     "times_ranked": 8971,
     "created_at": "2025-05-10T14:30:35+00:00",
-    "updated_at": "2026-06-12T10:03:48.808+00:00",
+    "updated_at": "2026-06-16T12:00:00+00:00",
     "slug": "all-star-wars-movies",
     "options": [
       {
@@ -1304,6 +1408,14 @@
         "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/54cef9f10712fedb481c14357398a627.webp",
         "created_at": "2025-05-10T14:30:35+00:00",
         "updated_at": "2025-05-10T14:37:29+00:00",
+        "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
+      },
+      {
+        "id": 343,
+        "name": "Star Wars: The Mandalorian and Grogu",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/the-mandalorian-and-grogu.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
         "template_id": "30b88e6b-b4de-427f-9a90-8fa26b083f8a"
       }
     ]
@@ -1701,14 +1813,14 @@
   },
   {
     "id": "3edd9333-2523-42b2-afc8-1a9b46d3d13a",
-    "title": "🏎️Best/Favorite F1 Drivers of 2025 Season",
-    "description": "Title contenders against rookies fighting for their seats. Battle all 20 Formula 1 drivers of the 2025 season in 1v1 matchups — Max Verstappen, Lando Norris, Lewis Hamilton, Charles Leclerc, Oscar Piastri. Rank the full 2025 F1 grid from best to worst, by talent or by heart.",
+    "title": "🏎️Best/Favorite F1 Drivers",
+    "description": "Title contenders against rookies fighting for their seats. Battle all 22 Formula 1 drivers on the current grid in 1v1 matchups — Max Verstappen, Lando Norris, Lewis Hamilton, Charles Leclerc, Oscar Piastri. Rank the full F1 grid from best to worst, by talent or by heart.",
     "category": "Sports",
-    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/a129dd0a02443b9747748dc8fc6f9fdf.webp",
+    "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/f1-drivers-2026-grid.webp",
     "times_ranked": 8875,
     "created_at": "2025-05-13T10:46:47+00:00",
-    "updated_at": "2026-06-12T10:03:48.808+00:00",
-    "slug": "bestfavorite-f1-drivers-of-2025-season",
+    "updated_at": "2026-06-16T12:00:00+00:00",
+    "slug": "bestfavorite-f1-drivers",
     "options": [
       {
         "id": 717,
@@ -1716,14 +1828,6 @@
         "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/1f9a7de1c89c924b8672307f0369fec6.webp",
         "created_at": "2025-05-13T10:46:47+00:00",
         "updated_at": "2025-05-13T10:46:51+00:00",
-        "template_id": "3edd9333-2523-42b2-afc8-1a9b46d3d13a"
-      },
-      {
-        "id": 718,
-        "name": "Yuki Tsunoda",
-        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/d7ef4c1868fd73a8bf947ca94e4e5f9e.webp",
-        "created_at": "2025-05-13T10:46:47+00:00",
-        "updated_at": "2025-05-13T10:46:53+00:00",
         "template_id": "3edd9333-2523-42b2-afc8-1a9b46d3d13a"
       },
       {
@@ -1868,6 +1972,30 @@
         "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/7dcdd4d1cf75ec395ab00b58ee95d5bc.webp",
         "created_at": "2025-05-13T10:46:47+00:00",
         "updated_at": "2025-05-13T10:47:39+00:00",
+        "template_id": "3edd9333-2523-42b2-afc8-1a9b46d3d13a"
+      },
+      {
+        "id": 737,
+        "name": "Arvid Lindblad",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/arvid-lindblad.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "3edd9333-2523-42b2-afc8-1a9b46d3d13a"
+      },
+      {
+        "id": 738,
+        "name": "Valtteri Bottas",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/valtteri-bottas.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "3edd9333-2523-42b2-afc8-1a9b46d3d13a"
+      },
+      {
+        "id": 739,
+        "name": "Sergio Pérez",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/sergio-perez.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
         "template_id": "3edd9333-2523-42b2-afc8-1a9b46d3d13a"
       }
     ]
@@ -5510,12 +5638,12 @@
   {
     "id": "b1ffa87d-31e3-4fb3-bef6-bfc8a6a87a4c",
     "title": "🪖🎮All Call of Duty Games",
-    "description": "Two decades of campaigns, zombies and multiplayer lobbies — ranked by you. Battle all 21 main Call of Duty games in 1v1 matchups, from the 2003 original to Modern Warfare, the Black Ops saga and Black Ops 6. Which CoD truly defined the franchise? Settle it head-to-head, year against year.",
+    "description": "Two decades of campaigns, zombies and multiplayer lobbies — ranked by you. Battle all 22 main Call of Duty games in 1v1 matchups, from the 2003 original to Modern Warfare, the Black Ops saga and Black Ops 7. Which CoD truly defined the franchise? Settle it head-to-head, year against year.",
     "category": "Games",
     "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/cover_1749639854_684962ae4251e.webp",
     "times_ranked": 4301,
     "created_at": "2025-06-11T11:04:16+00:00",
-    "updated_at": "2026-06-12T10:03:48.808+00:00",
+    "updated_at": "2026-06-16T12:00:00+00:00",
     "slug": "all-call-of-duty-games",
     "options": [
       {
@@ -5684,6 +5812,14 @@
         "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/option_1749642311_68496c47941c9.webp",
         "created_at": "2025-06-11T11:15:59+00:00",
         "updated_at": "2025-06-11T11:45:13+00:00",
+        "template_id": "b1ffa87d-31e3-4fb3-bef6-bfc8a6a87a4c"
+      },
+      {
+        "id": 1824,
+        "name": "Call of Duty: Black Ops 7 (2025)",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/call-of-duty-black-ops-7.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
         "template_id": "b1ffa87d-31e3-4fb3-bef6-bfc8a6a87a4c"
       }
     ]
@@ -7239,12 +7375,12 @@
   {
     "id": "bade351b-5f50-4b14-b9ba-251e1a35a8a0",
     "title": " 🎬✨Pixar Movies: The Ultimate Ranking!",
-    "description": "Three decades of Pixar animation go head-to-head in the ultimate ranking. Battle all 28 movies in 1v1 matchups — Toy Story, Finding Nemo, The Incredibles, Up, WALL-E, Coco, Inside Out and the rest. Does Toy Story 3 beat the 1995 original? Is Ratatouille secretly the studio's masterpiece? Rank every Pixar film from best to worst.",
+    "description": "Three decades of Pixar animation go head-to-head in the ultimate ranking. Battle all 30 movies in 1v1 matchups — Toy Story, Finding Nemo, The Incredibles, Up, WALL-E, Coco, Inside Out and the rest. Does Toy Story 3 beat the 1995 original? Is Ratatouille secretly the studio's masterpiece? Rank every Pixar film from best to worst.",
     "category": "Movies",
     "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/cover_1749832670_684c53deaacf1.webp",
     "times_ranked": 5692,
     "created_at": "2025-06-13T16:37:51+00:00",
-    "updated_at": "2026-06-12T10:03:48.808+00:00",
+    "updated_at": "2026-06-16T12:00:00+00:00",
     "slug": "pixar-movies-the-ultimate-ranking",
     "options": [
       {
@@ -7469,6 +7605,22 @@
         "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/option_1749833589_684c57751bd7b.webp",
         "created_at": "2025-06-13T16:38:09+00:00",
         "updated_at": "2025-06-13T16:53:10+00:00",
+        "template_id": "bade351b-5f50-4b14-b9ba-251e1a35a8a0"
+      },
+      {
+        "id": 2032,
+        "name": "Elio (2025)",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/elio.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
+        "template_id": "bade351b-5f50-4b14-b9ba-251e1a35a8a0"
+      },
+      {
+        "id": 2033,
+        "name": "Hoppers (2026)",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/hoppers.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
         "template_id": "bade351b-5f50-4b14-b9ba-251e1a35a8a0"
       }
     ]
@@ -12161,12 +12313,12 @@
   {
     "id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276",
     "title": "🎤✨All of Taylor Swift's Studio Albums",
-    "description": "Which era is THE era? Battle all 15 Taylor Swift albums — Taylor's Versions included — in 1v1 matchups: Fearless, Red, 1989, Reputation, folklore, evermore, Midnights, The Tortured Poets Department. Country roots against synth-pop against indie folk: rank the entire Swift discography and crown her definitive record.",
+    "description": "Which era is THE era? Battle all 16 Taylor Swift albums — Taylor's Versions included — in 1v1 matchups: Fearless, Red, 1989, Reputation, folklore, evermore, Midnights, The Tortured Poets Department, The Life of a Showgirl. Country roots against synth-pop against indie folk: rank the entire Swift discography and crown her definitive record.",
     "category": "Music",
     "cover_image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/covers/cover_1749834648_684c5b98b699f.webp",
     "times_ranked": 2920,
     "created_at": "2025-05-08T15:48:12+00:00",
-    "updated_at": "2026-06-12T10:03:48.808+00:00",
+    "updated_at": "2026-06-16T12:00:00+00:00",
     "slug": "all-of-taylor-swifts-studio-albums",
     "options": [
       {
@@ -12287,6 +12439,14 @@
         "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/04d9a363f785b27bd30090d7bb465a0a.webp",
         "created_at": "2025-05-08T15:48:12+00:00",
         "updated_at": "2025-05-08T15:49:03+00:00",
+        "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
+      },
+      {
+        "id": 290,
+        "name": "The Life of a Showgirl (2025)",
+        "image": "https://cdn.jsdelivr.net/gh/martinezharo/rankmaker-imgs@main/options/the-life-of-a-showgirl.webp",
+        "created_at": "2026-06-16T12:00:00+00:00",
+        "updated_at": "2026-06-16T12:00:00+00:00",
         "template_id": "c40fad36-d4e4-45cc-b0f6-a9050ab7d276"
       }
     ]
