@@ -15,7 +15,7 @@ const db = Astro.locals.runtime.env.DB;
 
 const user = await db
     .prepare(
-        `SELECT id, username, avatar, is_verified, created_at
+        `SELECT id, username, avatar, is_verified, created_at, bio
          FROM users WHERE username = ? COLLATE NOCASE`,
     )
     .bind(Astro.params.username)
@@ -25,6 +25,7 @@ const user = await db
         avatar: string;
         is_verified: number;
         created_at: string;
+        bio: string | null;
     }>();
 
 if (!user) {
@@ -91,6 +92,13 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                             : t("profile.memberSince", { date: memberSince })
                     }
                 </p>
+                {
+                    user.bio && (
+                        <p class="text-sm text-text-secondary mt-3 whitespace-pre-wrap break-words max-w-2xl">
+                            {user.bio}
+                        </p>
+                    )
+                }
                 <div class="flex items-center gap-6 mt-3 text-sm">
                     <span class="flex items-center gap-2 text-text-muted">
                         <i class="fa-solid fa-layer-group text-primary/70 text-xs"

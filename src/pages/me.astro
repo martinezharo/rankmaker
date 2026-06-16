@@ -5,6 +5,7 @@ import Layout from "../layouts/Layout.astro";
 import Avatar from "../components/Avatar.astro";
 import SmartImage from "../components/SmartImage.astro";
 import { getSessionUser } from "../lib/auth";
+import { MAX_BIO_LEN } from "./api/me/profile";
 import { categoryIcon } from "../lib/categories";
 import { getCounts } from "../lib/counts";
 import { listTemplatesByUserId } from "../lib/templates";
@@ -23,6 +24,13 @@ if (!user) {
         302,
     );
 }
+
+// Bio isn't part of the session payload; fetch it for the owner editor.
+const bioRow = await db
+    .prepare("SELECT bio FROM users WHERE id = ?")
+    .bind(user.id)
+    .first<{ bio: string | null }>();
+const bio = bioRow?.bio ?? "";
 
 // Owner view: include private/unlisted templates. Counts are merged here
 // server-side because the public /api/counts (used by the client counts
@@ -77,6 +85,74 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 <i class="fa-solid fa-plus text-xs"></i>
                 {tr("me.createTemplate")}
             </a>
+        </div>
+
+        <!-- Bio -->
+        <div
+            id="bio-card"
+            class="mb-10 rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6"
+            data-bio={bio}
+            data-max={MAX_BIO_LEN}
+        >
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h2
+                    class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2"
+                >
+                    <i class="fa-solid fa-quote-left text-xs text-primary/70"></i>
+                    {tr("me.bioHeading")}
+                </h2>
+                <button
+                    type="button"
+                    id="bio-edit-btn"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-primary transition-colors"
+                >
+                    <i class="fa-solid fa-pen text-[10px]"></i>
+                    {tr("me.bioEdit")}
+                </button>
+            </div>
+
+            <!-- Display mode -->
+            <p
+                id="bio-display"
+                class="text-sm whitespace-pre-wrap break-words"
+                class:list={[bio ? "text-text-secondary" : "text-text-muted italic"]}
+            >
+                {bio || tr("me.bioEmpty")}
+            </p>
+
+            <!-- Edit mode -->
+            <div id="bio-editor" class="hidden">
+                <textarea
+                    id="bio-input"
+                    maxlength={MAX_BIO_LEN}
+                    rows="3"
+                    placeholder={tr("me.bioPlaceholder")}
+                    class="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all resize-none field-sizing-content"
+                    >{bio}</textarea
+                >
+                <div class="flex items-center justify-between gap-3 mt-3">
+                    <span
+                        id="bio-count"
+                        class="text-xs text-text-muted tabular-nums"></span>
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            id="bio-cancel"
+                            class="px-4 py-2 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
+                        >
+                            {tr("common.cancel")}
+                        </button>
+                        <button
+                            type="button"
+                            id="bio-save"
+                            class="px-4 py-2 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity disabled:opacity-50"
+                        >
+                            {tr("common.save")}
+                        </button>
+                    </div>
+                </div>
+                <p id="bio-error" class="text-xs text-red-400 mt-2 min-h-4"></p>
+            </div>
         </div>
 
         <!-- Templates -->
@@ -315,6 +391,82 @@ Astro.response.headers.set("Cache-Control", "no-store");
         tplModal.dataset.bound = "1";
 
         const t = clientT();
+
+        // ── Edit bio ─────────────────────────────────────────────────
+        const bioCard = document.getElementById("bio-card");
+        if (bioCard) {
+            const maxLen = Number(bioCard.dataset.max) || 280;
+            const display = document.getElementById("bio-display")!;
+            const editor = document.getElementById("bio-editor")!;
+            const editBtn = document.getElementById("bio-edit-btn")!;
+            const input = document.getElementById(
+                "bio-input",
+            ) as HTMLTextAreaElement;
+            const count = document.getElementById("bio-count")!;
+            const saveBtn = document.getElementById(
+                "bio-save",
+            ) as HTMLButtonElement;
+            const cancelBtn = document.getElementById("bio-cancel")!;
+            const errorEl = document.getElementById("bio-error")!;
+
+            const updateCount = () => {
+                count.textContent = `${input.value.length} / ${maxLen}`;
+            };
+
+            const openEditor = () => {
+                input.value = bioCard.dataset.bio || "";
+                errorEl.textContent = "";
+                updateCount();
+                display.classList.add("hidden");
+                editBtn.classList.add("hidden");
+                editor.classList.remove("hidden");
+                input.focus();
+            };
+
+            const closeEditor = () => {
+                editor.classList.add("hidden");
+                display.classList.remove("hidden");
+                editBtn.classList.remove("hidden");
+            };
+
+            editBtn.addEventListener("click", openEditor);
+            cancelBtn.addEventListener("click", closeEditor);
+            input.addEventListener("input", updateCount);
+
+            saveBtn.addEventListener("click", async () => {
+                const value = input.value.trim();
+                saveBtn.disabled = true;
+                errorEl.textContent = "";
+                try {
+                    const res = await fetch("/api/me/profile", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ bio: value }),
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.ok) {
+                        const saved = (data.bio as string | null) || "";
+                        bioCard.dataset.bio = saved;
+                        if (saved) {
+                            display.textContent = saved;
+                            display.className =
+                                "text-sm whitespace-pre-wrap break-words text-text-secondary";
+                        } else {
+                            display.textContent = t("me.bioEmpty");
+                            display.className =
+                                "text-sm whitespace-pre-wrap break-words text-text-muted italic";
+                        }
+                        closeEditor();
+                    } else {
+                        errorEl.textContent =
+                            data.error || t("common.genericError");
+                    }
+                } catch {
+                    errorEl.textContent = t("common.networkError");
+                }
+                saveBtn.disabled = false;
+            });
+        }
 
         // ── Delete template ──────────────────────────────────────────
         const tplBody = document.getElementById("delete-template-body")!;

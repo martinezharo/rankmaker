@@ -26,6 +26,8 @@
     "db:migrate6:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0006_ranking_results_cover.sql",
     "db:migrate7:local": "npx --yes wrangler@latest d1 execute rankmaker --local --file=migrations/0007_comments.sql",
     "db:migrate7:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0007_comments.sql",
+    "db:migrate8:local": "npx --yes wrangler@latest d1 execute rankmaker --local --file=migrations/0008_user_bio.sql",
+    "db:migrate8:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --file=migrations/0008_user_bio.sql",
     "db:counts:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
   },
   "dependencies": {
