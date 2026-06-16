@@ -58,3 +58,4 @@ Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIE
 - Components `PascalCase.astro`, pages `kebab-case.astro`, lib/scripts `kebab-case.ts`. Tabs in `.astro` files.
 - Tailwind utility classes only; global styles/theme in `src/styles/global.css`.
 - D1 types (`D1Database`, `KVNamespace`, `Ai`) are hand-declared in `src/env.d.ts`, not imported from `@cloudflare/workers-types` — extend them there if you use new methods.
+- **User-visible strings must not be hardcoded.** All user-facing text goes in the i18n locale files with every supported language. Use the translation function, never raw strings in components or pages.
