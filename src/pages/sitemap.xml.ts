@@ -2,7 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { getOfficialTemplates, listUserTemplates } from '../lib/templates';
-import { defaultLocale, localizePath, locales } from '../i18n';
+import { CONTENT_LOCALIZED, defaultLocale, localizePath, locales } from '../i18n';
 
 const SITE_URL = 'https://rankmaker.net';
 
@@ -27,11 +27,29 @@ const toLastmod = (value: string | undefined): string | undefined => {
 };
 
 /**
- * One <url> entry per locale, each carrying the full set of hreflang
- * alternates (+ x-default → the unprefixed English URL). This is the layout
- * Google expects for a multilingual sitemap.
+ * Sitemap entries for a page.
+ *
+ * Gated on `CONTENT_LOCALIZED` (see `src/i18n/config.ts`):
+ *   - false (current): English URL only. The locale variants (/es, /fr, …)
+ *     are near-duplicates — only the UI chrome is translated, the content is
+ *     English on every locale URL — so listing all 6 just multiplies the
+ *     sitemap and dilutes crawl budget. So we omit them.
+ *   - true: one <url> per locale, each carrying the full set of hreflang
+ *     alternates (+ x-default → English). The layout Google expects for a
+ *     genuinely multilingual sitemap.
  */
 function urlEntries(entry: SitemapEntry): string {
+    const lastmod = entry.lastmod ? `
+    <lastmod>${entry.lastmod}</lastmod>` : '';
+
+    if (!CONTENT_LOCALIZED) {
+        const loc_url = xmlEscape(absUrl(localizePath(entry.path, defaultLocale)));
+        return `
+  <url>
+    <loc>${loc_url}</loc>${lastmod}
+  </url>`;
+    }
+
     const alternates = [
         ...locales.map(
             (loc) =>
@@ -45,8 +63,7 @@ function urlEntries(entry: SitemapEntry): string {
             const loc_url = xmlEscape(absUrl(localizePath(entry.path, loc)));
             return `
   <url>
-    <loc>${loc_url}</loc>${entry.lastmod ? `
-    <lastmod>${entry.lastmod}</lastmod>` : ''}
+    <loc>${loc_url}</loc>${lastmod}
     ${alternates}
   </url>`;
         })
@@ -91,8 +108,10 @@ export const GET: APIRoute = async (context) => {
 
     const allPages = [...staticPages, ...templatePages, ...profiles];
 
+    // The xhtml namespace is only needed for the per-locale hreflang alternates.
+    const xhtmlNs = CONTENT_LOCALIZED ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : '';
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${xhtmlNs}>
   ${allPages.map(urlEntries).join('')}
 </urlset>`;
 

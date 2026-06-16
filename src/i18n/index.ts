@@ -11,7 +11,7 @@
  * partial translations never break a page; a truly unknown key returns the key
  * itself (and warns in dev).
  */
-import { defaultLocale, isLocale, localeNames, locales, type Locale } from './config';
+import { CONTENT_LOCALIZED, defaultLocale, isLocale, localeNames, locales, type Locale } from './config';
 import { en, type Dict } from './locales/en';
 import { es } from './locales/es';
 import { fr } from './locales/fr';
@@ -86,4 +86,4 @@ export function unlocalizePath(pathname: string): string {
 	return pathname;
 }
 
-export { defaultLocale, isLocale, localeNames, locales, type Locale };
+export { CONTENT_LOCALIZED, defaultLocale, isLocale, localeNames, locales, type Locale };

@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 import CookieConsent from "../components/CookieConsent.astro";
 import { ViewTransitions } from "astro:transitions";
 import {
+    CONTENT_LOCALIZED,
     defaultLocale,
     localizePath,
     locales,
@@ -34,7 +35,14 @@ const SITE_URL = "https://rankmaker.net";
 // After the i18n middleware rewrite, Astro.url.pathname is the canonical
 // (unprefixed) path. Build per-locale URLs from it for canonical + hreflang.
 const basePath = unlocalizePath(Astro.url.pathname);
-const canonicalURL = new URL(localizePath(basePath, locale), SITE_URL);
+// While content isn't localized (CONTENT_LOCALIZED=false), the locale variants
+// are near-duplicates of the English page, so they canonicalize to English and
+// emit no hreflang — consolidating the duplicates onto one URL. Flip the flag
+// (see src/i18n/config.ts) to restore self-canonical + hreflang per locale.
+const canonicalURL = new URL(
+    localizePath(basePath, CONTENT_LOCALIZED ? locale : defaultLocale),
+    SITE_URL,
+);
 const alternates = locales.map((loc) => ({
     hreflang: loc,
     href: new URL(localizePath(basePath, loc), SITE_URL).toString(),
@@ -57,9 +65,13 @@ const ogImage = image
         {noindex && <meta name="robots" content="noindex, nofollow" />}
         <link rel="canonical" href={canonicalURL} />
 
-        <!-- hreflang alternates: one per locale + x-default (English). -->
+        <!-- hreflang alternates: one per locale + x-default (English).
+             Suppressed while CONTENT_LOCALIZED is false — the locale variants
+             share the same English content, so advertising them as language
+             alternates would be misleading and spread crawl budget. -->
         {
-            !noindex &&
+            CONTENT_LOCALIZED &&
+                !noindex &&
                 alternates.map((alt) => (
                     <link
                         rel="alternate"
@@ -69,7 +81,7 @@ const ogImage = image
                 ))
         }
         {
-            !noindex && (
+            CONTENT_LOCALIZED && !noindex && (
                 <link
                     rel="alternate"
                     hreflang="x-default"
