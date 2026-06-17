@@ -1,5 +1,6 @@
 ---
 import Avatar from "../Avatar.astro";
+import VoteControl from "./VoteControl.astro";
 import type { Creator } from "../../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n";
 
@@ -55,6 +56,10 @@ const t = useTranslations(locale);
                     </p>
                 )
             }
+
+            <div class="mt-5 flex justify-center">
+                <VoteControl />
+            </div>
         </div>
 
         <!-- Podium -->

@@ -5,6 +5,7 @@ import Layout from "../../layouts/Layout.astro";
 import Avatar from "../../components/Avatar.astro";
 import TemplateCard from "../../components/TemplateCard.astro";
 import { getCounts } from "../../lib/counts";
+import { getTemplateVotes } from "../../lib/template-votes";
 import { listTemplatesByUserId } from "../../lib/templates";
 import { defaultLocale, useTranslations } from "../../i18n";
 
@@ -39,10 +40,14 @@ let templates = await listTemplatesByUserId(db, user.id);
 
 // Merge live counts (keep JSON numbers as fallback, like the homepage).
 try {
-    const counts = await getCounts(db);
+    const [counts, votes] = await Promise.all([
+        getCounts(db),
+        getTemplateVotes(db),
+    ]);
     templates = templates.map((t) => ({
         ...t,
         times_ranked: counts[t.slug] ?? 0,
+        votes: votes[t.slug] ?? 0,
     }));
 } catch {
     // keep fallback numbers

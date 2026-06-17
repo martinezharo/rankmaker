@@ -326,6 +326,7 @@ const basePath = unlocalizePath(Astro.url.pathname);
             </button>
             <div class="auth-dropdown absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50" style="display:none;">
                 <a href="${L("/me")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-user w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myProfile"))}</a>
+                <a href="${L("/saved")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bookmark w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
                 <a href="${L("/history")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>
                 <button type="button" class="auth-logout-btn block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.logout"))}</button>
             </div>`;
@@ -388,6 +389,7 @@ const basePath = unlocalizePath(Astro.url.pathname);
                 const L = (p: string) => localizePath(p, getClientLocale());
                 mobileLinks.innerHTML = `
                     <a href="${L("/me")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-user w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myProfile"))}</a>
+                    <a href="${L("/saved")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bookmark w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
                     <a href="${L("/history")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>`;
             }
         });

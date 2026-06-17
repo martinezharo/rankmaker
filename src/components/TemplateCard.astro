@@ -19,6 +19,7 @@ interface Props {
         category: string | null;
         cover_image: string | null;
         times_ranked: number;
+        votes?: number;
         creator?: Creator;
     };
 }
@@ -60,7 +61,16 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
             )
         }
 
-        <!-- Share Button -->
+        <!-- Save + Share Buttons -->
+        <button
+            class="save-btn absolute top-3 right-12 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100"
+            aria-label={t("card.saveAria")}
+            data-save-aria={t("card.saveAria")}
+            data-unsave-aria={t("card.unsaveAria")}
+            data-slug={template.slug}
+        >
+            <i class="fa-regular fa-bookmark text-xs"></i>
+        </button>
         <button
             class="share-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100"
             aria-label={t("card.shareAria")}
@@ -108,13 +118,24 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
             )
         }
 
-        <div class="flex items-center gap-1.5 pt-1">
-            <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
-            <span
-                class="text-xs text-text-muted font-medium"
-                data-count-slug={template.slug}
-            >
-                {t("card.ranked", { n: template.times_ranked.toLocaleString() })}
+        <div class="flex items-center gap-3 pt-1">
+            <span class="inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
+                <span
+                    class="text-xs text-text-muted font-medium"
+                    data-count-slug={template.slug}
+                >
+                    {t("card.ranked", { n: template.times_ranked.toLocaleString() })}
+                </span>
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-up text-[10px] text-primary/70"></i>
+                <span
+                    class="text-xs text-text-muted font-medium"
+                    data-vote-slug={template.slug}
+                >
+                    {t("card.votes", { n: (template.votes ?? 0).toLocaleString() })}
+                </span>
             </span>
         </div>
     </div>
@@ -123,10 +144,14 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
 <script>
     import { clientT, getClientLocale } from "../i18n/client";
     import { localizePath } from "../i18n";
+    import { initSaveButtons } from "../scripts/save-template";
 
     document.addEventListener("astro:page-load", () => {
         const t = clientT();
         const locale = getClientLocale();
+
+        initSaveButtons();
+
         document.querySelectorAll(".share-btn").forEach((btn) => {
             btn.addEventListener("click", async (e) => {
                 e.preventDefault();

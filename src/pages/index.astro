@@ -5,6 +5,7 @@ import Layout from "../layouts/Layout.astro";
 import CategorySection from "../components/CategorySection.astro";
 import SEOContent from "../components/SEOContent.astro";
 import { getCounts } from "../lib/counts";
+import { getTemplateVotes } from "../lib/template-votes";
 import { CATEGORIES as categories } from "../lib/categories";
 import { getOfficialTemplates, listUserTemplates } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
@@ -17,14 +18,16 @@ const t = useTranslations(locale);
 // `times_ranked` / official-only list if the binding/query is unavailable
 // so the page never breaks.
 let counts: Record<string, number> = {};
+let votes: Record<string, number> = {};
 let haveCounts = false;
 let userTemplates: ReturnType<typeof getOfficialTemplates> = [];
 try {
 	const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
 	if (db) {
-		[counts, userTemplates] = await Promise.all([
+		[counts, userTemplates, votes] = await Promise.all([
 			getCounts(db),
 			listUserTemplates(db),
+			getTemplateVotes(db),
 		]);
 		haveCounts = true;
 	}
@@ -37,6 +40,7 @@ const templates = [...getOfficialTemplates(), ...userTemplates]
 	.map((t) => ({
 		...t,
 		times_ranked: haveCounts ? (counts[t.slug] ?? 0) : t.times_ranked,
+		votes: votes[t.slug] ?? 0,
 	}))
 	.sort((a, b) => b.times_ranked - a.times_ranked);
 

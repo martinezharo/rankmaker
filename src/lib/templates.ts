@@ -6,6 +6,7 @@
 import templatesJson from '../data/templates.json';
 import { CATEGORY_NAMES } from './categories';
 import { getCounts } from './counts';
+import { getTemplateVotes } from './template-votes';
 import { recommendTemplates } from '../scripts/recommend';
 
 export const VISIBILITIES = ['public', 'private', 'unlisted'] as const;
@@ -31,6 +32,8 @@ export type Template = {
     category: string | null;
     cover_image: string | null;
     times_ranked: number;
+    /** Net up/down vote score — merged by pages via getTemplateVotes(db). */
+    votes?: number;
     created_at: string;
     updated_at: string;
     options: TemplateOption[];
@@ -214,6 +217,65 @@ export async function listTemplatesByUserId(
         : own;
 }
 
+// ── Saved (bookmarked) templates ─────────────────────────────────────────────
+
+/** Slugs this user has saved, newest first. */
+export async function listSavedSlugs(
+    db: D1Database,
+    userId: string
+): Promise<string[]> {
+    const { results } = await db
+        .prepare(
+            `SELECT slug FROM template_saves
+             WHERE user_id = ? ORDER BY created_at DESC`
+        )
+        .bind(userId)
+        .all<{ slug: string }>();
+    return results.map((r) => r.slug);
+}
+
+/**
+ * Full templates a user has saved, newest first. Resolves each slug from either
+ * source. Slugs that no longer exist, or that are hidden (private/unlisted) and
+ * not owned by this user, are dropped. Live times_ranked + vote scores merged.
+ */
+export async function listSavedTemplates(
+    db: D1Database,
+    userId: string
+): Promise<Template[]> {
+    const slugs = await listSavedSlugs(db, userId);
+    if (slugs.length === 0) return [];
+
+    const [resolved, counts, votes] = await Promise.all([
+        Promise.all(slugs.map((s) => getTemplateBySlug(db, s))),
+        getCounts(db, true),
+        getTemplateVotes(db, true),
+    ]);
+
+    const out: Template[] = [];
+    for (const t of resolved) {
+        if (!t) continue;
+        // Hidden (private/unlisted) templates only show to their creator.
+        if (t.visibility !== 'public') {
+            const owns =
+                (await db
+                    .prepare(
+                        `SELECT 1 FROM templates tp
+                         WHERE tp.slug = ? COLLATE NOCASE AND tp.creator_id = ?`
+                    )
+                    .bind(t.slug, userId)
+                    .first()) !== null;
+            if (!owns) continue;
+        }
+        out.push({
+            ...t,
+            times_ranked: counts[t.slug] ?? t.times_ranked,
+            votes: votes[t.slug] ?? 0,
+        });
+    }
+    return out;
+}
+
 // ── Recommendations ──────────────────────────────────────────────────────────
 
 /**
@@ -231,10 +293,12 @@ export async function getRecommendedTemplates(
 ): Promise<Template[]> {
     let userTemplates: Template[] = [];
     let counts: Record<string, number> = {};
+    let votes: Record<string, number> = {};
     try {
-        [userTemplates, counts] = await Promise.all([
+        [userTemplates, counts, votes] = await Promise.all([
             listUserTemplates(db),
             getCounts(db),
+            getTemplateVotes(db),
         ]);
     } catch {
         // officials-only fallback
@@ -243,6 +307,7 @@ export async function getRecommendedTemplates(
     const pool = [...getOfficialTemplates(), ...userTemplates].map((t) => ({
         ...t,
         times_ranked: counts[t.slug] ?? t.times_ranked,
+        votes: votes[t.slug] ?? 0,
     }));
 
     // User templates loaded via TEMPLATE_SELECT carry no optionNames; derive it

@@ -1,0 +1,66 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import TemplateCard from "../components/TemplateCard.astro";
+import { getSessionUser } from "../lib/auth";
+import { listSavedTemplates } from "../lib/templates";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
+
+const db = Astro.locals.runtime.env.DB;
+const user = await getSessionUser(Astro.cookies, db);
+if (!user) {
+    return Astro.redirect(
+        `/api/auth/login?next=${encodeURIComponent(localizePath("/saved", locale))}`,
+        302,
+    );
+}
+
+const templates = await listSavedTemplates(db, user.id);
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Layout title={t("saved.title")}>
+    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
+        <div class="mb-8">
+            <h1
+                class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary flex items-center gap-3"
+            >
+                <i class="fa-solid fa-bookmark text-primary/80 text-xl"></i>
+                {t("saved.heading")}
+            </h1>
+            <p class="text-sm text-text-secondary mt-2">
+                {t("saved.subtitle")}
+            </p>
+        </div>
+
+        {
+            templates.length === 0 ? (
+                <div class="rounded-2xl border border-dashed border-border p-10 text-center space-y-3">
+                    <i class="fa-solid fa-bookmark text-2xl text-text-muted" />
+                    <p class="text-sm text-text-secondary">
+                        {t("saved.empty")}
+                    </p>
+                    <a
+                        href={L("/search")}
+                        class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+                    >
+                        {t("saved.emptyCta")}
+                        <i class="fa-solid fa-arrow-right text-xs" />
+                    </a>
+                </div>
+            ) : (
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {templates.map((template) => (
+                        <TemplateCard template={template} />
+                    ))}
+                </div>
+            )
+        }
+    </section>
+</Layout>

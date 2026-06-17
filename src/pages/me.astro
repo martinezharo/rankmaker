@@ -8,6 +8,7 @@ import { getSessionUser } from "../lib/auth";
 import { MAX_BIO_LEN } from "./api/me/profile";
 import { categoryIcon } from "../lib/categories";
 import { getCounts } from "../lib/counts";
+import { getTemplateVotes } from "../lib/template-votes";
 import { listTemplatesByUserId } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
@@ -37,10 +38,14 @@ const bio = bioRow?.bio ?? "";
 // script) excludes hidden slugs.
 let templates = await listTemplatesByUserId(db, user.id, true);
 try {
-    const counts = await getCounts(db, true);
+    const [counts, votes] = await Promise.all([
+        getCounts(db, true),
+        getTemplateVotes(db, true),
+    ]);
     templates = templates.map((t) => ({
         ...t,
         times_ranked: counts[t.slug] ?? 0,
+        votes: votes[t.slug] ?? 0,
     }));
 } catch {
     // keep zeros
@@ -226,6 +231,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                     >
                                         {tr("card.ranked", {
                                             n: t.times_ranked.toLocaleString(),
+                                        })}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <i
+                                            class="fa-solid fa-arrow-up text-[10px] text-primary/70"
+                                        />
+                                        {tr("card.votes", {
+                                            n: (t.votes ?? 0).toLocaleString(),
                                         })}
                                     </span>
                                     {t.visibility !== "public" && (

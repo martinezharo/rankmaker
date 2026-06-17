@@ -63,6 +63,17 @@ if (isHidden) {
     template.times_ranked = row?.n ?? 0;
 }
 
+// Net up/down vote score for the read-only display. The interactive vote
+// controls (battle/results views) refresh this client-side via the
+// /api/templates/vote endpoint, since this page may be cached.
+const voteRow = await db
+    .prepare(
+        "SELECT COALESCE(SUM(value), 0) AS score FROM votes WHERE subject_type = 'template' AND subject_id = ?",
+    )
+    .bind(template.slug)
+    .first<{ score: number }>();
+const voteScore = voteRow?.score ?? 0;
+
 const icon = categoryIcon(template.category);
 // Helper to resolve image paths (strip 'public' prefix if present)
 const resolveImg = (path: string | null) => {
@@ -246,6 +257,12 @@ try {
                             >{t("card.ranked", { n: template.times_ranked.toLocaleString() })}</span
                         >
                     </div>
+                    <div class="flex items-center gap-2 text-text-muted">
+                        <i class="fa-solid fa-arrow-up text-primary/70 text-xs"></i>
+                        <span class="font-medium" data-vote-score
+                            >{t("card.votes", { n: voteScore.toLocaleString() })}</span
+                        >
+                    </div>
                     {
                         options && (
                             <div class="flex items-center gap-2 text-text-muted">
@@ -263,8 +280,13 @@ try {
         <!-- Share script -->
         <script>
             import { clientT } from "../../i18n/client";
+            import { initSaveButtons } from "../../scripts/save-template";
+            import { initTemplateVote } from "../../scripts/template-vote";
 
             document.addEventListener("astro:page-load", () => {
+                initSaveButtons();
+                initTemplateVote();
+
                 const shareBtn = document.getElementById("share-template-btn");
                 if (!shareBtn) return;
                 const t = clientT();
@@ -343,8 +365,24 @@ try {
     <!-- Floating CTA Button -->
     <div
         id="start-ranking-cta"
-        class="fixed bottom-20 md:bottom-6 right-6 z-40"
+        class="fixed bottom-20 md:bottom-6 right-6 z-40 flex items-center gap-3"
     >
+        <button
+            id="save-template-btn"
+            class="save-btn group flex items-center gap-2 px-5 py-4 rounded-2xl bg-surface-elevated border border-border hover:border-primary/60 text-text-secondary hover:text-text-primary font-semibold text-sm transition-all duration-200 cursor-pointer"
+            aria-label={t("card.saveAria")}
+            data-save-aria={t("card.saveAria")}
+            data-unsave-aria={t("card.unsaveAria")}
+            data-slug={template.slug}
+        >
+            <i class="fa-regular fa-bookmark text-sm"></i>
+            <span
+                class="save-label"
+                data-label-save={t("ranking.saveTemplate")}
+                data-label-saved={t("ranking.savedTemplate")}
+                >{t("ranking.saveTemplate")}</span
+            >
+        </button>
         <button
             id="start-ranking-btn"
             class="group flex items-center gap-3 px-7 py-4 rounded-2xl bg-gradient-gold text-zinc-950 font-black text-sm glow-gold hover:shadow-[0_8px_60px_rgba(255,215,0,0.5)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"

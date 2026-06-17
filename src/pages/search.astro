@@ -11,6 +11,7 @@ import {
     listUserTemplates,
     type Template,
 } from "../lib/templates";
+import { getTemplateVotes } from "../lib/template-votes";
 import { avatarHtml } from "../lib/avatars";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
@@ -23,17 +24,23 @@ const L = (p: string) => localizePath(p, locale);
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
 let userTemplates: Template[] = [];
+let votes: Record<string, number> = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
-    if (db) userTemplates = await listUserTemplates(db);
+    if (db) {
+        [userTemplates, votes] = await Promise.all([
+            listUserTemplates(db),
+            getTemplateVotes(db),
+        ]);
+    }
 } catch {
     // official-only fallback
 }
 
 // Sort by most ranked (live counts re-sort client-side via rm:counts)
-const templates = [...getOfficialTemplates(), ...userTemplates].sort(
-    (a, b) => b.times_ranked - a.times_ranked,
-);
+const templates = [...getOfficialTemplates(), ...userTemplates]
+    .map((t) => ({ ...t, votes: votes[t.slug] ?? 0 }))
+    .sort((a, b) => b.times_ranked - a.times_ranked);
 
 const escapeHtml = (s: string) =>
     s.replace(
@@ -59,6 +66,7 @@ const templatesForClient = templates.map((t) => ({
     category: t.category,
     cover_image: t.cover_image,
     times_ranked: t.times_ranked,
+    votes: t.votes ?? 0,
     optionNames: t.optionNames ?? "",
     creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${L(`/u/${encodeURIComponent(t.creator.username)}`)}" title="${escapeHtml(tr("card.viewProfile", { username: t.creator.username }))}">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified)}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
 }));
@@ -176,6 +184,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
     <script>
         import { clientT, getClientLocale } from "../i18n/client";
         import { localizePath } from "../i18n";
+        import { initSaveButtons } from "../scripts/save-template";
 
         document.addEventListener("astro:page-load", () => {
             const templates: any[] = (window as any).__SEARCH_TEMPLATES__;
@@ -256,14 +265,21 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                     <div class="relative aspect-4/3 overflow-hidden bg-surface">
                         ${imgHtml}
                         ${t.category ? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>` : ""}
+                        <button class="save-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100" aria-label="${esc(tt("card.saveAria"))}" data-save-aria="${esc(tt("card.saveAria"))}" data-unsave-aria="${esc(tt("card.unsaveAria"))}" data-slug="${esc(t.slug)}"><i class="fa-regular fa-bookmark text-xs"></i></button>
                     </div>
                     <div class="p-4 space-y-2">
                         <h3 class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors">${esc(t.title)}</h3>
                         ${t.creatorHtml || ""}
                         ${descHtml}
-                        <div class="flex items-center gap-1.5 pt-1">
-                            <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
-                            <span class="text-xs text-text-muted font-medium" data-count-slug="${esc(t.slug)}">${esc(tt("card.ranked", { n: t.times_ranked.toLocaleString() }))}</span>
+                        <div class="flex items-center gap-3 pt-1">
+                            <span class="inline-flex items-center gap-1.5">
+                                <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
+                                <span class="text-xs text-text-muted font-medium" data-count-slug="${esc(t.slug)}">${esc(tt("card.ranked", { n: t.times_ranked.toLocaleString() }))}</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrow-up text-[10px] text-primary/70"></i>
+                                <span class="text-xs text-text-muted font-medium" data-vote-slug="${esc(t.slug)}">${esc(tt("card.votes", { n: (t.votes ?? 0).toLocaleString() }))}</span>
+                            </span>
                         </div>
                     </div>
                 </a>`;
@@ -315,6 +331,9 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                 // Patch "N ranked" with real counts (results are rendered client-side
                 // after the global counts fetch, so apply them to the new cards).
                 (window as any).__applyRankCounts?.(grid!);
+
+                // Bind/mark save buttons on the freshly-rendered cards.
+                initSaveButtons();
 
                 // Update count
                 resultsCount!.textContent =
