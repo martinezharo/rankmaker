@@ -1,0 +1,163 @@
+---
+// FollowingSection.astro — homepage row of the latest templates from the
+// accounts the logged-in user follows. Rendered ABOVE the regular category
+// sections. The homepage is publicly edge-cached and this data is per-user, so
+// the whole row is fetched and built client-side (like the header auth UI):
+// the section ships hidden and reveals itself only when there are templates.
+import { defaultLocale, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+---
+
+<section data-following-section class="py-8 hidden">
+	<!-- Section Header -->
+	<div class="flex items-center gap-3 mb-5">
+		<div
+			class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+		>
+			<i class="fa-solid fa-user-group text-primary text-sm"></i>
+		</div>
+		<h2 class="text-lg font-bold text-text-primary tracking-tight">
+			{t("home.followingHeading")}
+		</h2>
+		<div class="flex-1 h-px bg-border/50 ml-2"></div>
+	</div>
+
+	<!-- Cards: horizontal scroll on mobile, 4-col grid on desktop -->
+	<div
+		data-following-grid
+		class="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:grid md:grid-cols-4 md:overflow-x-visible md:snap-none"
+	>
+	</div>
+</section>
+
+<script>
+	import { categoryIcon } from "../lib/categories";
+	import { avatarHtml } from "../lib/avatars";
+	import { clientT, getClientLocale } from "../i18n/client";
+	import { localizePath } from "../i18n";
+	import { initSaveButtons } from "../scripts/save-template";
+	import { initShareButtons } from "../scripts/share-template";
+
+	type Creator = {
+		username: string;
+		avatar: string;
+		isVerified: boolean;
+	};
+	type Card = {
+		slug: string;
+		title: string;
+		description: string | null;
+		category: string | null;
+		cover_image: string | null;
+		times_ranked: number;
+		votes: number;
+		creator?: Creator;
+	};
+
+	function esc(s: string): string {
+		return s
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
+
+	function resolveImg(path: string | null): string | null {
+		if (!path) return null;
+		if (path.startsWith("http")) return path;
+		if (path.startsWith("public/")) return path.replace("public/", "/");
+		return path;
+	}
+
+	function cardHtml(tpl: Card, t: ReturnType<typeof clientT>, L: (p: string) => string): string {
+		const href = L(`/template/${tpl.slug}`);
+		const icon = categoryIcon(tpl.category);
+		const cover = resolveImg(tpl.cover_image);
+		const coverInner = cover
+			? `<img src="${esc(cover)}" alt="${esc(tpl.title)}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+			   <div class="absolute inset-0 hidden flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface"><span class="font-bold text-text-primary/90 leading-tight text-xl line-clamp-3">${esc(tpl.title)}</span></div>`
+			: `<div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface"><span class="font-bold text-text-primary/90 leading-tight text-xl line-clamp-3">${esc(tpl.title)}</span><div class="mt-2 w-12 h-1 bg-primary/50 rounded-full"></div></div>`;
+
+		const categoryBadge = tpl.category
+			? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>`
+			: "";
+
+		const creatorBlock = tpl.creator
+			? `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${esc(L(`/u/${encodeURIComponent(tpl.creator.username)}`))}" title="${esc(t("card.viewProfile", { username: tpl.creator.username }))}">
+					${avatarHtml(tpl.creator.avatar, 20, tpl.creator.isVerified)}
+					<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${esc(tpl.creator.username)}</span>
+				</span>`
+			: "";
+
+		const descBlock = tpl.description
+			? `<p class="text-xs text-text-muted leading-relaxed line-clamp-2">${esc(tpl.description)}</p>`
+			: "";
+
+		return `
+			<div class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start h-full">
+				<a href="${esc(href)}" class="group flex flex-col h-full rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]">
+					<div class="relative aspect-4/3 overflow-hidden bg-surface">
+						${coverInner}
+						${categoryBadge}
+						<button class="save-btn absolute top-3 right-12 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100" aria-label="${esc(t("card.saveAria"))}" data-save-aria="${esc(t("card.saveAria"))}" data-unsave-aria="${esc(t("card.unsaveAria"))}" data-slug="${esc(tpl.slug)}">
+							<i class="fa-regular fa-bookmark text-xs"></i>
+						</button>
+						<button class="share-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100" aria-label="${esc(t("card.shareAria"))}" data-title="${esc(tpl.title)}" data-slug="${esc(tpl.slug)}">
+							<i class="fa-solid fa-share-nodes text-xs"></i>
+						</button>
+					</div>
+					<div class="flex-1 p-4 space-y-2">
+						<h3 class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors">${esc(tpl.title)}</h3>
+						${creatorBlock}
+						${descBlock}
+						<div class="flex items-center gap-3 pt-1">
+							<span class="inline-flex items-center gap-1.5">
+								<i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
+								<span class="text-xs text-text-muted font-medium" data-count-slug="${esc(tpl.slug)}">${esc(t("card.ranked", { n: tpl.times_ranked.toLocaleString() }))}</span>
+							</span>
+							<span class="inline-flex items-center gap-1.5">
+								<i class="fa-solid fa-arrow-up text-[10px] text-primary/70"></i>
+								<span class="text-xs text-text-muted font-medium" data-vote-slug="${esc(tpl.slug)}">${esc(t("card.votes", { n: tpl.votes.toLocaleString() }))}</span>
+							</span>
+						</div>
+					</div>
+				</a>
+			</div>`;
+	}
+
+	async function loadFollowing(): Promise<void> {
+		const section = document.querySelector<HTMLElement>(
+			"[data-following-section]",
+		);
+		const grid = section?.querySelector<HTMLElement>(
+			"[data-following-grid]",
+		);
+		if (!section || !grid) return;
+
+		try {
+			const res = await fetch("/api/me/following-templates");
+			if (!res.ok) return;
+			const data = (await res.json()) as { templates: Card[] };
+			if (!data.templates || data.templates.length === 0) return;
+
+			const t = clientT();
+			const locale = getClientLocale();
+			const L = (p: string) => localizePath(p, locale);
+
+			grid.innerHTML = data.templates
+				.map((tpl) => cardHtml(tpl, t, L))
+				.join("");
+			section.classList.remove("hidden");
+
+			// Wire the injected save/share buttons (idempotent).
+			initSaveButtons();
+			initShareButtons();
+		} catch {
+			/* anonymous or offline — leave the row hidden */
+		}
+	}
+
+	document.addEventListener("astro:page-load", loadFollowing);
+</script>

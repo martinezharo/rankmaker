@@ -142,43 +142,11 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
 </a>
 
 <script>
-    import { clientT, getClientLocale } from "../i18n/client";
-    import { localizePath } from "../i18n";
     import { initSaveButtons } from "../scripts/save-template";
+    import { initShareButtons } from "../scripts/share-template";
 
     document.addEventListener("astro:page-load", () => {
-        const t = clientT();
-        const locale = getClientLocale();
-
         initSaveButtons();
-
-        document.querySelectorAll(".share-btn").forEach((btn) => {
-            btn.addEventListener("click", async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const el = e.currentTarget as HTMLElement;
-                const title = el.dataset.title || "";
-                const slug = el.dataset.slug || "";
-                const url = `${window.location.origin}${localizePath(`/template/${slug}`, locale)}`;
-
-                if (navigator.share) {
-                    try {
-                        await navigator.share({
-                            title: t("card.shareTitle", { title }),
-                            url,
-                        });
-                    } catch {}
-                } else {
-                    await navigator.clipboard.writeText(url);
-                    const icon = el.querySelector("i");
-                    if (icon) {
-                        icon.className = "fa-solid fa-check text-xs";
-                        setTimeout(() => {
-                            icon.className = "fa-solid fa-share-nodes text-xs";
-                        }, 1500);
-                    }
-                }
-            });
-        });
+        initShareButtons();
     });
 </script>

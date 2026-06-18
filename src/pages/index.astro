@@ -3,6 +3,7 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import CategorySection from "../components/CategorySection.astro";
+import FollowingSection from "../components/FollowingSection.astro";
 import SEOContent from "../components/SEOContent.astro";
 import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
@@ -99,6 +100,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
 
 	<!-- Category Sections -->
 	<div id="categories" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
+		<FollowingSection />
 		{
 			categories.map((cat) => (
 				<CategorySection
