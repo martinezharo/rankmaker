@@ -1,6 +1,5 @@
 ---
 // Footer.astro — Full footer with social, pages, categories, legal sections
-import { CATEGORY_NAMES } from "../lib/categories";
 import {
     defaultLocale,
     localeNames,
@@ -14,7 +13,6 @@ const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
-const categories = CATEGORY_NAMES;
 const year = new Date().getFullYear();
 // Base (unprefixed) path for the language switcher links; refreshed on the
 // client on every navigation (the footer is transition:persist).
@@ -135,9 +133,12 @@ const basePath = unlocalizePath(Astro.url.pathname);
                         >
                     </li>
                 </ul>
+            </div>
 
+            <!-- Col 3: Information -->
+            <div class="space-y-4">
                 <h4
-                    class="text-xs font-semibold uppercase tracking-widest text-text-muted pt-4"
+                    class="text-xs font-semibold uppercase tracking-widest text-text-muted"
                 >
                     {t("footer.information")}
                 </h4>
@@ -156,31 +157,6 @@ const basePath = unlocalizePath(Astro.url.pathname);
                             >{t("footer.contact")}</a
                         >
                     </li>
-                </ul>
-            </div>
-
-            <!-- Col 3: Categories -->
-            <div class="space-y-4">
-                <h4
-                    class="text-xs font-semibold uppercase tracking-widest text-text-muted"
-                >
-                    {t("footer.categories")}
-                </h4>
-                <ul class="space-y-2">
-                    {
-                        categories.map((cat) => (
-                            <li>
-                                <a
-                                    href={L(
-                                        `/search?category=${encodeURIComponent(cat)}`
-                                    )}
-                                    class="text-sm text-text-secondary hover:text-text-primary transition-colors"
-                                >
-                                    {t(`categories.${cat}`)}
-                                </a>
-                            </li>
-                        ))
-                    }
                 </ul>
             </div>
 
