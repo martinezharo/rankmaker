@@ -1,13 +1,24 @@
 ---
 // Footer.astro — Full footer with social, pages, categories, legal sections
 import { CATEGORY_NAMES } from "../lib/categories";
-import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import {
+    defaultLocale,
+    localeNames,
+    locales,
+    localizePath,
+    unlocalizePath,
+    useTranslations,
+} from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
 const categories = CATEGORY_NAMES;
+const year = new Date().getFullYear();
+// Base (unprefixed) path for the language switcher links; refreshed on the
+// client on every navigation (the footer is transition:persist).
+const basePath = unlocalizePath(Astro.url.pathname);
 ---
 
 <footer
@@ -212,5 +223,134 @@ const categories = CATEGORY_NAMES;
                 </ul>
             </div>
         </div>
+
+        <!-- Bottom bar: copyright + language switcher -->
+        <div
+            class="mt-12 pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-6"
+        >
+            <p class="text-xs text-text-muted order-2 sm:order-1">
+                © {year} RANKMAKER
+            </p>
+
+            <!-- Language switcher — hrefs refreshed on the client since the
+                 footer is transition:persist. -->
+            <div
+                class="lang-switcher relative order-1 sm:order-2 w-full sm:w-auto sm:min-w-[200px]"
+            >
+                <button
+                    type="button"
+                    class="lang-switcher-btn w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-label={t("nav.language")}
+                >
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-globe text-xs"></i>
+                        <span class="lang-current-name"
+                            >{localeNames[locale]}</span
+                        >
+                    </span>
+                    <i
+                        class="fa-solid fa-chevron-down text-[10px] text-text-muted transition-transform lang-chevron"
+                    ></i>
+                </button>
+                <div
+                    class="lang-menu absolute left-0 right-0 bottom-full mb-2 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50"
+                    style="display:none;"
+                >
+                    {
+                        locales.map((loc) => (
+                            <a
+                                href={localizePath(basePath, loc)}
+                                hreflang={loc}
+                                data-lang={loc}
+                                data-astro-reload
+                                class={`lang-option flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${loc === locale ? "text-text-primary font-medium" : "text-text-secondary hover:text-text-primary"}`}
+                            >
+                                {localeNames[loc]}
+                                {loc === locale && (
+                                    <i class="fa-solid fa-check text-primary text-xs" />
+                                )}
+                            </a>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 </footer>
+
+<script>
+    import { getClientLocale } from "../i18n/client";
+    import { localizePath, unlocalizePath, localeNames } from "../i18n";
+
+    // The footer is transition:persist, so the language switcher links (and the
+    // current-locale label) are rendered once and must be refreshed on every
+    // navigation to point at the localized variant of the *current* page.
+    function refreshLangLinks() {
+        const locale = getClientLocale();
+        const base =
+            unlocalizePath(window.location.pathname) +
+            window.location.search +
+            window.location.hash;
+        document
+            .querySelectorAll<HTMLAnchorElement>(".lang-option")
+            .forEach((a) => {
+                const loc = a.dataset.lang;
+                if (loc) a.href = localizePath(base, loc as any);
+            });
+        document
+            .querySelectorAll<HTMLElement>(".lang-current-name")
+            .forEach(
+                (el) =>
+                    (el.textContent =
+                        localeNames[locale as keyof typeof localeNames] ??
+                        locale),
+            );
+    }
+
+    function closeLangMenus() {
+        document
+            .querySelectorAll<HTMLElement>(".lang-menu")
+            .forEach((m) => (m.style.display = "none"));
+        document
+            .querySelectorAll<HTMLElement>(".lang-chevron")
+            .forEach((c) => (c.style.transform = ""));
+        document
+            .querySelectorAll<HTMLElement>(".lang-switcher-btn")
+            .forEach((b) => b.setAttribute("aria-expanded", "false"));
+    }
+
+    function bindLangSwitchers() {
+        document
+            .querySelectorAll<HTMLElement>(".lang-switcher-btn")
+            .forEach((btn) => {
+                if (btn.dataset.bound) return;
+                btn.dataset.bound = "1";
+                const menu =
+                    btn.parentElement?.querySelector<HTMLElement>(".lang-menu");
+                const chevron = btn.querySelector<HTMLElement>(".lang-chevron");
+                if (!menu) return;
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const isOpen = menu.style.display !== "none";
+                    closeLangMenus();
+                    if (!isOpen) {
+                        menu.style.display = "";
+                        btn.setAttribute("aria-expanded", "true");
+                        if (chevron) chevron.style.transform = "rotate(180deg)";
+                    }
+                });
+            });
+    }
+
+    document.addEventListener("astro:page-load", () => {
+        refreshLangLinks();
+        bindLangSwitchers();
+        closeLangMenus();
+    });
+
+    // Close the menu when clicking outside the switcher. Bound once (the footer
+    // persists across view transitions).
+    document.addEventListener("click", () => closeLangMenus());
+</script>
