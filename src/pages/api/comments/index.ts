@@ -2,14 +2,16 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
-import { getTemplateBySlug } from '../../../lib/templates';
+import { getTemplateBySlug, getTemplateOwnerId } from '../../../lib/templates';
 import {
 	createComment,
 	getComment,
+	getCommentAuthorId,
 	listComments,
 	parentOnSlug,
 	MAX_BODY_LEN,
 } from '../../../lib/comments';
+import { dispatchNotification } from '../../../lib/notifications';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
@@ -100,6 +102,35 @@ export const POST: APIRoute = async (context) => {
 			parentId,
 			body: text,
 		});
+
+		// Notify (best-effort — never fail the comment if this throws).
+		// A reply notifies the parent comment's author; a top-level comment
+		// notifies the template owner. dispatchNotification skips self-notifies.
+		try {
+			const recipientId = parentId
+				? await getCommentAuthorId(env.DB, parentId)
+				: await getTemplateOwnerId(env.DB, slug);
+			if (recipientId) {
+				await dispatchNotification(
+					env,
+					context.locals.runtime.ctx?.waitUntil?.bind(
+						context.locals.runtime.ctx
+					),
+					{
+						recipientId,
+						actorId: user.id,
+						type: parentId
+							? 'comment_reply'
+							: 'comment_on_template',
+						slug,
+						title: template.title,
+						commentId: id,
+					}
+				);
+			}
+		} catch (notifyError) {
+			console.error('Notification dispatch error:', notifyError);
+		}
 
 		const comment = await getComment(env.DB, id, user.id);
 		return json({ ok: true, comment }, 200, NO_STORE);

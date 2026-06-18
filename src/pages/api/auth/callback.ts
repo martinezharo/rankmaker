@@ -93,11 +93,20 @@ export const GET: APIRoute = async (context) => {
         const ghUser = (await userRes.json()) as {
             id?: number;
             login?: string;
+            email?: string | null;
         };
         if (typeof ghUser.id !== 'number' || !ghUser.login) {
             console.error('OAuth callback: unexpected user payload');
             return fail();
         }
+
+        // Resolve the best email for notifications: prefer the primary, verified
+        // address from /user/emails (only exposed with the user:email scope);
+        // fall back to the public profile email. Missing email is non-fatal.
+        const email = await fetchPrimaryEmail(
+            tokenData.access_token,
+            ghUser.email ?? null
+        );
 
         const db = env.DB;
         const existing = await db
@@ -106,6 +115,14 @@ export const GET: APIRoute = async (context) => {
             .first<{ id: string }>();
 
         if (existing) {
+            // Keep the stored email fresh on every login (it may have been added
+            // or changed since signup). Don't clobber a stored email with null.
+            if (email) {
+                await db
+                    .prepare('UPDATE users SET email = ? WHERE id = ?')
+                    .bind(email, existing.id)
+                    .run();
+            }
             const sessionId = await createSession(db, existing.id);
             context.cookies.set(
                 SESSION_COOKIE,
@@ -120,6 +137,7 @@ export const GET: APIRoute = async (context) => {
         const signupCookie = await signPayload(env.SESSION_SECRET, {
             ghId: ghUser.id,
             ghLogin: ghUser.login,
+            ghEmail: email,
             next: statePayload.next || '/',
             exp: Date.now() + 15 * 60 * 1000,
         });
@@ -134,3 +152,37 @@ export const GET: APIRoute = async (context) => {
         return fail();
     }
 };
+
+/**
+ * The user's primary, verified email via the GitHub `/user/emails` endpoint
+ * (requires the user:email scope). Falls back to the public profile email, then
+ * null. Never throws — a missing email just means no notification emails.
+ */
+async function fetchPrimaryEmail(
+    accessToken: string,
+    profileEmail: string | null
+): Promise<string | null> {
+    try {
+        const res = await fetch('https://api.github.com/user/emails', {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: 'application/vnd.github+json',
+                'User-Agent': 'rankmaker',
+            },
+        });
+        if (res.ok) {
+            const emails = (await res.json()) as {
+                email?: string;
+                primary?: boolean;
+                verified?: boolean;
+            }[];
+            const primary = emails.find((e) => e.primary && e.verified);
+            const anyVerified = emails.find((e) => e.verified);
+            const chosen = primary?.email ?? anyVerified?.email ?? null;
+            if (chosen) return chosen;
+        }
+    } catch (error) {
+        console.error('OAuth callback: email fetch failed', error);
+    }
+    return profileEmail;
+}

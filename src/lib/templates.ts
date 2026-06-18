@@ -190,6 +190,23 @@ export async function getTemplateBySlug(
     );
 }
 
+/**
+ * The user id that owns a template (for notifications). Official templates are
+ * owned by the RANKMAKER account; user templates resolve to their creator_id.
+ * Returns null when the slug doesn't exist.
+ */
+export async function getTemplateOwnerId(
+    db: D1Database,
+    slug: string
+): Promise<string | null> {
+    if (getOfficialTemplateBySlug(slug)) return OFFICIAL_USER_ID;
+    const row = await db
+        .prepare('SELECT creator_id FROM templates WHERE slug = ? COLLATE NOCASE')
+        .bind(slug)
+        .first<{ creator_id: string }>();
+    return row?.creator_id ?? null;
+}
+
 /** Public user templates (no per-option rows) for home/search list views. */
 export async function listUserTemplates(db: D1Database): Promise<Template[]> {
     const { results } = await db

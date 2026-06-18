@@ -8,6 +8,7 @@ import {
     generateUnlistedSlug,
     validateTemplateInput,
 } from '../../../lib/templates';
+import { notifyNewTemplate } from '../../../lib/notifications';
 
 /** Create a template (auth required). Body: { title, description, category, cover_image, visibility, options }. */
 export const POST: APIRoute = async (context) => {
@@ -75,6 +76,20 @@ export const POST: APIRoute = async (context) => {
                     .bind(id, o.name, o.image, i)
             ),
         ]);
+
+        // Tell followers about new PUBLIC templates only (private/unlisted are
+        // hidden, so surfacing them would leak them). Best-effort.
+        if (data.visibility === 'public') {
+            try {
+                await notifyNewTemplate(db, {
+                    creatorId: user.id,
+                    slug,
+                    title: data.title,
+                });
+            } catch (notifyError) {
+                console.error('New-template notification error:', notifyError);
+            }
+        }
 
         return json({ ok: true, id, slug });
     } catch (error) {

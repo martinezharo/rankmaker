@@ -63,8 +63,17 @@ type Runtime = {
         GITHUB_CLIENT_ID: string;
         GITHUB_CLIENT_SECRET: string;
         SESSION_SECRET: string;
+        /** Resend API key — when unset, notification emails are skipped. */
+        RESEND_API_KEY?: string;
+        /** Verified Resend sender, e.g. "RANKMAKER <notifications@rankmaker.net>". */
+        RESEND_FROM?: string;
+        /** Absolute base URL for links in emails (defaults to https://rankmaker.net). */
+        SITE_URL?: string;
     };
     cf: Record<string, unknown>;
+    /** Cloudflare execution context — `waitUntil` keeps fire-and-forget work
+     *  (notification emails) alive after the response is returned. */
+    ctx: { waitUntil(promise: Promise<unknown>): void };
 };
 
 declare namespace App {

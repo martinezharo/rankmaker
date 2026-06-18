@@ -14,7 +14,13 @@ import {
 } from '../../../lib/auth';
 import { isValidAvatarKey } from '../../../lib/avatars';
 
-type SignupPayload = { ghId: number; ghLogin: string; next: string; exp: number };
+type SignupPayload = {
+    ghId: number;
+    ghLogin: string;
+    ghEmail?: string | null;
+    next: string;
+    exp: number;
+};
 
 /**
  * Final signup step: creates the user row (username is permanent) + session.
@@ -56,9 +62,15 @@ export const POST: APIRoute = async (context) => {
     try {
         await db
             .prepare(
-                'INSERT INTO users (id, github_id, username, avatar) VALUES (?, ?, ?, ?)'
+                'INSERT INTO users (id, github_id, username, avatar, email) VALUES (?, ?, ?, ?, ?)'
             )
-            .bind(userId, signup.ghId, username, body.avatar)
+            .bind(
+                userId,
+                signup.ghId,
+                username,
+                body.avatar,
+                signup.ghEmail ?? null
+            )
             .run();
     } catch (error) {
         // UNIQUE constraint race: username or github_id grabbed concurrently.

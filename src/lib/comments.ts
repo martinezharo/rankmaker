@@ -146,6 +146,20 @@ export async function getComment(
 	return nodes[0] ?? null;
 }
 
+/** Author (user id) of a comment, or null if it doesn't exist / is deleted. */
+export async function getCommentAuthorId(
+	db: D1Database,
+	commentId: string
+): Promise<string | null> {
+	const row = await db
+		.prepare(
+			'SELECT user_id FROM comments WHERE id = ? AND is_deleted = 0'
+		)
+		.bind(commentId)
+		.first<{ user_id: string }>();
+	return row?.user_id ?? null;
+}
+
 /** Does `parentId` exist on this slug? (Reject cross-template replies.) */
 export async function parentOnSlug(
 	db: D1Database,

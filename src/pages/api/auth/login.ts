@@ -43,6 +43,10 @@ export const GET: APIRoute = async (context) => {
         `${url.origin}/api/auth/callback`
     );
     authorize.searchParams.set('state', state);
+    // Request read access to the user's email addresses so we can send
+    // notification emails (Resend). Email is stored on first signup / refreshed
+    // on subsequent logins; users can still opt out of emails in-app.
+    authorize.searchParams.set('scope', 'user:email');
 
     return context.redirect(authorize.toString(), 302);
 };

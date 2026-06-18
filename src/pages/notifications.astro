@@ -1,0 +1,388 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Avatar from "../components/Avatar.astro";
+import { getSessionUser } from "../lib/auth";
+import {
+	getEmailPref,
+	listNotifications,
+	type NotificationItem,
+	type NotificationType,
+} from "../lib/notifications";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
+
+// Per-user, never cached. Anonymous visitors get a login prompt; the page is
+// noindex either way (private surface).
+const db = Astro.locals.runtime.env.DB;
+const user = await getSessionUser(Astro.cookies, db);
+
+let items: NotificationItem[] = [];
+let emailPref = true;
+if (user) {
+	try {
+		[items, emailPref] = await Promise.all([
+			listNotifications(db, user.id),
+			getEmailPref(db, user.id),
+		]);
+	} catch {
+		// Degrade to an empty list rather than 500 the page.
+	}
+}
+
+// Parse the stored "YYYY-MM-DD HH:MM:SS" (UTC) timestamp.
+const parseTs = (s: string) => new Date(s.replace(" ", "T") + "Z");
+const utcDayKey = (d: Date) => d.toISOString().slice(0, 10);
+
+const now = new Date();
+const todayKey = utcDayKey(now);
+const yesterdayKey = utcDayKey(new Date(now.getTime() - 86400000));
+
+const dayLabel = (d: Date) => {
+	const key = utcDayKey(d);
+	if (key === todayKey) return t("notifications.today");
+	if (key === yesterdayKey) return t("notifications.yesterday");
+	return isNaN(d.getTime())
+		? ""
+		: d.toLocaleDateString(locale, {
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+			});
+};
+
+const timeLabel = (d: Date) =>
+	isNaN(d.getTime())
+		? ""
+		: d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+
+// Group notifications into consecutive day blocks (list is already newest-first).
+type Group = { key: string; label: string; items: NotificationItem[] };
+const groups: Group[] = [];
+for (const n of items) {
+	const d = parseTs(n.createdAt);
+	const key = utcDayKey(d);
+	const last = groups[groups.length - 1];
+	if (last && last.key === key) last.items.push(n);
+	else groups.push({ key, label: dayLabel(d), items: [n] });
+}
+
+const TYPE_META: Record<
+	NotificationType,
+	{ icon: string; color: string; msgKey: string }
+> = {
+	comment_on_template: {
+		icon: "fa-comment",
+		color: "text-primary",
+		msgKey: "notifications.msgCommentOnTemplate",
+	},
+	comment_reply: {
+		icon: "fa-reply",
+		color: "text-blue-400",
+		msgKey: "notifications.msgCommentReply",
+	},
+	new_template: {
+		icon: "fa-wand-magic-sparkles",
+		color: "text-gold-start",
+		msgKey: "notifications.msgNewTemplate",
+	},
+};
+
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("X-Robots-Tag", "noindex");
+---
+
+<Layout title={t("notifications.title")} noindex={true}>
+	<section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
+		<div class="flex items-center gap-3 mb-2">
+			<div
+				class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+			>
+				<i class="fa-solid fa-bell text-primary"></i>
+			</div>
+			<h1
+				class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
+			>
+				{t("notifications.heading")}
+			</h1>
+		</div>
+		<p class="text-sm text-text-secondary mb-6">
+			{t("notifications.subtitle")}
+		</p>
+
+		{
+			!user ? (
+				<div class="rounded-2xl border border-dashed border-border p-10 text-center space-y-3">
+					<i class="fa-solid fa-bell text-2xl text-text-muted" />
+					<p class="text-sm text-text-secondary">
+						{t("notifications.loginRequired")}
+					</p>
+					<a
+						href="/api/auth/login?next=/notifications"
+						data-astro-reload
+						class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+					>
+						<i class="fa-brands fa-github" />
+						{t("notifications.login")}
+					</a>
+				</div>
+			) : (
+				<>
+					{/* Email preference */}
+					<div class="flex items-center justify-between gap-4 rounded-2xl bg-surface-elevated border border-border p-4 mb-6">
+						<div class="min-w-0">
+							<p class="text-sm font-semibold text-text-primary">
+								{t("notifications.emailPrefHeading")}
+							</p>
+							<p class="text-xs text-text-muted mt-0.5">
+								{t("notifications.emailPrefDesc")}
+							</p>
+						</div>
+						<button
+							id="email-pref-toggle"
+							type="button"
+							role="switch"
+							aria-checked={emailPref ? "true" : "false"}
+							aria-label={t("notifications.emailPrefToggle")}
+							class:list={[
+								"relative shrink-0 w-12 h-7 rounded-full transition-colors",
+								emailPref ? "bg-primary" : "bg-border",
+							]}
+						>
+							<span
+								class:list={[
+									"absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform",
+									emailPref && "translate-x-5",
+								]}
+							/>
+						</button>
+					</div>
+
+					{/* Filters */}
+					<div
+						id="notif-filters"
+						class="flex flex-wrap gap-2 mb-6"
+						role="tablist"
+					>
+						{(
+							[
+								["all", "notifications.filterAll"],
+								[
+									"comment_on_template",
+									"notifications.filterComments",
+								],
+								["comment_reply", "notifications.filterReplies"],
+								["new_template", "notifications.filterTemplates"],
+							] as const
+						).map(([value, key], i) => (
+							<button
+								type="button"
+								role="tab"
+								data-filter={value}
+								aria-selected={i === 0 ? "true" : "false"}
+								class:list={[
+									"notif-filter px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors",
+									i === 0
+										? "bg-primary/15 border-primary/40 text-text-primary"
+										: "bg-surface border-border text-text-secondary hover:text-text-primary hover:border-border-hover",
+								]}
+							>
+								{t(key)}
+							</button>
+						))}
+					</div>
+
+					<div id="notif-list" class="space-y-6">
+						{groups.map((g) => (
+							<div class="notif-group" data-day={g.key}>
+								<h2 class="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+									{g.label}
+								</h2>
+								<div class="space-y-2">
+									{g.items.map((n) => {
+										const meta = TYPE_META[n.type];
+										return (
+											<a
+												href={L(
+													`/template/${n.slug}`,
+												)}
+												data-type={n.type}
+												class:list={[
+													"notif-item flex items-start gap-3 rounded-2xl border p-3.5 transition-all",
+													n.isRead
+														? "bg-surface-elevated border-border hover:border-border-hover"
+														: "bg-primary/[0.06] border-primary/25 hover:border-primary/45",
+												]}
+											>
+												<div class="relative shrink-0">
+													<Avatar
+														avatar={n.actor.avatar}
+														size="md"
+														verified={
+															n.actor.isVerified
+														}
+													/>
+													<span
+														class:list={[
+															"absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-surface border border-border flex items-center justify-center",
+															meta.color,
+														]}
+													>
+														<i
+															class={`fa-solid ${meta.icon} text-[9px]`}
+														/>
+													</span>
+												</div>
+												<div class="flex-1 min-w-0">
+													<p class="text-sm text-text-secondary leading-snug">
+														{t(meta.msgKey, {
+															actor: n.actor
+																.username,
+															title: n.title,
+														})}
+													</p>
+													<span class="text-xs text-text-muted">
+														{timeLabel(
+															parseTs(
+																n.createdAt,
+															),
+														)}
+													</span>
+												</div>
+												{!n.isRead && (
+													<span class="shrink-0 mt-1 w-2 h-2 rounded-full bg-primary" />
+												)}
+											</a>
+										);
+									})}
+								</div>
+							</div>
+						))}
+					</div>
+
+					<div
+						id="notif-empty"
+						class:list={[
+							"rounded-2xl border border-dashed border-border p-10 text-center space-y-3",
+							items.length > 0 && "hidden",
+						]}
+					>
+						<i class="fa-solid fa-bell-slash text-2xl text-text-muted" />
+						<p class="text-sm text-text-secondary">
+							{t("notifications.empty")}
+						</p>
+					</div>
+				</>
+			)
+		}
+	</section>
+</Layout>
+
+<script>
+	import { clientT } from "../i18n/client";
+
+	// Clear the header badge (the header persists across navigations and caches
+	// /api/auth/me, so it won't refetch the now-zero count on its own).
+	function clearHeaderBadge() {
+		document
+			.querySelectorAll<HTMLElement>(".notif-badge")
+			.forEach((el) => el.remove());
+		document
+			.querySelectorAll<HTMLElement>("[data-notif-count]")
+			.forEach((el) => (el.textContent = ""));
+	}
+
+	// "Seeing" the notifications clears their pending state server-side.
+	function markRead() {
+		if (!document.getElementById("notif-list")) return; // logged-out view
+		fetch("/api/me/notifications/read", { method: "POST" })
+			.then(() => clearHeaderBadge())
+			.catch(() => {
+				/* best-effort */
+			});
+	}
+
+	function applyFilter(filter: string) {
+		const list = document.getElementById("notif-list");
+		if (!list) return;
+		list.querySelectorAll<HTMLElement>(".notif-group").forEach((group) => {
+			let groupVisible = 0;
+			group
+				.querySelectorAll<HTMLElement>(".notif-item")
+				.forEach((item) => {
+					const show =
+						filter === "all" || item.dataset.type === filter;
+					item.classList.toggle("hidden", !show);
+					if (show) groupVisible++;
+				});
+			// Hide a whole day block when none of its items match the filter.
+			group.classList.toggle("hidden", groupVisible === 0);
+		});
+	}
+
+	function bindFilters() {
+		const tabs = document.getElementById("notif-filters");
+		if (!tabs || tabs.dataset.bound) return;
+		tabs.dataset.bound = "1";
+		tabs.addEventListener("click", (e) => {
+			const btn = (e.target as HTMLElement)?.closest<HTMLElement>(
+				".notif-filter",
+			);
+			if (!btn) return;
+			tabs.querySelectorAll<HTMLElement>(".notif-filter").forEach((b) => {
+				const active = b === btn;
+				b.setAttribute("aria-selected", String(active));
+				b.classList.toggle("bg-primary/15", active);
+				b.classList.toggle("border-primary/40", active);
+				b.classList.toggle("text-text-primary", active);
+				b.classList.toggle("bg-surface", !active);
+				b.classList.toggle("border-border", !active);
+				b.classList.toggle("text-text-secondary", !active);
+			});
+			applyFilter(btn.dataset.filter || "all");
+		});
+	}
+
+	function bindEmailToggle() {
+		const toggle = document.getElementById("email-pref-toggle");
+		if (!toggle || toggle.dataset.bound) return;
+		toggle.dataset.bound = "1";
+		const knob = toggle.querySelector<HTMLElement>("span");
+		const t = clientT();
+		toggle.addEventListener("click", async () => {
+			const next = toggle.getAttribute("aria-checked") !== "true";
+			// Optimistic UI.
+			toggle.setAttribute("aria-checked", String(next));
+			toggle.classList.toggle("bg-primary", next);
+			toggle.classList.toggle("bg-border", !next);
+			knob?.classList.toggle("translate-x-5", next);
+			try {
+				const res = await fetch("/api/me/notifications/prefs", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ emailNotifications: next }),
+				});
+				if (!res.ok) throw new Error("prefs " + res.status);
+			} catch {
+				// Revert on failure.
+				toggle.setAttribute("aria-checked", String(!next));
+				toggle.classList.toggle("bg-primary", !next);
+				toggle.classList.toggle("bg-border", next);
+				knob?.classList.toggle("translate-x-5", !next);
+				alert(t("notifications.emailPrefError"));
+			}
+		});
+	}
+
+	document.addEventListener("astro:page-load", () => {
+		// All three are no-ops off the notifications page (they guard on their
+		// own elements), so no path check is needed.
+		bindFilters();
+		bindEmailToggle();
+		markRead();
+	});
+</script>

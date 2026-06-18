@@ -1,0 +1,44 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# RANKMAKER — environment variables
+#
+# Copy this file to `.dev.vars` (gitignored) for local development. Wrangler /
+# Astro load `.dev.vars` automatically when running `pnpm dev` / `pnpm preview`.
+#
+# In PRODUCTION these are NOT read from a file — set each one as a Worker secret:
+#   npx wrangler secret put GITHUB_CLIENT_ID
+#   npx wrangler secret put GITHUB_CLIENT_SECRET
+#   npx wrangler secret put SESSION_SECRET
+#   npx wrangler secret put RESEND_API_KEY
+#   npx wrangler secret put RESEND_FROM
+#   npx wrangler secret put SITE_URL
+#
+# Non-secret bindings (D1 `DB`, KV `rm-times-ranked`, Workers AI `AI`) live in
+# wrangler.jsonc, not here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── GitHub OAuth (sign in) ───────────────────────────────────────────────────
+# Create an OAuth App at https://github.com/settings/developers
+# Authorization callback URL (local): http://localhost:4321/api/auth/callback
+# The app requests the `user:email` scope so we can email notifications.
+GITHUB_CLIENT_ID=your_github_oauth_client_id
+GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
+
+# ── Session / signed cookies ─────────────────────────────────────────────────
+# Secret used to sign session-related HMAC cookies (OAuth state + signup handoff)
+# and to key sessions. Use a long random string, e.g.:
+#   openssl rand -hex 32
+SESSION_SECRET=replace_with_a_long_random_string
+
+# ── Resend (transactional email for notifications) ───────────────────────────
+# API key from https://resend.com/api-keys . When RESEND_API_KEY or RESEND_FROM
+# is unset, email sending is silently skipped (the in-app notification still
+# works) — so local dev needs no Resend account.
+RESEND_API_KEY=re_your_resend_api_key
+# The verified sender. Must be on a domain you've verified in Resend.
+# Format: "Display Name <address@your-domain.com>".
+RESEND_FROM=RANKMAKER <notifications@rankmaker.net>
+
+# ── Site URL ─────────────────────────────────────────────────────────────────
+# Absolute base URL used to build links inside emails (e.g. to a template or the
+# notifications page). Defaults to https://rankmaker.net when unset.
+SITE_URL=http://localhost:4321
