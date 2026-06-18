@@ -108,6 +108,13 @@ type TemplateRow = {
     option_names?: string | null;
 };
 
+export function mapTemplateRow(
+    row: TemplateRow,
+    options: TemplateOption[] = []
+): Template {
+    return mapRow(row, options);
+}
+
 function mapRow(row: TemplateRow, options: TemplateOption[] = []): Template {
     return {
         id: row.id,
