@@ -123,6 +123,7 @@ export const en = {
 		heroSubtitle:
 			'No tiers. No noise. RANKMAKER lets you build accurate rankings through fast, decisive 1v1 battles. Pick a template and find out what really comes out on top.',
 		exploreTemplates: 'Explore Templates',
+		followingHeading: 'Following',
 		emptyTitle: 'No templates yet',
 		emptyBody:
 			'Templates will appear here once they are added to the database. Check back soon!',
@@ -196,6 +197,15 @@ export const en = {
 		totalRankings: '{n} total rankings',
 		templatesBy: 'Templates by @{username}',
 		noTemplates: "@{username} hasn't created any templates yet.",
+		follow: 'Follow',
+		following: 'Following',
+		unfollow: 'Unfollow',
+		followersLabel: 'followers',
+		followingLabel: 'following',
+		followersTitle: 'Followers',
+		followingTitle: 'Following',
+		noFollowers: 'No followers yet.',
+		noFollowing: 'Not following anyone yet.',
 	},
 	signup: {
 		title: 'Finish signing up — RANKMAKER',

@@ -120,6 +120,7 @@ export const fr: LocaleDict = {
 		heroSubtitle:
 			'Pas de niveaux. Pas de bruit. RANKMAKER vous permet de créer des classements précis grâce à des duels 1 contre 1 rapides et décisifs. Choisissez un modèle et découvrez ce qui arrive en tête.',
 		exploreTemplates: 'Explorer les modèles',
+		followingHeading: 'Abonnements',
 		emptyTitle: "Aucun modèle pour l'instant",
 		emptyBody:
 			'Les modèles apparaîtront ici une fois ajoutés à la base de données. Revenez bientôt !',
@@ -193,6 +194,15 @@ export const fr: LocaleDict = {
 		totalRankings: '{n} classements au total',
 		templatesBy: 'Modèles de @{username}',
 		noTemplates: "@{username} n'a encore créé aucun modèle.",
+		follow: 'Suivre',
+		following: 'Abonné',
+		unfollow: 'Se désabonner',
+		followersLabel: 'abonnés',
+		followingLabel: 'abonnements',
+		followersTitle: 'Abonnés',
+		followingTitle: 'Abonnements',
+		noFollowers: "Aucun abonné pour l'instant.",
+		noFollowing: "N'est encore abonné à personne.",
 	},
 	signup: {
 		title: 'Finalisez votre inscription — RANKMAKER',

@@ -114,6 +114,7 @@ export const zh: LocaleDict = {
 		heroSubtitle:
 			'无层级，无噪音。RANKMAKER 让您通过快速、果断的一对一对决构建精准排名。选择一个模板，找出真正的冠军。',
 		exploreTemplates: '探索模板',
+		followingHeading: '关注',
 		emptyTitle: '暂无模板',
 		emptyBody: '模板添加到数据库后将在此显示，请稍后再来！',
 	},
@@ -184,6 +185,15 @@ export const zh: LocaleDict = {
 		totalRankings: '共 {n} 次排名',
 		templatesBy: '@{username} 的模板',
 		noTemplates: '@{username} 还没有创建任何模板。',
+		follow: '关注',
+		following: '已关注',
+		unfollow: '取消关注',
+		followersLabel: '粉丝',
+		followingLabel: '关注',
+		followersTitle: '粉丝',
+		followingTitle: '关注',
+		noFollowers: '还没有粉丝。',
+		noFollowing: '还没有关注任何人。',
 	},
 	signup: {
 		title: '完成注册 — RANKMAKER',

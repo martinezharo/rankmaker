@@ -119,6 +119,7 @@ export const ms: LocaleDict = {
 		heroSubtitle:
 			'Tiada peringkat. Tiada gangguan. RANKMAKER membolehkan anda membina ranking tepat melalui pertarungan 1v1 yang pantas dan tegas. Pilih templat dan cari tahu apa yang sebenarnya menang.',
 		exploreTemplates: 'Jelajahi Templat',
+		followingHeading: 'Diikuti',
 		emptyTitle: 'Tiada templat lagi',
 		emptyBody:
 			'Templat akan muncul di sini setelah ditambah ke pangkalan data. Semak semula tidak lama lagi!',
@@ -192,6 +193,15 @@ export const ms: LocaleDict = {
 		totalRankings: '{n} ranking jumlah',
 		templatesBy: 'Templat oleh @{username}',
 		noTemplates: '@{username} belum mencipta sebarang templat.',
+		follow: 'Ikut',
+		following: 'Mengikuti',
+		unfollow: 'Nyahikut',
+		followersLabel: 'pengikut',
+		followingLabel: 'mengikuti',
+		followersTitle: 'Pengikut',
+		followingTitle: 'Mengikuti',
+		noFollowers: 'Belum ada pengikut.',
+		noFollowing: 'Belum mengikuti sesiapa.',
 	},
 	signup: {
 		title: 'Selesaikan pendaftaran — RANKMAKER',

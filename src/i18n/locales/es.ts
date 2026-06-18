@@ -120,6 +120,7 @@ export const es: LocaleDict = {
 		heroSubtitle:
 			'Sin niveles. Sin ruido. RANKMAKER te permite crear rankings precisos mediante batallas 1 contra 1 rápidas y decisivas. Elige una plantilla y descubre qué queda en lo más alto.',
 		exploreTemplates: 'Explorar plantillas',
+		followingHeading: 'Siguiendo',
 		emptyTitle: 'Aún no hay plantillas',
 		emptyBody:
 			'Las plantillas aparecerán aquí cuando se añadan a la base de datos. ¡Vuelve pronto!',
@@ -193,6 +194,15 @@ export const es: LocaleDict = {
 		totalRankings: '{n} rankings en total',
 		templatesBy: 'Plantillas de @{username}',
 		noTemplates: '@{username} aún no ha creado ninguna plantilla.',
+		follow: 'Seguir',
+		following: 'Siguiendo',
+		unfollow: 'Dejar de seguir',
+		followersLabel: 'seguidores',
+		followingLabel: 'siguiendo',
+		followersTitle: 'Seguidores',
+		followingTitle: 'Siguiendo',
+		noFollowers: 'Aún no tiene seguidores.',
+		noFollowing: 'Todavía no sigue a nadie.',
 	},
 	signup: {
 		title: 'Termina de registrarte — RANKMAKER',

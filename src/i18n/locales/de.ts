@@ -120,6 +120,7 @@ export const de: LocaleDict = {
 		heroSubtitle:
 			'Keine Stufen. Kein Lärm. RANKMAKER ermöglicht dir, präzise Rankings durch schnelle, entschlossene 1v1-Duelle zu erstellen. Wähle eine Vorlage und finde heraus, was wirklich oben landet.',
 		exploreTemplates: 'Vorlagen erkunden',
+		followingHeading: 'Folge ich',
 		emptyTitle: 'Noch keine Vorlagen',
 		emptyBody:
 			'Vorlagen erscheinen hier, sobald sie zur Datenbank hinzugefügt wurden. Schau bald wieder vorbei!',
@@ -193,6 +194,15 @@ export const de: LocaleDict = {
 		totalRankings: '{n} Rankings insgesamt',
 		templatesBy: 'Vorlagen von @{username}',
 		noTemplates: '@{username} hat noch keine Vorlagen erstellt.',
+		follow: 'Folgen',
+		following: 'Folge ich',
+		unfollow: 'Entfolgen',
+		followersLabel: 'Follower',
+		followingLabel: 'Folge ich',
+		followersTitle: 'Follower',
+		followingTitle: 'Folge ich',
+		noFollowers: 'Noch keine Follower.',
+		noFollowing: 'Folgt noch niemandem.',
 	},
 	signup: {
 		title: 'Registrierung abschließen — RANKMAKER',
