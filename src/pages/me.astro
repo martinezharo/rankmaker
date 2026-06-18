@@ -193,12 +193,12 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 <div class="space-y-3">
                     {templates.map((t) => (
                         <div
-                            class="my-template-row flex items-center gap-4 p-3 rounded-xl bg-surface-elevated border border-border"
+                            class="my-template-row flex items-start gap-3 sm:gap-4 p-3 rounded-xl bg-surface-elevated border border-border"
                             data-template-id={t.id}
                         >
                             <a
                                 href={L(`/template/${t.slug}`)}
-                                class="w-20 h-15 sm:w-24 sm:h-18 shrink-0 rounded-lg overflow-hidden bg-surface border border-border"
+                                class="w-16 h-16 sm:w-24 sm:h-18 shrink-0 rounded-lg overflow-hidden bg-surface border border-border"
                             >
                                 <SmartImage
                                     src={resolveImg(t.cover_image)}
@@ -208,21 +208,43 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                 />
                             </a>
                             <div class="flex-1 min-w-0">
-                                <a
-                                    href={L(`/template/${t.slug}`)}
-                                    class="block font-semibold text-sm text-text-primary hover:text-white transition-colors truncate"
-                                >
-                                    {t.title}
-                                </a>
-                                <p class="text-xs text-text-muted mt-1 flex items-center gap-3">
-                                    <span class="inline-flex items-center gap-1.5">
+                                <div class="flex items-start justify-between gap-2">
+                                    <a
+                                        href={L(`/template/${t.slug}`)}
+                                        class="block font-semibold text-sm text-text-primary hover:text-white transition-colors line-clamp-2 sm:truncate"
+                                    >
+                                        {t.title}
+                                    </a>
+                                    <div class="flex items-center gap-1.5 shrink-0 -mt-0.5">
+                                        <a
+                                            href={L(`/edit/${t.slug}`)}
+                                            class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-primary border border-border hover:border-primary/50 transition-all"
+                                            aria-label={tr("me.editTemplateAria")}
+                                        >
+                                            <i class="fa-solid fa-pen text-xs" />
+                                        </a>
+                                        <button
+                                            type="button"
+                                            class="delete-template-btn w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-red-400 border border-border hover:border-red-400/50 transition-all"
+                                            data-id={t.id}
+                                            data-title={t.title}
+                                            aria-label={tr("me.deleteTemplateAria")}
+                                        >
+                                            <i class="fa-solid fa-trash text-xs" />
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-text-muted mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <span class="inline-flex items-center gap-1.5 min-w-0">
                                         <i
-                                            class={`fa-solid ${categoryIcon(t.category)} text-[10px] text-primary/70`}
+                                            class={`fa-solid ${categoryIcon(t.category)} text-[10px] text-primary/70 shrink-0`}
                                         />
-                                        {tr(`categories.${t.category}`)}
+                                        <span class="truncate">
+                                            {tr(`categories.${t.category}`)}
+                                        </span>
                                     </span>
                                     <span
-                                        class="inline-flex items-center gap-1.5"
+                                        class="inline-flex items-center gap-1.5 whitespace-nowrap"
                                         data-count-slug={
                                             t.visibility === "public"
                                                 ? t.slug
@@ -233,7 +255,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                             n: t.times_ranked.toLocaleString(),
                                         })}
                                     </span>
-                                    <span class="inline-flex items-center gap-1.5">
+                                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
                                         <i
                                             class="fa-solid fa-arrow-up text-[10px] text-primary/70"
                                         />
@@ -242,7 +264,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                         })}
                                     </span>
                                     {t.visibility !== "public" && (
-                                        <span class="inline-flex items-center gap-1.5 uppercase tracking-wider font-semibold text-text-muted">
+                                        <span class="inline-flex items-center gap-1.5 whitespace-nowrap uppercase tracking-wider font-semibold text-text-muted">
                                             <i
                                                 class={`fa-solid ${t.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
                                             />
@@ -251,25 +273,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                                 : tr("me.visibilityUnlisted")}
                                         </span>
                                     )}
-                                </p>
-                            </div>
-                            <div class="flex items-center gap-2 shrink-0">
-                                <a
-                                    href={L(`/edit/${t.slug}`)}
-                                    class="w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-primary border border-border hover:border-primary/50 transition-all"
-                                    aria-label={tr("me.editTemplateAria")}
-                                >
-                                    <i class="fa-solid fa-pen text-xs" />
-                                </a>
-                                <button
-                                    type="button"
-                                    class="delete-template-btn w-9 h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-red-400 border border-border hover:border-red-400/50 transition-all"
-                                    data-id={t.id}
-                                    data-title={t.title}
-                                    aria-label={tr("me.deleteTemplateAria")}
-                                >
-                                    <i class="fa-solid fa-trash text-xs" />
-                                </button>
+                                </div>
                             </div>
                         </div>
                     ))}
