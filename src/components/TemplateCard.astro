@@ -63,7 +63,7 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
 
         <!-- Save + Share Buttons -->
         <button
-            class="save-btn absolute top-3 right-12 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100"
+            class="save-btn absolute top-3 right-12 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100"
             aria-label={t("card.saveAria")}
             data-save-aria={t("card.saveAria")}
             data-unsave-aria={t("card.unsaveAria")}
@@ -72,7 +72,7 @@ const coverSrc = resolveImg(template.cover_image); // SmartImage handles fallbac
             <i class="fa-regular fa-bookmark text-xs"></i>
         </button>
         <button
-            class="share-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100"
+            class="share-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100"
             aria-label={t("card.shareAria")}
             data-title={template.title}
             data-slug={template.slug}
