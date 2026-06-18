@@ -7,6 +7,7 @@ import TemplateCard from "../../components/TemplateCard.astro";
 import { getCounts } from "../../lib/counts";
 import { getTemplateVotes } from "../../lib/template-votes";
 import { listTemplatesByUserId } from "../../lib/templates";
+import { getFollowCounts } from "../../lib/follows";
 import { defaultLocale, useTranslations } from "../../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -53,6 +54,16 @@ try {
     // keep fallback numbers
 }
 templates.sort((a, b) => b.times_ranked - a.times_ranked);
+
+// Follower/following counts are public — render them SSR. The follow button's
+// per-viewer state (follow/unfollow/self) is hydrated client-side because the
+// page is edge-cached.
+let followCounts = { followers: 0, following: 0 };
+try {
+    followCounts = await getFollowCounts(db, user.id);
+} catch {
+    // keep zeros
+}
 
 const totalRanked = templates.reduce((sum, t) => sum + t.times_ranked, 0);
 const memberSince = new Date(
@@ -104,7 +115,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                         </p>
                     )
                 }
-                <div class="flex items-center gap-6 mt-3 text-sm">
+                <div class="flex items-center gap-x-6 gap-y-2 mt-3 text-sm flex-wrap">
                     <span class="flex items-center gap-2 text-text-muted">
                         <i class="fa-solid fa-layer-group text-primary/70 text-xs"
                         ></i>
@@ -123,7 +134,52 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                             })}
                         </span>
                     </span>
+                    <button
+                        type="button"
+                        data-open-follows="followers"
+                        class="flex items-center gap-1.5 text-text-muted hover:text-text-primary transition-colors"
+                    >
+                        <span
+                            class="font-semibold text-text-primary"
+                            data-followers-count
+                        >
+                            {followCounts.followers.toLocaleString()}
+                        </span>
+                        <span class="font-medium"
+                            >{t("profile.followersLabel")}</span
+                        >
+                    </button>
+                    <button
+                        type="button"
+                        data-open-follows="following"
+                        class="flex items-center gap-1.5 text-text-muted hover:text-text-primary transition-colors"
+                    >
+                        <span
+                            class="font-semibold text-text-primary"
+                            data-following-count
+                        >
+                            {followCounts.following.toLocaleString()}
+                        </span>
+                        <span class="font-medium"
+                            >{t("profile.followingLabel")}</span
+                        >
+                    </button>
                 </div>
+            </div>
+
+            <!-- Follow button — hidden until hydrated (state is per-viewer). -->
+            <div
+                data-follow-wrap
+                data-username={user.username}
+                class="hidden sm:self-start"
+            >
+                <button
+                    type="button"
+                    data-follow-btn
+                    aria-live="polite"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                >
+                </button>
             </div>
         </div>
 
@@ -151,4 +207,256 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             )
         }
     </section>
+
+    <!-- Followers / Following list modal (reused for both lists) -->
+    <div
+        id="follows-modal"
+        data-username={user.username}
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="follows-modal-title"
+    >
+        <div
+            data-modal-backdrop
+            class="absolute inset-0 bg-black/70 backdrop-blur-sm animate-modal-bg"
+        >
+        </div>
+        <div
+            class="relative w-full max-w-md rounded-2xl bg-surface-elevated border border-border shadow-2xl animate-modal-content flex flex-col max-h-[85vh]"
+        >
+            <div class="flex items-center gap-3 p-5 border-b border-border/60">
+                <h3
+                    id="follows-modal-title"
+                    class="text-base font-bold text-text-primary flex-1"
+                >
+                </h3>
+                <button
+                    type="button"
+                    data-modal-close
+                    aria-label={t("common.close")}
+                    class="shrink-0 w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted hover:text-text-primary hover:border-border-hover transition-colors"
+                >
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+            <div data-follows-list class="p-3 overflow-y-auto space-y-1"></div>
+        </div>
+    </div>
 </Layout>
+
+<script>
+    import { avatarHtml } from "../../lib/avatars";
+    import { openModal, closeModal } from "../../scripts/modal-a11y";
+    import { clientT, getClientLocale } from "../../i18n/client";
+    import { localizePath } from "../../i18n";
+
+    type FollowStatus = {
+        exists: boolean;
+        followers: number;
+        following: number;
+        isFollowing: boolean;
+        isSelf: boolean;
+        loggedIn: boolean;
+    };
+
+    type UserSummary = {
+        username: string;
+        avatar: string;
+        isVerified: boolean;
+        bio: string | null;
+    };
+
+    function esc(s: string): string {
+        return s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function redirectToLogin(): void {
+        const next = encodeURIComponent(
+            location.pathname + location.search,
+        );
+        location.href = `/api/auth/login?next=${next}`;
+    }
+
+    function init(): void {
+        const wrap = document.querySelector<HTMLElement>("[data-follow-wrap]");
+        const username = wrap?.dataset.username ?? "";
+        if (!username) return;
+
+        const t = clientT();
+        const locale = getClientLocale();
+        const L = (p: string) => localizePath(p, locale);
+
+        const btn = wrap?.querySelector<HTMLButtonElement>("[data-follow-btn]");
+        const followersCountEl = document.querySelector<HTMLElement>(
+            "[data-followers-count]",
+        );
+
+        let status: FollowStatus | null = null;
+        let pending = false;
+
+        // ── follow button ────────────────────────────────────────────
+        function paintButton(): void {
+            if (!btn || !status) return;
+            if (status.isFollowing) {
+                btn.innerHTML = `<i class="fa-solid fa-check text-xs"></i> ${esc(t("profile.following"))}`;
+                btn.className =
+                    "follow-following inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all bg-surface border border-border text-text-primary hover:border-red-400/60 hover:text-red-400";
+                btn.dataset.unfollowLabel = t("profile.unfollow");
+                btn.dataset.followingLabel = t("profile.following");
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-user-plus text-xs"></i> ${esc(t("profile.follow"))}`;
+                btn.className =
+                    "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all bg-primary hover:bg-primary-light text-white";
+            }
+        }
+
+        async function toggleFollow(): Promise<void> {
+            if (!status || pending) return;
+            if (!status.loggedIn) {
+                redirectToLogin();
+                return;
+            }
+            const next = !status.isFollowing;
+            pending = true;
+            // Optimistic update.
+            status.isFollowing = next;
+            status.followers += next ? 1 : -1;
+            paintButton();
+            if (followersCountEl)
+                followersCountEl.textContent =
+                    status.followers.toLocaleString();
+
+            try {
+                const res = await fetch("/api/follow", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username,
+                        action: next ? "follow" : "unfollow",
+                    }),
+                });
+                if (res.status === 401) {
+                    redirectToLogin();
+                    return;
+                }
+                if (res.ok) {
+                    const data = (await res.json()) as {
+                        isFollowing: boolean;
+                        followers: number;
+                    };
+                    status.isFollowing = data.isFollowing;
+                    status.followers = data.followers;
+                } else {
+                    // revert
+                    status.isFollowing = !next;
+                    status.followers += next ? -1 : 1;
+                }
+            } catch {
+                status.isFollowing = !next;
+                status.followers += next ? -1 : 1;
+            }
+            paintButton();
+            if (followersCountEl)
+                followersCountEl.textContent =
+                    status.followers.toLocaleString();
+            pending = false;
+        }
+
+        // On a "Following" button, swap the label to "Unfollow" on hover.
+        btn?.addEventListener("mouseenter", () => {
+            if (status?.isFollowing && btn) {
+                btn.innerHTML = `<i class="fa-solid fa-user-minus text-xs"></i> ${esc(t("profile.unfollow"))}`;
+            }
+        });
+        btn?.addEventListener("mouseleave", () => {
+            if (status?.isFollowing) paintButton();
+        });
+        btn?.addEventListener("click", () => void toggleFollow());
+
+        // Fetch per-viewer status, then reveal the button (unless it's the
+        // viewer's own profile).
+        void (async () => {
+            try {
+                const res = await fetch(
+                    `/api/follow?username=${encodeURIComponent(username)}`,
+                );
+                if (!res.ok) return;
+                status = (await res.json()) as FollowStatus;
+                if (!status.exists || status.isSelf) return;
+                paintButton();
+                wrap?.classList.remove("hidden");
+            } catch {
+                /* leave the button hidden on error */
+            }
+        })();
+
+        // ── followers / following modal ──────────────────────────────
+        const modal = document.querySelector<HTMLElement>("#follows-modal");
+        const listEl = modal?.querySelector<HTMLElement>("[data-follows-list]");
+        const titleEl = modal?.querySelector<HTMLElement>(
+            "#follows-modal-title",
+        );
+
+        function userRowHtml(u: UserSummary): string {
+            const href = L(`/u/${encodeURIComponent(u.username)}`);
+            return `
+                <a href="${esc(href)}" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-hover transition-colors">
+                    ${avatarHtml(u.avatar, 40, u.isVerified)}
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-sm font-semibold text-text-primary truncate">@${esc(u.username)}</span>
+                        ${u.bio ? `<span class="block text-xs text-text-muted truncate">${esc(u.bio)}</span>` : ""}
+                    </span>
+                </a>`;
+        }
+
+        async function openList(type: "followers" | "following"): Promise<void> {
+            if (!modal || !listEl || !titleEl) return;
+            titleEl.textContent =
+                type === "following"
+                    ? t("profile.followingTitle")
+                    : t("profile.followersTitle");
+            listEl.innerHTML = `<p class="py-8 text-center text-sm text-text-muted"><i class="fa-solid fa-spinner btn-spinner mr-2"></i>${esc(t("common.loading"))}</p>`;
+            openModal(modal);
+            try {
+                const res = await fetch(
+                    `/api/follow/list?username=${encodeURIComponent(username)}&type=${type}`,
+                );
+                const data = (await res.json()) as { users: UserSummary[] };
+                if (data.users.length === 0) {
+                    listEl.innerHTML = `<p class="py-8 text-center text-sm text-text-muted">${esc(type === "following" ? t("profile.noFollowing") : t("profile.noFollowers"))}</p>`;
+                    return;
+                }
+                listEl.innerHTML = data.users.map(userRowHtml).join("");
+            } catch {
+                listEl.innerHTML = `<p class="py-8 text-center text-sm text-text-muted">${esc(t("common.genericError"))}</p>`;
+            }
+        }
+
+        document
+            .querySelectorAll<HTMLElement>("[data-open-follows]")
+            .forEach((el) => {
+                el.addEventListener("click", () => {
+                    const type =
+                        el.dataset.openFollows === "following"
+                            ? "following"
+                            : "followers";
+                    void openList(type);
+                });
+            });
+
+        modal
+            ?.querySelectorAll<HTMLElement>(
+                "[data-modal-close],[data-modal-backdrop]",
+            )
+            .forEach((el) =>
+                el.addEventListener("click", () => closeModal(modal)),
+            );
+    }
+
+    document.addEventListener("astro:page-load", init);
+</script>
