@@ -152,19 +152,24 @@ const L = (p: string) => localizePath(p, locale);
     // (see renderUserSlot / renderMobileLinks); this just sets their text and
     // shows/hides them, so there's a single source of truth and nothing goes
     // stale.
+    // Toggle visibility via an inline display style rather than the `hidden`
+    // class: these placeholders also carry a `flex`/`inline-flex` utility, and
+    // because `.inline-flex` is emitted *after* `.hidden` in the generated CSS,
+    // `hidden` loses the cascade on the dropdown chips and leaves an empty red
+    // circle behind. An inline style always wins, regardless of class order.
     function applyNotifCount(count: number) {
         const label = count > 9 ? "9+" : String(count);
         document
             .querySelectorAll<HTMLElement>(".notif-badge")
             .forEach((el) => {
                 el.textContent = label;
-                el.classList.toggle("hidden", count < 1);
+                el.style.display = count < 1 ? "none" : "";
             });
         document
             .querySelectorAll<HTMLElement>("[data-notif-count]")
             .forEach((el) => {
                 el.textContent = count > 0 ? label : "";
-                el.classList.toggle("hidden", count < 1);
+                el.style.display = count < 1 ? "none" : "";
             });
     }
 
@@ -217,11 +222,11 @@ const L = (p: string) => localizePath(p, locale);
             <button type="button" class="auth-user-btn relative inline-flex items-center gap-2 ${compact ? "px-2 py-1.5" : "px-3 py-1.5"} rounded-xl text-sm font-medium text-text-primary border border-border hover:border-border-hover transition-all" aria-haspopup="true" aria-expanded="false">
                 ${avatarHtml(user.avatar, 24, user.isVerified)}
                 ${compact ? "" : `<span class="max-w-28 truncate">${escapeHtml(user.username)}</span><i class="fa-solid fa-chevron-down text-[10px] text-text-muted"></i>`}
-                <span class="notif-badge hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold flex items-center justify-center ring-2 ring-surface"></span>
+                <span class="notif-badge absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold flex items-center justify-center ring-2 ring-surface" style="display:none"></span>
             </button>
             <div class="auth-dropdown absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50" style="display:none;">
                 <a href="${L("/me")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-user w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myProfile"))}</a>
-                <a href="${L("/notifications")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bell w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.notifications"))}<span data-notif-count class="hidden ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center"></span></a>
+                <a href="${L("/notifications")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bell w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.notifications"))}<span data-notif-count class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center" style="display:none"></span></a>
                 <a href="${L("/saved")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bookmark w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
                 <a href="${L("/history")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>
                 <button type="button" class="auth-logout-btn block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.logout"))}</button>
@@ -285,7 +290,7 @@ const L = (p: string) => localizePath(p, locale);
         const L = (p: string) => localizePath(p, getClientLocale());
         mobileLinks.innerHTML = `
             <a href="${L("/me")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-user w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myProfile"))}</a>
-            <a href="${L("/notifications")}" class="flex items-center px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bell w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.notifications"))}<span data-notif-count class="hidden ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center"></span></a>
+            <a href="${L("/notifications")}" class="flex items-center px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bell w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.notifications"))}<span data-notif-count class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center" style="display:none"></span></a>
             <a href="${L("/saved")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bookmark w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
             <a href="${L("/history")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>`;
     }
