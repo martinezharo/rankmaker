@@ -147,27 +147,58 @@ const L = (p: string) => localizePath(p, locale);
         unreadNotifications?: number;
     } | null;
 
-    // Badge markup for the profile button (empty when nothing is unread).
-    function notifBadge(count: number): string {
-        if (!count || count < 1) return "";
-        return `<span class="notif-badge absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold flex items-center justify-center ring-2 ring-surface">${count > 9 ? "9+" : count}</span>`;
+    // Apply the unread count to the (persisted) header: the button badge plus
+    // the dropdown / mobile-menu chips. Placeholders always exist in the markup
+    // (see renderUserSlot / renderMobileLinks); this just sets their text and
+    // shows/hides them, so there's a single source of truth and nothing goes
+    // stale.
+    function applyNotifCount(count: number) {
+        const label = count > 9 ? "9+" : String(count);
+        document
+            .querySelectorAll<HTMLElement>(".notif-badge")
+            .forEach((el) => {
+                el.textContent = label;
+                el.classList.toggle("hidden", count < 1);
+            });
+        document
+            .querySelectorAll<HTMLElement>("[data-notif-count]")
+            .forEach((el) => {
+                el.textContent = count > 0 ? label : "";
+                el.classList.toggle("hidden", count < 1);
+            });
     }
 
-    // Fetch the session user once per page session (header persists across
-    // view transitions, but each soft navigation re-runs astro:page-load).
-    let mePromise: Promise<Me> | null = null;
-    function getMe(): Promise<Me> {
-        if (!mePromise) {
-            mePromise = fetch("/api/auth/me")
-                .then((r) => (r.ok ? r.json() : { user: null }))
-                .then((d) => d.user as Me)
-                .catch(() => {
-                    mePromise = null;
-                    return null;
-                });
-        }
-        return mePromise;
+    // The header persists for the whole SPA session, so the unread count must be
+    // re-fetched on every navigation (and whenever notifications change) rather
+    // than cached — otherwise the badge freezes at its first-load value and only
+    // a full reload fixes it. A sequence guard makes the latest request win, so
+    // a slow stale response can't clobber a fresher count (e.g. the refetch
+    // fired right after marking notifications read).
+    let meSeq = 0;
+    function refreshMe(): void {
+        const seq = ++meSeq;
+        fetch("/api/auth/me", { headers: { "cache-control": "no-cache" } })
+            .then((r) => (r.ok ? r.json() : { user: null }))
+            .then((d) => {
+                if (seq !== meSeq) return; // superseded by a newer refresh
+                const user = d.user as Me;
+                if (!user) return;
+                document
+                    .querySelectorAll<HTMLElement>(".auth-slot")
+                    .forEach((slot) => renderUserSlot(slot, user));
+                renderMobileLinks(user);
+                applyNotifCount(user.unreadNotifications ?? 0);
+            })
+            .catch(() => {
+                /* leave whatever is currently shown */
+            });
     }
+
+    // The notifications page (and any future notification action) fires this
+    // after the server state changes so the badge updates immediately, without
+    // waiting for the next navigation.
+    document.addEventListener("rm:notif-changed", refreshMe);
+
 
     function closeAllDropdowns() {
         document
@@ -182,20 +213,15 @@ const L = (p: string) => localizePath(p, locale);
         const t = clientT();
         const locale = getClientLocale();
         const L = (p: string) => localizePath(p, locale);
-        const count = user.unreadNotifications ?? 0;
-        const countChip =
-            count > 0
-                ? `<span data-notif-count class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center">${count > 9 ? "9+" : count}</span>`
-                : `<span data-notif-count class="ml-auto"></span>`;
         slot.innerHTML = `
             <button type="button" class="auth-user-btn relative inline-flex items-center gap-2 ${compact ? "px-2 py-1.5" : "px-3 py-1.5"} rounded-xl text-sm font-medium text-text-primary border border-border hover:border-border-hover transition-all" aria-haspopup="true" aria-expanded="false">
                 ${avatarHtml(user.avatar, 24, user.isVerified)}
                 ${compact ? "" : `<span class="max-w-28 truncate">${escapeHtml(user.username)}</span><i class="fa-solid fa-chevron-down text-[10px] text-text-muted"></i>`}
-                ${notifBadge(count)}
+                <span class="notif-badge hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold flex items-center justify-center ring-2 ring-surface"></span>
             </button>
             <div class="auth-dropdown absolute right-0 top-full mt-2 w-48 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50" style="display:none;">
                 <a href="${L("/me")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-user w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myProfile"))}</a>
-                <a href="${L("/notifications")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bell w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.notifications"))}${countChip}</a>
+                <a href="${L("/notifications")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bell w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.notifications"))}<span data-notif-count class="hidden ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center"></span></a>
                 <a href="${L("/saved")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bookmark w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
                 <a href="${L("/history")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>
                 <button type="button" class="auth-logout-btn block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.logout"))}</button>
@@ -246,29 +272,22 @@ const L = (p: string) => localizePath(p, locale);
             .querySelectorAll<HTMLAnchorElement>(".auth-login-link")
             .forEach((a) => (a.href = `/api/auth/login?next=${next}`));
 
-        getMe().then((user) => {
-            if (!user) return;
-            document
-                .querySelectorAll<HTMLElement>(".auth-slot")
-                .forEach((slot) => renderUserSlot(slot, user));
-            // Mobile menu: add profile/manage links once.
-            const mobileLinks = document.getElementById("mobile-auth-links");
-            if (mobileLinks && !mobileLinks.dataset.user) {
-                mobileLinks.dataset.user = user.username;
-                const t = clientT();
-                const L = (p: string) => localizePath(p, getClientLocale());
-                const count = user.unreadNotifications ?? 0;
-                const mobileChip =
-                    count > 0
-                        ? `<span data-notif-count class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center">${count > 9 ? "9+" : count}</span>`
-                        : "";
-                mobileLinks.innerHTML = `
-                    <a href="${L("/me")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-user w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myProfile"))}</a>
-                    <a href="${L("/notifications")}" class="flex items-center px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bell w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.notifications"))}${mobileChip}</a>
-                    <a href="${L("/saved")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bookmark w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
-                    <a href="${L("/history")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>`;
-            }
-        });
+        refreshMe();
+    }
+
+    // Mobile menu: profile/manage links, rendered once. The notification chip
+    // is a persistent placeholder filled by applyNotifCount.
+    function renderMobileLinks(user: NonNullable<Me>) {
+        const mobileLinks = document.getElementById("mobile-auth-links");
+        if (!mobileLinks || mobileLinks.dataset.user) return;
+        mobileLinks.dataset.user = user.username;
+        const t = clientT();
+        const L = (p: string) => localizePath(p, getClientLocale());
+        mobileLinks.innerHTML = `
+            <a href="${L("/me")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-user w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myProfile"))}</a>
+            <a href="${L("/notifications")}" class="flex items-center px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bell w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.notifications"))}<span data-notif-count class="hidden ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center"></span></a>
+            <a href="${L("/saved")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-bookmark w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
+            <a href="${L("/history")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>`;
     }
 
     // The header persists across View Transitions, so an open mobile menu or

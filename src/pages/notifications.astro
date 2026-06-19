@@ -285,22 +285,14 @@ Astro.response.headers.set("X-Robots-Tag", "noindex");
 <script>
 	import { clientT } from "../i18n/client";
 
-	// Clear the header badge (the header persists across navigations and caches
-	// /api/auth/me, so it won't refetch the now-zero count on its own).
-	function clearHeaderBadge() {
-		document
-			.querySelectorAll<HTMLElement>(".notif-badge")
-			.forEach((el) => el.remove());
-		document
-			.querySelectorAll<HTMLElement>("[data-notif-count]")
-			.forEach((el) => (el.textContent = ""));
-	}
-
-	// "Seeing" the notifications clears their pending state server-side.
+	// "Seeing" the notifications clears their pending state server-side; tell
+	// the (persisted) header to refresh its badge once that's done.
 	function markRead() {
 		if (!document.getElementById("notif-list")) return; // logged-out view
 		fetch("/api/me/notifications/read", { method: "POST" })
-			.then(() => clearHeaderBadge())
+			.then(() => {
+				document.dispatchEvent(new CustomEvent("rm:notif-changed"));
+			})
 			.catch(() => {
 				/* best-effort */
 			});
