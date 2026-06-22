@@ -5,9 +5,17 @@ interface Props {
     className?: string; // Additional classes for the container
     text: string; // Text to display in fallback
     isOption?: boolean; // If true, uses a smaller text size for options
+    priority?: boolean; // LCP image: load eagerly with high fetch priority
 }
 
-const { src, alt, className = "", text, isOption = false } = Astro.props;
+const {
+    src,
+    alt,
+    className = "",
+    text,
+    isOption = false,
+    priority = false,
+} = Astro.props;
 
 // Generate a consistent color based on the text string
 const stringToColor = (str: string) => {
@@ -39,7 +47,9 @@ const seedColor = stringToColor(text);
                 src={src}
                 alt={alt}
                 class="w-full h-full object-cover transition-opacity duration-300"
-                loading="lazy"
+                loading={priority ? "eager" : "lazy"}
+                fetchpriority={priority ? "high" : "auto"}
+                decoding={priority ? "async" : undefined}
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
             />
         ) : null

@@ -19,6 +19,8 @@ interface Props {
     image?: string | null;
     /** Ask search engines not to index this page (private/unlisted templates). */
     noindex?: boolean;
+    /** Preload this image as the LCP candidate (e.g. the template cover). */
+    preloadImage?: string | null;
 }
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -29,6 +31,7 @@ const {
     description = t("seo.defaultDescription"),
     image,
     noindex = false,
+    preloadImage,
 } = Astro.props;
 
 const SITE_URL = "https://rankmaker.net";
@@ -101,6 +104,19 @@ const ogImage = image
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImage} />
+
+        <!-- Cover images are served from jsDelivr — open the connection early. -->
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+        {
+            preloadImage && (
+                <link
+                    rel="preload"
+                    as="image"
+                    href={preloadImage}
+                    fetchpriority="high"
+                />
+            )
+        }
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />

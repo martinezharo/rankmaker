@@ -134,6 +134,7 @@ try {
     title={t("ranking.pageTitle", { title: template.title })}
     description={template.description || undefined}
     image={coverSrc}
+    preloadImage={coverSrc}
     noindex={isHidden}
 >
     {
@@ -174,6 +175,7 @@ try {
                     alt={template.title}
                     text={template.title}
                     className="w-full h-full object-cover"
+                    priority
                 />
             </div>
 
