@@ -1,7 +1,7 @@
 /**
  * Malay dictionary.
- * Keys and structure must match en.ts exactly.
- * Any key removed here falls back to English (see ../index.ts).
+ * Partial dictionary — only the keys actually translated need to be present.
+ * Any key missing here falls back to English at runtime (see ../index.ts).
  */
 import type { LocaleDict } from "../types";
 
