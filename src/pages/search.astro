@@ -411,8 +411,12 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             if (q) searchInput.value = q;
             if (cat) categorySelect.value = cat;
 
-            // Initial render
-            filterAndRender();
+            // Initial render — only when the URL carries a filter. Without one,
+            // the server-rendered grid already shows the full, correctly-ordered
+            // list, so rebuilding it client-side here is wasted work (and would
+            // needlessly replace the SSR DOM on every load). Listeners below and
+            // the rm:counts handler re-render on demand.
+            if (q || cat) filterAndRender();
 
             // Re-render once real counts arrive so results sort by them.
             // `document` survives View Transitions, so register exactly once —
