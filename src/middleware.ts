@@ -16,8 +16,8 @@ import { defaultLocale, isLocale } from './i18n/config';
 const CSP = [
 	"default-src 'self'",
 	"script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com",
-	"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
-	'font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com',
+	"style-src 'self' 'unsafe-inline'",
+	"font-src 'self'",
 	"img-src 'self' https: data:",
 	"connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://cloudflareinsights.com",
 	"frame-ancestors 'none'",

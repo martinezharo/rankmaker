@@ -38,6 +38,8 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.12",
+    "@fontsource-variable/outfit": "^5.2.8",
+    "@fortawesome/fontawesome-free": "^7.3.0",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.17.1",
     "sortablejs": "^1.15.7",

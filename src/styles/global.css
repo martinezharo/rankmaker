@@ -1,4 +1,8 @@
 @import "tailwindcss";
+/* Self-hosted Outfit (variable, weights 100–900) — replaces the render-blocking
+   Google Fonts request. Ships font-display: swap; Vite emits the woff2 files
+   from node_modules with hashed, long-cache filenames. */
+@import "@fontsource-variable/outfit";
 
 @theme {
     --color-primary: #8400FF;
@@ -14,7 +18,7 @@
     --color-text-primary: #f0f0f5;
     --color-text-secondary: #8888a0;
     --color-text-muted: #55556a;
-    --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Outfit Variable", "Outfit", ui-sans-serif, system-ui, sans-serif;
     --breakpoint-xs: 22.5rem;
 }
 
