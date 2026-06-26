@@ -1,6 +1,5 @@
 ---
 import { defaultLocale, useTranslations } from "../../i18n";
-import VoteControl from "./VoteControl.astro";
 
 interface Props {
     title: string;
@@ -172,9 +171,5 @@ const t = useTranslations(locale);
         >
             {t("ranking.tapPreferred")}
         </p>
-
-        <div class="mt-5 flex justify-center">
-            <VoteControl />
-        </div>
     </div>
 </section>
