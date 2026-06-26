@@ -17,12 +17,13 @@ pnpm test                   # Vitest unit tests (src/scripts/*.test.ts)
 pnpm test:e2e               # Playwright e2e (e2e/, drives `pnpm dev`); needs browser deps:
                             #   sudo npx playwright install-deps chromium
 
-# D1 migrations are plain SQL files run individually (no migration runner):
-pnpm run db:migrate:local   # migrations/0001_init.sql (rankings table)
-pnpm run db:migrate3:local  # migrations/0003_users_templates.sql (users/sessions/templates)
-pnpm run db:migrate4:local  # migrations/0004_template_visibility.sql (templates.visibility)
-pnpm run db:migrate5:local  # migrations/0005_ranking_history.sql (rankings.user_id + ranking_results)
-# :remote variants apply to production D1
+# D1 migrations use Wrangler's native runner (state tracked in the d1_migrations
+# table). One command applies every pending migrations/NNNN_*.sql in order — no
+# per-file script. To add one: scaffold, write the SQL, then apply.
+pnpm run db:migrate:new <name>  # scaffold migrations/NNNN_<name>.sql
+pnpm run db:migrate:list        # show pending migrations (local)
+pnpm run db:migrate:local       # apply all pending migrations to local D1
+pnpm run db:migrate:remote      # apply all pending migrations to production D1
 ```
 
 Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `SESSION_SECRET`. Production secrets are set with `wrangler secret put`.

@@ -28,7 +28,8 @@
     {
       "binding": "DB",
       "database_name": "rankmaker",
-      "database_id": "fae5241a-0498-47d3-bbc0-fff72a1cb6f6"
+      "database_id": "fae5241a-0498-47d3-bbc0-fff72a1cb6f6",
+      "migrations_dir": "migrations"
     }
   ]
 }
