@@ -30,10 +30,6 @@ pnpm-debug.log*
 # vscode settings
 .vscode/
 
-# ai agents
-.claude/
-.agents/
-
 # local scripts (root-level only — must not match src/scripts/)
 /scripts/
 
