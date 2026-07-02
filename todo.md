@@ -91,9 +91,14 @@ things that can help:
   count and the vote score aren't protected, unlike `index.astro`/
   `search.astro`. **Fixed** (all four reads wrapped; degrade to 503 / prior
   count / 0).
-- [ ] **Race condition on template creation**: `api/templates/index.ts`
+- [x] **Race condition on template creation**: `api/templates/index.ts`
   checks `MAX_TEMPLATES_PER_USER` with a `SELECT COUNT(*)` separate from the
   `INSERT`; two concurrent creations by the same user can bypass the limit.
+  **Fixed**: the template `INSERT` now re-checks the limit atomically
+  (`INSERT … SELECT … WHERE (SELECT COUNT(*) …) < ?` inside the existing
+  batch/transaction; option inserts are conditioned on the template row
+  existing) and returns 403 when `meta.changes` is 0. The `COUNT(*)`
+  pre-check is kept only as a fast path.
 - [x] **Hardcoded "VS"** in `src/components/ranking/BattleView.astro` (line
   ~130) instead of using `t("ranking.vs")` (which already exists and is used
   in the history modal). **Fixed**: badge now uses `t("ranking.vs")` with an
@@ -102,17 +107,24 @@ things that can help:
   ~184) draws `ctx.fillText('', ...)` — a leftover from a removed subtitle
   that leaves an empty ~26px gap under the title. **Fixed**: removed the dead
   draw and shrank `HEADER_H` 140→110 to close the gap (test baselines updated).
-- [ ] **Blocking `alert()`** in `notifications.astro` (~line 368) when saving
+- [x] **Blocking `alert()`** in `notifications.astro` (~line 368) when saving
   email preferences fails — inconsistent with the rest of the app, which
-  uses inline error messages.
+  uses inline error messages. **Fixed**: replaced with an inline
+  `role="status"` error under the email-pref description (announced by
+  screen readers, cleared on the next attempt); the `clientT` import is
+  gone since the message is SSR-rendered into a `data-msg` attribute.
 
 ## ⚡ Performance
 
 - [x] **N+1 in `listSavedTemplates`** (`src/lib/templates.ts` ~280-293): one
   ownership query per non-public saved template, inside a `for` loop.
   **Fixed**: ownership for all hidden slugs resolved in one `IN (...)` query.
-- [ ] **`listComments` with no limit** (`src/lib/comments.ts`): a popular
-  thread grows without bound and there's no pagination.
+- [x] **`listComments` with no limit** (`src/lib/comments.ts`): a popular
+  thread grows without bound and there's no pagination. **Fixed** (limit
+  half): a recursive CTE now fetches only the top `MAX_ROOT_THREADS` (100)
+  root threads — same order the UI displays (vote volume desc, newest) —
+  each with all its replies, so no reply is ever orphaned. Real pagination
+  + "most upvoted" sorting stays a feature idea below.
 - [x] **`dispatchNotification` sequential**: fetched the recipient's row and
   then the actor's row sequentially (`src/lib/notifications.ts` ~216-227).
   **Fixed**: both rows come from `users` in a single `IN (?, ?)` query (better
