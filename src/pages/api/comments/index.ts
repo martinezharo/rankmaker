@@ -2,7 +2,11 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
-import { getTemplateBySlug, getTemplateOwnerId } from '../../../lib/templates';
+import {
+	canAccessTemplate,
+	getTemplateBySlug,
+	getTemplateOwnerId,
+} from '../../../lib/templates';
 import {
 	createComment,
 	getComment,
@@ -29,6 +33,12 @@ export const GET: APIRoute = async (context) => {
 		if (!template) return json({ error: 'Not found' }, 404, NO_STORE);
 
 		const user = await getSessionUser(context.cookies, env.DB);
+		// Private templates: same "creator only" rule as the page — a comment
+		// thread is real content, not just metadata, so it must 404 for everyone
+		// else instead of leaking through this publicly-cached-page-adjacent API.
+		if (!canAccessTemplate(template, user?.username)) {
+			return json({ error: 'Not found' }, 404, NO_STORE);
+		}
 		const comments = await listComments(env.DB, slug, user?.id ?? null);
 
 		return json(
@@ -81,6 +91,9 @@ export const POST: APIRoute = async (context) => {
 		const slug = typeof body.slug === 'string' ? body.slug : '';
 		const template = await getTemplateBySlug(env.DB, slug);
 		if (!template) return json({ error: 'Not found' }, 404);
+		if (!canAccessTemplate(template, user.username)) {
+			return json({ error: 'Not found' }, 404);
+		}
 
 		const text = typeof body.body === 'string' ? body.body.trim() : '';
 		if (!text) return json({ error: 'Comment is empty' }, 400);

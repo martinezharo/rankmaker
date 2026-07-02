@@ -2,23 +2,12 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
-import { getOfficialTemplateBySlug } from '../../../lib/templates';
+import { canAccessTemplate, getTemplateBySlug } from '../../../lib/templates';
 import {
 	applyTemplateVote,
 	getTemplateVoteScore,
 	getUserTemplateVote,
 } from '../../../lib/template-votes';
-
-/** Does this slug map to a real template (official JSON or D1)? */
-async function templateExists(db: D1Database, slug: string): Promise<boolean> {
-	return (
-		getOfficialTemplateBySlug(slug) !== null ||
-		(await db
-			.prepare('SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE')
-			.bind(slug)
-			.first()) !== null
-	);
-}
 
 /**
  * GET `?slug=…` → `{ score, myVote, loggedIn }`. The ranking page is publicly
@@ -32,9 +21,16 @@ export const GET: APIRoute = async (context) => {
 		const { env } = context.locals.runtime;
 		if (!slug) return json({ score: 0, myVote: 0, loggedIn: false }, 200, headers);
 
-		const score = await getTemplateVoteScore(env.DB, slug);
-
 		const user = await getSessionUser(context.cookies, env.DB);
+		// Private templates are creator-only, same rule as the page and the
+		// comments API — don't leak a vote score for a template the caller
+		// isn't allowed to see.
+		const template = await getTemplateBySlug(env.DB, slug);
+		if (!template || !canAccessTemplate(template, user?.username)) {
+			return json({ score: 0, myVote: 0, loggedIn: false }, 200, headers);
+		}
+
+		const score = await getTemplateVoteScore(env.DB, slug);
 		const myVote = user
 			? await getUserTemplateVote(env.DB, user.id, slug)
 			: 0;
@@ -72,7 +68,8 @@ export const POST: APIRoute = async (context) => {
 		if (value !== 1 && value !== -1 && value !== 0) {
 			return json({ error: 'Invalid vote' }, 400);
 		}
-		if (!slug || !(await templateExists(env.DB, slug))) {
+		const template = slug ? await getTemplateBySlug(env.DB, slug) : null;
+		if (!template || !canAccessTemplate(template, user.username)) {
 			return json({ error: 'Template not found' }, 404);
 		}
 

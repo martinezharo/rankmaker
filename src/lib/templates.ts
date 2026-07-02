@@ -191,6 +191,22 @@ export async function getTemplateBySlug(
 }
 
 /**
+ * Whether `viewerUsername` may see a private template through API surfaces
+ * (comments, votes, saves). Mirrors the creator-only check the template
+ * detail page enforces on `visibility === 'private'` — unlisted templates
+ * stay reachable by anyone with the slug, same as the page.
+ */
+export function canAccessTemplate(
+    template: Pick<Template, 'source' | 'visibility' | 'creator'>,
+    viewerUsername: string | null | undefined
+): boolean {
+    if (template.source !== 'user' || template.visibility !== 'private') {
+        return true;
+    }
+    return viewerUsername != null && viewerUsername === template.creator.username;
+}
+
+/**
  * The user id that owns a template (for notifications). Official templates are
  * owned by the RANKMAKER account; user templates resolve to their creator_id.
  * Returns null when the slug doesn't exist.
