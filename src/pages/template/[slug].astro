@@ -1054,6 +1054,8 @@ try {
                     setFinalRoundUI(true);
                     const banner = document.createElement("div");
                     banner.className = "final-round-banner";
+                    banner.setAttribute("role", "status");
+                    banner.setAttribute("aria-live", "polite");
                     banner.innerHTML = `<i class="fa-solid fa-bolt"></i> ${t(count === 1 ? "ranking.suddenDeathOne" : "ranking.suddenDeath", { count })}`;
                     battleView.appendChild(banner);
                     setTimeout(() => {
