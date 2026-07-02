@@ -18,6 +18,14 @@ export const MAX_DEPTH = 3;
 export const MAX_BODY_LEN = 2000;
 export const MAX_RESULT_ITEMS = 200;
 
+/**
+ * Cap on root threads fetched per template (replies of an included root always
+ * load in full). Bounds the query on popular templates; the roots beyond the
+ * cap are exactly the ones that would render last, so nothing visible is lost
+ * until real pagination exists.
+ */
+export const MAX_ROOT_THREADS = 100;
+
 export type RankedItem = { id: number | string; name: string; image: string };
 
 export type CommentAuthor = {

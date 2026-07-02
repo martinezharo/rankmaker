@@ -10,6 +10,7 @@ import {
 	arrangeComments,
 	MAX_BODY_LEN,
 	MAX_RESULT_ITEMS,
+	MAX_ROOT_THREADS,
 	type CommentNode,
 	type FlatComment,
 	type RankedItem,
@@ -47,10 +48,13 @@ function parseResult(raw: string | null): RankedItem[] | null {
 }
 
 /**
- * Every comment on `slug`, assembled into the render-ready pre-order list.
- * `currentUserId` (when logged in) joins in that user's vote per comment and
- * flags their own comments. Deleted comments are kept (their replies need a
- * parent) but stripped of author/body/result.
+ * The comments on `slug`, assembled into the render-ready pre-order list.
+ * Bounded: only the top MAX_ROOT_THREADS root threads (in display order —
+ * total vote volume desc, then newest) are fetched, each with ALL its replies,
+ * so a popular thread can't grow the query without bound and no reply is ever
+ * orphaned from its parent. `currentUserId` (when logged in) joins in that
+ * user's vote per comment and flags their own comments. Deleted comments are
+ * kept (their replies need a parent) but stripped of author/body/result.
  */
 export async function listComments(
 	db: D1Database,
@@ -59,20 +63,31 @@ export async function listComments(
 ): Promise<CommentNode[]> {
 	const { results } = await db
 		.prepare(
-			`SELECT c.id, c.parent_id, c.user_id, c.body, rr.result AS result,
+			`WITH RECURSIVE roots AS (
+			   SELECT id FROM comments
+			   WHERE slug = ? AND parent_id IS NULL
+			   ORDER BY (up_votes + down_votes) DESC, created_at DESC, id ASC
+			   LIMIT ?
+			 ),
+			 thread AS (
+			   SELECT id FROM roots
+			   UNION ALL
+			   SELECT c.id FROM comments c JOIN thread t ON c.parent_id = t.id
+			 )
+			 SELECT c.id, c.parent_id, c.user_id, c.body, rr.result AS result,
 			        c.up_votes, c.down_votes, c.is_deleted, c.created_at,
 			        u.username, u.avatar, u.is_verified,
 			        v.value AS my_vote
-			 FROM comments c
+			 FROM thread
+			 JOIN comments c ON c.id = thread.id
 			 JOIN users u ON u.id = c.user_id
 			 LEFT JOIN votes v
 			   ON v.subject_type = 'comment' AND v.subject_id = c.id
 			      AND v.user_id = ?
 			 LEFT JOIN ranking_results rr
-			   ON rr.user_id = c.user_id AND rr.slug = c.slug
-			 WHERE c.slug = ?`
+			   ON rr.user_id = c.user_id AND rr.slug = c.slug`
 		)
-		.bind(currentUserId ?? '', slug)
+		.bind(slug, MAX_ROOT_THREADS, currentUserId ?? '')
 		.all<CommentRow>();
 
 	const flat: FlatComment[] = results.map((r) => {
@@ -217,7 +232,7 @@ export async function softDeleteComment(
 		.run();
 	// D1 exposes affected rows via meta.changes on most adapters; fall back to
 	// a re-check when unavailable.
-	const changes = (res as { meta?: { changes?: number } }).meta?.changes;
+	const changes = res.meta?.changes;
 	if (typeof changes === 'number') return changes > 0;
 	const row = await db
 		.prepare('SELECT is_deleted FROM comments WHERE id = ? AND user_id = ?')
