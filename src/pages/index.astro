@@ -55,9 +55,46 @@ for (const cat of categories) {
 
 // Short edge cache so the homepage isn't a D1 hit on every request.
 Astro.response.headers.set("Cache-Control", "public, max-age=60");
+
+// Site-level structured data: identifies RANKMAKER as an entity (Organization)
+// and enables the sitelinks search box (WebSite + SearchAction). Emitted only
+// on the home page — the canonical root of the site.
+const SITE_URL = "https://rankmaker.net";
+const siteJsonLd = {
+	"@context": "https://schema.org",
+	"@graph": [
+		{
+			"@type": "Organization",
+			"@id": `${SITE_URL}/#organization`,
+			name: "RANKMAKER",
+			url: SITE_URL,
+			logo: `${SITE_URL}/favicon.webp`,
+		},
+		{
+			"@type": "WebSite",
+			"@id": `${SITE_URL}/#website`,
+			name: "RANKMAKER",
+			url: SITE_URL,
+			publisher: { "@id": `${SITE_URL}/#organization` },
+			potentialAction: {
+				"@type": "SearchAction",
+				target: {
+					"@type": "EntryPoint",
+					urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+				},
+				"query-input": "required name=search_term_string",
+			},
+		},
+	],
+};
 ---
 
 <Layout title={t("home.title")}>
+	<script
+		type="application/ld+json"
+		set:html={JSON.stringify(siteJsonLd)}
+		is:inline
+	/>
 	<!-- Hero Section -->
 	<section
 		class="relative flex items-center justify-center px-4 sm:px-6 lg:px-8"
