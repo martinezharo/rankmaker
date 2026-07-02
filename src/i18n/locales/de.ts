@@ -163,6 +163,18 @@ export const de: LocaleDict = {
 		emptyTitle: 'Keine Vorlagen gefunden',
 		emptyBody: 'Passe deine Suchanfrage an oder ändere den Kategoriefilter.',
 	},
+	category: {
+		title: '{category}-Vorlagen — RANKMAKER',
+		metaDescription:
+			'Durchstöbere alle {category}-Ranking-Vorlagen auf RANKMAKER. Ranke deine Favoriten in 1v1-Duellen und teile deine Ergebnisse.',
+		heading: '{category}-Vorlagen',
+		subtitle:
+			'Alle {category}-Vorlagen auf RANKMAKER — ranke deine Favoriten in 1v1-Duellen.',
+		browseAll: 'Alle Vorlagen ansehen',
+		otherCategories: 'Weitere Kategorien',
+		notFoundTitle: 'Kategorie nicht gefunden',
+		notFoundBody: 'Diese Kategorie existiert nicht. Durchstöbere stattdessen alle Vorlagen.',
+	},
 	history: {
 		title: 'Mein Ranking-Verlauf — RANKMAKER',
 		heading: 'Mein Ranking-Verlauf',

@@ -162,6 +162,18 @@ export const ms: LocaleDict = {
 		emptyTitle: 'Tiada templat dijumpai',
 		emptyBody: 'Cuba laraskan pertanyaan carian anda atau tukar penapis kategori.',
 	},
+	category: {
+		title: 'Templat {category} — RANKMAKER',
+		metaDescription:
+			'Layari semua templat ranking {category} di RANKMAKER. Ranking kegemaran anda secara head-to-head dan kongsi keputusan anda.',
+		heading: 'Templat {category}',
+		subtitle:
+			'Semua templat {category} di RANKMAKER — ranking kegemaran anda secara head-to-head.',
+		browseAll: 'Layari semua templat',
+		otherCategories: 'Kategori lain',
+		notFoundTitle: 'Kategori tidak dijumpai',
+		notFoundBody: 'Kategori itu tidak wujud. Sebaliknya, layari semua templat.',
+	},
 	history: {
 		title: 'Sejarah ranking saya — RANKMAKER',
 		heading: 'Sejarah ranking saya',

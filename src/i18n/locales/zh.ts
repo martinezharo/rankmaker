@@ -155,6 +155,18 @@ export const zh: LocaleDict = {
 		emptyTitle: '未找到模板',
 		emptyBody: '请尝试调整搜索词或更改分类筛选。',
 	},
+	category: {
+		title: '{category}模板 — RANKMAKER',
+		metaDescription:
+			'在 RANKMAKER 上浏览所有 {category} 排名模板。通过一对一对决排出您的最爱并分享您的结果。',
+		heading: '{category}模板',
+		subtitle:
+			'RANKMAKER 上的所有 {category} 模板 — 通过一对一对决排出您的最爱。',
+		browseAll: '浏览所有模板',
+		otherCategories: '其他分类',
+		notFoundTitle: '未找到分类',
+		notFoundBody: '该分类不存在。请改为浏览所有模板。',
+	},
 	history: {
 		title: '我的排名历史 — RANKMAKER',
 		heading: '我的排名历史',

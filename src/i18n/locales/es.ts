@@ -163,6 +163,18 @@ export const es: LocaleDict = {
 		emptyTitle: 'No se encontraron plantillas',
 		emptyBody: 'Prueba a ajustar tu búsqueda o a cambiar el filtro de categoría.',
 	},
+	category: {
+		title: 'Plantillas de {category} — RANKMAKER',
+		metaDescription:
+			'Explora todas las plantillas de ranking de {category} en RANKMAKER. Clasifica tus favoritas en enfrentamientos 1 contra 1 y comparte tus resultados.',
+		heading: 'Plantillas de {category}',
+		subtitle:
+			'Todas las plantillas de {category} en RANKMAKER — clasifica tus favoritas en enfrentamientos 1 contra 1.',
+		browseAll: 'Ver todas las plantillas',
+		otherCategories: 'Otras categorías',
+		notFoundTitle: 'Categoría no encontrada',
+		notFoundBody: 'Esa categoría no existe. En su lugar, explora todas las plantillas.',
+	},
 	history: {
 		title: 'Mi historial de rankings — RANKMAKER',
 		heading: 'Mi historial de rankings',

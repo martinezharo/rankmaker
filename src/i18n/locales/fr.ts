@@ -163,6 +163,18 @@ export const fr: LocaleDict = {
 		emptyTitle: 'Aucun modèle trouvé',
 		emptyBody: 'Essayez de modifier votre recherche ou de changer le filtre de catégorie.',
 	},
+	category: {
+		title: 'Modèles de {category} — RANKMAKER',
+		metaDescription:
+			'Parcourez tous les modèles de classement de {category} sur RANKMAKER. Classez vos favoris en duels 1 contre 1 et partagez vos résultats.',
+		heading: 'Modèles de {category}',
+		subtitle:
+			'Tous les modèles de {category} sur RANKMAKER — classez vos favoris en duels 1 contre 1.',
+		browseAll: 'Voir tous les modèles',
+		otherCategories: 'Autres catégories',
+		notFoundTitle: 'Catégorie introuvable',
+		notFoundBody: 'Cette catégorie n\'existe pas. Parcourez tous les modèles à la place.',
+	},
 	history: {
 		title: 'Mon historique de classements — RANKMAKER',
 		heading: 'Mon historique de classements',
