@@ -191,6 +191,24 @@ export async function getTemplateBySlug(
 }
 
 /**
+ * Whether a slug maps to a real template (official JSON or a D1 row), without
+ * loading it. Deliberately ignores visibility: callers are write paths that
+ * only need to reject invented slugs (track, history) — anything that exposes
+ * template content must go through getTemplateBySlug + canAccessTemplate.
+ */
+export async function templateExists(
+    db: D1Database,
+    slug: string
+): Promise<boolean> {
+    if (getOfficialTemplateBySlug(slug)) return true;
+    const row = await db
+        .prepare('SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE')
+        .bind(slug)
+        .first();
+    return row !== null;
+}
+
+/**
  * Whether `viewerUsername` may see a private template through API surfaces
  * (comments, votes, saves). Mirrors the creator-only check the template
  * detail page enforces on `visibility === 'private'` — unlisted templates
@@ -434,12 +452,7 @@ export async function generateUnlistedSlug(
     const base = slugify(title).slice(0, 40).replace(/-+$/, '') || 'ranking';
     for (;;) {
         const candidate = `${base}-${randomToken()}`;
-        if (getOfficialTemplateBySlug(candidate)) continue;
-        const exists = await db
-            .prepare('SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE')
-            .bind(candidate)
-            .first();
-        if (!exists) return candidate;
+        if (!(await templateExists(db, candidate))) return candidate;
     }
 }
 

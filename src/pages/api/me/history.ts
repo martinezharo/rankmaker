@@ -2,7 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
-import { getOfficialTemplateBySlug } from '../../../lib/templates';
+import { templateExists } from '../../../lib/templates';
 
 // Bounds so a logged-in user can't bloat the row. A result is the ordered list
 // of options they ranked — typically small, but cap it defensively.
@@ -92,14 +92,9 @@ export const POST: APIRoute = async (context) => {
 		if (!slug) return json({ ok: true, skipped: true }, 200);
 
 		// Only persist results for a slug that maps to a real template.
-		const exists =
-			getOfficialTemplateBySlug(slug) !== null ||
-			(await env.DB.prepare(
-				'SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE'
-			)
-				.bind(slug)
-				.first()) !== null;
-		if (!exists) return json({ ok: true, skipped: true }, 200);
+		if (!(await templateExists(env.DB, slug))) {
+			return json({ ok: true, skipped: true }, 200);
+		}
 
 		const title = (body.title || slug).slice(0, MAX_TITLE_LEN);
 		const cover =

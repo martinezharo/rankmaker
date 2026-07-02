@@ -3,7 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser } from '../../lib/auth';
 import { slugFromUrl } from '../../lib/slug';
-import { getOfficialTemplateBySlug } from '../../lib/templates';
+import { templateExists } from '../../lib/templates';
 
 // Counts feed the public "X ranked" numbers AND the home/search ordering, so
 // this write path is abuse-sensitive: require a same-origin Origin (as every
@@ -50,14 +50,7 @@ export const POST: APIRoute = async (context) => {
                 headers: { 'Content-Type': 'application/json' },
             });
         }
-        const exists =
-            getOfficialTemplateBySlug(slug) !== null ||
-            (await env.DB.prepare(
-                'SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE'
-            )
-                .bind(slug)
-                .first()) !== null;
-        if (!exists) {
+        if (!(await templateExists(env.DB, slug))) {
             return new Response(JSON.stringify({ ok: true, skipped: true }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },

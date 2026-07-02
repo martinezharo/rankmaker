@@ -120,12 +120,15 @@ things that can help:
 
 ## 🧹 Best practices
 
-- [ ] **`templateExists` duplicated three times** (previously in `vote.ts`,
+- [x] **`templateExists` duplicated three times** (previously in `vote.ts`,
   `me/saved.ts`, and inline in `history.ts`/`track.ts`) instead of living
   once in `templates.ts` alongside `getTemplateBySlug` — any future
   visibility fix risks being applied inconsistently if it isn't
   consolidated (this commit's security fix already removes two of the three
-  copies).
+  copies). **Fixed**: `templateExists(db, slug)` now lives in
+  `src/lib/templates.ts` (with a doc note that it deliberately ignores
+  visibility — existence-only, for write paths); `history.ts`, `track.ts`
+  and `generateUnlistedSlug` all use it.
 
 ## ♿ Accessibility
 
