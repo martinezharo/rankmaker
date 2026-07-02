@@ -292,20 +292,30 @@ export async function listSavedTemplates(
         getTemplateVotes(db, true),
     ]);
 
+    // Hidden (private/unlisted) templates only show to their creator. Resolve
+    // ownership for all of them in one query rather than one round-trip per
+    // hidden slug (the previous N+1).
+    const hiddenSlugs = resolved
+        .filter((t): t is Template => t !== null && t.visibility !== 'public')
+        .map((t) => t.slug);
+    let ownedHidden = new Set<string>();
+    if (hiddenSlugs.length > 0) {
+        const placeholders = hiddenSlugs.map(() => '?').join(', ');
+        const { results } = await db
+            .prepare(
+                `SELECT slug FROM templates
+                 WHERE creator_id = ? AND slug COLLATE NOCASE IN (${placeholders})`
+            )
+            .bind(userId, ...hiddenSlugs)
+            .all<{ slug: string }>();
+        ownedHidden = new Set(results.map((r) => r.slug.toLowerCase()));
+    }
+
     const out: Template[] = [];
     for (const t of resolved) {
         if (!t) continue;
-        // Hidden (private/unlisted) templates only show to their creator.
-        if (t.visibility !== 'public') {
-            const owns =
-                (await db
-                    .prepare(
-                        `SELECT 1 FROM templates tp
-                         WHERE tp.slug = ? COLLATE NOCASE AND tp.creator_id = ?`
-                    )
-                    .bind(t.slug, userId)
-                    .first()) !== null;
-            if (!owns) continue;
+        if (t.visibility !== 'public' && !ownedHidden.has(t.slug.toLowerCase())) {
+            continue;
         }
         out.push({
             ...t,

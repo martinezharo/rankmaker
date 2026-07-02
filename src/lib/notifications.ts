@@ -212,19 +212,21 @@ export async function dispatchNotification(
 
 	if (!EMAILABLE.includes(type)) return;
 
-	// Resolve recipient contact + actor name for the email body.
-	const recipient = await db
-		.prepare(
-			'SELECT email, email_notifications FROM users WHERE id = ?'
-		)
-		.bind(recipientId)
-		.first<{ email: string | null; email_notifications: number }>();
+	// Resolve recipient contact + actor name for the email body in a single
+	// round-trip (both are rows in `users`), then split them back out.
+	const { results: userRows } = await db
+		.prepare('SELECT id, email, email_notifications, username FROM users WHERE id IN (?, ?)')
+		.bind(recipientId, actorId)
+		.all<{
+			id: string;
+			email: string | null;
+			email_notifications: number;
+			username: string;
+		}>();
+	const recipient = userRows.find((r) => r.id === recipientId);
 	if (!recipient?.email || recipient.email_notifications !== 1) return;
 
-	const actor = await db
-		.prepare('SELECT username FROM users WHERE id = ?')
-		.bind(actorId)
-		.first<{ username: string }>();
+	const actor = userRows.find((r) => r.id === actorId);
 	const actorName = actor?.username ?? 'Someone';
 
 	const promise = sendNotificationEmail(env, {
