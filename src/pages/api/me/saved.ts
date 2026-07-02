@@ -2,18 +2,11 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
-import { getOfficialTemplateBySlug, listSavedSlugs } from '../../../lib/templates';
-
-/** Does this slug map to a real template (official JSON or D1)? */
-async function templateExists(db: D1Database, slug: string): Promise<boolean> {
-	return (
-		getOfficialTemplateBySlug(slug) !== null ||
-		(await db
-			.prepare('SELECT 1 FROM templates WHERE slug = ? COLLATE NOCASE')
-			.bind(slug)
-			.first()) !== null
-	);
-}
+import {
+	canAccessTemplate,
+	getTemplateBySlug,
+	listSavedSlugs,
+} from '../../../lib/templates';
 
 /**
  * GET → `{ slugs: string[] }`, the slugs this user has saved. Drives client-side
@@ -56,7 +49,8 @@ export const POST: APIRoute = async (context) => {
 
 		const slug = typeof body.slug === 'string' ? body.slug : '';
 		const action = body.action === 'unsave' ? 'unsave' : 'save';
-		if (!slug || !(await templateExists(env.DB, slug))) {
+		const template = slug ? await getTemplateBySlug(env.DB, slug) : null;
+		if (!template || !canAccessTemplate(template, user.username)) {
 			return json({ error: 'Template not found' }, 404);
 		}
 
