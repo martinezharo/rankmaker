@@ -144,18 +144,22 @@ things that can help:
 
 ## ♿ Accessibility
 
-- [ ] **Battle progress without `aria-live`**: `#battle-progress` /
+- [x] **Battle progress without `aria-live`**: `#battle-progress` /
   `#battle-skipped-count` in `BattleView.astro` change via `textContent` on
   every comparison, but there's no `aria-live` region, so a screen reader
   user has no way of knowing a round advanced or a skip was registered —
-  exactly the most important feedback in the main flow.
-- [ ] **Unannounced "sudden death" banner**: in `[slug].astro`
+  exactly the most important feedback in the main flow. **Fixed**: both spans
+  now carry `role="status" aria-live="polite" aria-atomic="true"`.
+- [x] **Unannounced "sudden death" banner**: in `[slug].astro`
   (`enterFinalRound`, ~1022-1037) the notice that the rules are changing
   (skip is disabled) is inserted/removed from the DOM without
-  `role="status"`/`aria-live`.
-- [ ] **Undo/Skip/Finish buttons too small**: `BattleView.astro` (~47-65)
+  `role="status"`/`aria-live`. **Fixed**: the banner element now sets
+  `role="status"` and `aria-live="polite"` before being appended.
+- [x] **Undo/Skip/Finish buttons too small**: `BattleView.astro` (~47-65)
   uses `px-3 py-2 text-xs` (~32px) for the three buttons of the main
   interaction on mobile, below the ~44px recommended touch target size.
+  **Fixed**: all three now use `inline-flex items-center justify-center
+  min-h-11` (44px) alongside the existing padding.
 
 ## 🎨 UX
 
