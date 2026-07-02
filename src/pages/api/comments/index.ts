@@ -16,8 +16,15 @@ import {
 	MAX_BODY_LEN,
 } from '../../../lib/comments';
 import { dispatchNotification } from '../../../lib/notifications';
+import { withinRateLimit } from '../../../lib/rate-limit';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
+
+// Abuse guard against scripted comment spam (each one also fires a
+// notification to the recipient) — not a limit a real person typing replies
+// would ever hit.
+const COMMENT_RATE_LIMIT = 20;
+const COMMENT_RATE_WINDOW_SECONDS = 300;
 
 /**
  * GET /api/comments?slug=… — public. The full comment thread for a template
@@ -107,6 +114,17 @@ export const POST: APIRoute = async (context) => {
 				return json({ error: 'Invalid parent' }, 400);
 			}
 			parentId = body.parentId;
+		}
+
+		if (
+			!(await withinRateLimit(
+				env['rm-times-ranked'],
+				`comment:${user.id}`,
+				COMMENT_RATE_LIMIT,
+				COMMENT_RATE_WINDOW_SECONDS
+			))
+		) {
+			return json({ error: 'rate_limited' }, 429);
 		}
 
 		const id = await createComment(env.DB, {

@@ -7,11 +7,18 @@ import {
     getSessionUser,
     json,
 } from '../../../lib/auth';
+import { detachUserComments } from '../../../lib/comments';
 
 /**
- * Permanently deletes the account. The single DELETE on `users` cascades to
+ * Permanently deletes the account. The DELETE on `users` cascades to
  * sessions, templates and template_options. Anonymous `rankings` rows (keyed
  * only by slug, no user id) are intentionally kept as aggregate analytics.
+ *
+ * Comments are handled separately, first: `detachUserComments` soft-deletes
+ * this user's own comments and reassigns them to a placeholder account, so
+ * the `DELETE FROM users` below can't cascade through them — which would
+ * otherwise cascade a second time through `comments.parent_id` and delete
+ * every reply *other* users had written underneath.
  */
 export const POST: APIRoute = async (context) => {
     if (!checkOrigin(context.request)) {
@@ -36,6 +43,7 @@ export const POST: APIRoute = async (context) => {
             );
         }
 
+        await detachUserComments(db, user.id);
         await db.prepare('DELETE FROM users WHERE id = ?').bind(user.id).run();
         context.cookies.delete(SESSION_COOKIE, { path: '/' });
 
