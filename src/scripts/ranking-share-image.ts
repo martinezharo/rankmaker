@@ -20,7 +20,7 @@ const ROW_H = 100;
 const COL_GAP = 24;
 const PODIUM_IMG = 120;
 const PODIUM_H = 420;
-const HEADER_H = 140;
+const HEADER_H = 110;
 const FOOTER_H = 60;
 
 /**
@@ -178,10 +178,6 @@ export async function downloadRankingImage(
 	ctx.fillStyle = '#ffffff';
 	ctx.font = "bold 32px -apple-system, 'Segoe UI', sans-serif";
 	ctx.fillText(title, W / 2, curY + 60);
-
-	ctx.fillStyle = 'rgba(255,255,255,0.4)';
-	ctx.font = "400 14px -apple-system, 'Segoe UI', sans-serif";
-	ctx.fillText('', W / 2, curY + 86);
 	curY += HEADER_H;
 
 	// ─── Podium ───

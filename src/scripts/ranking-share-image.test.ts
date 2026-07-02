@@ -2,21 +2,21 @@ import { describe, it, expect } from 'vitest';
 import { computeCanvasHeight, truncate } from './ranking-share-image';
 
 describe('computeCanvasHeight', () => {
-	// HEADER_H(140) + PODIUM_H(420) + FOOTER_H(60) + PAD(50) = 670 baseline.
+	// HEADER_H(110) + PODIUM_H(420) + FOOTER_H(60) + PAD(50) = 640 baseline.
 	it('has no rest band for 3 or fewer items', () => {
-		expect(computeCanvasHeight(1)).toBe(670);
-		expect(computeCanvasHeight(3)).toBe(670);
+		expect(computeCanvasHeight(1)).toBe(640);
+		expect(computeCanvasHeight(3)).toBe(640);
 	});
 
 	it('adds one 2-column row band for items 4–5', () => {
 		// 1 row → ROW_H(100) + label band(60) = 160.
-		expect(computeCanvasHeight(4)).toBe(830);
-		expect(computeCanvasHeight(5)).toBe(830);
+		expect(computeCanvasHeight(4)).toBe(800);
+		expect(computeCanvasHeight(5)).toBe(800);
 	});
 
 	it('grows by a row every two extra items', () => {
 		// 6 items → 3 rest → 2 rows → 2*100 + 60 = 260.
-		expect(computeCanvasHeight(6)).toBe(930);
+		expect(computeCanvasHeight(6)).toBe(900);
 	});
 });
 
