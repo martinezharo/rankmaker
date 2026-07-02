@@ -40,15 +40,12 @@ concretas que pueden ayudar:
 - [ ] **`og:image:width` / `og:image:height`** en `Layout.astro` — a día de
   hoy faltan; sin ellas algunos crawlers de redes sociales tienen que
   descargar la imagen para calcular el tamaño antes de mostrar la tarjeta.
-- [x] **Bug de fiabilidad en `/template/[slug]`**: a diferencia de
-  `index.astro` y `search.astro`, esta página no envolvía sus lecturas a D1 en
-  try/catch — un fallo transitorio de D1 tumbaba con un 500 justo la página
-  que quieres que Google indexe. Corregido en este mismo commit (ver más
-  abajo); no es la causa del problema de indexación de hoy, pero sí un riesgo
-  de fiabilidad que juega en contra a largo plazo. *(Nota: al final se
-  priorizó el fix de seguridad de plantillas privadas como "la" mejora
-  implementada — este bug de reliability queda documentado aquí para
-  abordarlo en otra pasada.)*
+- [ ] **Bug de fiabilidad en `/template/[slug]`**: a diferencia de
+  `index.astro` y `search.astro`, esta página no envuelve sus lecturas a D1 en
+  try/catch (ver bloque de Bugs más abajo) — un fallo transitorio de D1
+  tumbaría con un 500 justo la página que quieres que Google indexe. No es la
+  causa del problema de indexación de hoy, pero sí un riesgo de fiabilidad que
+  juega en contra a largo plazo.
 - [ ] **Contenido único en plantillas de usuario**: las oficiales tienen
   descripciones largas (~290 caracteres de media); anima (o exige un mínimo
   algo mayor) a que las plantillas de usuarios también tengan descripciones
