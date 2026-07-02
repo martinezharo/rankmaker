@@ -24,6 +24,8 @@ type KVNamespace = {
 type D1Result<T = Record<string, unknown>> = {
     results: T[];
     success: boolean;
+    /** Not populated by every adapter — treat a missing value as unknown, not 0. */
+    meta?: { changes?: number };
 };
 
 type D1PreparedStatement = {

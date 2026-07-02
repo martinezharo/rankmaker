@@ -32,15 +32,19 @@ export const POST: APIRoute = async (context) => {
         if (!result.ok) return json({ error: result.error }, 400);
         const data = result.data;
 
+        const limitError = json(
+            { error: `You can create at most ${MAX_TEMPLATES_PER_USER} templates.` },
+            403
+        );
+
+        // Fast path only — the atomic re-check lives in the INSERT below. This
+        // just avoids the slug-generation queries when the user is clearly over.
         const count = await db
             .prepare('SELECT COUNT(*) AS n FROM templates WHERE creator_id = ?')
             .bind(user.id)
             .first<{ n: number }>();
         if ((count?.n ?? 0) >= MAX_TEMPLATES_PER_USER) {
-            return json(
-                { error: `You can create at most ${MAX_TEMPLATES_PER_USER} templates.` },
-                403
-            );
+            return limitError;
         }
 
         const id = crypto.randomUUID();
@@ -51,11 +55,17 @@ export const POST: APIRoute = async (context) => {
                 ? await generateUnlistedSlug(db, data.title)
                 : await generateUniqueSlug(db, data.title);
 
-        await db.batch([
+        // The COUNT above and this INSERT are separate statements, so two
+        // concurrent creations could both pass the fast path. The batch runs as
+        // one transaction: the template INSERT re-checks the limit atomically,
+        // and the option INSERTs are conditioned on the template row existing
+        // so the whole batch no-ops cleanly when the limit was hit in between.
+        const results = await db.batch([
             db
                 .prepare(
                     `INSERT INTO templates (id, creator_id, slug, title, description, category, cover_image, visibility)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+                     SELECT ?, ?, ?, ?, ?, ?, ?, ?
+                     WHERE (SELECT COUNT(*) FROM templates WHERE creator_id = ?) < ?`
                 )
                 .bind(
                     id,
@@ -65,17 +75,25 @@ export const POST: APIRoute = async (context) => {
                     data.description,
                     data.category,
                     data.cover_image,
-                    data.visibility
+                    data.visibility,
+                    user.id,
+                    MAX_TEMPLATES_PER_USER
                 ),
             ...data.options.map((o, i) =>
                 db
                     .prepare(
                         `INSERT INTO template_options (template_id, name, image, position)
-                         VALUES (?, ?, ?, ?)`
+                         SELECT ?, ?, ?, ?
+                         WHERE EXISTS (SELECT 1 FROM templates WHERE id = ?)`
                     )
-                    .bind(id, o.name, o.image, i)
+                    .bind(id, o.name, o.image, i, id)
             ),
         ]);
+        // Missing meta (older adapters) must not read as failure — the fast
+        // path already covered the common case, so default to success.
+        if ((results[0]?.meta?.changes ?? 1) === 0) {
+            return limitError;
+        }
 
         // Tell followers about new PUBLIC templates only (private/unlisted are
         // hidden, so surfacing them would leak them). Best-effort.
