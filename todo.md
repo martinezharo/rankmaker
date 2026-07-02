@@ -35,18 +35,20 @@ things that can help:
   with its own unique `<title>`/`<meta description>` would multiply the
   indexable surface with 100% legitimate content (not thin/duplicate) and
   reinforce internal linking to templates.
-- [ ] **`WebSite` + `SearchAction` and `Organization` JSON-LD** on the home
+- [x] **`WebSite` + `SearchAction` and `Organization` JSON-LD** on the home
   page — helps Google understand the site's entity and enables the
-  sitelinks search box in results. Cheap to add, zero risk.
+  sitelinks search box in results. Cheap to add, zero risk. **Added** as a
+  `@graph` (Organization + WebSite w/ SearchAction → `/search?q=`) in
+  `index.astro`.
 - [ ] **`og:image:width` / `og:image:height`** in `Layout.astro` — currently
   missing; without them some social network crawlers have to download the
   image to calculate its size before showing the card.
-- [ ] **Reliability bug in `/template/[slug]`**: unlike `index.astro` and
+- [x] **Reliability bug in `/template/[slug]`**: unlike `index.astro` and
   `search.astro`, this page doesn't wrap its D1 reads in try/catch (see the
   Bugs block below) — a transient D1 failure would bring down with a 500
-  exactly the page you want Google to index. It's not the cause of today's
-  indexing issue, but it is a reliability risk that works against you long
-  term.
+  exactly the page you want Google to index. **Fixed**: the template load now
+  degrades to 503+`Retry-After` (not a 404 that risks de-indexing), and the
+  session/count/vote-score reads each fall back gracefully.
 - [ ] **Unique content in user templates**: official templates have long
   descriptions (~290 characters on average); encourage (or enforce a
   somewhat higher minimum) so that user templates also have substantial
@@ -84,35 +86,37 @@ things that can help:
 
 ## 🐛 Bugs
 
-- [ ] **`/template/[slug].astro` missing try/catch around D1**: see the SEO
+- [x] **`/template/[slug].astro` missing try/catch around D1**: see the SEO
   note above — `getTemplateBySlug`, `getSessionUser`, the `times_ranked`
   count and the vote score aren't protected, unlike `index.astro`/
-  `search.astro`. A transient D1 failure = 500 instead of graceful
-  degradation.
+  `search.astro`. **Fixed** (all four reads wrapped; degrade to 503 / prior
+  count / 0).
 - [ ] **Race condition on template creation**: `api/templates/index.ts`
   checks `MAX_TEMPLATES_PER_USER` with a `SELECT COUNT(*)` separate from the
   `INSERT`; two concurrent creations by the same user can bypass the limit.
-- [ ] **Hardcoded "VS"** in `src/components/ranking/BattleView.astro` (line
+- [x] **Hardcoded "VS"** in `src/components/ranking/BattleView.astro` (line
   ~130) instead of using `t("ranking.vs")` (which already exists and is used
-  in the history modal) — "VS" shows up in every non-English language,
-  breaking the project's i18n rule.
-- [ ] **Ghost text in the results image**: `ranking-share-image.ts` (line
+  in the history modal). **Fixed**: badge now uses `t("ranking.vs")` with an
+  `uppercase` class so it still reads "VS" while being translatable.
+- [x] **Ghost text in the results image**: `ranking-share-image.ts` (line
   ~184) draws `ctx.fillText('', ...)` — a leftover from a removed subtitle
-  that leaves an empty ~26px gap under the title in every downloaded image.
+  that leaves an empty ~26px gap under the title. **Fixed**: removed the dead
+  draw and shrank `HEADER_H` 140→110 to close the gap (test baselines updated).
 - [ ] **Blocking `alert()`** in `notifications.astro` (~line 368) when saving
   email preferences fails — inconsistent with the rest of the app, which
   uses inline error messages.
 
 ## ⚡ Performance
 
-- [ ] **N+1 in `listSavedTemplates`** (`src/lib/templates.ts` ~280-293): one
-  ownership query per non-public saved template, inside a `for` loop,
-  instead of a single batched query (`IN (...)`).
+- [x] **N+1 in `listSavedTemplates`** (`src/lib/templates.ts` ~280-293): one
+  ownership query per non-public saved template, inside a `for` loop.
+  **Fixed**: ownership for all hidden slugs resolved in one `IN (...)` query.
 - [ ] **`listComments` with no limit** (`src/lib/comments.ts`): a popular
   thread grows without bound and there's no pagination.
-- [ ] **`dispatchNotification` sequential**: fetches the recipient's row and
-  then the actor's row sequentially (`src/lib/notifications.ts` ~216-227) —
-  a clear candidate for `Promise.all`.
+- [x] **`dispatchNotification` sequential**: fetched the recipient's row and
+  then the actor's row sequentially (`src/lib/notifications.ts` ~216-227).
+  **Fixed**: both rows come from `users` in a single `IN (?, ?)` query (better
+  than `Promise.all` — one round-trip, opt-out short-circuit preserved).
 
 ## 🧹 Best practices
 
