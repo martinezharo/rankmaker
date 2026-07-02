@@ -12,7 +12,7 @@ const L = (p: string) => localizePath(p, locale);
     transition:persist
     transition:name="site-header"
     transition:animate="none"
-    class="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-surface/80 backdrop-blur-xl"
+    class="fixed top-0 left-0 right-0 z-50 border-b border-transparent transition-colors duration-300"
 >
     <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
@@ -313,6 +313,29 @@ const L = (p: string) => localizePath(p, locale);
     document.addEventListener("astro:page-load", () => {
         applyAuthState();
         resetMenus();
+
+        // Header background: transparent at the top of the page, gains the
+        // surface/blur/border treatment once the user scrolls down. Bound once
+        // because the header is transition:persist.
+        const header = document.querySelector("header");
+        if (header && !header.dataset.scrollBound) {
+            header.dataset.scrollBound = "1";
+            const SCROLLED_CLASSES = [
+                "border-border/50",
+                "bg-surface/80",
+                "backdrop-blur-xl",
+            ];
+            const update = () => {
+                const scrolled = window.scrollY > 8;
+                header.classList.toggle("header-scrolled", scrolled);
+                SCROLLED_CLASSES.forEach((c) =>
+                    header.classList.toggle(c, scrolled),
+                );
+            };
+            update();
+            window.addEventListener("scroll", update, { passive: true });
+            window.addEventListener("resize", update);
+        }
 
         const toggle = document.getElementById("mobile-menu-toggle");
         const menu = document.getElementById("mobile-menu");
