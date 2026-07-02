@@ -141,6 +141,12 @@ Astro.response.headers.set("X-Robots-Tag", "noindex");
 							<p class="text-xs text-text-muted mt-0.5">
 								{t("notifications.emailPrefDesc")}
 							</p>
+							<p
+								id="email-pref-error"
+								role="status"
+								data-msg={t("notifications.emailPrefError")}
+								class="text-xs text-red-400 mt-1 empty:hidden"
+							/>
 						</div>
 						<button
 							id="email-pref-toggle"
@@ -283,8 +289,6 @@ Astro.response.headers.set("X-Robots-Tag", "noindex");
 </Layout>
 
 <script>
-	import { clientT } from "../i18n/client";
-
 	// "Seeing" the notifications clears their pending state server-side; tell
 	// the (persisted) header to refresh its badge once that's done.
 	function markRead() {
@@ -344,10 +348,11 @@ Astro.response.headers.set("X-Robots-Tag", "noindex");
 		if (!toggle || toggle.dataset.bound) return;
 		toggle.dataset.bound = "1";
 		const knob = toggle.querySelector<HTMLElement>("span");
-		const t = clientT();
+		const errorEl = document.getElementById("email-pref-error");
 		toggle.addEventListener("click", async () => {
 			const next = toggle.getAttribute("aria-checked") !== "true";
 			// Optimistic UI.
+			if (errorEl) errorEl.textContent = "";
 			toggle.setAttribute("aria-checked", String(next));
 			toggle.classList.toggle("bg-primary", next);
 			toggle.classList.toggle("bg-border", !next);
@@ -365,7 +370,10 @@ Astro.response.headers.set("X-Robots-Tag", "noindex");
 				toggle.classList.toggle("bg-primary", !next);
 				toggle.classList.toggle("bg-border", next);
 				knob?.classList.toggle("translate-x-5", !next);
-				alert(t("notifications.emailPrefError"));
+				// Inline error next to the toggle (role="status" announces it);
+				// setting textContent (vs. a hidden class) is what triggers the
+				// live-region announcement.
+				if (errorEl) errorEl.textContent = errorEl.dataset.msg ?? "";
 			}
 		});
 	}
