@@ -1,6 +1,7 @@
 ---
 // CategorySection.astro — 4-card grid per category
 import TemplateCard from "./TemplateCard.astro";
+import { categorySlug } from "../lib/categories";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 import type { Creator } from "../lib/templates";
@@ -46,7 +47,7 @@ const anchorId = `cat-${category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
         <div class="flex-1 h-px bg-border/50 ml-2"></div>
         <a
             href={localizePath(
-                `/search?category=${encodeURIComponent(category)}`,
+                `/category/${categorySlug(category)}`,
                 locale,
             )}
             class="text-xs font-semibold text-text-secondary hover:text-primary transition-colors whitespace-nowrap ml-2 group"

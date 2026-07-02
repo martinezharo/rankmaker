@@ -32,3 +32,27 @@ export const CATEGORY_ICONS: Record<string, string> = Object.fromEntries(
 export function categoryIcon(category: string | null | undefined): string {
     return (category && CATEGORY_ICONS[category]) || 'fa-ellipsis-h';
 }
+
+/**
+ * URL-safe slug for a category name — used for the indexable
+ * `/category/[slug]` pages (e.g. "History & Culture" → "history-culture").
+ */
+export function categorySlug(name: string): string {
+    return name
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+/** Reverse of `categorySlug`: slug → canonical category name, or null. */
+export function categoryFromSlug(slug: string): string | null {
+    for (const c of CATEGORIES) {
+        if (categorySlug(c.name) === slug) return c.name;
+    }
+    return null;
+}
+
+/** `[slug, categoryName]` pairs for sitemap / internal linking. */
+export const CATEGORY_SLUGS: { slug: string; name: string; icon: string }[] =
+    CATEGORIES.map((c) => ({ slug: categorySlug(c.name), name: c.name, icon: c.icon }));

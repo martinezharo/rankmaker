@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { getOfficialTemplates, listUserTemplates } from '../lib/templates';
+import { CATEGORY_SLUGS } from '../lib/categories';
 import { CONTENT_LOCALIZED, defaultLocale, localizePath, locales } from '../i18n';
 
 const SITE_URL = 'https://rankmaker.net';
@@ -82,6 +83,11 @@ export const GET: APIRoute = async (context) => {
         '/terms-of-use',
     ].map((path) => ({ path }));
 
+    // One indexable URL per category (`/category/[slug]`).
+    const categoryPages: SitemapEntry[] = CATEGORY_SLUGS.map((c) => ({
+        path: `/category/${c.slug}`,
+    }));
+
     // Official + user-created templates and creator profiles.
     let userTemplates: Awaited<ReturnType<typeof listUserTemplates>> = [];
     let profiles: SitemapEntry[] = [{ path: '/u/RANKMAKER' }];
@@ -106,7 +112,12 @@ export const GET: APIRoute = async (context) => {
         lastmod: toLastmod(t.updated_at ?? t.created_at),
     }));
 
-    const allPages = [...staticPages, ...templatePages, ...profiles];
+    const allPages = [
+        ...staticPages,
+        ...categoryPages,
+        ...templatePages,
+        ...profiles,
+    ];
 
     // The xhtml namespace is only needed for the per-locale hreflang alternates.
     const xhtmlNs = CONTENT_LOCALIZED ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : '';

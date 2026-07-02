@@ -20,7 +20,7 @@ Google can decide "Discovered - currently not indexed" for everything that
 isn't the home page, even if the HTML is perfect. Still, there are concrete
 things that can help:
 
-- [ ] **Actually check Google Search Console**: check the coverage report
+- [x] **Actually check Google Search Console**: check the coverage report
   ("Discovered - currently not indexed" or "Crawled - currently not
   indexed"? these are different causes). Submit the sitemap manually from
   there if that hasn't been done yet. This matters more than any code
@@ -29,7 +29,7 @@ things that can help:
   site on tool directories (Product Hunt, AlternativeTo, "web
   tools"/"quiz makers" directories), get 3-5 quality links. This is what
   has the most real impact at this stage.
-- [ ] **Indexable category pages** (`/category/[name]`, or
+- [x] **Indexable category pages** (`/category/[name]`, or
   `/search?category=x` with its own canonicalizable URL): right now
   `/search` is a single URL with client-side filtering; a page per category
   with its own unique `<title>`/`<meta description>` would multiply the

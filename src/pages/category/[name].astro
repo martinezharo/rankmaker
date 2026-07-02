@@ -1,0 +1,154 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import TemplateCard from "../../components/TemplateCard.astro";
+import {
+    CATEGORIES,
+    categoryFromSlug,
+    categoryIcon,
+    categorySlug,
+} from "../../lib/categories";
+import {
+    getOfficialTemplates,
+    listUserTemplates,
+    type Template,
+} from "../../lib/templates";
+import { getTemplateVotes } from "../../lib/template-votes";
+import { defaultLocale, localizePath, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
+
+const { name: rawSlug } = Astro.params;
+const slug = decodeURIComponent(String(rawSlug ?? ""));
+const categoryName = categoryFromSlug(slug);
+
+// Unknown category slug — 404 (don't manufacture thin pages for arbitrary text).
+if (!categoryName) {
+    return new Response(null, { status: 404 });
+}
+
+// Official (JSON) + user-created (D1) templates, filtered to this category.
+// Same official-only fallback as /search if D1 is unavailable.
+let userTemplates: Template[] = [];
+let votes: Record<string, number> = {};
+try {
+    const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
+    if (db) {
+        [userTemplates, votes] = await Promise.all([
+            listUserTemplates(db),
+            getTemplateVotes(db),
+        ]);
+    }
+} catch {
+    // official-only fallback
+}
+
+const templates = [...getOfficialTemplates(), ...userTemplates]
+    .filter((tpl) => tpl.category === categoryName)
+    .map((tpl) => ({ ...tpl, votes: votes[tpl.slug] ?? 0 }))
+    .sort((a, b) => b.times_ranked - a.times_ranked);
+
+const icon = categoryIcon(categoryName);
+const title = t("category.title", { category: t(`categories.${categoryName}`) });
+const description = t("category.metaDescription", {
+    category: t(`categories.${categoryName}`),
+});
+
+// Other categories for cross-linking (reinforces internal linking, keeps
+// link equity flowing between indexable category pages).
+const otherCategories = CATEGORIES.filter((c) => c.name !== categoryName);
+
+Astro.response.headers.set("Cache-Control", "public, max-age=60");
+---
+
+<Layout title={title} description={description}>
+    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
+        <!-- Breadcrumb / back link -->
+        <div class="mb-8">
+            <a
+                href={L("/search")}
+                class="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors"
+            >
+                <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                {t("category.browseAll")}
+            </a>
+        </div>
+
+        <!-- Page Header -->
+        <div class="flex items-center gap-4 mb-3">
+            <div
+                class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0"
+            >
+                <i class={`fa-solid ${icon} text-primary text-lg`}></i>
+            </div>
+            <h1
+                class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary"
+            >
+                {t(`categories.${categoryName}`)}
+            </h1>
+        </div>
+        <p class="text-sm text-text-secondary mb-10 max-w-2xl">
+            {t("category.subtitle", {
+                category: t(`categories.${categoryName}`),
+            })}
+        </p>
+
+        <!-- Template Grid -->
+        {
+            templates.length > 0 ? (
+                <div
+                    id="template-grid"
+                    class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+                >
+                    {templates.map((tpl) => (
+                        <TemplateCard template={tpl} />
+                    ))}
+                </div>
+            ) : (
+                <div class="text-center py-20 space-y-4">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"
+                    >
+                        <i class="fa-solid fa-inbox text-primary text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-text-primary">
+                        {t("category.notFoundTitle")}
+                    </h3>
+                    <p class="text-sm text-text-muted max-w-md mx-auto">
+                        {t("category.notFoundBody")}
+                    </p>
+                    <a
+                        href={L("/search")}
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-light text-white text-sm font-semibold transition-all"
+                    >
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        {t("category.browseAll")}
+                    </a>
+                </div>
+            )
+        }
+
+        <!-- Other categories: cross-link every indexable category page -->
+        <div class="mt-16 pt-10 border-t border-border/50">
+            <h2 class="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">
+                {t("category.otherCategories")}
+            </h2>
+            <div class="flex flex-wrap gap-2">
+                {
+                    otherCategories.map((cat) => (
+                        <a
+                            href={L(`/category/${categorySlug(cat.name)}`)}
+                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm text-text-secondary hover:text-text-primary transition-all"
+                        >
+                            <i class={`fa-solid ${cat.icon} text-[11px] text-primary/70`} />
+                            {t(`categories.${cat.name}`)}
+                        </a>
+                    ))
+                }
+            </div>
+        </div>
+    </section>
+</Layout>

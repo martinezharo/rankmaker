@@ -166,6 +166,18 @@ export const en = {
 		emptyTitle: 'No templates found',
 		emptyBody: 'Try adjusting your search query or changing the category filter.',
 	},
+	category: {
+		title: '{category} Templates — RANKMAKER',
+		metaDescription:
+			'Browse all {category} ranking templates on RANKMAKER. Rank your favorites head-to-head and share your results.',
+		heading: '{category} Templates',
+		subtitle:
+			'All {category} templates on RANKMAKER — rank your favorites head-to-head.',
+		browseAll: 'Browse all templates',
+		otherCategories: 'Other categories',
+		notFoundTitle: 'Category not found',
+		notFoundBody: "That category doesn't exist. Browse all templates instead.",
+	},
 	history: {
 		title: 'My ranking history — RANKMAKER',
 		heading: 'My ranking history',

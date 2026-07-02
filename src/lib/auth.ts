@@ -214,6 +214,7 @@ export const RESERVED_USERNAMES = [
     'templates',
     'search',
     'create',
+    'category',
     'edit',
     'me',
     'history',
