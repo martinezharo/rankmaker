@@ -22,7 +22,19 @@ const L = (p: string) => localizePath(p, locale);
 // Served on demand: official templates resolve from the bundled JSON (no D1
 // read), user templates from D1. A null body + 404 makes Astro render 404.astro.
 const db = Astro.locals.runtime.env.DB;
-const template = await getTemplateBySlug(db, Astro.params.slug as string);
+// Official templates resolve from bundled JSON (no D1). A user template needs a
+// D1 read; on a transient failure signal "try again" (503) rather than a 404 —
+// a 404 on the page we most want indexed risks it being dropped from the index.
+let template: Awaited<ReturnType<typeof getTemplateBySlug>>;
+try {
+    template = await getTemplateBySlug(db, Astro.params.slug as string);
+} catch (err) {
+    console.error("template load failed:", err);
+    return new Response(null, {
+        status: 503,
+        headers: { "Retry-After": "30" },
+    });
+}
 if (!template) {
     return new Response(null, { status: 404 });
 }
@@ -31,7 +43,14 @@ if (!template) {
 // so the slug doesn't leak. Unlisted: anyone with the (random) URL.
 const isHidden = template.source === "user" && template.visibility !== "public";
 if (template.visibility === "private") {
-    const viewer = await getSessionUser(Astro.cookies, db);
+    // Fail closed on a session-lookup blip (treat as non-creator → 404).
+    // Private pages are noindex, so this never affects search.
+    let viewer = null;
+    try {
+        viewer = await getSessionUser(Astro.cookies, db);
+    } catch (err) {
+        console.error("session lookup failed:", err);
+    }
     if (!viewer || viewer.username !== template.creator.username) {
         return new Response(null, { status: 404 });
     }
@@ -56,23 +75,34 @@ if (isHidden) {
     Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
     // /api/counts excludes hidden slugs (it would leak them), so fetch the
     // real count here server-side instead of via the client counts script.
-    const row = await db
-        .prepare("SELECT COUNT(*) AS n FROM rankings WHERE slug = ?")
-        .bind(template.slug)
-        .first<{ n: number }>();
-    template.times_ranked = row?.n ?? 0;
+    try {
+        const row = await db
+            .prepare("SELECT COUNT(*) AS n FROM rankings WHERE slug = ?")
+            .bind(template.slug)
+            .first<{ n: number }>();
+        template.times_ranked = row?.n ?? 0;
+    } catch (err) {
+        // Count is decorative — keep the existing value on a D1 blip.
+        console.error("times-ranked count failed:", err);
+    }
 }
 
 // Net up/down vote score for the read-only display. The interactive vote
 // controls (battle/results views) refresh this client-side via the
-// /api/templates/vote endpoint, since this page may be cached.
-const voteRow = await db
-    .prepare(
-        "SELECT COALESCE(SUM(value), 0) AS score FROM votes WHERE subject_type = 'template' AND subject_id = ?",
-    )
-    .bind(template.slug)
-    .first<{ score: number }>();
-const voteScore = voteRow?.score ?? 0;
+// /api/templates/vote endpoint, since this page may be cached. Decorative, so
+// a transient D1 failure degrades to 0 rather than 500-ing the whole page.
+let voteScore = 0;
+try {
+    const voteRow = await db
+        .prepare(
+            "SELECT COALESCE(SUM(value), 0) AS score FROM votes WHERE subject_type = 'template' AND subject_id = ?",
+        )
+        .bind(template.slug)
+        .first<{ score: number }>();
+    voteScore = voteRow?.score ?? 0;
+} catch (err) {
+    console.error("vote score failed:", err);
+}
 
 const icon = categoryIcon(template.category);
 // Helper to resolve image paths (strip 'public' prefix if present)
