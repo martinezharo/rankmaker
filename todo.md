@@ -66,23 +66,39 @@ things that can help:
   **Fixed in this commit** with a shared helper `canAccessTemplate()` in
   `src/lib/templates.ts`, applied in `api/comments/index.ts` (GET+POST),
   `api/templates/vote.ts` (GET+POST) and `api/me/saved.ts` (POST).
-- [ ] **Account deletion with a dangerous cascade**: `ON DELETE CASCADE` on
+- [x] **Account deletion with a dangerous cascade**: `ON DELETE CASCADE` on
   `comments.parent_id` (`migrations/0007_comments.sql`) + the `DELETE FROM
   users` in `api/auth/delete-account.ts` also deletes replies that **other
   users** wrote on the comments of the account being deleted, even though
-  `softDeleteComment` exists specifically to avoid this. Change account
-  deletion to soft-delete its comments instead of hitting the `users` table
-  directly, or drop the cascade and clean up manually.
-- [ ] **No rate limit on comments and follow/unfollow**: unlike
+  `softDeleteComment` exists specifically to avoid this. **Fixed**: added a
+  permanent "deleted user" placeholder account
+  (`migrations/0012_deleted_user_placeholder.sql`) and a new
+  `detachUserComments()` (`src/lib/comments.ts`), called before the `DELETE
+  FROM users`, which soft-deletes the departing user's own comments and
+  reassigns them to the placeholder — so the `user_id` cascade never fires
+  for their rows, and `parent_id`'s cascade (which only fires when a comment
+  row is actually deleted) never gets a chance to wipe other users' replies.
+- [x] **No rate limit on comments and follow/unfollow**: unlike
   `/api/templates/describe` (daily limit in KV), any logged-in account can
   script unlimited comment spam (with a notification to the owner) or
-  follows.
-- [ ] **Existence oracle for private slugs**: `templates/vote.ts` (before the
+  follows. **Fixed**: a shared fixed-window KV limiter
+  (`src/lib/rate-limit.ts`, same non-atomic-but-fine tradeoff as the AI daily
+  cap) is now applied to `POST /api/comments` (20 / 5 min per user) and `POST
+  /api/follow` (30 / 5 min per user), returning 429 `rate_limited` once hit.
+- [x] **Existence oracle for private slugs**: `templates/vote.ts` (before the
   fix) returned 404 only if the slug didn't exist, allowing confirmation
   that a guessed private slug *exists* even though its content is
   protected. The fix above normalizes this (404 both when it doesn't exist
   and when you don't have access), but it's worth a pass to confirm no
-  other endpoint leaks that state distinction.
+  other endpoint leaks that state distinction. **Audited**: `comments/index.ts`
+  (GET+POST), `templates/vote.ts` (GET+POST) and `me/saved.ts` (POST) all
+  gate on `getTemplateBySlug` + `canAccessTemplate` and return an identical
+  404 for "doesn't exist" and "exists but private". `track.ts` and
+  `me/history.ts` use `templateExists`, which deliberately ignores visibility
+  by design (documented in `templates.ts`) — they're write-only aggregate
+  endpoints that never expose template content, so a uniform
+  exists/doesn't-exist signal there doesn't leak the private/unlisted
+  distinction. No further change needed.
 
 ## 🐛 Bugs
 

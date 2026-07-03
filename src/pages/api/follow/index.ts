@@ -7,6 +7,12 @@ import {
 	isFollowing,
 	setFollow,
 } from '../../../lib/follows';
+import { withinRateLimit } from '../../../lib/rate-limit';
+
+// Abuse guard against scripted follow/unfollow spam — generous enough that a
+// person clicking around real profiles never notices it.
+const FOLLOW_RATE_LIMIT = 30;
+const FOLLOW_RATE_WINDOW_SECONDS = 300;
 
 /** Resolve a user id from a username (case-insensitive). */
 async function userIdByUsername(
@@ -116,6 +122,17 @@ export const POST: APIRoute = async (context) => {
 		if (!targetId) return json({ error: 'User not found' }, 404);
 		if (targetId === viewer.id) {
 			return json({ error: "You can't follow yourself" }, 400);
+		}
+
+		if (
+			!(await withinRateLimit(
+				env['rm-times-ranked'],
+				`follow:${viewer.id}`,
+				FOLLOW_RATE_LIMIT,
+				FOLLOW_RATE_WINDOW_SECONDS
+			))
+		) {
+			return json({ error: 'rate_limited' }, 429);
 		}
 
 		await setFollow(env.DB, viewer.id, targetId, follow);

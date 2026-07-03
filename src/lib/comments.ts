@@ -21,6 +21,10 @@ export type { CommentNode, RankedItem };
 
 export const VOTE_SUBJECT_COMMENT = 'comment';
 
+// Permanent placeholder account (see migrations/0012_deleted_user_placeholder.sql)
+// that absorbs a deleted user's comments — see detachUserComments below.
+export const DELETED_USER_ID = 'deleted-user';
+
 type CommentRow = {
 	id: string;
 	parent_id: string | null;
@@ -239,6 +243,34 @@ export async function softDeleteComment(
 		.bind(id, userId)
 		.first<{ is_deleted: number }>();
 	return row?.is_deleted === 1;
+}
+
+/**
+ * Detach every comment `userId` authored from their account, before that
+ * account is deleted: soft-deletes them (same effect as softDeleteComment)
+ * and reassigns ownership to the permanent "deleted user" placeholder.
+ * `comments.user_id` cascades on delete, and so does `comments.parent_id` —
+ * without this, deleting the user would hard-delete their own comment rows,
+ * which would then cascade a second time through parent_id and wipe every
+ * reply *other* users had written underneath them.
+ */
+export async function detachUserComments(
+	db: D1Database,
+	userId: string
+): Promise<void> {
+	await db.batch([
+		db
+			.prepare(
+				`UPDATE comments
+				 SET is_deleted = 1, body = '', result = NULL,
+				     updated_at = datetime('now')
+				 WHERE user_id = ? AND is_deleted = 0`
+			)
+			.bind(userId),
+		db
+			.prepare('UPDATE comments SET user_id = ? WHERE user_id = ?')
+			.bind(DELETED_USER_ID, userId),
+	]);
 }
 
 /**
