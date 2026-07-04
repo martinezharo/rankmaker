@@ -105,8 +105,8 @@ const ogImage = image
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImage} />
 
-        <!-- Cover images are served from jsDelivr — open the connection early. -->
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+        <!-- Cover images are served from R2 via img.rankmaker.net — open the connection early. -->
+        <link rel="preconnect" href="https://img.rankmaker.net" crossorigin />
         {
             preloadImage && (
                 <link
