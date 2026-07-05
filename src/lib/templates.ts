@@ -466,7 +466,7 @@ export type TemplateInput = {
     title: string;
     description: string;
     category: string;
-    cover_image: string;
+    cover_image: string | null;
     visibility: Visibility;
     options: { name: string; image: string | null }[];
 };
@@ -505,15 +505,6 @@ export function validateTemplateInput(
         return err('Pick a valid category.');
     }
 
-    const cover =
-        typeof body?.cover_image === 'string' ? body.cover_image.trim() : '';
-    if (!cover) {
-        return err('Cover image is required.');
-    }
-    if (!isHttpUrl(cover)) {
-        return err('Cover image must be a valid http(s) URL.');
-    }
-
     // Optional for older clients — missing means public (the previous behavior).
     const visibility: Visibility =
         body?.visibility === undefined || body?.visibility === ''
@@ -521,6 +512,18 @@ export function validateTemplateInput(
             : body.visibility;
     if (!VISIBILITIES.includes(visibility)) {
         return err('Pick a valid visibility.');
+    }
+
+    // A cover image is only required for public templates (including editing a
+    // template to public). Private/unlisted ones may omit it. When present it
+    // must still be a valid URL regardless of visibility.
+    const cover =
+        typeof body?.cover_image === 'string' ? body.cover_image.trim() : '';
+    if (!cover && visibility === 'public') {
+        return err('Cover image is required.');
+    }
+    if (cover && !isHttpUrl(cover)) {
+        return err('Cover image must be a valid http(s) URL.');
     }
 
     if (!Array.isArray(body?.options)) return err('Options are required.');
@@ -557,7 +560,7 @@ export function validateTemplateInput(
             title,
             description,
             category,
-            cover_image: cover,
+            cover_image: cover || null,
             visibility,
             options,
         },
