@@ -543,8 +543,11 @@ const inputClass =
                 return t("form.errDescription");
             if (!category.value) return t("form.errCategory");
             const coverVal = cover.value.trim();
-            if (!coverVal) return t("form.errCoverRequired");
-            if (!isHttpUrl(coverVal)) return t("form.errCoverUrl");
+            // Cover is only required for public templates; private/unlisted
+            // may skip it. A provided URL must still be valid, any visibility.
+            if (!coverVal && visibility.value === "public")
+                return t("form.errCoverRequired");
+            if (coverVal && !isHttpUrl(coverVal)) return t("form.errCoverUrl");
             const opts = rows();
             const named = opts.filter(
                 (r) =>
