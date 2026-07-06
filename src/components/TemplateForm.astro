@@ -539,13 +539,15 @@ const inputClass =
         // ── Submit ───────────────────────────────────────────────────
         function validate(skipDescLength = false): string | null {
             if (title.value.trim().length < 3) return t("form.errTitle");
-            if (!skipDescLength && desc.value.trim().length < 15)
+            // Description, category and cover image are only required for
+            // public templates; private/unlisted may skip them. A provided
+            // cover URL must still be valid, any visibility.
+            const isPublic = visibility.value === "public";
+            if (isPublic && !skipDescLength && desc.value.trim().length < 15)
                 return t("form.errDescription");
-            if (!category.value) return t("form.errCategory");
+            if (isPublic && !category.value) return t("form.errCategory");
             const coverVal = cover.value.trim();
-            // Cover is only required for public templates; private/unlisted
-            // may skip it. A provided URL must still be valid, any visibility.
-            if (!coverVal && visibility.value === "public")
+            if (!coverVal && isPublic)
                 return t("form.errCoverRequired");
             if (coverVal && !isHttpUrl(coverVal)) return t("form.errCoverUrl");
             const opts = rows();
@@ -747,8 +749,13 @@ const inputClass =
             // A too-short description routes to the AI modal instead of a
             // plain error — but only in create mode, where the modal exists.
             const descShort = desc.value.trim().length < 15;
+            // The AI description assist (both the "short" and "discover"
+            // modals) is only offered for public templates.
             const canAiAssist =
-                data.mode === "create" && !!aiModal && !!aiText;
+                data.mode === "create" &&
+                !!aiModal &&
+                !!aiText &&
+                visibility.value === "public";
 
             const problem = validate(descShort && canAiAssist);
             if (problem) {
@@ -796,12 +803,7 @@ const inputClass =
             }
 
             // Discoverability pitch only makes sense for public templates.
-            if (
-                data.mode === "create" &&
-                aiModal &&
-                aiText &&
-                payload.visibility === "public"
-            ) {
+            if (canAiAssist) {
                 setBusy(true);
                 if (!aiAsked) {
                     aiAsked = true;

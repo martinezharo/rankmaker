@@ -491,21 +491,9 @@ export function validateTemplateInput(
         return err('Title must be between 3 and 80 characters.');
     }
 
-    const description =
-        typeof body?.description === 'string' ? body.description.trim() : '';
-    if (description.length < 15) {
-        return err('Description is required (at least 15 characters).');
-    }
-    if (description.length > 300) {
-        return err('Description must be 300 characters or less.');
-    }
-
-    const category = typeof body?.category === 'string' ? body.category : '';
-    if (!CATEGORY_NAMES.includes(category)) {
-        return err('Pick a valid category.');
-    }
-
-    // Optional for older clients — missing means public (the previous behavior).
+    // Visibility is resolved first because description, category and cover
+    // image are only *required* for public templates. Missing means public
+    // (the previous behavior, for older clients).
     const visibility: Visibility =
         body?.visibility === undefined || body?.visibility === ''
             ? 'public'
@@ -513,13 +501,35 @@ export function validateTemplateInput(
     if (!VISIBILITIES.includes(visibility)) {
         return err('Pick a valid visibility.');
     }
+    const isPublic = visibility === 'public';
+
+    // Description: required (>= 15 chars) only for public templates;
+    // private/unlisted may omit it. The 300-char cap always applies.
+    const description =
+        typeof body?.description === 'string' ? body.description.trim() : '';
+    if (description.length > 300) {
+        return err('Description must be 300 characters or less.');
+    }
+    if (isPublic && description.length < 15) {
+        return err('Description is required (at least 15 characters).');
+    }
+
+    // Category: required only for public templates; optional for
+    // private/unlisted. When present it must be a known category.
+    const category = typeof body?.category === 'string' ? body.category : '';
+    if (category && !CATEGORY_NAMES.includes(category)) {
+        return err('Pick a valid category.');
+    }
+    if (isPublic && !category) {
+        return err('Pick a valid category.');
+    }
 
     // A cover image is only required for public templates (including editing a
     // template to public). Private/unlisted ones may omit it. When present it
     // must still be a valid URL regardless of visibility.
     const cover =
         typeof body?.cover_image === 'string' ? body.cover_image.trim() : '';
-    if (!cover && visibility === 'public') {
+    if (!cover && isPublic) {
         return err('Cover image is required.');
     }
     if (cover && !isHttpUrl(cover)) {
