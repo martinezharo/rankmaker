@@ -597,6 +597,16 @@ body {
     transition: width 0.1s ease-out, opacity 0.4s ease-out 0.1s;
 }
 
+/* ── Saved-result pre-paint guard (template pages) ─────────────────────────
+   Set on <html> by the inline script in template/[slug].astro when this
+   browser already has a saved result for the template, so the detail/START
+   view never flashes before the module lands on the results view. The module
+   removes the class once the real `hidden` classes reflect the decision. */
+html.rm-saved-result #detail-view,
+html.rm-saved-result #start-ranking-cta {
+    display: none;
+}
+
 /* Generic inline spinner for buttons doing async work (e.g. Download Image,
    the create/save template submit). */
 .btn-spinner {

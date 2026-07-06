@@ -176,6 +176,36 @@ try {
             />
         )
     }
+    <!-- Pre-paint guard: if this browser already has a saved result for this
+         template, the page lands on the results view — but that decision is
+         made by the bundled module on astro:page-load, i.e. after first paint,
+         so the cached detail-view HTML flashed for a moment. This inline
+         script re-runs on every swap, peeks at the same storage keys as
+         maybeShowSavedResult (WITHOUT consuming the one-shot sessionStorage
+         flags — the module still owns that) and hides detail view + START CTA
+         via a class on <html> (rule in global.css) before anything paints.
+         rankingInit removes the class once the real hidden classes are set. -->
+    <script is:inline data-astro-rerun define:vars={{ slug: template.slug }}>
+        (() => {
+            const root = document.documentElement;
+            root.classList.remove("rm-saved-result");
+            try {
+                const ss = (k) => JSON.parse(sessionStorage.getItem(k) || "null");
+                if (ss("rankmaker_force_fresh") === slug) return;
+                const shows = (r) => Array.isArray(r) && r.length >= 2;
+                const pending = ss("rankmaker_pending_result");
+                if (pending && pending.slug === slug && pending.result) {
+                    if (shows(pending.result)) root.classList.add("rm-saved-result");
+                    return;
+                }
+                const map = JSON.parse(localStorage.getItem("rankmaker_history") || "null");
+                const local = map && map[slug];
+                if (local && shows(local.result)) root.classList.add("rm-saved-result");
+            } catch {
+                /* storage unavailable — the module decides after paint as before */
+            }
+        })();
+    </script>
     <!-- ═══════════════════════════════════════════════════
          VIEW 1: TEMPLATE DETAIL (default)
          ═══════════════════════════════════════════════════ -->
@@ -491,23 +521,38 @@ try {
         } from "../../scripts/history";
         import { clientT } from "../../i18n/client";
 
+        // Undo the pre-paint guard set by the inline script near the top of
+        // the page (it hides detail view + START CTA before first paint when
+        // a saved result exists). Called once the real `hidden` classes
+        // reflect the landing decision — and on every early bail-out, so the
+        // guard can never strand the page with the detail view hidden.
+        const clearSavedResultGuard = () =>
+            document.documentElement.classList.remove("rm-saved-result");
+
         function rankingInit() {
             const t = clientT();
             // Read options + title from the JSON data element in the current
             // (swapped) DOM, so they can never lag behind the page on screen.
             const dataEl = document.getElementById("ranking-data");
-            if (!dataEl) return;
+            if (!dataEl) {
+                clearSavedResultGuard();
+                return;
+            }
             let rankingData;
             try {
                 rankingData = JSON.parse(dataEl.textContent);
             } catch {
+                clearSavedResultGuard();
                 return;
             }
             const items = rankingData.options;
             const templateTitle = rankingData.title;
             const templateSlug = rankingData.slug;
             const templateCover = rankingData.cover || "";
-            if (!items || items.length < 2) return;
+            if (!items || items.length < 2) {
+                clearSavedResultGuard();
+                return;
+            }
 
             // Persist a completed result: localStorage for everyone (anonymous
             // history + instant same-device recommendation filtering) and, for
@@ -1537,6 +1582,11 @@ try {
                     .catch(() => {});
             }
             maybeShowSavedResult();
+            // The synchronous part of maybeShowSavedResult has run: the real
+            // `hidden` classes now encode the landing decision, so the
+            // pre-paint guard is no longer needed (the async D1 fallback shows
+            // the detail view while in flight, same as before the guard).
+            clearSavedResultGuard();
         }
         document.addEventListener("astro:page-load", rankingInit);
     </script>
