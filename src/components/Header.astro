@@ -147,6 +147,31 @@ const L = (p: string) => localizePath(p, locale);
         unreadNotifications?: number;
     } | null;
 
+    // Last-known signed-in user, cached so the header can paint the user chip
+    // immediately on load instead of flashing the "Login" button while
+    // /api/auth/me round-trips (pages are publicly cached, so the server HTML
+    // is always the signed-out variant). refreshMe() reconciles afterwards.
+    const ME_CACHE_KEY = "rm:me";
+    function readCachedMe(): Me {
+        try {
+            const raw = localStorage.getItem(ME_CACHE_KEY);
+            const parsed = raw ? (JSON.parse(raw) as Me) : null;
+            return parsed && typeof parsed.username === "string"
+                ? parsed
+                : null;
+        } catch {
+            return null;
+        }
+    }
+    function cacheMe(user: Me) {
+        try {
+            if (user) localStorage.setItem(ME_CACHE_KEY, JSON.stringify(user));
+            else localStorage.removeItem(ME_CACHE_KEY);
+        } catch {
+            /* storage unavailable — optimistic paint just won't happen */
+        }
+    }
+
     // Apply the unread count to the (persisted) header: the button badge plus
     // the dropdown / mobile-menu chips. Placeholders always exist in the markup
     // (see renderUserSlot / renderMobileLinks); this just sets their text and
@@ -187,7 +212,17 @@ const L = (p: string) => localizePath(p, locale);
             .then((d) => {
                 if (seq !== meSeq) return; // superseded by a newer refresh
                 const user = d.user as Me;
-                if (!user) return;
+                cacheMe(user);
+                if (!user) {
+                    // Session gone (expired / logged out elsewhere) — undo any
+                    // optimistic paint and restore the server login markup.
+                    document
+                        .querySelectorAll<HTMLElement>(".auth-slot")
+                        .forEach(renderLoginSlot);
+                    clearMobileLinks();
+                    applyNotifCount(0);
+                    return;
+                }
                 document
                     .querySelectorAll<HTMLElement>(".auth-slot")
                     .forEach((slot) => renderUserSlot(slot, user));
@@ -209,6 +244,34 @@ const L = (p: string) => localizePath(p, locale);
         document
             .querySelectorAll<HTMLElement>(".auth-dropdown")
             .forEach((m) => (m.style.display = "none"));
+    }
+
+    // Original server-rendered (signed-out) markup per slot, captured before
+    // any renderUserSlot overwrite so a downgrade can restore it.
+    const initialSlotHtml = new Map<string, string>();
+    document
+        .querySelectorAll<HTMLElement>(".auth-slot")
+        .forEach((slot) =>
+            initialSlotHtml.set(slot.dataset.authSlot ?? "", slot.innerHTML),
+        );
+
+    function renderLoginSlot(slot: HTMLElement) {
+        if (!slot.dataset.user) return; // already showing the login link
+        delete slot.dataset.user;
+        slot.innerHTML = initialSlotHtml.get(slot.dataset.authSlot ?? "") ?? "";
+        const next = encodeURIComponent(
+            window.location.pathname + window.location.search,
+        );
+        slot.querySelectorAll<HTMLAnchorElement>(".auth-login-link").forEach(
+            (a) => (a.href = `/api/auth/login?next=${next}`),
+        );
+    }
+
+    function clearMobileLinks() {
+        const mobileLinks = document.getElementById("mobile-auth-links");
+        if (!mobileLinks) return;
+        delete mobileLinks.dataset.user;
+        mobileLinks.innerHTML = "";
     }
 
     function renderUserSlot(slot: HTMLElement, user: NonNullable<Me>) {
@@ -249,6 +312,7 @@ const L = (p: string) => localizePath(p, locale);
                 } catch {
                     /* ignore */
                 }
+                cacheMe(null);
                 window.location.href = localizePath("/", getClientLocale());
             },
         );
@@ -308,6 +372,18 @@ const L = (p: string) => localizePath(p, locale);
         if (iconOpen) iconOpen.style.display = "";
         if (iconClose) iconClose.style.display = "none";
         toggle?.setAttribute("aria-expanded", "false");
+    }
+
+    // Optimistic first paint: show the cached user chip right away so signed-in
+    // users never see the "Login" flash. The refreshMe() fired by the first
+    // astro:page-load confirms (or downgrades) it against the server.
+    const cachedMe = readCachedMe();
+    if (cachedMe) {
+        document
+            .querySelectorAll<HTMLElement>(".auth-slot")
+            .forEach((slot) => renderUserSlot(slot, cachedMe));
+        renderMobileLinks(cachedMe);
+        applyNotifCount(cachedMe.unreadNotifications ?? 0);
     }
 
     document.addEventListener("astro:page-load", () => {
