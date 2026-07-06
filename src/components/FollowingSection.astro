@@ -127,6 +127,46 @@ const t = useTranslations(locale);
 			</div>`;
 	}
 
+	// Last successful response, cached so the row can paint immediately on the
+	// next visit instead of popping in after the fetch and pushing the page
+	// content down (same optimistic pattern as the header auth chip).
+	const CACHE_KEY = "rm:following-templates";
+	function readCache(): Card[] | null {
+		try {
+			const raw = localStorage.getItem(CACHE_KEY);
+			const parsed = raw ? (JSON.parse(raw) as Card[]) : null;
+			return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+		} catch {
+			return null;
+		}
+	}
+	function writeCache(templates: Card[] | null) {
+		try {
+			if (templates && templates.length > 0)
+				localStorage.setItem(CACHE_KEY, JSON.stringify(templates));
+			else localStorage.removeItem(CACHE_KEY);
+		} catch {
+			/* storage unavailable — optimistic paint just won't happen */
+		}
+	}
+
+	function renderCards(
+		section: HTMLElement,
+		grid: HTMLElement,
+		templates: Card[],
+	): void {
+		const t = clientT();
+		const locale = getClientLocale();
+		const L = (p: string) => localizePath(p, locale);
+
+		grid.innerHTML = templates.map((tpl) => cardHtml(tpl, t, L)).join("");
+		section.classList.remove("hidden");
+
+		// Wire the injected save/share buttons (idempotent).
+		initSaveButtons();
+		initShareButtons();
+	}
+
 	async function loadFollowing(): Promise<void> {
 		const section = document.querySelector<HTMLElement>(
 			"[data-following-section]",
@@ -136,26 +176,30 @@ const t = useTranslations(locale);
 		);
 		if (!section || !grid) return;
 
+		// Optimistic paint from the last-known list; the fetch below reconciles
+		// (and hides the row if the user logged out or unfollowed everyone).
+		const cached = readCache();
+		if (cached) renderCards(section, grid, cached);
+
 		try {
 			const res = await fetch("/api/me/following-templates");
-			if (!res.ok) return;
+			if (!res.ok) return; // transient server error — keep what's shown
 			const data = (await res.json()) as { templates: Card[] };
-			if (!data.templates || data.templates.length === 0) return;
+			if (!data.templates || data.templates.length === 0) {
+				// Anonymous (the API answers 200 + [] for them) or nothing to
+				// show — drop any optimistic render and forget the cache.
+				writeCache(null);
+				section.classList.add("hidden");
+				grid.innerHTML = "";
+				return;
+			}
 
-			const t = clientT();
-			const locale = getClientLocale();
-			const L = (p: string) => localizePath(p, locale);
-
-			grid.innerHTML = data.templates
-				.map((tpl) => cardHtml(tpl, t, L))
-				.join("");
-			section.classList.remove("hidden");
-
-			// Wire the injected save/share buttons (idempotent).
-			initSaveButtons();
-			initShareButtons();
+			writeCache(data.templates);
+			// Skip the re-render (and image flicker) if nothing changed.
+			if (JSON.stringify(data.templates) !== JSON.stringify(cached))
+				renderCards(section, grid, data.templates);
 		} catch {
-			/* anonymous or offline — leave the row hidden */
+			/* offline — leave whatever is currently shown */
 		}
 	}
 
