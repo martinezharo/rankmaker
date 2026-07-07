@@ -1,9 +1,12 @@
 // history.ts — client-side record of which templates this browser has played and
 // the results it produced, for anonymous users (logged-in users persist to D1).
 //
-// Two stores in localStorage:
-//   rankmaker_played  → string[] of slugs (the "played" set; written on START)
-//   rankmaker_history → Record<slug, HistoryEntry> (the saved result; on finish)
+// Three stores in localStorage:
+//   rankmaker_played   → string[] of slugs (the "played" set; written on START)
+//   rankmaker_history  → Record<slug, HistoryEntry> (the saved result; on finish)
+//   rankmaker_excluded → Record<slug, (number|string)[]> (option ids the user
+//                        removed from a template's ranking; purely client-side,
+//                        restorable from the template detail view)
 //
 // The pure helpers (add/upsert/list) are exported and unit-tested; the
 // localStorage wrappers are thin and fail-safe (storage may be unavailable or
@@ -23,6 +26,7 @@ export type HistoryEntry = {
 
 const PLAYED_KEY = 'rankmaker_played';
 const HISTORY_KEY = 'rankmaker_history';
+const EXCLUDED_KEY = 'rankmaker_excluded';
 // sessionStorage handoff: the /history "View details" button stows the picked
 // result here so the template page can open straight on the results view, even
 // cross-device (where this browser's localStorage has no copy). One-shot.
@@ -36,6 +40,7 @@ const FRESH_KEY = 'rankmaker_force_fresh';
 const MAX_PLAYED = 500;
 const MAX_HISTORY = 200;
 const MAX_RESULT_ITEMS = 200;
+const MAX_EXCLUDED_SLUGS = 200;
 
 // ── Pure helpers (unit-tested) ────────────────────────────────────────────────
 
@@ -68,6 +73,27 @@ export function historyToList(
 	map: Record<string, HistoryEntry>
 ): HistoryEntry[] {
 	return Object.values(map).sort((a, b) => b.ts - a.ts);
+}
+
+/**
+ * Upsert one template's excluded option ids into the exclusions map. An empty
+ * `ids` removes the slug's entry entirely; the map is capped by dropping the
+ * longest-standing slugs first (insertion order).
+ */
+export function upsertExcluded(
+	map: Record<string, (number | string)[]>,
+	slug: string,
+	ids: (number | string)[]
+): Record<string, (number | string)[]> {
+	const next: Record<string, (number | string)[]> = { ...map };
+	delete next[slug];
+	if (ids.length > 0) next[slug] = [...ids];
+	const keys = Object.keys(next);
+	if (keys.length <= MAX_EXCLUDED_SLUGS) return next;
+	for (const k of keys.slice(0, keys.length - MAX_EXCLUDED_SLUGS)) {
+		delete next[k];
+	}
+	return next;
 }
 
 // ── localStorage wrappers (fail-safe) ─────────────────────────────────────────
@@ -127,6 +153,23 @@ export function getLocalResult(slug: string): HistoryEntry | null {
 	if (!slug) return null;
 	const map = read<Record<string, HistoryEntry>>(HISTORY_KEY, {});
 	return map[slug] ?? null;
+}
+
+/** Option ids this browser has removed from `slug`'s ranking. */
+export function getExcludedIds(slug: string): (number | string)[] {
+	if (!slug) return [];
+	const map = read<Record<string, (number | string)[]>>(EXCLUDED_KEY, {});
+	const ids = map[slug];
+	return Array.isArray(ids) ? ids : [];
+}
+
+/** Persist the full set of removed option ids for `slug` (empty set clears it). */
+export function setExcludedIds(
+	slug: string,
+	ids: (number | string)[]
+): void {
+	if (!slug) return;
+	write(EXCLUDED_KEY, upsertExcluded(read(EXCLUDED_KEY, {}), slug, ids));
 }
 
 // ── sessionStorage handoff (one-shot) ─────────────────────────────────────────

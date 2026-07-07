@@ -7,6 +7,7 @@ import Avatar from "../../components/Avatar.astro";
 import BattleView from "../../components/ranking/BattleView.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
 import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
+import RemoveOptionModal from "../../components/ranking/RemoveOptionModal.astro";
 import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
 import RankingComments from "../../components/ranking/RankingComments.astro";
 import RecommendedTemplates from "../../components/RecommendedTemplates.astro";
@@ -399,9 +400,12 @@ try {
                     </div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {options.map((option) => (
-                            <div class="group rounded-xl bg-surface-elevated border border-border hover:border-primary/30 transition-all overflow-hidden">
+                            <div
+                                class="group relative rounded-xl bg-surface-elevated border border-border hover:border-primary/30 transition-all overflow-hidden"
+                                data-option-card={option.id}
+                            >
                                 <!-- Image -->
-                                <div class="aspect-square overflow-hidden bg-surface">
+                                <div class="option-media relative aspect-square overflow-hidden bg-surface transition-all">
                                     <SmartImage
                                         src={resolveImg(option.image)}
                                         alt={option.name}
@@ -409,9 +413,23 @@ try {
                                         isOption={true}
                                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
+                                    <span class="option-removed-badge hidden absolute inset-0 items-center justify-center bg-black/40">
+                                        <span class="px-2.5 py-1 rounded-full bg-black/70 text-white text-[10px] font-bold uppercase tracking-wider">
+                                            {t("ranking.removedBadge")}
+                                        </span>
+                                    </span>
                                 </div>
+                                <button
+                                    type="button"
+                                    data-remove-option={option.id}
+                                    data-option-name={option.name}
+                                    aria-label={t("ranking.removeOptionAria", { name: option.name })}
+                                    class="absolute top-2 right-2 z-10 w-8 h-8 rounded-lg bg-black/55 backdrop-blur-sm text-white/80 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                    <i class="fa-solid fa-trash-can text-xs" />
+                                </button>
                                 <div class="p-3">
-                                    <p class="text-sm font-medium text-text-primary text-center line-clamp-1">
+                                    <p class="option-name text-sm font-medium text-text-primary text-center line-clamp-1">
                                         {option.name}
                                     </p>
                                 </div>
@@ -461,6 +479,8 @@ try {
     <BattleView title={template.title} />
 
     <FinishEarlyModal />
+
+    <RemoveOptionModal />
 
     <!-- VIEW 3: RESULTS VIEW -->
     <ResultsView title={template.title} creator={creator} />
@@ -518,6 +538,8 @@ try {
             getLocalResult,
             consumePendingResult,
             consumeForceFresh,
+            getExcludedIds,
+            setExcludedIds,
         } from "../../scripts/history";
         import { clientT } from "../../i18n/client";
 
@@ -552,6 +574,23 @@ try {
             if (!items || items.length < 2) {
                 clearSavedResultGuard();
                 return;
+            }
+
+            // ─── Removed options (persisted per template) ────
+            // The user can exclude options they don't care about; the set lives
+            // in localStorage because this page is publicly cached (same reason
+            // the played-templates filter is client-side). Ids are compared as
+            // strings so number/string ids round-trip safely through storage.
+            let excludedIds = new Set(
+                getExcludedIds(templateSlug).map(String),
+            );
+            const activeItems = () =>
+                items.filter((it) => !excludedIds.has(String(it.id)));
+            // Stale exclusions (e.g. the template's options changed) must never
+            // leave fewer than 2 rankable options — reset rather than strand.
+            if (activeItems().length < 2) {
+                excludedIds = new Set();
+                setExcludedIds(templateSlug, []);
             }
 
             // Persist a completed result: localStorage for everyone (anonymous
@@ -637,6 +676,16 @@ try {
             const actionHistory = document.getElementById("action-history");
             const actionRankAgain =
                 document.getElementById("action-rank-again");
+            const removeModal = document.getElementById("remove-option-modal");
+            const removeBody = document.getElementById("remove-option-body");
+            const removeCancel = document.getElementById("remove-cancel-btn");
+            const removeConfirm =
+                document.getElementById("remove-confirm-btn");
+            const removeBackdrop = document.getElementById(
+                "remove-modal-backdrop",
+            );
+            const battleRemoveA = document.getElementById("battle-remove-a");
+            const battleRemoveB = document.getElementById("battle-remove-b");
 
             // ─── Merge Sort with Human Input & Transitive Inference ──
             // comparisonMap: key "idA-idB" => 1 (A wins) or -1 (B wins)
@@ -816,6 +865,16 @@ try {
                 nameB.textContent = b.name;
                 cardA.dataset.itemId = a.id;
                 cardB.dataset.itemId = b.id;
+                if (battleRemoveA)
+                    battleRemoveA.setAttribute(
+                        "aria-label",
+                        t("ranking.removeOptionAria", { name: a.name }),
+                    );
+                if (battleRemoveB)
+                    battleRemoveB.setAttribute(
+                        "aria-label",
+                        t("ranking.removeOptionAria", { name: b.name }),
+                    );
 
                 // Reset ALL animation classes (both in & out, both directions)
                 const allAnimClasses = [
@@ -894,6 +953,199 @@ try {
 
             cardA.addEventListener("click", () => handlePick("a"));
             cardB.addEventListener("click", () => handlePick("b"));
+            // The cards are role=button divs (a real <button> can't nest the
+            // remove control), so Enter/Space must be wired up by hand. Only
+            // when the card itself has focus — not the nested remove button.
+            const cardKeydown = (side) => (e) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handlePick(side);
+                }
+            };
+            cardA.addEventListener("keydown", cardKeydown("a"));
+            cardB.addEventListener("keydown", cardKeydown("b"));
+
+            // ─── Remove options from this ranking ────────────
+            // Both entry points (detail-grid buttons and the buttons over the
+            // battle cards) funnel into the same confirm modal. Removing
+            // mid-battle reuses the Undo machinery: cancel the pending
+            // comparison and restart the sort — transitive inference replays
+            // every answered duel, so the user continues where they were,
+            // minus the battles involving the removed option.
+            let pendingRemove = null; // item awaiting modal confirmation
+
+            function requestRemove(item) {
+                if (!item || activeItems().length <= 2) return;
+                pendingRemove = item;
+                removeBody.textContent = t("ranking.removeModalBody", {
+                    name: item.name,
+                });
+                openModal(removeModal, { focus: removeCancel });
+            }
+
+            removeCancel.addEventListener("click", () => {
+                pendingRemove = null;
+                closeModal(removeModal);
+            });
+            removeBackdrop.addEventListener("click", () => {
+                pendingRemove = null;
+                closeModal(removeModal);
+            });
+            removeConfirm.addEventListener("click", () => {
+                closeModal(removeModal);
+                const item = pendingRemove;
+                pendingRemove = null;
+                if (item) excludeOption(item.id);
+            });
+
+            function excludeOption(id) {
+                excludedIds.add(String(id));
+                setExcludedIds(templateSlug, [...excludedIds]);
+                // Drop deferred duels involving the removed option so they can
+                // never resurface in the forced final round.
+                for (const key of Object.keys(skipped)) {
+                    const [a, b] = key.split("-");
+                    if (a === String(id) || b === String(id))
+                        delete skipped[key];
+                }
+                // Removal is deliberately not undoable via the battle Undo
+                // button: restoring a snapshot could resurrect skipped pairs
+                // for the removed option. Restore lives in the detail grid.
+                undoStack = [];
+                undoBtn.disabled = true;
+                refreshOptionCards();
+                refreshRemoveButtons();
+                if (!battleView.classList.contains("hidden")) {
+                    savedShuffleOrder = savedShuffleOrder.filter(
+                        (it) => String(it.id) !== String(id),
+                    );
+                    const n = savedShuffleOrder.length;
+                    totalEstimate = Math.ceil(n * Math.log2(n) - n + 1);
+                    updateProgress();
+                    // Same pattern as Undo: cancel + re-run, fast-forwarding
+                    // through everything already answered.
+                    sortResolve = null;
+                    restartSort();
+                }
+            }
+
+            function restoreOption(id) {
+                excludedIds.delete(String(id));
+                setExcludedIds(templateSlug, [...excludedIds]);
+                refreshOptionCards();
+                refreshRemoveButtons();
+            }
+
+            // Reflect the exclusion set on the detail-grid cards: dim + badge
+            // the removed ones and flip their button into a restore control.
+            function refreshOptionCards() {
+                document
+                    .querySelectorAll("[data-option-card]")
+                    .forEach((card) => {
+                        const excluded = excludedIds.has(
+                            String(card.dataset.optionCard),
+                        );
+                        const media = card.querySelector(".option-media");
+                        const badge = card.querySelector(
+                            ".option-removed-badge",
+                        );
+                        const name = card.querySelector(".option-name");
+                        const btn = card.querySelector("[data-remove-option]");
+                        if (media) {
+                            media.classList.toggle("grayscale", excluded);
+                            media.classList.toggle("opacity-40", excluded);
+                        }
+                        if (badge) {
+                            badge.classList.toggle("hidden", !excluded);
+                            badge.classList.toggle("flex", excluded);
+                        }
+                        if (name) name.classList.toggle("opacity-50", excluded);
+                        if (btn) {
+                            const icon = btn.querySelector("i");
+                            if (icon)
+                                icon.className = excluded
+                                    ? "fa-solid fa-rotate-left text-xs"
+                                    : "fa-solid fa-trash-can text-xs";
+                            btn.classList.toggle("hover:bg-red-500", !excluded);
+                            btn.classList.toggle(
+                                "hover:bg-emerald-500",
+                                excluded,
+                            );
+                            btn.setAttribute(
+                                "aria-label",
+                                t(
+                                    excluded
+                                        ? "ranking.restoreOptionAria"
+                                        : "ranking.removeOptionAria",
+                                    { name: btn.dataset.optionName || "" },
+                                ),
+                            );
+                        }
+                    });
+            }
+
+            // A ranking needs at least 2 options: at the floor, disable every
+            // remove control (restore stays available on excluded cards).
+            function refreshRemoveButtons() {
+                const atMin = activeItems().length <= 2;
+                document
+                    .querySelectorAll("[data-remove-option]")
+                    .forEach((btn) => {
+                        const excluded = excludedIds.has(
+                            String(btn.dataset.removeOption),
+                        );
+                        btn.disabled = atMin && !excluded;
+                        btn.title = btn.disabled
+                            ? t("ranking.removeMinNotice")
+                            : "";
+                    });
+                [battleRemoveA, battleRemoveB].forEach((btn) => {
+                    if (!btn) return;
+                    btn.disabled = atMin;
+                    btn.title = atMin ? t("ranking.removeMinNotice") : "";
+                });
+            }
+
+            document
+                .querySelectorAll("[data-remove-option]")
+                .forEach((btn) => {
+                    btn.addEventListener("click", () => {
+                        const id = btn.dataset.removeOption;
+                        if (excludedIds.has(String(id))) {
+                            restoreOption(id);
+                        } else if (activeItems().length > 2) {
+                            // From the detail grid (pre-battle) we remove
+                            // straight away — it's undoable via the restore
+                            // control on the card itself, so the confirm
+                            // modal is unnecessary noise here. The modal only
+                            // guards mid-battle removals.
+                            excludeOption(Number(id));
+                        }
+                    });
+                });
+
+            const battleRemoveHandler = (card) => (e) => {
+                // Don't let the click bubble to the card and count as a pick.
+                e.stopPropagation();
+                if (isProcessing) return;
+                requestRemove(
+                    items.find((x) => x.id === parseInt(card.dataset.itemId)),
+                );
+            };
+            if (battleRemoveA)
+                battleRemoveA.addEventListener(
+                    "click",
+                    battleRemoveHandler(cardA),
+                );
+            if (battleRemoveB)
+                battleRemoveB.addEventListener(
+                    "click",
+                    battleRemoveHandler(cardB),
+                );
+
+            refreshOptionCards();
+            refreshRemoveButtons();
 
             // ─── Skip (defer this duel) ──────────────────────
             // Resolve provisionally (keep order) WITHOUT recording, so merge sort
@@ -986,9 +1238,12 @@ try {
             });
 
             function finishEarly() {
-                // Rank based on win rate from existing comparisons
+                // Rank based on win rate from existing comparisons. Only the
+                // active options — comparisonMap entries for removed ones are
+                // skipped by the `scores[id]` guards below.
                 const scores = {};
-                items.forEach((item) => {
+                const pool = activeItems();
+                pool.forEach((item) => {
                     scores[item.id] = { wins: 0, total: 0 };
                 });
 
@@ -1014,7 +1269,7 @@ try {
                     }
                 }
 
-                const ranked = [...items].sort((a, b) => {
+                const ranked = [...pool].sort((a, b) => {
                     const aRate =
                         scores[a.id].total > 0
                             ? scores[a.id].wins / scores[a.id].total
@@ -1036,7 +1291,8 @@ try {
             let savedShuffleOrder = []; // fixed shuffle so undo replays the exact same tree
 
             async function startSort() {
-                const n = items.length;
+                const pool = activeItems();
+                const n = pool.length;
                 // Worst-case merge sort comparison count. Transitive inference
                 // almost never short-circuits a comparison on a fresh run (merge
                 // only ever pits not-yet-connected halves against each other), so
@@ -1052,7 +1308,7 @@ try {
                 undoBtn.disabled = true;
                 setFinalRoundUI(false);
                 // Shuffle once and save the order — undo restarts reuse this
-                savedShuffleOrder = [...items].sort(() => Math.random() - 0.5);
+                savedShuffleOrder = [...pool].sort(() => Math.random() - 0.5);
                 updateProgress();
                 await runSort();
             }
@@ -1486,10 +1742,14 @@ try {
                 if (reorderMode) {
                     actionReorder.click();
                 } // exit reorder mode
+                // Back to the options grid: that's where the restore controls
+                // live, so the user can re-include excluded options before a
+                // fresh ranking (battle has no restore path of its own).
                 resultsView.classList.add("hidden");
-                battleView.classList.remove("hidden");
+                battleView.classList.add("hidden");
+                detailView.classList.remove("hidden");
+                startCta.classList.remove("hidden");
                 window.scrollTo({ top: 0, behavior: "smooth" });
-                startSort();
             });
 
             // ─── Share Template ────────────────────────────

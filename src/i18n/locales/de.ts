@@ -364,6 +364,14 @@ export const de: LocaleDict = {
 		finishEarlyBody:
 			'Bist du sicher, dass du das Ranking vorzeitig beenden möchtest? Die verbleibenden Elemente werden basierend auf ihrer aktuellen Leistung eingestuft.',
 		finishNow: 'Jetzt beenden',
+		removeOptionAria: '{name} aus diesem Ranking entfernen',
+		restoreOptionAria: '{name} in dieses Ranking zurückholen',
+		removedBadge: 'Entfernt',
+		removeModalTitle: 'Diese Option entfernen?',
+		removeModalBody:
+			'„{name}" wird aus diesem Ranking ausgeschlossen. Du kannst sie später über die Optionsliste wiederherstellen.',
+		removeConfirm: 'Entfernen',
+		removeMinNotice: 'Ein Ranking braucht mindestens 2 Optionen',
 	},
 	notFound: {
 		title: 'Seite nicht gefunden — RANKMAKER',

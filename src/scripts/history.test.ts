@@ -9,6 +9,9 @@ import {
 	setForceFresh,
 	consumeForceFresh,
 	saveResult,
+	upsertExcluded,
+	getExcludedIds,
+	setExcludedIds,
 	type HistoryEntry,
 } from './history';
 
@@ -133,6 +136,53 @@ describe('sessionStorage handoff', () => {
 		setPendingResult(entry('a', 1));
 		expect(consumePendingResult('b')).toBeNull(); // mismatch → null + cleared
 		expect(consumePendingResult('a')).toBeNull(); // and gone
+	});
+});
+
+describe('upsertExcluded', () => {
+	it('sets and replaces a slug\'s excluded ids', () => {
+		let map = upsertExcluded({}, 'a', [1, 2]);
+		expect(map).toEqual({ a: [1, 2] });
+		map = upsertExcluded(map, 'a', [3]);
+		expect(map).toEqual({ a: [3] });
+	});
+
+	it('removes the entry when ids is empty', () => {
+		const map = upsertExcluded({ a: [1], b: [2] }, 'a', []);
+		expect(map).toEqual({ b: [2] });
+	});
+
+	it('caps the map by dropping the longest-standing slugs', () => {
+		let map: Record<string, (number | string)[]> = {};
+		for (let i = 0; i < 205; i++) {
+			map = upsertExcluded(map, `s${i}`, [1]);
+		}
+		expect(Object.keys(map).length).toBe(200);
+		expect(map['s0']).toBeUndefined();
+		expect(map['s204']).toEqual([1]);
+	});
+
+	it('does not mutate the input map', () => {
+		const orig = { a: [1] };
+		upsertExcluded(orig, 'a', [2]);
+		expect(orig).toEqual({ a: [1] });
+	});
+});
+
+describe('excluded ids storage', () => {
+	beforeEach(() => {
+		globalThis.localStorage = memStorage();
+	});
+
+	it('round-trips ids per slug and clears on empty', () => {
+		expect(getExcludedIds('a')).toEqual([]);
+		setExcludedIds('a', [1, 'x']);
+		setExcludedIds('b', [2]);
+		expect(getExcludedIds('a')).toEqual([1, 'x']);
+		expect(getExcludedIds('b')).toEqual([2]);
+		setExcludedIds('a', []);
+		expect(getExcludedIds('a')).toEqual([]);
+		expect(getExcludedIds('b')).toEqual([2]);
 	});
 });
 

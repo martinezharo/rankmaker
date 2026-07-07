@@ -348,6 +348,13 @@ export const zh: LocaleDict = {
 		finishEarlyTitle: '提前结束排名？',
 		finishEarlyBody: '确定要提前结束排名吗？剩余项目将根据当前表现进行排序。',
 		finishNow: '立即结束',
+		removeOptionAria: '将 {name} 从此排名中移除',
+		restoreOptionAria: '将 {name} 恢复到此排名',
+		removedBadge: '已移除',
+		removeModalTitle: '移除此选项？',
+		removeModalBody: '"{name}"将不会出现在此排名中。你可以稍后从选项列表中恢复它。',
+		removeConfirm: '移除',
+		removeMinNotice: '排名至少需要 2 个选项',
 	},
 	notFound: {
 		title: '页面未找到 — RANKMAKER',

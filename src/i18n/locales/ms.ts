@@ -363,6 +363,14 @@ export const ms: LocaleDict = {
 		finishEarlyBody:
 			'Adakah anda pasti mahu menyelesaikan ranking lebih awal? Item yang tinggal akan diranking berdasarkan prestasi semasa mereka.',
 		finishNow: 'Selesai Sekarang',
+		removeOptionAria: 'Keluarkan {name} daripada ranking ini',
+		restoreOptionAria: 'Pulihkan {name} ke ranking ini',
+		removedBadge: 'Dikeluarkan',
+		removeModalTitle: 'Keluarkan pilihan ini?',
+		removeModalBody:
+			'"{name}" akan dikecualikan daripada ranking ini. Anda boleh memulihkannya kemudian daripada senarai pilihan.',
+		removeConfirm: 'Keluarkan',
+		removeMinNotice: 'Ranking memerlukan sekurang-kurangnya 2 pilihan',
 	},
 	notFound: {
 		title: 'Halaman tidak dijumpai — RANKMAKER',

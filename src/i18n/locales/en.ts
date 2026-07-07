@@ -375,6 +375,15 @@ export const en = {
 		finishEarlyBody:
 			'Are you sure you want to finish ranking early? The remaining items will be ranked based on their current performance.',
 		finishNow: 'Finish Now',
+		// Remove-option (exclude from this ranking)
+		removeOptionAria: 'Remove {name} from this ranking',
+		restoreOptionAria: 'Restore {name} to this ranking',
+		removedBadge: 'Removed',
+		removeModalTitle: 'Remove this option?',
+		removeModalBody:
+			'"{name}" will be left out of this ranking. You can restore it later from the options list.',
+		removeConfirm: 'Remove',
+		removeMinNotice: 'A ranking needs at least 2 options',
 	},
 	notFound: {
 		title: 'Page not found — RANKMAKER',

@@ -364,6 +364,14 @@ export const es: LocaleDict = {
 		finishEarlyBody:
 			'¿Seguro que quieres terminar el ranking antes? Los elementos restantes se clasificarán según su rendimiento actual.',
 		finishNow: 'Terminar ahora',
+		removeOptionAria: 'Quitar {name} de este ranking',
+		restoreOptionAria: 'Restaurar {name} en este ranking',
+		removedBadge: 'Excluida',
+		removeModalTitle: '¿Quitar esta opción?',
+		removeModalBody:
+			'"{name}" quedará fuera de este ranking. Puedes restaurarla más tarde desde la lista de opciones.',
+		removeConfirm: 'Quitar',
+		removeMinNotice: 'Un ranking necesita al menos 2 opciones',
 	},
 	notFound: {
 		title: 'Página no encontrada — RANKMAKER',

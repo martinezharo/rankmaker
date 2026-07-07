@@ -1,0 +1,54 @@
+---
+import { defaultLocale, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+---
+
+<div
+	id="remove-option-modal"
+	class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+	role="dialog"
+	aria-modal="true"
+	aria-labelledby="remove-option-title"
+>
+	<div
+		class="absolute inset-0 bg-black/60 animate-modal-bg"
+		id="remove-modal-backdrop"
+	>
+	</div>
+	<div
+		class="relative bg-surface-elevated border border-border rounded-2xl p-6 max-w-md w-full animate-modal-content"
+	>
+		<div class="text-center space-y-4">
+			<div
+				class="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto"
+			>
+				<i class="fa-solid fa-trash-can text-red-400 text-xl"></i>
+			</div>
+			<h3
+				id="remove-option-title"
+				class="text-lg font-bold text-text-primary"
+			>
+				{t("ranking.removeModalTitle")}
+			</h3>
+			<p
+				id="remove-option-body"
+				class="text-sm text-text-secondary leading-relaxed"
+			>
+			</p>
+			<div class="flex items-center gap-3 pt-2">
+				<button
+					id="remove-cancel-btn"
+					class="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+					>{t("common.cancel")}</button
+				>
+				<button
+					id="remove-confirm-btn"
+					class="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-400 transition-colors"
+					>{t("ranking.removeConfirm")}</button
+				>
+			</div>
+		</div>
+	</div>
+</div>

@@ -93,9 +93,13 @@ const t = useTranslations(locale);
         <div
             class="w-full flex flex-col xs:flex-row items-center xs:items-stretch justify-center gap-4 xs:gap-3 sm:gap-6 relative"
         >
-            <!-- Card A -->
-            <button
+            <!-- Card A — role=button div (not <button>) so the remove control
+                 can be a real nested button; the controller adds Enter/Space
+                 keyboard handling to keep it operable like the button it was. -->
+            <div
                 id="battle-card-a"
+                role="button"
+                tabindex="0"
                 class="battle-card group flex flex-col w-full xs:w-auto xs:flex-1 xs:min-w-0 sm:flex-none sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
             >
                 <div class="relative aspect-square shrink-0 overflow-hidden bg-surface">
@@ -115,6 +119,14 @@ const t = useTranslations(locale);
                         >
                         </span>
                     </div>
+                    <button
+                        id="battle-remove-a"
+                        type="button"
+                        class="absolute top-2 right-2 z-10 w-9 h-9 rounded-lg bg-black/55 backdrop-blur-sm text-white/80 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                        aria-label={t("ranking.removeModalTitle")}
+                    >
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
                 </div>
                 <div class="flex-1 flex items-center justify-center p-3 sm:p-4 min-h-[3.5rem]">
                     <p
@@ -123,7 +135,7 @@ const t = useTranslations(locale);
                     >
                     </p>
                 </div>
-            </button>
+            </div>
 
             <!-- VS Badge -->
             <div
@@ -139,9 +151,11 @@ const t = useTranslations(locale);
                 </div>
             </div>
 
-            <!-- Card B -->
-            <button
+            <!-- Card B — same role=button pattern as Card A -->
+            <div
                 id="battle-card-b"
+                role="button"
+                tabindex="0"
                 class="battle-card group flex flex-col w-full xs:w-auto xs:flex-1 xs:min-w-0 sm:flex-none sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
             >
                 <div class="relative aspect-square shrink-0 overflow-hidden bg-surface">
@@ -161,6 +175,14 @@ const t = useTranslations(locale);
                         >
                         </span>
                     </div>
+                    <button
+                        id="battle-remove-b"
+                        type="button"
+                        class="absolute top-2 right-2 z-10 w-9 h-9 rounded-lg bg-black/55 backdrop-blur-sm text-white/80 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                        aria-label={t("ranking.removeModalTitle")}
+                    >
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
                 </div>
                 <div class="flex-1 flex items-center justify-center p-3 sm:p-4 min-h-[3.5rem]">
                     <p
@@ -169,7 +191,7 @@ const t = useTranslations(locale);
                     >
                     </p>
                 </div>
-            </button>
+            </div>
         </div>
 
         <p
