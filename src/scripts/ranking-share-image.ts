@@ -19,7 +19,7 @@ const PAD = 50;
 const ROW_H = 100;
 const COL_GAP = 24;
 const PODIUM_IMG = 120;
-const PODIUM_H = 420;
+const PODIUM_H = 460;
 const HEADER_H = 110;
 const FOOTER_H = 60;
 
@@ -257,7 +257,7 @@ export async function downloadRankingImage(
 			ctx.fillStyle = '#FBBF24';
 			ctx.font = 'bold 26px -apple-system, sans-serif';
 			ctx.textAlign = 'center';
-			ctx.fillText('👑', x + w / 2, imgY + 2);
+			ctx.fillText('👑', x + w / 2, imgY + crownH - 22);
 		}
 
 		// Image
