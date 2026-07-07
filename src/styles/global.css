@@ -607,6 +607,16 @@ html.rm-saved-result #start-ranking-cta {
     display: none;
 }
 
+/* ── Signed-in pre-paint guard (homepage hero) ─────────────────────────────
+   The homepage is publicly edge-cached, so its HTML is always the signed-out
+   variant. An inline script in index.astro sets this class on <html> from the
+   last-known auth cache (`rm:me`) before first paint, and the header's
+   /api/auth/me reconciliation keeps it in sync afterwards. The hero pitch is
+   for visitors — signed-in users go straight to the content. */
+html.rm-authed #home-hero {
+    display: none;
+}
+
 /* Generic inline spinner for buttons doing async work (e.g. Download Image,
    the create/save template submit). */
 .btn-spinner {

@@ -115,11 +115,17 @@ export const ms: LocaleDict = {
 		feature4: 'Bina profil yang mempamerkan templat anda',
 	},
 	home: {
-		title: 'RANKMAKER — Ranking Benda-benda Anda',
-		heroHeadline: 'ranking benda-benda anda.',
+		title: 'RANKMAKER — Ranking Apa Sahaja dengan Pertarungan 1v1',
+		metaDescription:
+			'Bina ranking yang boleh dipercayai melalui pertarungan satu lawan satu yang pantas. Ranking filem, permainan, muzik dan banyak lagi — cipta templat sendiri atau main beratus-ratus daripada komuniti. Percuma, tanpa pendaftaran.',
+		heroEyebrow: 'Pencipta ranking satu lawan satu',
+		heroHeadline1: 'Ranking apa sahaja.',
+		heroHeadline2: 'Satu pertarungan pada satu masa.',
 		heroSubtitle:
-			'Tiada peringkat. Tiada gangguan. RANKMAKER membolehkan anda membina ranking tepat melalui pertarungan 1v1 yang pantas dan tegas. Pilih templat dan cari tahu apa yang sebenarnya menang.',
+			'Lupakan tier list yang bercelaru. RANKMAKER menukarkan mana-mana senarai kepada pertarungan 1v1 yang pantas — anda pilih pemenang, kami bina ranking muktamad anda. Filem, permainan, makanan, muzik: jika boleh disenaraikan, boleh diranking.',
+		createTemplate: 'Cipta templat',
 		exploreTemplates: 'Jelajahi Templat',
+		demoTitle: 'Saga Filem',
 		followingHeading: 'Diikuti',
 		emptyTitle: 'Tiada templat lagi',
 		emptyBody:

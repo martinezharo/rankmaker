@@ -116,11 +116,18 @@ export const es: LocaleDict = {
 		feature4: 'Crea un perfil que muestre tus plantillas',
 	},
 	home: {
-		title: 'RANKMAKER — Clasifica tus favoritos',
-		heroHeadline: 'clasifica tus favoritos.',
+		title: 'RANKMAKER — Clasifica lo que sea con batallas 1v1',
+		metaDescription:
+			'Crea rankings fiables mediante rápidas batallas uno contra uno. Clasifica películas, juegos, música y mucho más: crea tu propia plantilla o juega con cientos creadas por la comunidad. Gratis y sin registro.',
+		heroEyebrow: 'El creador de rankings uno contra uno',
+		heroHeadline1: 'Clasifica lo que quieras.',
+		heroHeadline2: 'Batalla a batalla.',
 		heroSubtitle:
-			'Sin niveles. Sin ruido. RANKMAKER te permite crear rankings precisos mediante batallas 1 contra 1 rápidas y decisivas. Elige una plantilla y descubre qué queda en lo más alto.',
+			'Olvídate de las tier lists caóticas. RANKMAKER convierte cualquier lista en rápidas batallas 1 contra 1: tú eliges al ganador y nosotros construimos tu ranking definitivo. Películas, juegos, comida, música… si puedes listarlo, puedes clasificarlo.',
+		createTemplate: 'Crear una plantilla',
 		exploreTemplates: 'Explorar plantillas',
+		demoTitle: 'Sagas de cine',
+		demoLotr: 'El Señor de los Anillos',
 		followingHeading: 'Siguiendo',
 		emptyTitle: 'Aún no hay plantillas',
 		emptyBody:

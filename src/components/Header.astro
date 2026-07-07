@@ -213,6 +213,9 @@ const L = (p: string) => localizePath(p, locale);
                 if (seq !== meSeq) return; // superseded by a newer refresh
                 const user = d.user as Me;
                 cacheMe(user);
+                // Keep the signed-in root class (auth-dependent CSS, e.g. the
+                // homepage hero) in sync with the confirmed session state.
+                document.documentElement.classList.toggle("rm-authed", !!user);
                 if (!user) {
                     // Session gone (expired / logged out elsewhere) — undo any
                     // optimistic paint and restore the server login markup.

@@ -116,11 +116,18 @@ export const de: LocaleDict = {
 		feature4: 'Erstelle ein Profil, das deine Vorlagen präsentiert',
 	},
 	home: {
-		title: 'RANKMAKER — Rank deine Sachen',
-		heroHeadline: 'rank deine sachen.',
+		title: 'RANKMAKER — Ranke alles mit schnellen 1v1-Duellen',
+		metaDescription:
+			'Erstelle verlässliche Rankings durch schnelle 1-gegen-1-Duelle. Ranke Filme, Spiele, Musik und mehr — erstelle deine eigene Vorlage oder spiele hunderte aus der Community. Kostenlos, ohne Anmeldung.',
+		heroEyebrow: 'Der 1-gegen-1-Ranking-Maker',
+		heroHeadline1: 'Ranke einfach alles.',
+		heroHeadline2: 'Ein Duell nach dem anderen.',
 		heroSubtitle:
-			'Keine Stufen. Kein Lärm. RANKMAKER ermöglicht dir, präzise Rankings durch schnelle, entschlossene 1v1-Duelle zu erstellen. Wähle eine Vorlage und finde heraus, was wirklich oben landet.',
+			'Vergiss chaotische Tier-Lists. RANKMAKER verwandelt jede Liste in schnelle 1-gegen-1-Duelle — du wählst den Gewinner, wir bauen dein endgültiges Ranking. Filme, Spiele, Essen, Musik: alles, was du auflisten kannst, kannst du ranken.',
+		createTemplate: 'Vorlage erstellen',
 		exploreTemplates: 'Vorlagen erkunden',
+		demoTitle: 'Film-Sagas',
+		demoLotr: 'Der Herr der Ringe',
 		followingHeading: 'Folge ich',
 		emptyTitle: 'Noch keine Vorlagen',
 		emptyBody:

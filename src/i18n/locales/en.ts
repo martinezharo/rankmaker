@@ -119,11 +119,21 @@ export const en = {
 		feature4: 'Build a profile showcasing your templates',
 	},
 	home: {
-		title: 'RANKMAKER — Rank Your Stuff',
-		heroHeadline: 'rank your stuff.',
+		title: 'RANKMAKER — Rank Anything with Quick 1v1 Battles',
+		metaDescription:
+			'Build rankings you can trust through quick head-to-head battles. Rank movies, games, music and more — create your own template or play hundreds made by the community. Free, no sign-up needed.',
+		heroEyebrow: 'The head-to-head ranking maker',
+		heroHeadline1: 'Rank anything.',
+		heroHeadline2: 'One battle at a time.',
 		heroSubtitle:
-			'No tiers. No noise. RANKMAKER lets you build accurate rankings through fast, decisive 1v1 battles. Pick a template and find out what really comes out on top.',
-		exploreTemplates: 'Explore Templates',
+			'Forget messy tier lists. RANKMAKER turns any list into quick 1v1 battles — you pick a winner, we build your definitive ranking. Movies, games, food, music: if you can list it, you can rank it.',
+		createTemplate: 'Create a template',
+		exploreTemplates: 'Explore templates',
+		demoTitle: 'Movie Sagas',
+		demoStarWars: 'Star Wars',
+		demoMarvel: 'Marvel',
+		demoHarryPotter: 'Harry Potter',
+		demoLotr: 'The Lord of the Rings',
 		followingHeading: 'Following',
 		emptyTitle: 'No templates yet',
 		emptyBody:

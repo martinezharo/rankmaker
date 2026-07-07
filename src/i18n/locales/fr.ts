@@ -116,11 +116,18 @@ export const fr: LocaleDict = {
 		feature4: 'Construisez un profil mettant en valeur vos modèles',
 	},
 	home: {
-		title: 'RANKMAKER — Classez vos préférences',
-		heroHeadline: 'classez vos préférences.',
+		title: 'RANKMAKER — Classez tout avec des duels 1v1',
+		metaDescription:
+			"Créez des classements fiables grâce à des duels rapides en tête-à-tête. Classez films, jeux, musique et plus encore — créez votre propre modèle ou jouez avec des centaines créés par la communauté. Gratuit, sans inscription.",
+		heroEyebrow: 'Le créateur de classements en duel',
+		heroHeadline1: 'Classez tout.',
+		heroHeadline2: 'Un duel à la fois.',
 		heroSubtitle:
-			'Pas de niveaux. Pas de bruit. RANKMAKER vous permet de créer des classements précis grâce à des duels 1 contre 1 rapides et décisifs. Choisissez un modèle et découvrez ce qui arrive en tête.',
+			"Oubliez les tier lists brouillonnes. RANKMAKER transforme n'importe quelle liste en duels rapides en un contre un : vous choisissez le gagnant, nous construisons votre classement définitif. Films, jeux, cuisine, musique : si vous pouvez le lister, vous pouvez le classer.",
+		createTemplate: 'Créer un modèle',
 		exploreTemplates: 'Explorer les modèles',
+		demoTitle: 'Sagas de cinéma',
+		demoLotr: 'Le Seigneur des Anneaux',
 		followingHeading: 'Abonnements',
 		emptyTitle: "Aucun modèle pour l'instant",
 		emptyBody:
