@@ -104,15 +104,25 @@ export async function downloadRankingImage(
 	ctx.fillRect(0, 0, W, H / 2);
 
 	// ─── Helpers (close over ctx) ───
-	function loadImg(src: string | null): Promise<HTMLImageElement | null> {
+	function tryLoad(src: string): Promise<HTMLImageElement | null> {
 		return new Promise((resolve) => {
-			if (!src) return resolve(null);
 			const img = new Image();
 			img.crossOrigin = 'anonymous';
 			img.onload = () => resolve(img);
 			img.onerror = () => resolve(null);
 			img.src = src;
 		});
+	}
+
+	async function loadImg(src: string | null): Promise<HTMLImageElement | null> {
+		if (!src) return null;
+		const img = await tryLoad(src);
+		if (img) return img;
+		// The page's plain <img> tags cache these images without CORS headers
+		// (the no-Origin response carries no Vary: Origin), so this crossOrigin
+		// request can be served a cached copy missing Access-Control-Allow-Origin
+		// and fail. Re-request past the HTTP cache so the CORS header arrives.
+		return tryLoad(src + (src.includes('?') ? '&' : '?') + 'cors=1');
 	}
 
 	function roundRect(x: number, y: number, w: number, h: number, r: number) {
