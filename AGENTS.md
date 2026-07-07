@@ -26,20 +26,24 @@ pnpm run db:migrate:local       # apply all pending migrations to local D1
 pnpm run db:migrate:remote      # apply all pending migrations to production D1
 ```
 
-Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `SESSION_SECRET`. Production secrets are set with `wrangler secret put`.
+Local secrets live in `.dev.vars` (gitignored): `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `SESSION_SECRET`, `OPENAI_API_KEY` (image moderation; optional locally — uploads skip moderation with a warning when unset). Production secrets are set with `wrangler secret put`.
 
 ## Architecture
 
 **Rendering model:** `astro.config.mjs` sets `output: 'static'`, but most pages and all API routes opt into SSR with `export const prerender = false`. Anything touching D1/KV/sessions must be SSR; purely static pages (about, legal) are prerendered. The Vite watcher ignores `.wrangler/**` — miniflare writes SQLite journals there on every query and watching them causes an infinite reload loop in dev.
 
 **Cloudflare bindings** (`wrangler.jsonc`, typed by hand in `src/env.d.ts`, accessed as `Astro.locals.runtime.env` / `locals.runtime.env`):
-- `DB` — D1: users, sessions, templates, template_options, rankings
-- `rm-times-ranked` — KV: raw "Start Ranking" event log (written by `/api/track`)
+- `DB` — D1: users, sessions, templates, template_options, rankings, images
+- `rm-times-ranked` — KV: raw "Start Ranking" event log (written by `/api/track`); also daily rate-limit counters
 - `AI` — Workers AI, used only by `/api/templates/describe`
+- `IMAGES_BUCKET` — R2: the img.rankmaker.net bucket (official assets under `covers/`/`options/`, user uploads under `u/{userId}/`)
+- `IMAGES` — Cloudflare Images binding: server-side WebP re-encode of uploads
 
 **Two template sources, one shape.** Official templates live in `src/data/templates.json`; user-created templates live in D1. `src/lib/templates.ts` normalizes both into a single `Template` type (`source: 'official' | 'user'`) so pages treat them identically. Slug lookups check JSON first, then D1; `generateUniqueSlug` deduplicates across both sources. Shared input validation for create/update (`validateTemplateInput`) also lives here — keep server-side limits (option counts, lengths) in sync with any frontend form changes.
 
 **Template visibility** (`templates.visibility`: `public` | `private` | `unlisted`; officials are always public). List queries (`listUserTemplates`, `listTemplatesByUserId`, the sitemap) return public templates only — `/me` passes `includeHidden`. Private pages 404 for anyone but the creator; unlisted pages are reachable by URL only: the slug is random (`generateUnlistedSlug`), the page is `noindex` (meta + `X-Robots-Tag`) and `no-store`. Switching a template TO unlisted regenerates its slug (the old one was public knowledge) and moves its `rankings` rows. **Don't leak hidden slugs through public endpoints** — that's why `getCounts` excludes them by default.
+
+**Template images are upload-only** (`src/lib/images.ts` + `POST /api/images`): the form uploads files, never URLs. Pipeline: client pre-compress (canvas WebP, untrusted) → auth + origin check + daily KV rate limit → magic-byte sniff → **server re-encode to WebP via the `IMAGES` binding** (client bytes are never stored; strips EXIF/payloads, caps dimensions per kind cover/option) → **moderation with OpenAI `omni-moderation-latest`** (free endpoint; per-category thresholds in `MODERATION_THRESHOLDS`, fail-closed on API errors, skipped when `OPENAI_API_KEY` unset) → R2 put under `u/{userId}/{uuid}.webp` + D1 `images` ownership row. `validateTemplateInput` only accepts uploaded-image URLs (plus the template's already-stored URLs on edit, grandfathering the external-link era); create/update verify key ownership and claim rows (`images.template_id`), edits/deletes remove no-longer-referenced objects from R2, and abandoned uploads (unclaimed > 1 day) are lazily cleaned per-user on the next upload — there is no cron (the Astro adapter owns the worker entry). Prod URLs point at img.rankmaker.net (direct R2, edge-cached); in dev `imagePublicBase()` falls back to the `GET /api/images/[...key]` passthrough so local-miniflare uploads render.
 
 **Times-ranked counts** are NOT the KV log: display counts come from `SELECT slug, COUNT(*) FROM rankings GROUP BY slug` in D1 via `src/lib/counts.ts` (shared by `/api/counts` and the SSR homepage). User templates are mapped with `times_ranked: 0` and pages merge real counts in.
 

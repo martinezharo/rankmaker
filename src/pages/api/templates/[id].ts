@@ -12,6 +12,14 @@ import {
     generateUnlistedSlug,
     validateTemplateInput,
 } from '../../../lib/templates';
+import {
+    claimImages,
+    collectImageKeys,
+    deleteTemplateImages,
+    deleteUnusedTemplateImages,
+    imagePublicBase,
+    verifyImageOwnership,
+} from '../../../lib/images';
 
 type Owned = { id: string; slug: string; visibility: string };
 
@@ -81,9 +89,35 @@ export const PUT: APIRoute = async (context) => {
         } catch {
             return json({ error: 'Invalid JSON' }, 400);
         }
-        const result = validateTemplateInput(body);
+
+        // URLs the template already stores stay valid on edit — templates
+        // created in the external-link era keep working without re-uploads.
+        const existing = await db
+            .prepare(
+                `SELECT cover_image AS url FROM templates WHERE id = ?
+                 UNION SELECT image FROM template_options WHERE template_id = ?`
+            )
+            .bind(owned.id, owned.id)
+            .all<{ url: string | null }>();
+        const allowedUrls = new Set(
+            existing.results.map((r) => r.url).filter((u): u is string => !!u)
+        );
+
+        const { env } = context.locals.runtime;
+        const imageBase = imagePublicBase(env);
+        const result = validateTemplateInput(body, {
+            base: imageBase,
+            allowedUrls,
+        });
         if (!result.ok) return json({ error: result.error }, 400);
         const data = result.data;
+
+        // Any referenced upload must belong to this user (rows claimed by
+        // this template still carry their user_id, so they pass too).
+        const imageKeys = collectImageKeys(data, imageBase);
+        if (!(await verifyImageOwnership(db, imageKeys, auth.user.id))) {
+            return json({ error: 'Invalid image.' }, 400);
+        }
 
         const becameUnlisted =
             data.visibility === 'unlisted' && owned.visibility !== 'unlisted';
@@ -130,6 +164,16 @@ export const PUT: APIRoute = async (context) => {
             ),
         ]);
 
+        // Reconcile uploads: claim the ones now referenced, delete (R2 +
+        // row) the ones this template no longer uses.
+        await claimImages(db, imageKeys, owned.id, auth.user.id);
+        await deleteUnusedTemplateImages(
+            db,
+            env.IMAGES_BUCKET,
+            owned.id,
+            imageKeys
+        );
+
         return json({ ok: true, slug });
     } catch (error) {
         console.error('Update template error:', error);
@@ -143,6 +187,14 @@ export const DELETE: APIRoute = async (context) => {
         const auth = await authorize(context);
         if (!auth.ok) return auth.response;
         const { db, owned } = auth;
+
+        // Uploaded images go with the template (before the row DELETE — its
+        // FK sets images.template_id to NULL, which would orphan them).
+        await deleteTemplateImages(
+            db,
+            context.locals.runtime.env.IMAGES_BUCKET,
+            owned.id
+        );
 
         await db
             .prepare('DELETE FROM templates WHERE id = ?')

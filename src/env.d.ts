@@ -43,6 +43,49 @@ type D1Database = {
     ): Promise<D1Result<T>[]>;
 };
 
+type R2ObjectBody = {
+    body: ReadableStream<Uint8Array>;
+    httpMetadata?: { contentType?: string };
+};
+
+type R2Bucket = {
+    put(
+        key: string,
+        value: ArrayBuffer | ReadableStream<Uint8Array>,
+        options?: {
+            httpMetadata?: { contentType?: string; cacheControl?: string };
+        }
+    ): Promise<unknown>;
+    get(key: string): Promise<R2ObjectBody | null>;
+    delete(keys: string | string[]): Promise<void>;
+};
+
+/** Cloudflare Images binding — used to re-encode uploads server-side. */
+type ImageTransformationResult = {
+    contentType(): string;
+    image(): ReadableStream<Uint8Array>;
+    response(): Response;
+};
+
+type ImageTransformer = {
+    transform(options: {
+        width?: number;
+        height?: number;
+        fit?: 'scale-down' | 'contain' | 'cover' | 'crop' | 'pad';
+    }): ImageTransformer;
+    output(options: {
+        format: 'image/webp' | 'image/avif' | 'image/jpeg' | 'image/png';
+        quality?: number;
+    }): Promise<ImageTransformationResult>;
+};
+
+type ImagesBinding = {
+    input(data: ReadableStream<Uint8Array> | ArrayBuffer): ImageTransformer;
+    info(
+        data: ReadableStream<Uint8Array>
+    ): Promise<{ format: string; fileSize?: number; width?: number; height?: number }>;
+};
+
 type Ai = {
     run(
         model: string,
@@ -62,6 +105,14 @@ type Runtime = {
         'rm-times-ranked': KVNamespace;
         DB: D1Database;
         AI: Ai;
+        IMAGES: ImagesBinding;
+        IMAGES_BUCKET: R2Bucket;
+        /** OpenAI key for the (free) image moderation endpoint. When unset
+         *  (local dev), uploads skip moderation with a console warning. */
+        OPENAI_API_KEY?: string;
+        /** Public base URL for uploaded images. Defaults to
+         *  https://img.rankmaker.net in prod and /api/images in dev. */
+        IMAGES_PUBLIC_BASE?: string;
         GITHUB_CLIENT_ID: string;
         GITHUB_CLIENT_SECRET: string;
         SESSION_SECRET: string;

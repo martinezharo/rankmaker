@@ -1,7 +1,9 @@
 ---
 // TemplateForm.astro — shared create/edit form for user templates.
-// Images are URL-only by design (no uploads). Rows are rendered client-side
-// from #template-form-data so create and edit share one row markup source.
+// Images are upload-only: files go through POST /api/images (WebP re-encode
+// + moderation) and the form stores the returned URL. Rows are rendered
+// client-side from #template-form-data so create and edit share one row
+// markup source.
 import { CATEGORIES } from "../lib/categories";
 import { MAX_OPTIONS, MIN_OPTIONS, type Visibility } from "../lib/templates";
 import { defaultLocale, useTranslations } from "../i18n";
@@ -161,32 +163,61 @@ const inputClass =
         <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
             <i class="fa-solid fa-image text-primary text-xs"></i>
             {t("form.coverImage")}
-            <span class="font-normal normal-case tracking-normal text-text-muted">{t("form.coverImageByUrl")}</span>
         </h2>
 
         <input
-            id="tf-cover"
-            type="url"
-            placeholder={t("form.coverPlaceholder")}
-            class={inputClass}
-            value={initial.cover_image}
+            id="tf-cover-file"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            class="sr-only"
+            tabindex="-1"
         />
 
-        <div class="relative aspect-4/3 max-w-sm rounded-xl overflow-hidden bg-surface border border-border">
+        <div
+            id="tf-cover-box"
+            class="relative aspect-4/3 max-w-sm rounded-xl overflow-hidden bg-surface border border-border transition-colors"
+        >
             <img
                 id="tf-cover-preview"
                 alt={t("form.coverPreviewAlt")}
                 class="w-full h-full object-cover"
                 style="display:none;"
             />
-            <div
-                id="tf-cover-placeholder"
-                class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted"
+            <button
+                type="button"
+                id="tf-cover-trigger"
+                class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted hover:text-text-secondary hover:bg-white/5 transition-colors cursor-pointer"
             >
-                <i class="fa-regular fa-image text-2xl"></i>
-                <span class="text-xs" id="tf-cover-placeholder-text">{t("form.previewHere")}</span>
+                <i id="tf-cover-icon" class="fa-solid fa-cloud-arrow-up text-2xl"></i>
+                <span id="tf-cover-cta" class="text-xs font-medium">{t("form.uploadCta")}</span>
+                <span id="tf-cover-hint" class="text-[11px] text-text-muted/70">{t("form.uploadHint")}</span>
+            </button>
+            <div
+                id="tf-cover-actions"
+                class="absolute top-2 right-2 gap-1.5"
+                style="display:none;"
+            >
+                <button
+                    type="button"
+                    id="tf-cover-replace"
+                    class="w-9 h-9 rounded-lg bg-black/55 backdrop-blur-sm text-white/90 hover:bg-black/75 flex items-center justify-center transition-colors"
+                    title={t("form.replaceImage")}
+                    aria-label={t("form.replaceImage")}
+                >
+                    <i class="fa-solid fa-arrows-rotate text-sm"></i>
+                </button>
+                <button
+                    type="button"
+                    id="tf-cover-remove"
+                    class="w-9 h-9 rounded-lg bg-black/55 backdrop-blur-sm text-white/90 hover:bg-red-500/80 flex items-center justify-center transition-colors"
+                    title={t("form.removeImage")}
+                    aria-label={t("form.removeImage")}
+                >
+                    <i class="fa-solid fa-trash-can text-sm"></i>
+                </button>
             </div>
         </div>
+        <p id="tf-cover-error" class="text-xs text-red-400 min-h-4"></p>
     </section>
 
     <!-- Options -->
@@ -204,6 +235,14 @@ const inputClass =
         <p class="text-xs text-text-muted -mt-2">
             {t("form.optionsHelp")}
         </p>
+
+        <input
+            id="tf-option-file"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            class="sr-only"
+            tabindex="-1"
+        />
 
         <div id="tf-options" class="space-y-3">
             <!-- Rows rendered by client script -->
@@ -234,30 +273,37 @@ const inputClass =
 
 <!-- Option row markup (cloned by the client script) -->
 <template id="tf-option-row-template">
-    <div class="option-row flex items-start gap-3 p-3 rounded-xl bg-surface border border-border">
-        <div
-            class="option-thumb relative w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-surface-elevated border border-border flex items-center justify-center"
-        >
-            <img
-                class="option-thumb-img w-full h-full object-cover"
-                alt=""
+    <div class="option-row flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
+        <div class="relative shrink-0">
+            <button
+                type="button"
+                class="option-thumb w-12 h-12 rounded-lg overflow-hidden bg-surface-elevated border border-dashed border-border hover:border-primary/60 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label={t("form.optionAddImage")}
+                title={t("form.optionAddImage")}
+            >
+                <img
+                    class="option-thumb-img w-full h-full object-cover"
+                    alt=""
+                    style="display:none;"
+                />
+                <i class="option-thumb-icon fa-solid fa-camera text-text-muted text-sm"></i>
+            </button>
+            <button
+                type="button"
+                class="option-image-remove absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-surface-elevated border border-border text-text-muted hover:text-red-400 hover:border-red-400/60 items-center justify-center transition-colors"
                 style="display:none;"
-            />
-            <i class="option-thumb-icon fa-regular fa-image text-text-muted text-sm"></i>
+                aria-label={t("form.removeImage")}
+                title={t("form.removeImage")}
+            >
+                <i class="fa-solid fa-xmark text-[10px]"></i>
+            </button>
         </div>
-        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input
-                type="text"
-                maxlength="80"
-                placeholder={t("form.optionNamePlaceholder")}
-                class="option-name w-full px-3 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 transition-all"
-            />
-            <input
-                type="url"
-                placeholder={t("form.optionImagePlaceholder")}
-                class="option-image w-full px-3 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 transition-all"
-            />
-        </div>
+        <input
+            type="text"
+            maxlength="80"
+            placeholder={t("form.optionNamePlaceholder")}
+            class="option-name flex-1 min-w-0 px-3 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-primary/60 transition-all"
+        />
         <button
             type="button"
             class="option-remove w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
@@ -342,6 +388,7 @@ const inputClass =
 
 <script>
     import { openModal, closeModal } from "../scripts/modal-a11y";
+    import { uploadTemplateImage } from "../scripts/image-upload";
     import { clientT, getClientLocale } from "../i18n/client";
     import { localizePath } from "../i18n";
 
@@ -371,16 +418,24 @@ const inputClass =
             "tf-visibility",
         ) as HTMLSelectElement;
         const visibilityHint = document.getElementById("tf-visibility-hint")!;
-        const cover = document.getElementById("tf-cover") as HTMLInputElement;
+        const coverFile = document.getElementById(
+            "tf-cover-file",
+        ) as HTMLInputElement;
+        const coverBox = document.getElementById("tf-cover-box")!;
         const coverPreview = document.getElementById(
             "tf-cover-preview",
         ) as HTMLImageElement;
-        const coverPlaceholder = document.getElementById(
-            "tf-cover-placeholder",
-        )!;
-        const coverPlaceholderText = document.getElementById(
-            "tf-cover-placeholder-text",
-        )!;
+        const coverTrigger = document.getElementById(
+            "tf-cover-trigger",
+        ) as HTMLButtonElement;
+        const coverIcon = document.getElementById("tf-cover-icon")!;
+        const coverCta = document.getElementById("tf-cover-cta")!;
+        const coverHint = document.getElementById("tf-cover-hint")!;
+        const coverActions = document.getElementById("tf-cover-actions")!;
+        const coverError = document.getElementById("tf-cover-error")!;
+        const optionFile = document.getElementById(
+            "tf-option-file",
+        ) as HTMLInputElement;
         const optionsEl = document.getElementById("tf-options")!;
         const optionCount = document.getElementById("tf-option-count")!;
         const addBtn = document.getElementById("tf-add-option")!;
@@ -392,57 +447,163 @@ const inputClass =
             "tf-submit",
         ) as HTMLButtonElement;
 
-        function isHttpUrl(value: string): boolean {
-            try {
-                const u = new URL(value);
-                return u.protocol === "http:" || u.protocol === "https:";
-            } catch {
-                return false;
+        // ── Image uploads ────────────────────────────────────────────
+        // Files go to POST /api/images (re-encode + moderation); the form
+        // only ever stores the returned URL. `pendingUploads` blocks submit
+        // while anything is still in flight.
+        let pendingUploads = 0;
+
+        function uploadErrorMessage(code: string): string {
+            switch (code) {
+                case "image_rejected":
+                    return t("form.errImageRejected");
+                case "too_large":
+                    return t("form.errImageTooLarge");
+                case "unsupported_type":
+                    return t("form.errImageType");
+                case "rate_limited":
+                    return t("form.errImageRateLimited");
+                default:
+                    return t("form.errImageUpload");
             }
         }
 
-        // ── Image previews ───────────────────────────────────────────
-        function bindPreview(
-            input: HTMLInputElement,
-            img: HTMLImageElement,
-            onState: (state: "empty" | "loading" | "ok" | "error") => void,
-        ) {
-            let timer: ReturnType<typeof setTimeout> | undefined;
-            const update = () => {
-                const url = input.value.trim();
-                if (!url || !isHttpUrl(url)) {
-                    img.style.display = "none";
-                    img.removeAttribute("src");
-                    onState(url ? "error" : "empty");
-                    return;
-                }
-                onState("loading");
-                img.onload = () => {
-                    img.style.display = "";
-                    onState("ok");
-                };
-                img.onerror = () => {
-                    img.style.display = "none";
-                    onState("error");
-                };
-                img.src = url;
-            };
-            input.addEventListener("input", () => {
-                clearTimeout(timer);
-                timer = setTimeout(update, 400);
-            });
-            update();
+        // ── Cover upload ─────────────────────────────────────────────
+        let coverUrl: string = data.cover_image || "";
+
+        function renderCover(state: "empty" | "uploading" | "set") {
+            coverActions.style.display = state === "set" ? "flex" : "none";
+            coverTrigger.style.display = state === "set" ? "none" : "";
+            if (state === "set") {
+                coverPreview.src = coverUrl;
+                coverPreview.style.display = "";
+                return;
+            }
+            coverPreview.style.display = "none";
+            coverPreview.removeAttribute("src");
+            if (state === "uploading") {
+                coverIcon.className = "fa-solid fa-spinner btn-spinner text-2xl";
+                coverCta.textContent = t("form.uploading");
+                coverHint.style.display = "none";
+            } else {
+                coverIcon.className = "fa-solid fa-cloud-arrow-up text-2xl";
+                coverCta.textContent = t("form.uploadCta");
+                coverHint.style.display = "";
+            }
         }
 
-        bindPreview(cover, coverPreview, (state) => {
-            coverPlaceholder.style.display = state === "ok" ? "none" : "";
-            coverPlaceholderText.textContent =
-                state === "error"
-                    ? t("form.previewLoadError")
-                    : state === "loading"
-                      ? t("form.previewLoading")
-                      : t("form.previewHere");
+        async function handleCoverFile(file: File) {
+            coverError.textContent = "";
+            pendingUploads++;
+            renderCover("uploading");
+            const result = await uploadTemplateImage(file, "cover");
+            pendingUploads--;
+            if (result.ok) {
+                coverUrl = result.url;
+                renderCover("set");
+            } else {
+                renderCover(coverUrl ? "set" : "empty");
+                coverError.textContent = uploadErrorMessage(result.error);
+            }
+        }
+
+        coverTrigger.addEventListener("click", () => coverFile.click());
+        document
+            .getElementById("tf-cover-replace")!
+            .addEventListener("click", () => coverFile.click());
+        document.getElementById("tf-cover-remove")!.addEventListener(
+            "click",
+            () => {
+                coverUrl = "";
+                coverError.textContent = "";
+                renderCover("empty");
+            },
+        );
+        coverFile.addEventListener("change", () => {
+            const file = coverFile.files?.[0];
+            coverFile.value = "";
+            if (file) handleCoverFile(file);
         });
+
+        // Drag & drop onto the cover box.
+        coverBox.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            coverBox.classList.add("border-primary/60");
+        });
+        coverBox.addEventListener("dragleave", () =>
+            coverBox.classList.remove("border-primary/60"),
+        );
+        coverBox.addEventListener("drop", (e) => {
+            e.preventDefault();
+            coverBox.classList.remove("border-primary/60");
+            const file = e.dataTransfer?.files?.[0];
+            if (file) handleCoverFile(file);
+        });
+
+        renderCover(coverUrl ? "set" : "empty");
+
+        // ── Option image uploads ─────────────────────────────────────
+        // One hidden file input shared by every row; a click on a thumb
+        // remembers its row until the change event fires.
+        let optionUploadRow: HTMLElement | null = null;
+
+        optionFile.addEventListener("change", () => {
+            const file = optionFile.files?.[0];
+            optionFile.value = "";
+            const row = optionUploadRow;
+            optionUploadRow = null;
+            if (file && row && row.isConnected) handleOptionFile(row, file);
+        });
+
+        function renderOptionThumb(row: HTMLElement) {
+            const url = row.dataset.image || "";
+            const uploading = row.dataset.uploading === "1";
+            const thumb = row.querySelector<HTMLButtonElement>(".option-thumb")!;
+            const img =
+                row.querySelector<HTMLImageElement>(".option-thumb-img")!;
+            const icon = row.querySelector<HTMLElement>(".option-thumb-icon")!;
+            const removeBtn = row.querySelector<HTMLElement>(
+                ".option-image-remove",
+            )!;
+            removeBtn.style.display = url && !uploading ? "flex" : "none";
+            if (uploading) {
+                img.style.display = "none";
+                icon.style.display = "";
+                icon.className =
+                    "option-thumb-icon fa-solid fa-spinner btn-spinner text-text-muted text-sm";
+            } else if (url) {
+                img.src = url;
+                img.style.display = "";
+                icon.style.display = "none";
+                thumb.title = t("form.replaceImage");
+                thumb.setAttribute("aria-label", t("form.replaceImage"));
+            } else {
+                img.style.display = "none";
+                img.removeAttribute("src");
+                icon.style.display = "";
+                icon.className =
+                    "option-thumb-icon fa-solid fa-camera text-text-muted text-sm";
+                thumb.title = t("form.optionAddImage");
+                thumb.setAttribute("aria-label", t("form.optionAddImage"));
+            }
+        }
+
+        async function handleOptionFile(row: HTMLElement, file: File) {
+            errorEl.textContent = "";
+            row.dataset.uploading = "1";
+            pendingUploads++;
+            renderOptionThumb(row);
+            const result = await uploadTemplateImage(file, "option");
+            pendingUploads--;
+            delete row.dataset.uploading;
+            if (!row.isConnected) return;
+            if (result.ok) {
+                row.dataset.image = result.url;
+            } else {
+                errorEl.textContent = uploadErrorMessage(result.error);
+            }
+            renderOptionThumb(row);
+        }
 
         // ── Option rows ──────────────────────────────────────────────
         function rows(): HTMLElement[] {
@@ -463,23 +624,22 @@ const inputClass =
             ).firstElementChild as HTMLElement;
             const nameInput =
                 row.querySelector<HTMLInputElement>(".option-name")!;
-            const imageInput =
-                row.querySelector<HTMLInputElement>(".option-image")!;
-            const thumbImg =
-                row.querySelector<HTMLImageElement>(".option-thumb-img")!;
-            const thumbIcon = row.querySelector<HTMLElement>(
-                ".option-thumb-icon",
-            )!;
             nameInput.value = name;
-            imageInput.value = image;
+            if (image) row.dataset.image = image;
 
-            bindPreview(imageInput, thumbImg, (state) => {
-                thumbIcon.style.display = state === "ok" ? "none" : "";
-                thumbIcon.className = `option-thumb-icon text-sm ${
-                    state === "error"
-                        ? "fa-solid fa-triangle-exclamation text-red-400/70"
-                        : "fa-regular fa-image text-text-muted"
-                }`;
+            row.querySelector<HTMLButtonElement>(
+                ".option-thumb",
+            )!.addEventListener("click", () => {
+                if (row.dataset.uploading === "1") return;
+                optionUploadRow = row;
+                optionFile.click();
+            });
+
+            row.querySelector<HTMLElement>(
+                ".option-image-remove",
+            )!.addEventListener("click", () => {
+                delete row.dataset.image;
+                renderOptionThumb(row);
             });
 
             row.querySelector(".option-remove")!.addEventListener(
@@ -490,6 +650,7 @@ const inputClass =
                 },
             );
 
+            renderOptionThumb(row);
             optionsEl.appendChild(row);
             updateCount();
             if (focus) nameInput.focus();
@@ -538,18 +699,15 @@ const inputClass =
 
         // ── Submit ───────────────────────────────────────────────────
         function validate(skipDescLength = false): string | null {
+            if (pendingUploads > 0) return t("form.errUploadsPending");
             if (title.value.trim().length < 3) return t("form.errTitle");
             // Description, category and cover image are only required for
-            // public templates; private/unlisted may skip them. A provided
-            // cover URL must still be valid, any visibility.
+            // public templates; private/unlisted may skip them.
             const isPublic = visibility.value === "public";
             if (isPublic && !skipDescLength && desc.value.trim().length < 15)
                 return t("form.errDescription");
             if (isPublic && !category.value) return t("form.errCategory");
-            const coverVal = cover.value.trim();
-            if (!coverVal && isPublic)
-                return t("form.errCoverRequired");
-            if (coverVal && !isHttpUrl(coverVal)) return t("form.errCoverUrl");
+            if (!coverUrl && isPublic) return t("form.errCoverRequired");
             const opts = rows();
             const named = opts.filter(
                 (r) =>
@@ -563,12 +721,8 @@ const inputClass =
                 const name = r
                     .querySelector<HTMLInputElement>(".option-name")!
                     .value.trim();
-                const image = r
-                    .querySelector<HTMLInputElement>(".option-image")!
-                    .value.trim();
-                if (!name && image) return t("form.errOptionNameNeeded");
-                if (image && !isHttpUrl(image))
-                    return t("form.errOptionImageUrl", { name });
+                if (!name && r.dataset.image)
+                    return t("form.errOptionNameNeeded");
             }
             return null;
         }
@@ -767,19 +921,14 @@ const inputClass =
                 title: title.value.trim(),
                 description: desc.value.trim(),
                 category: category.value,
-                cover_image: cover.value.trim(),
+                cover_image: coverUrl,
                 visibility: visibility.value,
                 options: rows()
                     .map((r) => ({
                         name: r
                             .querySelector<HTMLInputElement>(".option-name")!
                             .value.trim(),
-                        image:
-                            r
-                                .querySelector<HTMLInputElement>(
-                                    ".option-image",
-                                )!
-                                .value.trim() || null,
+                        image: r.dataset.image || null,
                     }))
                     .filter((o) => o.name),
             };

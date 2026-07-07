@@ -18,6 +18,18 @@
     "binding": "AI",
     "remote": true
   },
+  // Server-side re-encode of user uploads to WebP (Images binding).
+  "images": {
+    "binding": "IMAGES"
+  },
+  // Existing bucket behind img.rankmaker.net. Official assets live under
+  // covers/ and options/; user uploads go under u/{userId}/.
+  "r2_buckets": [
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "rankmaker-images"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "rm-times-ranked",

@@ -5,6 +5,7 @@
  */
 import templatesJson from '../data/templates.json';
 import { CATEGORY_NAMES } from './categories';
+import { extractImageKey } from './images';
 import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
 import { recommendTemplates } from '../scripts/recommend';
@@ -471,18 +472,27 @@ export type TemplateInput = {
     options: { name: string; image: string | null }[];
 };
 
-function isHttpUrl(value: string): boolean {
+/**
+ * Where template images are allowed to come from. Images are upload-only:
+ * a URL is valid iff it's an uploaded image under `base` (see
+ * `extractImageKey`) or an exact match of a URL the template already
+ * stores (`allowedUrls`) — that grandfathering keeps templates created in
+ * the external-link era editable without forcing a re-upload.
+ */
+export type TemplateImagePolicy = {
+    base: string;
+    allowedUrls?: Set<string>;
+};
+
+function isAllowedImageUrl(value: string, policy: TemplateImagePolicy): boolean {
     if (value.length > 500) return false;
-    try {
-        const u = new URL(value);
-        return u.protocol === 'http:' || u.protocol === 'https:';
-    } catch {
-        return false;
-    }
+    if (policy.allowedUrls?.has(value)) return true;
+    return extractImageKey(value, policy.base) !== null;
 }
 
 export function validateTemplateInput(
-    body: any
+    body: any,
+    imagePolicy: TemplateImagePolicy
 ): { ok: true; data: TemplateInput } | { ok: false; error: string } {
     const err = (error: string) => ({ ok: false as const, error });
 
@@ -532,8 +542,8 @@ export function validateTemplateInput(
     if (!cover && isPublic) {
         return err('Cover image is required.');
     }
-    if (cover && !isHttpUrl(cover)) {
-        return err('Cover image must be a valid http(s) URL.');
+    if (cover && !isAllowedImageUrl(cover, imagePolicy)) {
+        return err('Cover image must be an uploaded image.');
     }
 
     if (!Array.isArray(body?.options)) return err('Options are required.');
@@ -557,8 +567,8 @@ export function validateTemplateInput(
 
         const rawImage =
             typeof o?.image === 'string' ? o.image.trim() : '';
-        if (rawImage && !isHttpUrl(rawImage)) {
-            return err(`Option "${name}": image must be a valid http(s) URL.`);
+        if (rawImage && !isAllowedImageUrl(rawImage, imagePolicy)) {
+            return err(`Option "${name}": image must be an uploaded image.`);
         }
         const image: string | null = rawImage || null;
         options.push({ name, image });

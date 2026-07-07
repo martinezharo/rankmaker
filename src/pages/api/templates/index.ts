@@ -8,6 +8,12 @@ import {
     generateUnlistedSlug,
     validateTemplateInput,
 } from '../../../lib/templates';
+import {
+    claimImages,
+    collectImageKeys,
+    imagePublicBase,
+    verifyImageOwnership,
+} from '../../../lib/images';
 import { notifyNewTemplate } from '../../../lib/notifications';
 
 /** Create a template (auth required). Body: { title, description, category, cover_image, visibility, options }. */
@@ -17,7 +23,8 @@ export const POST: APIRoute = async (context) => {
     }
 
     try {
-        const db = context.locals.runtime.env.DB;
+        const { env } = context.locals.runtime;
+        const db = env.DB;
         const user = await getSessionUser(context.cookies, db);
         if (!user) return json({ error: 'You must be logged in.' }, 401);
 
@@ -28,9 +35,18 @@ export const POST: APIRoute = async (context) => {
             return json({ error: 'Invalid JSON' }, 400);
         }
 
-        const result = validateTemplateInput(body);
+        const imageBase = imagePublicBase(env);
+        const result = validateTemplateInput(body, { base: imageBase });
         if (!result.ok) return json({ error: result.error }, 400);
         const data = result.data;
+
+        // Every referenced image must be an upload owned by this user —
+        // this is what stops hand-crafted payloads from pointing at other
+        // people's (or unmoderated) objects.
+        const imageKeys = collectImageKeys(data, imageBase);
+        if (!(await verifyImageOwnership(db, imageKeys, user.id))) {
+            return json({ error: 'Invalid image.' }, 400);
+        }
 
         const limitError = json(
             { error: `You can create at most ${MAX_TEMPLATES_PER_USER} templates.` },
@@ -94,6 +110,11 @@ export const POST: APIRoute = async (context) => {
         if ((results[0]?.meta?.changes ?? 1) === 0) {
             return limitError;
         }
+
+        // Claim the uploads (after the INSERT: images.template_id has a FK
+        // on templates.id). Claimed keys survive orphan cleanup and are
+        // deleted with the template.
+        await claimImages(db, imageKeys, id, user.id);
 
         // Tell followers about new PUBLIC templates only (private/unlisted are
         // hidden, so surfacing them would leak them). Best-effort.
