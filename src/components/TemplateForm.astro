@@ -273,7 +273,7 @@ const inputClass =
 
 <!-- Option row markup (cloned by the client script) -->
 <template id="tf-option-row-template">
-    <div class="option-row flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
+    <div class="option-row flex flex-wrap items-center gap-3 p-3 rounded-xl bg-surface border border-border">
         <div class="relative shrink-0">
             <button
                 type="button"
@@ -311,6 +311,7 @@ const inputClass =
         >
             <i class="fa-solid fa-xmark text-sm"></i>
         </button>
+        <p class="option-error basis-full text-xs text-red-400 min-h-0 empty:hidden"></p>
     </div>
 </template>
 
@@ -589,7 +590,9 @@ const inputClass =
         }
 
         async function handleOptionFile(row: HTMLElement, file: File) {
-            errorEl.textContent = "";
+            const optionError =
+                row.querySelector<HTMLElement>(".option-error")!;
+            optionError.textContent = "";
             row.dataset.uploading = "1";
             pendingUploads++;
             renderOptionThumb(row);
@@ -600,7 +603,7 @@ const inputClass =
             if (result.ok) {
                 row.dataset.image = result.url;
             } else {
-                errorEl.textContent = uploadErrorMessage(result.error);
+                optionError.textContent = uploadErrorMessage(result.error);
             }
             renderOptionThumb(row);
         }
@@ -639,6 +642,7 @@ const inputClass =
                 ".option-image-remove",
             )!.addEventListener("click", () => {
                 delete row.dataset.image;
+                row.querySelector<HTMLElement>(".option-error")!.textContent = "";
                 renderOptionThumb(row);
             });
 
