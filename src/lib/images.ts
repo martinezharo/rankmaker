@@ -206,11 +206,32 @@ export async function moderateImage(
             }
             const data: any = await res.json();
             const scores = data?.results?.[0]?.category_scores;
-            console.log(
-                '[moderation] scores:',
-                JSON.stringify(scores),
-            );
             const result = evaluateImageModeration(scores);
+            if (!result.allowed) {
+                console.warn(
+                    `[moderation] rejected (${result.category}):`,
+                    JSON.stringify(scores),
+                );
+            } else {
+                // Log borderline cases — any score above 70% of its
+                // threshold — so thresholds can be tuned with real data
+                // without logging every benign upload.
+                const borderline: Record<string, number> = {};
+                for (const [cat, threshold] of Object.entries(
+                    MODERATION_THRESHOLDS,
+                )) {
+                    const s = (scores as Record<string, unknown>)?.[cat];
+                    if (typeof s === 'number' && s > threshold * 0.7) {
+                        borderline[cat] = s;
+                    }
+                }
+                if (Object.keys(borderline).length > 0) {
+                    console.log(
+                        '[moderation] borderline:',
+                        JSON.stringify(borderline),
+                    );
+                }
+            }
             return result.allowed
                 ? { verdict: 'allowed' }
                 : { verdict: 'rejected', category: result.category };
