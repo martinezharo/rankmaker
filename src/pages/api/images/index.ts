@@ -109,6 +109,16 @@ export const POST: APIRoute = async (context) => {
             return json({ error: 'image_rejected' }, 422);
         }
         if (moderation.verdict === 'unavailable') {
+            // Transient/our-side failure: the user got nothing usable and
+            // will retry, so refund the slot reserved above rather than
+            // spend their daily quota on our outage. Re-read to avoid
+            // clobbering a concurrent upload's increment (soft cap —
+            // exactness isn't required). Rejections still count, keeping the
+            // re-encode/moderation cost cap intact.
+            const cur = parseInt((await kv.get(rlKey)) ?? '0', 10) || 0;
+            await kv.put(rlKey, String(Math.max(0, cur - 1)), {
+                expirationTtl: 60 * 60 * 48,
+            });
             return json({ error: 'upload_failed' }, 503);
         }
 
