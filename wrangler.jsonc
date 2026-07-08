@@ -27,7 +27,7 @@
   "r2_buckets": [
     {
       "binding": "IMAGES_BUCKET",
-      "bucket_name": "rankmaker-images"
+      "bucket_name": "rankmaker-imgs"
     }
   ],
   "kv_namespaces": [
