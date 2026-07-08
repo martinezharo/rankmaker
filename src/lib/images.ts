@@ -116,19 +116,24 @@ export function sniffImageType(bytes: Uint8Array): SniffedType | null {
 
 /**
  * Per-category score thresholds — an image is rejected when any score
- * reaches its threshold. Tuned "Instagram-level": swimwear, movie/game
- * violence and artistic partial nudity pass; explicit sexual content,
- * gore and self-harm imagery don't. `sexual/minors` is near-zero
- * tolerance. Plain `violence` fires high on posters and game art, so its
- * threshold is a backstop only — `violence/graphic` is the real gate.
+ * reaches its threshold. Tuned "Instagram-level" for sexual content
+ * (swimwear and artistic partial nudity pass; explicit sexual content
+ * doesn't) with near-zero tolerance for `sexual/minors`. Violence
+ * thresholds are set high so fictional gore (death-metal covers, game
+ * art, movie posters) passes while only the most extreme real gore is
+ * blocked — the model can't distinguish fiction from real, so we err
+ * on the permissive side for violence given the site's thematic focus.
+ * `self-harm` thresholds are high (fictional DSBM art passes) but
+ * `self-harm/instructions` stays conservative — that score fires on
+ * instructive content, not on artistic imagery.
  */
 export const MODERATION_THRESHOLDS: Record<string, number> = {
     'sexual/minors': 0.02,
     sexual: 0.65,
-    'violence/graphic': 0.75,
-    violence: 0.9,
-    'self-harm': 0.75,
-    'self-harm/intent': 0.75,
+    'violence/graphic': 0.95,
+    violence: 0.98,
+    'self-harm': 0.92,
+    'self-harm/intent': 0.92,
     'self-harm/instructions': 0.75,
 };
 
@@ -200,9 +205,12 @@ export async function moderateImage(
                 return { verdict: 'unavailable' };
             }
             const data: any = await res.json();
-            const result = evaluateImageModeration(
-                data?.results?.[0]?.category_scores
+            const scores = data?.results?.[0]?.category_scores;
+            console.log(
+                '[moderation] scores:',
+                JSON.stringify(scores),
             );
+            const result = evaluateImageModeration(scores);
             return result.allowed
                 ? { verdict: 'allowed' }
                 : { verdict: 'rejected', category: result.category };

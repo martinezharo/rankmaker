@@ -115,11 +115,10 @@ describe('evaluateImageModeration', () => {
         ).toBe(false);
     });
 
-    it('allows movie-poster violence but blocks gore', () => {
+    it('allows fictional gore (death-metal covers, game art) but blocks extreme gore', () => {
         expect(evaluateImageModeration({ violence: 0.8 }).allowed).toBe(true);
-        expect(
-            evaluateImageModeration({ 'violence/graphic': 0.8 }).allowed
-        ).toBe(false);
+        expect(evaluateImageModeration({ 'violence/graphic': 0.8 }).allowed).toBe(true);
+        expect(evaluateImageModeration({ 'violence/graphic': 0.96 }).allowed).toBe(false);
     });
 
     it('fails closed on malformed responses', () => {
