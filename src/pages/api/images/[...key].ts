@@ -20,7 +20,7 @@ export const GET: APIRoute = async (context) => {
 
     return new Response(object.body, {
         headers: {
-            'Content-Type': 'image/webp',
+            'Content-Type': object.httpMetadata?.contentType || 'image/webp',
             'Cache-Control': 'public, max-age=31536000, immutable',
             'X-Content-Type-Options': 'nosniff',
             'Content-Disposition': 'inline',

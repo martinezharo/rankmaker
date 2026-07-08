@@ -63,13 +63,17 @@ export const POST: APIRoute = async (context) => {
         if (original.byteLength > MAX_UPLOAD_BYTES) {
             return json({ error: 'too_large' }, 413);
         }
-        if (!sniffImageType(new Uint8Array(original).subarray(0, 16))) {
+        const sniffed = sniffImageType(new Uint8Array(original).subarray(0, 16));
+        if (!sniffed) {
             return json({ error: 'unsupported_type' }, 415);
         }
 
         // Re-encode to WebP, longest edge capped per kind. scale-down never
         // upscales and preserves aspect ratio. A decode failure here means
-        // the bytes weren't a real image after all.
+        // the bytes weren't a real image after all. The Images binding only
+        // works with `wrangler dev --remote`; in local dev it throws, so we
+        // fall back to storing the client-compressed bytes as-is (the client
+        // already pre-compresses to WebP via canvas — acceptable for local).
         const maxDim = IMAGE_DIMENSIONS[kind];
         const encode = async (quality: number) => {
             const result = await env.IMAGES.input(new Response(original).body!)
@@ -82,8 +86,16 @@ export const POST: APIRoute = async (context) => {
             webp = await encode(82);
             if (webp.byteLength > MAX_STORED_BYTES) webp = await encode(55);
         } catch (error) {
-            console.error('Image re-encode failed:', error);
-            return json({ error: 'unsupported_type' }, 415);
+            if (import.meta.env.DEV) {
+                console.warn(
+                    'IMAGES binding unavailable in local dev — storing client bytes as-is:',
+                    String(error),
+                );
+                webp = original;
+            } else {
+                console.error('Image re-encode failed:', error);
+                return json({ error: 'unsupported_type' }, 415);
+            }
         }
         if (webp.byteLength > MAX_STORED_BYTES) {
             return json({ error: 'too_large' }, 413);
@@ -101,9 +113,13 @@ export const POST: APIRoute = async (context) => {
         }
 
         const key = `u/${user.id}/${crypto.randomUUID()}.webp`;
+        const contentType =
+            import.meta.env.DEV && webp === original
+                ? `image/${sniffed}`
+                : 'image/webp';
         await env.IMAGES_BUCKET.put(key, webp, {
             httpMetadata: {
-                contentType: 'image/webp',
+                contentType,
                 cacheControl: 'public, max-age=31536000, immutable',
             },
         });
