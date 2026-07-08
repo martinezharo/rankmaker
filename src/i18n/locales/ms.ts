@@ -261,7 +261,7 @@ export const ms: LocaleDict = {
 		coverImage: 'Imej penutup',
 		coverPreviewAlt: 'Pratonton penutup',
 		uploadCta: 'Klik atau seret imej untuk memuat naik',
-		uploadHint: 'JPG, PNG, WebP atau GIF · sehingga 10 MB',
+		uploadHint: 'JPG, PNG, WebP, AVIF atau GIF · sehingga 10 MB',
 		uploading: 'Memuat naik…',
 		replaceImage: 'Ganti imej',
 		removeImage: 'Buang imej',
@@ -287,7 +287,7 @@ export const ms: LocaleDict = {
 		errImageUpload: 'Imej tidak dapat dimuat naik. Sila cuba lagi.',
 		errImageRejected: 'Imej itu tidak boleh digunakan — ia kelihatan eksplisit atau tidak selamat.',
 		errImageTooLarge: 'Imej itu terlalu besar (maks 10 MB).',
-		errImageType: 'Jenis fail tidak disokong — gunakan JPG, PNG, WebP atau GIF.',
+		errImageType: 'Jenis fail tidak disokong — gunakan JPG, PNG, WebP, AVIF atau GIF.',
 		errImageRateLimited: 'Anda telah mencapai had muat naik imej hari ini. Cuba lagi esok.',
 		aiShortTitle: 'Penerangan anda terlalu pendek',
 		aiShortCopy:

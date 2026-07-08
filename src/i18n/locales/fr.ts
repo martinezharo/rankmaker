@@ -263,7 +263,7 @@ export const fr: LocaleDict = {
 		coverImage: 'Image de couverture',
 		coverPreviewAlt: 'Aperçu de la couverture',
 		uploadCta: 'Cliquez ou déposez une image pour la téléverser',
-		uploadHint: "JPG, PNG, WebP ou GIF · jusqu'à 10 Mo",
+		uploadHint: "JPG, PNG, WebP, AVIF ou GIF · jusqu'à 10 Mo",
 		uploading: 'Téléversement…',
 		replaceImage: "Remplacer l'image",
 		removeImage: "Retirer l'image",
@@ -289,7 +289,7 @@ export const fr: LocaleDict = {
 		errImageUpload: "Impossible de téléverser l'image. Veuillez réessayer.",
 		errImageRejected: 'Cette image ne peut pas être utilisée — elle semble explicite ou inappropriée.',
 		errImageTooLarge: 'Cette image est trop lourde (10 Mo max).',
-		errImageType: 'Type de fichier non pris en charge — utilisez JPG, PNG, WebP ou GIF.',
+		errImageType: 'Type de fichier non pris en charge — utilisez JPG, PNG, WebP, AVIF ou GIF.',
 		errImageRateLimited: "Vous avez atteint la limite quotidienne d'envois d'images. Réessayez demain.",
 		aiShortTitle: 'Votre description est trop courte',
 		aiShortCopy:

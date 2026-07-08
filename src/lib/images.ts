@@ -71,7 +71,7 @@ export function collectImageKeys(
 
 // ── Upload validation ────────────────────────────────────────────────────
 
-export type SniffedType = 'jpeg' | 'png' | 'gif' | 'webp';
+export type SniffedType = 'jpeg' | 'png' | 'gif' | 'webp' | 'avif';
 
 /** Magic-byte sniffing — the client's Content-Type header is untrusted. */
 export function sniffImageType(bytes: Uint8Array): SniffedType | null {
@@ -98,6 +98,16 @@ export function sniffImageType(bytes: Uint8Array): SniffedType | null {
         bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
     ) {
         return 'webp';
+    }
+    // AVIF: ISOBMFF container — bytes 4-7 are "ftyp", bytes 8-11 are the
+    // major brand ("avif" for still images, "avis" for sequences).
+    if (
+        bytes.length >= 12 &&
+        bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70 &&
+        ((bytes[8] === 0x61 && bytes[9] === 0x76 && bytes[10] === 0x69 && bytes[11] === 0x66) ||
+         (bytes[8] === 0x61 && bytes[9] === 0x76 && bytes[10] === 0x69 && bytes[11] === 0x73))
+    ) {
+        return 'avif';
     }
     return null;
 }

@@ -6,7 +6,7 @@
 
 export const CLIENT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-const ACCEPTED_TYPES = /^image\/(jpeg|png|webp|gif)$/;
+const ACCEPTED_TYPES = /^image\/(jpeg|png|webp|gif|avif)$/;
 
 /** Longest edge sent over the wire; the server caps smaller per kind. */
 const CLIENT_MAX_DIM = { cover: 1600, option: 800 } as const;

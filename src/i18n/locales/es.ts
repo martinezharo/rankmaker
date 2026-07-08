@@ -263,7 +263,7 @@ export const es: LocaleDict = {
 		coverImage: 'Imagen de portada',
 		coverPreviewAlt: 'Vista previa de la portada',
 		uploadCta: 'Haz clic o arrastra una imagen para subirla',
-		uploadHint: 'JPG, PNG, WebP o GIF · hasta 10 MB',
+		uploadHint: 'JPG, PNG, WebP, AVIF o GIF · hasta 10 MB',
 		uploading: 'Subiendo…',
 		replaceImage: 'Cambiar imagen',
 		removeImage: 'Quitar imagen',
@@ -289,7 +289,7 @@ export const es: LocaleDict = {
 		errImageUpload: 'No se pudo subir la imagen. Inténtalo de nuevo.',
 		errImageRejected: 'Esa imagen no se puede usar: parece explícita o insegura.',
 		errImageTooLarge: 'Esa imagen es demasiado grande (máx. 10 MB).',
-		errImageType: 'Tipo de archivo no compatible — usa JPG, PNG, WebP o GIF.',
+		errImageType: 'Tipo de archivo no compatible — usa JPG, PNG, WebP, AVIF o GIF.',
 		errImageRateLimited: 'Has alcanzado el límite diario de subida de imágenes. Inténtalo mañana.',
 		aiShortTitle: 'Tu descripción es demasiado corta',
 		aiShortCopy:

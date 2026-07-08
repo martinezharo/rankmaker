@@ -263,7 +263,7 @@ export const de: LocaleDict = {
 		coverImage: 'Titelbild',
 		coverPreviewAlt: 'Vorschau des Titelbilds',
 		uploadCta: 'Klicke oder ziehe ein Bild hierher, um es hochzuladen',
-		uploadHint: 'JPG, PNG, WebP oder GIF · bis zu 10 MB',
+		uploadHint: 'JPG, PNG, WebP, AVIF oder GIF · bis zu 10 MB',
 		uploading: 'Lädt hoch…',
 		replaceImage: 'Bild ersetzen',
 		removeImage: 'Bild entfernen',
@@ -289,7 +289,7 @@ export const de: LocaleDict = {
 		errImageUpload: 'Das Bild konnte nicht hochgeladen werden. Bitte versuche es erneut.',
 		errImageRejected: 'Dieses Bild kann nicht verwendet werden — es wirkt explizit oder unsicher.',
 		errImageTooLarge: 'Dieses Bild ist zu groß (max. 10 MB).',
-		errImageType: 'Nicht unterstützter Dateityp — verwende JPG, PNG, WebP oder GIF.',
+		errImageType: 'Nicht unterstützter Dateityp — verwende JPG, PNG, WebP, AVIF oder GIF.',
 		errImageRateLimited: 'Du hast das tägliche Upload-Limit erreicht. Versuche es morgen erneut.',
 		aiShortTitle: 'Deine Beschreibung ist zu kurz',
 		aiShortCopy:

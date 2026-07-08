@@ -60,7 +60,7 @@ describe('collectImageKeys', () => {
 describe('sniffImageType', () => {
     const bytes = (...values: number[]) => new Uint8Array(values);
 
-    it('detects jpeg/png/gif/webp', () => {
+    it('detects jpeg/png/gif/webp/avif', () => {
         expect(sniffImageType(bytes(0xff, 0xd8, 0xff, 0xe0))).toBe('jpeg');
         expect(
             sniffImageType(bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
@@ -72,6 +72,14 @@ describe('sniffImageType', () => {
         webp.set([...'RIFF'].map((c) => c.charCodeAt(0)), 0);
         webp.set([...'WEBP'].map((c) => c.charCodeAt(0)), 8);
         expect(sniffImageType(webp)).toBe('webp');
+        const avif = new Uint8Array(12);
+        avif.set([...'ftyp'].map((c) => c.charCodeAt(0)), 4);
+        avif.set([...'avif'].map((c) => c.charCodeAt(0)), 8);
+        expect(sniffImageType(avif)).toBe('avif');
+        const avis = new Uint8Array(12);
+        avis.set([...'ftyp'].map((c) => c.charCodeAt(0)), 4);
+        avis.set([...'avis'].map((c) => c.charCodeAt(0)), 8);
+        expect(sniffImageType(avis)).toBe('avif');
     });
 
     it('rejects SVG and arbitrary bytes', () => {

@@ -269,7 +269,7 @@ export const en = {
 		coverImage: 'Cover image',
 		coverPreviewAlt: 'Cover preview',
 		uploadCta: 'Click or drop an image to upload',
-		uploadHint: 'JPG, PNG, WebP or GIF · up to 10 MB',
+		uploadHint: 'JPG, PNG, WebP, AVIF or GIF · up to 10 MB',
 		uploading: 'Uploading…',
 		replaceImage: 'Replace image',
 		removeImage: 'Remove image',
@@ -297,7 +297,7 @@ export const en = {
 		errImageRejected:
 			"That image can't be used — it looks explicit or unsafe.",
 		errImageTooLarge: 'That image is too large (max 10 MB).',
-		errImageType: 'Unsupported file type — use JPG, PNG, WebP or GIF.',
+		errImageType: 'Unsupported file type — use JPG, PNG, WebP, AVIF or GIF.',
 		errImageRateLimited:
 			"You've hit today's image upload limit. Try again tomorrow.",
 		// AI suggestion modal
