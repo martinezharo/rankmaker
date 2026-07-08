@@ -295,7 +295,7 @@ export const en = {
 		errUploadsPending: 'Wait for images to finish uploading.',
 		errImageUpload: "Couldn't upload the image. Please try again.",
 		errImageRejected:
-			"That image can't be used — it looks explicit or unsafe.",
+			'That image may violate our content guidelines — please try a different one.',
 		errImageTooLarge: 'That image is too large (max 10 MB).',
 		errImageType: 'Unsupported file type — use JPG, PNG, WebP, AVIF or GIF.',
 		errImageRateLimited:

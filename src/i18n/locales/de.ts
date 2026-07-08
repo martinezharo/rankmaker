@@ -287,7 +287,7 @@ export const de: LocaleDict = {
 		errOptionNameNeeded: 'Jede Option mit einem Bild benötigt einen Namen.',
 		errUploadsPending: 'Warte, bis alle Bilder hochgeladen sind.',
 		errImageUpload: 'Das Bild konnte nicht hochgeladen werden. Bitte versuche es erneut.',
-		errImageRejected: 'Dieses Bild kann nicht verwendet werden — es wirkt explizit oder unsicher.',
+		errImageRejected: 'Dieses Bild verstößt möglicherweise gegen unsere Inhaltsrichtlinien — bitte versuche ein anderes.',
 		errImageTooLarge: 'Dieses Bild ist zu groß (max. 10 MB).',
 		errImageType: 'Nicht unterstützter Dateityp — verwende JPG, PNG, WebP, AVIF oder GIF.',
 		errImageRateLimited: 'Du hast das tägliche Upload-Limit erreicht. Versuche es morgen erneut.',

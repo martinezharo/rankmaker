@@ -287,7 +287,7 @@ export const fr: LocaleDict = {
 		errOptionNameNeeded: 'Chaque option avec une image doit avoir un nom.',
 		errUploadsPending: 'Attendez la fin du téléversement des images.',
 		errImageUpload: "Impossible de téléverser l'image. Veuillez réessayer.",
-		errImageRejected: 'Cette image ne peut pas être utilisée — elle semble explicite ou inappropriée.',
+		errImageRejected: 'Cette image enfreint peut-être nos règles de contenu — essayez-en une autre.',
 		errImageTooLarge: 'Cette image est trop lourde (10 Mo max).',
 		errImageType: 'Type de fichier non pris en charge — utilisez JPG, PNG, WebP, AVIF ou GIF.',
 		errImageRateLimited: "Vous avez atteint la limite quotidienne d'envois d'images. Réessayez demain.",

@@ -119,11 +119,13 @@ export function sniffImageType(bytes: Uint8Array): SniffedType | null {
  * reaches its threshold. Tuned "Instagram-level" for sexual content
  * (swimwear and artistic partial nudity pass; explicit sexual content
  * doesn't) with near-zero tolerance for `sexual/minors`. Violence
- * thresholds are set high so fictional gore (death-metal covers, game
- * art, movie posters) passes while only the most extreme real gore is
- * blocked — the model can't distinguish fiction from real, so we err
- * on the permissive side for violence given the site's thematic focus.
- * `self-harm` thresholds are high (fictional DSBM art passes) but
+ * thresholds are set high so fictional gore (album covers, game art,
+ * movie posters) passes while only the most extreme real gore is
+ * blocked: this is a general pop-culture ranking site, so such artwork
+ * is legitimate user content — a permitted subset, not the focus — and
+ * the model can't tell fiction from real, so we err permissive to avoid
+ * false-positives on it.
+ * `self-harm` thresholds are high (fictional dark/DSBM art passes) but
  * `self-harm/instructions` stays conservative — that score fires on
  * instructive content, not on artistic imagery.
  */

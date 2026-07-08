@@ -285,7 +285,7 @@ export const ms: LocaleDict = {
 		errOptionNameNeeded: 'Setiap pilihan dengan imej memerlukan nama.',
 		errUploadsPending: 'Tunggu sehingga semua imej selesai dimuat naik.',
 		errImageUpload: 'Imej tidak dapat dimuat naik. Sila cuba lagi.',
-		errImageRejected: 'Imej itu tidak boleh digunakan — ia kelihatan eksplisit atau tidak selamat.',
+		errImageRejected: 'Imej itu mungkin melanggar garis panduan kandungan kami — sila cuba yang lain.',
 		errImageTooLarge: 'Imej itu terlalu besar (maks 10 MB).',
 		errImageType: 'Jenis fail tidak disokong — gunakan JPG, PNG, WebP, AVIF atau GIF.',
 		errImageRateLimited: 'Anda telah mencapai had muat naik imej hari ini. Cuba lagi esok.',

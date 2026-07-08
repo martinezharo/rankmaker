@@ -279,7 +279,7 @@ export const zh: LocaleDict = {
 		errOptionNameNeeded: '每个有图片的选项都需要名称。',
 		errUploadsPending: '请等待图片上传完成。',
 		errImageUpload: '图片上传失败，请重试。',
-		errImageRejected: '该图片无法使用——内容疑似露骨或不安全。',
+		errImageRejected: '该图片可能违反我们的内容规范——请换一张试试。',
 		errImageTooLarge: '图片过大（最大 10 MB）。',
 		errImageType: '不支持的文件类型——请使用 JPG、PNG、WebP、AVIF 或 GIF。',
 		errImageRateLimited: '你已达到今日图片上传上限，请明天再试。',
