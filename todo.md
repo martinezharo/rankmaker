@@ -194,6 +194,19 @@ things that can help:
   view) has the same visual weight as share/save, with nothing reassuring
   the user that their result has already been saved before nudging them to
   redo it.
+- [ ] **Optimistic image preview during upload/moderation**: `TemplateForm`
+  currently shows a blank box with a spinner while a cover/option image
+  uploads and goes through server-side moderation (an OpenAI round-trip on
+  top of re-encode — can be a few seconds). Show the picked file
+  (`URL.createObjectURL`) dimmed with a spinner overlay immediately instead,
+  in both `renderCover` and `renderOptionThumb`. Moderation stays
+  server-side/unchanged. Details to get right: revoke the objectURLs on
+  success/failure (mind `astro:page-load` re-runs), overlay CSS for the
+  spinner over the dimmed image, keep the local preview until the server
+  URL's `img` `onload` to avoid swap flicker, and cleanly revert to
+  empty + error on a moderation rejection. Verify visually in the browser
+  (drag&drop, option rows, error states) — no fundamental trade-off, it's
+  the user's own local file rendered client-side.
 
 ## 🌍 i18n
 
