@@ -4,6 +4,10 @@
 // sections. The homepage is publicly edge-cached and this data is per-user, so
 // the whole row is fetched and built client-side (like the header auth UI):
 // the section ships hidden and reveals itself only when there are templates.
+// To avoid the row popping in after first paint and pushing the categories
+// down, an inline pre-paint script below reveals the section with card-sized
+// skeletons whenever the localStorage cache says there is something to show;
+// the module script then swaps them 1:1 for the real cards.
 import { defaultLocale, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -31,6 +35,40 @@ const t = useTranslations(locale);
 	>
 	</div>
 </section>
+
+<!-- Pre-paint reveal: the bundled module below only runs at astro:page-load,
+     after first paint, so on its own the row appears late and shifts the page.
+     This inline script runs during HTML parse (and re-runs on SPA swaps): it
+     reads the same cache the module maintains and, when the last-known list is
+     non-empty, unhides the section pre-paint with one skeleton per cached card
+     so the layout is already settled when the real cards render. First-ever
+     visit (no cache yet) still reveals post-fetch — the data is per-user and
+     the HTML is publicly cached, so that one-time reveal is unavoidable. -->
+<script is:inline data-astro-rerun>
+	(() => {
+		try {
+			const raw = localStorage.getItem("rm:following-templates");
+			const list = raw ? JSON.parse(raw) : null;
+			if (!Array.isArray(list) || list.length === 0) return;
+			const section = document.querySelector("[data-following-section]");
+			const grid = section?.querySelector("[data-following-grid]");
+			if (!grid) return;
+			const skeleton =
+				'<div class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start h-full">' +
+				'<div class="flex flex-col h-full rounded-2xl bg-surface-elevated border border-border overflow-hidden animate-pulse">' +
+				'<div class="aspect-4/3 bg-surface"></div>' +
+				'<div class="flex-1 p-4 space-y-2">' +
+				'<div class="h-4 w-3/4 rounded bg-surface"></div>' +
+				'<div class="h-3 w-1/2 rounded bg-surface"></div>' +
+				'<div class="h-3 w-full rounded bg-surface"></div>' +
+				"</div></div></div>";
+			grid.innerHTML = skeleton.repeat(list.length);
+			section.classList.remove("hidden");
+		} catch {
+			/* storage unavailable — the module script reveals it post-load */
+		}
+	})();
+</script>
 
 <script>
 	import { categoryIcon } from "../lib/categories";
@@ -129,7 +167,8 @@ const t = useTranslations(locale);
 
 	// Last successful response, cached so the row can paint immediately on the
 	// next visit instead of popping in after the fetch and pushing the page
-	// content down (same optimistic pattern as the header auth chip).
+	// content down (same optimistic pattern as the header auth chip). The
+	// inline pre-paint script above reads this same key — keep them in sync.
 	const CACHE_KEY = "rm:following-templates";
 	function readCache(): Card[] | null {
 		try {
