@@ -362,6 +362,14 @@ const L = (p: string) => localizePath(p, locale);
             <a href="${L("/history")}" class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-2 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>`;
     }
 
+    // Whether the mobile menu is currently open. The header background logic
+    // treats this like "scrolled" so an open menu always has the surface/blur
+    // treatment — without it, opening the menu at the top of the page (where
+    // the header is still transparent) renders the links floating over content
+    // with no visible background.
+    let mobileMenuOpen = false;
+    let updateHeader: (() => void) | null = null;
+
     // The header persists across View Transitions, so an open mobile menu or
     // auth dropdown would stay open after tapping a link and navigating. Reset
     // them to closed on every soft navigation.
@@ -375,6 +383,8 @@ const L = (p: string) => localizePath(p, locale);
         if (iconOpen) iconOpen.style.display = "";
         if (iconClose) iconClose.style.display = "none";
         toggle?.setAttribute("aria-expanded", "false");
+        mobileMenuOpen = false;
+        updateHeader?.();
     }
 
     // Optimistic first paint: show the cached user chip right away so signed-in
@@ -405,12 +415,13 @@ const L = (p: string) => localizePath(p, locale);
                 "backdrop-blur-xl",
             ];
             const update = () => {
-                const scrolled = window.scrollY > 8;
+                const scrolled = window.scrollY > 8 || mobileMenuOpen;
                 header.classList.toggle("header-scrolled", scrolled);
                 SCROLLED_CLASSES.forEach((c) =>
                     header.classList.toggle(c, scrolled),
                 );
             };
+            updateHeader = update;
             update();
             window.addEventListener("scroll", update, { passive: true });
             window.addEventListener("resize", update);
@@ -434,12 +445,15 @@ const L = (p: string) => localizePath(p, locale);
                 iconOpen.style.display = "";
                 iconClose.style.display = "none";
                 toggle.setAttribute("aria-expanded", "false");
+                mobileMenuOpen = false;
             } else {
                 menu.style.display = "";
                 iconOpen.style.display = "none";
                 iconClose.style.display = "";
                 toggle.setAttribute("aria-expanded", "true");
+                mobileMenuOpen = true;
             }
+            updateHeader?.();
         });
 
         document.addEventListener("click", closeAllDropdowns);
@@ -456,6 +470,8 @@ const L = (p: string) => localizePath(p, locale);
             iconOpen.style.display = "";
             iconClose.style.display = "none";
             toggle.setAttribute("aria-expanded", "false");
+            mobileMenuOpen = false;
+            updateHeader?.();
         });
     });
 </script>
