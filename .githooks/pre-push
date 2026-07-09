@@ -1,0 +1,42 @@
+#!/bin/sh
+# Deploy-readiness guard. Runs ONLY when this push advances `main` (which is
+# what triggers the Cloudflare deploy) and blocks it if production has pending
+# migrations or is missing a required secret.
+#
+# Enabled via `git config core.hooksPath .githooks` — the `prepare` npm script
+# does this automatically on `pnpm install`.
+#
+# Skip once with:  SKIP_DEPLOY_CHECK=1 git push
+set -e
+
+[ -n "$SKIP_DEPLOY_CHECK" ] && exit 0
+
+pushes_main=0
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+	case "$remote_ref" in
+		refs/heads/main) pushes_main=1 ;;
+	esac
+done
+
+[ "$pushes_main" -eq 0 ] && exit 0
+
+echo "→ pre-push: verifying production is up to date before advancing main…"
+set +e
+npx --yes tsx .github/scripts/check-deploy-readiness.ts
+code=$?
+set -e
+
+if [ "$code" -eq 1 ]; then
+	echo ""
+	echo "✖ Push blocked: production is out of sync with this code (see above)."
+	echo "  Apply the migration/secret, or bypass with: SKIP_DEPLOY_CHECK=1 git push"
+	exit 1
+fi
+
+if [ "$code" -eq 2 ]; then
+	echo ""
+	echo "⚠ Could not verify production (no Cloudflare auth?). Allowing push."
+	echo "  Run 'wrangler login' to enable the local check."
+fi
+
+exit 0

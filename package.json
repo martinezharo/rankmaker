@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "astro": "astro",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
+    "check:deploy": "npx --yes tsx .github/scripts/check-deploy-readiness.ts",
     "wrangler": "npx --yes wrangler@latest",
     "db:create": "npx --yes wrangler@latest d1 create rankmaker",
     "db:migrate:new": "npx --yes wrangler@latest d1 migrations create rankmaker",
