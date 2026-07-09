@@ -40,9 +40,15 @@ things that can help:
   sitelinks search box in results. Cheap to add, zero risk. **Added** as a
   `@graph` (Organization + WebSite w/ SearchAction → `/search?q=`) in
   `index.astro`.
-- [ ] **`og:image:width` / `og:image:height`** in `Layout.astro` — currently
-  missing; without them some social network crawlers have to download the
-  image to calculate its size before showing the card.
+- [x] **`og:image:width` / `og:image:height`** in `Layout.astro` —
+  **Added**: Layout now emits `og:image:width`/`og:image:height` (and the
+  Twitter equivalents), defaulting to the favicon's 1200×1200 when no `image`
+  is supplied, plus optional `imageWidth`/`imageHeight` props for callers with
+  known cover dimensions. A wrong size is worse than an absent one, so when an
+  `image` is supplied without dimensions the tags are omitted rather than
+  guessed. Template covers don't carry stored dimensions yet, so the
+  per-template card still relies on the crawler fetching it — storing cover
+  dimensions in D1/`templates.json` (a follow-up) would close that gap.
 - [x] **Reliability bug in `/template/[slug]`**: unlike `index.astro` and
   `search.astro`, this page doesn't wrap its D1 reads in try/catch (see the
   Bugs block below) — a transient D1 failure would bring down with a 500

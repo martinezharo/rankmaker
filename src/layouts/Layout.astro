@@ -17,6 +17,13 @@ interface Props {
     title: string;
     description?: string;
     image?: string | null;
+    /**
+     * Pixel dimensions of `image`. When omitted and `image` is also omitted,
+     * the default favicon (1200×1200) is assumed. Pass them when `image` is a
+     * cover so crawlers can size the card without downloading it first.
+     */
+    imageWidth?: number;
+    imageHeight?: number;
     /** Ask search engines not to index this page (private/unlisted templates). */
     noindex?: boolean;
     /** Preload this image as the LCP candidate (e.g. the template cover). */
@@ -30,6 +37,8 @@ const {
     title,
     description = t("seo.defaultDescription"),
     image,
+    imageWidth,
+    imageHeight,
     noindex = false,
     preloadImage,
 } = Astro.props;
@@ -50,10 +59,23 @@ const alternates = locales.map((loc) => ({
     hreflang: loc,
     href: new URL(localizePath(basePath, loc), SITE_URL).toString(),
 }));
-// og:image must be an absolute URL
+// og:image must be an absolute URL. The default banner is rankmaker.webp —
+// horizontal (1200×800), which fits `summary_large_image` cards far better
+// than the square favicon.
+const DEFAULT_OG_BANNER = "/rankmaker.webp";
+const DEFAULT_OG_WIDTH = 1200;
+const DEFAULT_OG_HEIGHT = 800;
 const ogImage = image
     ? new URL(image, SITE_URL).toString()
-    : `${SITE_URL}/favicon.webp`;
+    : `${SITE_URL}${DEFAULT_OG_BANNER}`;
+// The default banner's dimensions are known statically. For supplied images
+// the caller should pass imageWidth/imageHeight; if it doesn't, omit the
+// size tags rather than lie (a wrong size is worse than an absent one).
+const hasImageDims = !!imageWidth && !!imageHeight;
+const ogImageWidth =
+    hasImageDims ? String(imageWidth) : image ? undefined : String(DEFAULT_OG_WIDTH);
+const ogImageHeight =
+    hasImageDims ? String(imageHeight) : image ? undefined : String(DEFAULT_OG_HEIGHT);
 ---
 
 <!doctype html>
@@ -99,11 +121,31 @@ const ogImage = image
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:image" content={ogImage} />
+        {
+            ogImageWidth !== undefined && (
+                <meta property="og:image:width" content={ogImageWidth} />
+            )
+        }
+        {
+            ogImageHeight !== undefined && (
+                <meta property="og:image:height" content={ogImageHeight} />
+            )
+        }
         <meta property="og:site_name" content="RANKMAKER" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={ogImage} />
+        {
+            ogImageWidth !== undefined && (
+                <meta name="twitter:image:width" content={ogImageWidth} />
+            )
+        }
+        {
+            ogImageHeight !== undefined && (
+                <meta name="twitter:image:height" content={ogImageHeight} />
+            )
+        }
 
         <!-- Cover images are served from R2 via img.rankmaker.net — open the connection early. -->
         <link rel="preconnect" href="https://img.rankmaker.net" crossorigin />
