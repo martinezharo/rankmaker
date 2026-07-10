@@ -180,9 +180,16 @@ const inputClass =
             <img
                 id="tf-cover-preview"
                 alt={t("form.coverPreviewAlt")}
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover transition-opacity"
                 style="display:none;"
             />
+            <div
+                id="tf-cover-uploading"
+                class="absolute inset-0 flex items-center justify-center bg-black/25 pointer-events-none"
+                style="display:none;"
+            >
+                <i class="fa-solid fa-spinner btn-spinner text-white text-2xl drop-shadow"></i>
+            </div>
             <button
                 type="button"
                 id="tf-cover-trigger"
@@ -277,16 +284,22 @@ const inputClass =
         <div class="relative shrink-0">
             <button
                 type="button"
-                class="option-thumb w-12 h-12 rounded-lg overflow-hidden bg-surface-elevated border border-dashed border-border hover:border-primary/60 flex items-center justify-center transition-colors cursor-pointer"
+                class="option-thumb relative w-12 h-12 rounded-lg overflow-hidden bg-surface-elevated border border-dashed border-border hover:border-primary/60 flex items-center justify-center transition-colors cursor-pointer"
                 aria-label={t("form.optionAddImage")}
                 title={t("form.optionAddImage")}
             >
                 <img
-                    class="option-thumb-img w-full h-full object-cover"
+                    class="option-thumb-img w-full h-full object-cover transition-opacity"
                     alt=""
                     style="display:none;"
                 />
                 <i class="option-thumb-icon fa-solid fa-camera text-text-muted text-sm"></i>
+                <span
+                    class="option-thumb-overlay absolute inset-0 items-center justify-center bg-black/25 pointer-events-none"
+                    style="display:none;"
+                >
+                    <i class="fa-solid fa-spinner btn-spinner text-white text-sm drop-shadow"></i>
+                </span>
             </button>
             <button
                 type="button"
@@ -429,9 +442,7 @@ const inputClass =
         const coverTrigger = document.getElementById(
             "tf-cover-trigger",
         ) as HTMLButtonElement;
-        const coverIcon = document.getElementById("tf-cover-icon")!;
-        const coverCta = document.getElementById("tf-cover-cta")!;
-        const coverHint = document.getElementById("tf-cover-hint")!;
+        const coverUploading = document.getElementById("tf-cover-uploading")!;
         const coverActions = document.getElementById("tf-cover-actions")!;
         const coverError = document.getElementById("tf-cover-error")!;
         const optionFile = document.getElementById(
@@ -454,6 +465,18 @@ const inputClass =
         // while anything is still in flight.
         let pendingUploads = 0;
 
+        // Preload a URL into the browser cache so swapping an <img>'s src to
+        // it paints from cache (no blank frame). Resolves on load or error —
+        // a failed preload just means the visible swap may flash briefly.
+        function preloadImage(url: string): Promise<void> {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                img.src = url;
+            });
+        }
+
         function uploadErrorMessage(code: string): string {
             switch (code) {
                 case "image_rejected":
@@ -471,34 +494,51 @@ const inputClass =
 
         // ── Cover upload ─────────────────────────────────────────────
         let coverUrl: string = data.cover_image || "";
+        // Object URL of the picked file, shown optimistically while the
+        // server re-encodes + moderates. Revoked once the upload settles.
+        let coverLocalUrl = "";
+        // Guards against an earlier upload finishing after a later one: only
+        // the newest handleCoverFile call may touch the UI when it resolves.
+        let coverToken = 0;
+
+        function setCoverLocalUrl(url: string) {
+            if (coverLocalUrl && coverLocalUrl !== url)
+                URL.revokeObjectURL(coverLocalUrl);
+            coverLocalUrl = url;
+        }
 
         function renderCover(state: "empty" | "uploading" | "set") {
+            const uploading = state === "uploading";
             coverActions.style.display = state === "set" ? "flex" : "none";
-            coverTrigger.style.display = state === "set" ? "none" : "";
-            if (state === "set") {
-                coverPreview.src = coverUrl;
-                coverPreview.style.display = "";
+            coverTrigger.style.display = state === "empty" ? "" : "none";
+            coverUploading.style.display = uploading ? "flex" : "none";
+            if (state === "empty") {
+                coverPreview.style.display = "none";
+                coverPreview.classList.remove("opacity-40");
+                coverPreview.removeAttribute("src");
                 return;
             }
-            coverPreview.style.display = "none";
-            coverPreview.removeAttribute("src");
-            if (state === "uploading") {
-                coverIcon.className = "fa-solid fa-spinner btn-spinner text-2xl";
-                coverCta.textContent = t("form.uploading");
-                coverHint.style.display = "none";
-            } else {
-                coverIcon.className = "fa-solid fa-cloud-arrow-up text-2xl";
-                coverCta.textContent = t("form.uploadCta");
-                coverHint.style.display = "";
-            }
+            // Uploading shows the local file dimmed under the spinner overlay;
+            // set shows the moderated server URL at full opacity.
+            coverPreview.src = uploading ? coverLocalUrl : coverUrl;
+            coverPreview.classList.toggle("opacity-40", uploading);
+            coverPreview.style.display = "";
         }
 
         async function handleCoverFile(file: File) {
+            const token = ++coverToken;
             coverError.textContent = "";
+            setCoverLocalUrl(URL.createObjectURL(file));
             pendingUploads++;
             renderCover("uploading");
             const result = await uploadTemplateImage(file, "cover");
+            // Preload the moderated URL before swapping so the local preview
+            // stays put until the server image can paint from cache.
+            if (result.ok) await preloadImage(result.url);
             pendingUploads--;
+            // A newer pick superseded this one — leave its UI/preview alone.
+            if (token !== coverToken) return;
+            setCoverLocalUrl("");
             if (result.ok) {
                 coverUrl = result.url;
                 renderCover("set");
@@ -556,30 +596,47 @@ const inputClass =
             if (file && row && row.isConnected) handleOptionFile(row, file);
         });
 
+        // Object URL of a row's optimistic preview lives in dataset so it
+        // survives re-renders; this revokes the old one whenever it changes.
+        function setRowLocalUrl(row: HTMLElement, url: string) {
+            const prev = row.dataset.localPreview || "";
+            if (prev && prev !== url) URL.revokeObjectURL(prev);
+            if (url) row.dataset.localPreview = url;
+            else delete row.dataset.localPreview;
+        }
+
         function renderOptionThumb(row: HTMLElement) {
             const url = row.dataset.image || "";
             const uploading = row.dataset.uploading === "1";
+            const localUrl = row.dataset.localPreview || "";
             const thumb = row.querySelector<HTMLButtonElement>(".option-thumb")!;
             const img =
                 row.querySelector<HTMLImageElement>(".option-thumb-img")!;
             const icon = row.querySelector<HTMLElement>(".option-thumb-icon")!;
+            const overlay = row.querySelector<HTMLElement>(
+                ".option-thumb-overlay",
+            )!;
             const removeBtn = row.querySelector<HTMLElement>(
                 ".option-image-remove",
             )!;
             removeBtn.style.display = url && !uploading ? "flex" : "none";
+            overlay.style.display = uploading ? "flex" : "none";
             if (uploading) {
-                img.style.display = "none";
-                icon.style.display = "";
-                icon.className =
-                    "option-thumb-icon fa-solid fa-spinner btn-spinner text-text-muted text-sm";
+                // Local file dimmed under the spinner overlay.
+                img.src = localUrl;
+                img.classList.add("opacity-40");
+                img.style.display = "";
+                icon.style.display = "none";
             } else if (url) {
                 img.src = url;
+                img.classList.remove("opacity-40");
                 img.style.display = "";
                 icon.style.display = "none";
                 thumb.title = t("form.replaceImage");
                 thumb.setAttribute("aria-label", t("form.replaceImage"));
             } else {
                 img.style.display = "none";
+                img.classList.remove("opacity-40");
                 img.removeAttribute("src");
                 icon.style.display = "";
                 icon.className =
@@ -593,18 +650,26 @@ const inputClass =
             const optionError =
                 row.querySelector<HTMLElement>(".option-error")!;
             optionError.textContent = "";
+            setRowLocalUrl(row, URL.createObjectURL(file));
             row.dataset.uploading = "1";
             pendingUploads++;
             renderOptionThumb(row);
             const result = await uploadTemplateImage(file, "option");
+            // Preload the moderated URL so the swap from the local preview
+            // paints from cache without a blank flash.
+            if (result.ok) await preloadImage(result.url);
             pendingUploads--;
             delete row.dataset.uploading;
-            if (!row.isConnected) return;
+            if (!row.isConnected) {
+                setRowLocalUrl(row, "");
+                return;
+            }
             if (result.ok) {
                 row.dataset.image = result.url;
             } else {
                 optionError.textContent = uploadErrorMessage(result.error);
             }
+            setRowLocalUrl(row, "");
             renderOptionThumb(row);
         }
 

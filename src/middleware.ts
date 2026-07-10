@@ -18,7 +18,9 @@ const CSP = [
 	"script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com",
 	"style-src 'self' 'unsafe-inline'",
 	"font-src 'self'",
-	"img-src 'self' https: data:",
+	// blob: covers the optimistic local previews (URL.createObjectURL) shown
+	// in the template form while an upload re-encodes + moderates.
+	"img-src 'self' https: data: blob:",
 	"connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://cloudflareinsights.com",
 	"frame-ancestors 'none'",
 	"base-uri 'self'",
