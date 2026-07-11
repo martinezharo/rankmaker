@@ -56,7 +56,7 @@ export const en = {
 	nav: {
 		home: 'Home',
 		findTemplates: 'Find Templates',
-		createRanking: 'Create Ranking',
+		createTemplate: 'Create Template',
 		create: 'Create',
 		login: 'Log in',
 		logout: 'Log out',

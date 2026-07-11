@@ -53,7 +53,7 @@ export const fr: LocaleDict = {
 	nav: {
 		home: 'Accueil',
 		findTemplates: 'Trouver des modèles',
-		createRanking: 'Créer un classement',
+		createTemplate: 'Créer un modèle',
 		create: 'Créer',
 		login: 'Connexion',
 		logout: 'Déconnexion',

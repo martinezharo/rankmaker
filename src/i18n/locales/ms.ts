@@ -52,7 +52,7 @@ export const ms: LocaleDict = {
 	nav: {
 		home: 'Laman Utama',
 		findTemplates: 'Cari Templat',
-		createRanking: 'Buat Ranking',
+		createTemplate: 'Buat Templat',
 		create: 'Buat',
 		login: 'Log masuk',
 		logout: 'Log keluar',

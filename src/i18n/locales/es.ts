@@ -53,7 +53,7 @@ export const es: LocaleDict = {
 	nav: {
 		home: 'Inicio',
 		findTemplates: 'Buscar plantillas',
-		createRanking: 'Crear ranking',
+		createTemplate: 'Crear plantilla',
 		create: 'Crear',
 		login: 'Iniciar sesión',
 		logout: 'Cerrar sesión',

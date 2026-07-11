@@ -51,7 +51,7 @@ export const zh: LocaleDict = {
 	nav: {
 		home: '首页',
 		findTemplates: '发现模板',
-		createRanking: '创建排名',
+		createTemplate: '创建模板',
 		create: '创建',
 		login: '登录',
 		logout: '退出登录',
