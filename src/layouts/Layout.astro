@@ -147,7 +147,14 @@ const ogImageHeight =
             )
         }
 
-        <!-- Cover images are served from R2 via img.rankmaker.net — open the connection early. -->
+        <!-- Cover images are served from R2 via img.rankmaker.net — open the
+             connection early. crossorigin="anonymous" aligns the preconnect,
+             preload and the eventual <img crossorigin="anonymous"> on the same
+             CORS request, so the preloaded response is reused instead of
+             re-fetched (R2 sends Access-Control-Allow-Origin: *). Mismatching
+             CORS modes (preconnect crossorigin + preload no-cors + img no-cors)
+             still works, but Chrome may open a second connection for the
+             no-cors fetch and waste the crossorigin TLS handshake. -->
         <link rel="preconnect" href="https://img.rankmaker.net" crossorigin />
         {
             preloadImage && (
@@ -156,6 +163,7 @@ const ogImageHeight =
                     as="image"
                     href={preloadImage}
                     fetchpriority="high"
+                    crossorigin="anonymous"
                 />
             )
         }
@@ -167,8 +175,22 @@ const ogImageHeight =
         <!-- Font Awesome — self-hosted (public/fonts/fontawesome) instead of
              cdnjs, so it's same-origin and carries no extra DNS/TLS round-trip
              on first paint. The .woff2 files are referenced relative to the CSS
-             (../webfonts/*). -->
-        <link rel="stylesheet" href="/fonts/fontawesome/css/all.min.css" />
+             (../webfonts/*).
+             Loaded non-blocking: filesize is ~90KB compressed and the FA CSS
+             ships `font-display: block`, so unloaded icons reserve their box
+             invisibly during the brief gap (~200ms cold cache) without showing
+             fallback italic text (no FOUC). Moving it off the critical path
+             lets the LCP <img> paint without waiting on the stylesheet. The
+             <noscript> fallback keeps icons visible for no-JS crawlers/users. -->
+        <link
+            rel="preload"
+            href="/fonts/fontawesome/css/all.min.css"
+            as="style"
+            onload="this.onload=null;this.rel='stylesheet'"
+        />
+        <noscript>
+            <link rel="stylesheet" href="/fonts/fontawesome/css/all.min.css" />
+        </noscript>
 
         <!-- Google Analytics is loaded only after cookie consent — see
              CookieConsent.astro (gtag is injected on Accept / stored consent). -->

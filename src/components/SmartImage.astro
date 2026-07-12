@@ -6,6 +6,17 @@ interface Props {
     text: string; // Text to display in fallback
     isOption?: boolean; // If true, uses a smaller text size for options
     priority?: boolean; // LCP image: load eagerly with high fetch priority
+    /**
+     * Intrinsic pixel dimensions of `src`. Only meaningful with `priority`:
+     * emitted as width/height attributes on the <img> so the browser reserves
+     * space before CSS layouts the page and identifies it as the LCP candidate
+     * immediately (no waiting for the preload to decode). When omitted for a
+     * priority cover, defaults to 1200×900 — matches the `aspect-4/3` cover
+     * container used across the app, so layout never shifts even if the real
+     * image has a different aspect (it crops via object-cover).
+     */
+    width?: number;
+    height?: number;
 }
 
 const {
@@ -15,7 +26,28 @@ const {
     text,
     isOption = false,
     priority = false,
+    width,
+    height,
 } = Astro.props;
+
+// Default intrinsic dimensions for priority covers: matches the `aspect-4/3`
+// container (1200×900 = 4:3). Lets the browser reserve the LCP box before
+// the image arrives, without waiting for the network. Real cover aspect ratios
+// vary (the object-cover crop handles that), so this only reserves space —
+// it never distorts the rendered image.
+const PRIORITY_DEFAULT_W = 1200;
+const PRIORITY_DEFAULT_H = 900;
+const intrinsicW = priority ? (width ?? PRIORITY_DEFAULT_W) : width;
+const intrinsicH = priority ? (height ?? PRIORITY_DEFAULT_H) : height;
+// Only emit width/height when explicitly meaningful (priority images). Lazy
+// <img> in cards rely on their container's aspect-ratio and would be lied
+// to by guessed dimensions.
+const hasIntrinsic = priority && !!intrinsicW && !!intrinsicH;
+// crossorigin="anonymous" so the LCP <img> matches the cross-origin preload's
+// CORS mode (R2 sends Access-Control-Allow-Origin: *) — guaranteeing the
+// preloaded response is reused instead of re-fetched. Also keeps the image
+// usable by the share-image canvas, which sets crossOrigin='anonymous'.
+const CORS_MODE = "anonymous";
 
 // Generate a consistent color based on the text string
 const stringToColor = (str: string) => {
@@ -42,7 +74,20 @@ const seedColor = stringToColor(text);
 
 <div class={`relative overflow-hidden bg-surface ${className}`}>
     {
-        isValidSrc ? (
+        isValidSrc && hasIntrinsic ? (
+            <img
+                src={src}
+                alt={alt}
+                width={intrinsicW}
+                height={intrinsicH}
+                class="w-full h-full object-cover transition-opacity duration-300"
+                loading={priority ? "eager" : "lazy"}
+                fetchpriority={priority ? "high" : "auto"}
+                decoding={priority ? "async" : undefined}
+                crossorigin={priority ? CORS_MODE : undefined}
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+        ) : isValidSrc ? (
             <img
                 src={src}
                 alt={alt}

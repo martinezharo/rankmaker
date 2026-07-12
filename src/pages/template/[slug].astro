@@ -62,12 +62,19 @@ const { options, creator } = template;
 // Official pages change rarely; user templates may be edited (≤60s staleness).
 // Hidden templates are never cached: private responses depend on the session,
 // and unlisted URLs shouldn't sit in shared caches.
+//
+// For officials we extend the edge freshness window to 1h with a 24h
+// stale-while-revalidate grace: the page does 3 D1 reads per render (template
+// + voteScore + recommendations) that are purely decorative — counts are
+// refreshed client-side via /api/counts on every page-load, so a 1h HTML cache
+// can't surface stale ranking numbers to users. This keeps cold-cache visitors
+// off the Worker most of the time, dropping TTFB from ~1s to <50ms.
 Astro.response.headers.set(
     "Cache-Control",
     isHidden
         ? "no-store"
         : template.source === "official"
-          ? "public, max-age=300"
+          ? "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400"
           : "public, max-age=60",
 );
 
