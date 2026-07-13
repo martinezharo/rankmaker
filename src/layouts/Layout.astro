@@ -76,6 +76,9 @@ const ogImageWidth =
     hasImageDims ? String(imageWidth) : image ? undefined : String(DEFAULT_OG_WIDTH);
 const ogImageHeight =
     hasImageDims ? String(imageHeight) : image ? undefined : String(DEFAULT_OG_HEIGHT);
+const preloadImageCrossorigin = preloadImage?.startsWith("https://img.rankmaker.net")
+    ? "anonymous"
+    : undefined;
 ---
 
 <!doctype html>
@@ -163,7 +166,7 @@ const ogImageHeight =
                     as="image"
                     href={preloadImage}
                     fetchpriority="high"
-                    crossorigin="anonymous"
+                    crossorigin={preloadImageCrossorigin}
                 />
             )
         }
@@ -200,12 +203,23 @@ const ogImageHeight =
              (see src/middleware.ts), so the beacon is added here and the beacon
              host is allow-listed in the CSP. It's cookieless, so it needs no
              consent gate and loads for every visitor. -->
-        <script
-            is:inline
-            defer
-            src="https://static.cloudflareinsights.com/beacon.min.js"
-            data-cf-beacon='{"token": "7cafed3cd4f74c66b7f9e9ddb934aaed"}'
-        ></script>
+        <script is:inline>
+            (() => {
+                const loadBeacon = () => {
+                    if (document.querySelector("script[data-cf-beacon]")) return;
+                    const script = document.createElement("script");
+                    script.defer = true;
+                    script.src = "https://static.cloudflareinsights.com/beacon.min.js";
+                    script.dataset.cfBeacon = JSON.stringify({
+                        token: "7cafed3cd4f74c66b7f9e9ddb934aaed",
+                    });
+                    document.head.append(script);
+                };
+                const idle = window.requestIdleCallback;
+                if (idle) idle(loadBeacon, { timeout: 3000 });
+                else window.addEventListener("load", () => setTimeout(loadBeacon, 1200), { once: true });
+            })();
+        </script>
 
         <!-- View Transitions -->
         <ViewTransitions />

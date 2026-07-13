@@ -75,17 +75,16 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 							class="group flex-1 min-w-0 flex flex-col rounded-xl bg-surface border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97]"
 						>
 							<div class="relative aspect-square overflow-hidden bg-surface">
-								{clientItems.map((item) => (
-									<img
-										src={item.image}
-										alt=""
-										data-demo-img={item.idx}
-										class:list={[
-											"absolute inset-0 w-full h-full object-cover transition-all duration-200 group-hover:scale-105",
-											item.idx === sideIdx ? "opacity-100" : "opacity-0",
-										]}
-									/>
-								))}
+								<img
+									src={demoItems[sideIdx].image}
+									alt=""
+									data-demo-photo
+									width="512"
+									height="512"
+									decoding="async"
+									fetchpriority="high"
+									class="w-full h-full object-cover transition-all duration-200 group-hover:scale-105"
+								/>
 							</div>
 							<div class="flex-1 flex items-center justify-center px-2 py-2.5 min-h-12 border-t border-border/60">
 								<span
@@ -209,6 +208,22 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 		}
 		if (!Array.isArray(items) || items.length !== 4) return;
 
+		// Only the first visible duel is in the HTML. Warm the remaining demo
+		// images after the browser has handled first paint/input so the hero does
+		// not compete with six hidden image downloads on the critical path.
+		const warmDemoImages = () => {
+			for (const item of items.slice(2)) {
+				const img = new Image();
+				img.decoding = "async";
+				img.src = item.image;
+			}
+		};
+		const idle = (window as any).requestIdleCallback as
+			| ((cb: () => void, opts?: { timeout: number }) => number)
+			| undefined;
+		if (idle) idle(warmDemoImages, { timeout: 2500 });
+		else window.setTimeout(warmDemoImages, 1200);
+
 		const battleEl = document.getElementById("hero-demo-battle");
 		const resultsEl = document.getElementById("hero-demo-results");
 		const listEl = document.getElementById("hero-demo-list");
@@ -292,12 +307,10 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 		let locked = false;
 
 		function setCardContent(card: HTMLElement, item: DemoItem) {
-			card.querySelectorAll("[data-demo-img]").forEach((img) => {
-				const match =
-					img.getAttribute("data-demo-img") === String(item.idx);
-				img.classList.toggle("opacity-100", match);
-				img.classList.toggle("opacity-0", !match);
-			});
+			const photo = card.querySelector<HTMLImageElement>("[data-demo-photo]");
+			if (photo && photo.getAttribute("src") !== item.image) {
+				photo.src = item.image;
+			}
 			const name = card.querySelector("[data-demo-name]");
 			if (name) name.textContent = item.name;
 			card.setAttribute("aria-label", item.name);

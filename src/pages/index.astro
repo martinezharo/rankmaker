@@ -90,7 +90,11 @@ const siteJsonLd = {
 };
 ---
 
-<Layout title={t("home.title")} description={t("home.metaDescription")}>
+<Layout
+	title={t("home.title")}
+	description={t("home.metaDescription")}
+	preloadImage="/hero/star-wars.webp"
+>
 	<script
 		type="application/ld+json"
 		set:html={JSON.stringify(siteJsonLd)}
