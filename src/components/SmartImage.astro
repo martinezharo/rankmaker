@@ -43,12 +43,6 @@ const intrinsicH = priority ? (height ?? PRIORITY_DEFAULT_H) : height;
 // <img> in cards rely on their container's aspect-ratio and would be lied
 // to by guessed dimensions.
 const hasIntrinsic = priority && !!intrinsicW && !!intrinsicH;
-// crossorigin="anonymous" so the LCP <img> matches the cross-origin preload's
-// CORS mode (R2 sends Access-Control-Allow-Origin: *) — guaranteeing the
-// preloaded response is reused instead of re-fetched. Also keeps the image
-// usable by the share-image canvas, which sets crossOrigin='anonymous'.
-const CORS_MODE = "anonymous";
-
 // Generate a consistent color based on the text string
 const stringToColor = (str: string) => {
     let hash = 0;
@@ -84,7 +78,6 @@ const seedColor = stringToColor(text);
                 loading={priority ? "eager" : "lazy"}
                 fetchpriority={priority ? "high" : "auto"}
                 decoding={priority ? "async" : undefined}
-                crossorigin={priority ? CORS_MODE : undefined}
                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
             />
         ) : isValidSrc ? (
