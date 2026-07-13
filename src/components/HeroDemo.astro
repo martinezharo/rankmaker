@@ -195,10 +195,9 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 	}
 
 	function heroDemoInit() {
-		const token = ++generation;
 		const root = document.getElementById("hero-demo");
 		const dataEl = document.getElementById("hero-demo-data");
-		if (!root || !dataEl) return;
+		if (!root || !dataEl || root.dataset.demoBound === "1") return;
 
 		let items: DemoItem[];
 		try {
@@ -207,22 +206,6 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 			return;
 		}
 		if (!Array.isArray(items) || items.length !== 4) return;
-
-		// Only the first visible duel is in the HTML. Warm the remaining demo
-		// images after the browser has handled first paint/input so the hero does
-		// not compete with six hidden image downloads on the critical path.
-		const warmDemoImages = () => {
-			for (const item of items.slice(2)) {
-				const img = new Image();
-				img.decoding = "async";
-				img.src = item.image;
-			}
-		};
-		const idle = (window as any).requestIdleCallback as
-			| ((cb: () => void, opts?: { timeout: number }) => number)
-			| undefined;
-		if (idle) idle(warmDemoImages, { timeout: 2500 });
-		else window.setTimeout(warmDemoImages, 1200);
 
 		const battleEl = document.getElementById("hero-demo-battle");
 		const resultsEl = document.getElementById("hero-demo-results");
@@ -245,6 +228,28 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 			!cardB
 		)
 			return;
+
+		// The module initializes the first page immediately and Astro's page-load
+		// event handles later View Transition swaps. Guard the root so the initial
+		// page-load event cannot attach a second set of listeners and timers.
+		root.dataset.demoBound = "1";
+		const token = ++generation;
+
+		// Only the first visible duel is in the HTML. Warm the remaining demo
+		// images after the browser has handled first paint/input so the hero does
+		// not compete with six hidden image downloads on the critical path.
+		const warmDemoImages = () => {
+			for (const item of items.slice(2)) {
+				const img = new Image();
+				img.decoding = "async";
+				img.src = item.image;
+			}
+		};
+		const idle = (window as any).requestIdleCallback as
+			| ((cb: () => void, opts?: { timeout: number }) => number)
+			| undefined;
+		if (idle) idle(warmDemoImages, { timeout: 2500 });
+		else window.setTimeout(warmDemoImages, 1200);
 
 		const cards = [cardA, cardB];
 		const alive = () => token === generation;
@@ -408,4 +413,5 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 	}
 
 	document.addEventListener("astro:page-load", heroDemoInit);
+	heroDemoInit();
 </script>
