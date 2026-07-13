@@ -76,9 +76,6 @@ const ogImageWidth =
     hasImageDims ? String(imageWidth) : image ? undefined : String(DEFAULT_OG_WIDTH);
 const ogImageHeight =
     hasImageDims ? String(imageHeight) : image ? undefined : String(DEFAULT_OG_HEIGHT);
-const preloadImageCrossorigin = preloadImage?.startsWith("https://img.rankmaker.net")
-    ? "anonymous"
-    : undefined;
 ---
 
 <!doctype html>
@@ -150,15 +147,12 @@ const preloadImageCrossorigin = preloadImage?.startsWith("https://img.rankmaker.
             )
         }
 
-        <!-- Cover images are served from R2 via img.rankmaker.net — open the
-             connection early. crossorigin="anonymous" aligns the preconnect,
-             preload and the eventual <img crossorigin="anonymous"> on the same
-             CORS request, so the preloaded response is reused instead of
-             re-fetched (R2 sends Access-Control-Allow-Origin: *). Mismatching
-             CORS modes (preconnect crossorigin + preload no-cors + img no-cors)
-             still works, but Chrome may open a second connection for the
-             no-cors fetch and waste the crossorigin TLS handshake. -->
-        <link rel="preconnect" href="https://img.rankmaker.net" crossorigin />
+        <!-- Cover images are served from R2 via img.rankmaker.net. The image
+             host does not send Access-Control-Allow-Origin, so the preconnect,
+             preload and eventual <img> intentionally use the normal no-cors
+             mode. Keeping their request modes aligned lets the browser reuse
+             the preloaded response without blocking the rendered image. -->
+        <link rel="preconnect" href="https://img.rankmaker.net" />
         {
             preloadImage && (
                 <link
@@ -166,7 +160,6 @@ const preloadImageCrossorigin = preloadImage?.startsWith("https://img.rankmaker.
                     as="image"
                     href={preloadImage}
                     fetchpriority="high"
-                    crossorigin={preloadImageCrossorigin}
                 />
             )
         }
