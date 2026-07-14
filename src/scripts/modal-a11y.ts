@@ -5,13 +5,34 @@
  * Modals are plain elements toggled via the `hidden` class; this wraps that
  * toggle with the keyboard/focus behaviour screen-reader and keyboard users
  * expect: Escape to close, a focus trap while open, focus moved into the
- * dialog on open and restored to the trigger on close. The markup should carry
+ * dialog on open and restored to the trigger on close. It also prevents the
+ * document behind the dialog from scrolling. The markup should carry
  * role="dialog" aria-modal="true" (and ideally aria-labelledby) statically.
  */
 
 let activeModal: HTMLElement | null = null;
 let lastFocused: HTMLElement | null = null;
 let onCloseCb: (() => void) | null = null;
+let scrollLockState: { rootOverflow: string; bodyOverflow: string } | null = null;
+
+function lockPageScroll(): void {
+	if (scrollLockState) return;
+
+	scrollLockState = {
+		rootOverflow: document.documentElement.style.overflow,
+		bodyOverflow: document.body.style.overflow,
+	};
+	document.documentElement.style.overflow = 'hidden';
+	document.body.style.overflow = 'hidden';
+}
+
+function unlockPageScroll(): void {
+	if (!scrollLockState) return;
+
+	document.documentElement.style.overflow = scrollLockState.rootOverflow;
+	document.body.style.overflow = scrollLockState.bodyOverflow;
+	scrollLockState = null;
+}
 
 function focusable(container: HTMLElement): HTMLElement[] {
 	const sel =
@@ -72,6 +93,7 @@ export function openModal(
 	modal.setAttribute('aria-modal', 'true');
 	activeModal = modal;
 	onCloseCb = opts.onClose ?? null;
+	lockPageScroll();
 	document.addEventListener('keydown', onKeydown, true);
 
 	const target = opts.focus ?? focusable(modal)[0] ?? modal;
@@ -85,6 +107,7 @@ export function closeModal(modal: HTMLElement): void {
 	if (activeModal === modal) {
 		activeModal = null;
 		document.removeEventListener('keydown', onKeydown, true);
+		unlockPageScroll();
 		const cb = onCloseCb;
 		onCloseCb = null;
 		if (lastFocused && document.contains(lastFocused)) lastFocused.focus();

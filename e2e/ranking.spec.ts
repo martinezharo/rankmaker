@@ -172,6 +172,43 @@ test('persists battle sides and restores the history after a reload', async ({
 	expect(firstRowText.indexOf(firstBattle.leftName)).toBeLessThan(
 		firstRowText.indexOf(firstBattle.rightName)
 	);
+
+	const historyList = dialog.locator('#history-list');
+	const backgroundScrollY = await page.evaluate(() => window.scrollY);
+	await expect
+		.poll(() =>
+			page.evaluate(() => ({
+				root: document.documentElement.style.overflow,
+				body: document.body.style.overflow,
+			}))
+		)
+		.toEqual({ root: 'hidden', body: 'hidden' });
+
+	// Reaching either end of the modal must not chain the wheel gesture to the
+	// results page underneath it.
+	await historyList.evaluate((element) => {
+		element.scrollTop = element.scrollHeight;
+	});
+	await historyList.hover();
+	await page.mouse.wheel(0, 1_200);
+	await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(backgroundScrollY);
+
+	await historyList.evaluate((element) => {
+		element.scrollTop = 0;
+	});
+	await page.mouse.wheel(0, -1_200);
+	await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(backgroundScrollY);
+
+	await dialog.getByRole('button').click();
+	await expect(dialog).toBeHidden();
+	await expect
+		.poll(() =>
+			page.evaluate(() => ({
+				root: document.documentElement.style.overflow,
+				body: document.body.style.overflow,
+			}))
+		)
+		.toEqual({ root: '', body: '' });
 });
 
 test('client-side navigation keeps options in sync with the template (regression)', async ({
