@@ -5,84 +5,62 @@ import Layout from "../layouts/Layout.astro";
 import { getSessionUser } from "../lib/auth";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 import { rankingResultTimestamp } from "../lib/ranking-results";
+import type { HistorySummary } from "../scripts/history";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
-// Per-user, never cached. Logged-in users get their saved results from D1
-// (cross-device); anonymous visitors get theirs from localStorage, rendered by
-// the client script below. A logged-in user may also have local-only entries
-// (e.g. ranked before logging in) — the client merges those in, de-duped.
+// Only lightweight card metadata is SSR'd. Complete ordered results are loaded
+// from localStorage or /api/me/history?slug=... when a card is expanded.
 const db = Astro.locals.runtime.env.DB;
 const user = await getSessionUser(Astro.cookies, db);
 
-type RankedItem = { id: number | string; name: string; image: string };
-type HistoryRow = {
-	slug: string;
-	title: string;
-	result: RankedItem[];
-	cover: string;
-	ts: number;
-};
-
-let serverEntries: HistoryRow[] = [];
+let serverSummaries: HistorySummary[] = [];
 if (user) {
 	try {
 		const { results } = await db
 			.prepare(
-				`SELECT slug, title, cover, result, updated_at
-				 FROM ranking_results WHERE user_id = ?
-				 ORDER BY updated_at DESC`,
+				`SELECT slug, title, cover, updated_at,
+				        CASE WHEN json_valid(result)
+				             THEN json_array_length(result) ELSE 0 END AS item_count,
+				        CASE
+				          WHEN cover IS NOT NULL AND cover != '' THEN cover
+				          WHEN json_valid(result)
+				            THEN COALESCE(json_extract(result, '$[0].image'), '')
+				          ELSE ''
+				        END AS thumb
+				 FROM ranking_results
+				 WHERE user_id = ?
+				 ORDER BY updated_at DESC, slug ASC`,
 			)
 			.bind(user.id)
 			.all<{
 				slug: string;
 				title: string;
 				cover: string | null;
-				result: string;
 				updated_at: string;
+				item_count: number;
+				thumb: string | null;
 			}>();
-		serverEntries = results.map((r) => ({
-			slug: r.slug,
-			title: r.title,
-			ts: rankingResultTimestamp(r.updated_at),
-			cover: r.cover ?? "",
-			result: (() => {
-				try {
-					return JSON.parse(r.result) as RankedItem[];
-				} catch {
-					return [];
-				}
-			})(),
+		serverSummaries = results.map((row) => ({
+			slug: row.slug,
+			title: row.title,
+			cover: row.cover ?? undefined,
+			thumb: row.thumb ?? "",
+			itemCount: row.item_count,
+			ts: rankingResultTimestamp(row.updated_at),
 		}));
 	} catch {
-		// degrade to the client-rendered (localStorage) view
+		// Degrade to the localStorage-only view.
 	}
 }
 
-const fmtDate = (d: string | number) => {
-	const date = new Date(d);
-	return isNaN(date.getTime())
-		? ""
-		: date.toLocaleDateString(locale, {
-				year: "numeric",
-				month: "short",
-				day: "numeric",
-			});
-};
-
-// Position badge — mirrors the results page: minted medallions for the top
-// three, plain numbers after. Kept in sync with the client script below.
-const posLabel = (i: number) => `${i + 1}`;
-const posCls = (i: number) =>
-	i === 0
-		? "medal-gold text-base font-black"
-		: i === 1
-			? "medal-silver text-base font-black"
-			: i === 2
-				? "medal-bronze text-base font-black"
-				: "bg-border/60 text-text-muted text-sm font-black";
+// Prevent a user-controlled title/URL from closing the JSON script element.
+const serverHistoryJson = JSON.stringify(serverSummaries).replaceAll(
+	"<",
+	"\\u003c",
+);
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
@@ -109,133 +87,42 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			}
 		</p>
 
+		<script
+			id="history-server-data"
+			type="application/json"
+			set:html={serverHistoryJson}
+			is:inline
+		/>
+
+		<div
+			id="history-loading"
+			class="flex items-center justify-center gap-2 py-12 text-sm text-text-muted"
+			role="status"
+		>
+			<i class="fa-solid fa-spinner fa-spin text-primary"></i>
+			{t("history.loading")}
+		</div>
+
 		<div
 			id="history-list"
 			class="space-y-3"
 			data-logged-in={user ? "true" : "false"}
-		>
-			{
-				serverEntries.map((e) => {
-					const thumb = e.cover || e.result[0]?.image || "";
-					return (
-						<div
-							data-slug={e.slug}
-							data-ts={e.ts}
-							data-source="server"
-							class="history-card group rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden"
-						>
-							<button
-								type="button"
-								class="history-toggle w-full flex items-center gap-4 p-4 text-left"
-								aria-expanded="false"
-							>
-								<div class="w-24 aspect-4/3 rounded-xl overflow-hidden bg-surface border border-border shrink-0">
-									{thumb && (
-										<img
-											src={thumb}
-											alt=""
-											class="w-full h-full object-cover"
-										/>
-									)}
-								</div>
-								<div class="flex-1 min-w-0">
-									<p class="font-semibold text-base text-text-primary truncate group-hover:text-white transition-colors">
-										{e.title}
-									</p>
-									<div class="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
-										<span class="inline-flex items-center gap-1.5">
-											<i class="fa-solid fa-list-ol text-[10px]" />
-											{t("history.items", { n: e.result.length })}
-										</span>
-										<span class="inline-flex items-center gap-1.5">
-											<i class="fa-regular fa-clock text-[10px]" />
-											{fmtDate(e.ts)}
-										</span>
-									</div>
-								</div>
-								<span class="shrink-0 w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-text-primary group-hover:border-border-hover transition-colors">
-									<i class="history-chevron fa-solid fa-chevron-down text-xs transition-transform duration-300" />
-								</span>
-							</button>
+		></div>
 
-							<div class="history-details grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out">
-								<div class="overflow-hidden">
-									<div class="px-4 pb-4 pt-1">
-										<div class="flex items-center gap-3 mb-3">
-											<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">
-												{t("history.fullRanking")}
-											</span>
-											<div class="flex-1 h-px bg-border/60" />
-										</div>
-										<ol class="space-y-1.5">
-											{e.result.map((item, i) => (
-												<li
-													class:list={[
-														"flex items-center gap-3 p-2 rounded-xl transition-colors",
-														i === 0
-															? "bg-amber-400/[0.06] border border-amber-400/15"
-															: "hover:bg-surface-hover",
-													]}
-												>
-													<span
-														class:list={[
-															"flex items-center justify-center w-9 h-9 rounded-lg shrink-0",
-															posCls(i),
-														]}
-													>
-														{posLabel(i)}
-													</span>
-													<div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
-														{item.image && (
-															<img
-																src={item.image}
-																alt=""
-																class="w-full h-full object-cover"
-															/>
-														)}
-													</div>
-													<span class="text-sm font-medium text-text-primary truncate flex-1">
-														{item.name}
-													</span>
-												</li>
-											))}
-										</ol>
-										<div class="flex justify-end gap-2 mt-4">
-											<a
-												href={L(`/template/${e.slug}`)}
-												data-slug={e.slug}
-												class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
-											>
-												<i class="fa-solid fa-rotate text-xs text-primary/70" />
-												{t("history.rankAgain")}
-											</a>
-											<a
-												href={L(`/template/${e.slug}`)}
-												data-slug={e.slug}
-												data-title={e.title}
-												data-cover={e.cover}
-												data-result={JSON.stringify(e.result)}
-												class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"
-											>
-												<i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12" />
-												{t("history.viewDetails")}
-											</a>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					);
-				})
-			}
+		<div class="mt-6 flex justify-center">
+			<button
+				id="history-load-more"
+				type="button"
+				class="hidden min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-5 py-2.5 text-sm font-semibold text-text-secondary transition-colors hover:border-primary/40 hover:text-text-primary"
+			>
+				<i class="fa-solid fa-chevron-down text-xs text-primary/70"></i>
+				{t("history.loadMore")}
+			</button>
 		</div>
 
 		<div
 			id="history-empty"
-			class:list={[
-				"rounded-2xl border border-dashed border-border p-10 text-center space-y-3",
-				serverEntries.length > 0 && "hidden",
-			]}
+			class="hidden rounded-2xl border border-dashed border-border p-10 text-center space-y-3"
 		>
 			<i class="fa-solid fa-clock-rotate-left text-2xl text-text-muted"></i>
 			<p class="text-sm text-text-secondary">
@@ -253,13 +140,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
 </Layout>
 
 <script>
-	// Merge in this device's localStorage history (covers anonymous visitors and
-	// any local-only entries a logged-in user made before signing in). SSR-
-	// rendered slugs win, so we skip duplicates. The markup here mirrors the
-	// Astro template above so both kinds of card look and behave identically.
 	import {
 		getLocalHistory,
-		mergeHistory,
+		mergeHistorySummaries,
 		reconcileMovedHistoryEntries,
 		removeLocalResult,
 		saveHistoryEntry,
@@ -267,237 +150,355 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		setPendingResult,
 		setForceFresh,
 		type HistoryEntry,
+		type HistorySummary,
 		type RankedItem,
 	} from "../scripts/history";
 	import { clientT, getClientLocale } from "../i18n/client";
 	import { localizePath } from "../i18n";
 
+	const PAGE_SIZE = 20;
 	const t = clientT();
 	const locale = getClientLocale();
 	const L = (p: string) => localizePath(p, locale);
 
-	function escapeHtml(s: string): string {
-		return s.replace(
+	type HistoryState = {
+		list: HTMLElement;
+		empty: HTMLElement;
+		loading: HTMLElement;
+		loadMore: HTMLButtonElement;
+		summaries: HistorySummary[];
+		details: Map<string, HistoryEntry>;
+		renderedCount: number;
+	};
+
+	let state: HistoryState | null = null;
+
+	function escapeHtml(value: string): string {
+		return value.replace(
 			/[&<>"']/g,
-			(c) =>
+			(char) =>
 				({
 					"&": "&amp;",
 					"<": "&lt;",
 					">": "&gt;",
 					'"': "&quot;",
 					"'": "&#39;",
-				})[c]!,
+				})[char]!,
 		);
 	}
 
-	function fmtDate(ts: number): string {
-		const d = new Date(ts);
-		return isNaN(d.getTime())
+	function fmtDate(timestamp: number): string {
+		const date = new Date(timestamp);
+		return Number.isNaN(date.getTime())
 			? ""
-			: d.toLocaleDateString(locale, {
+			: date.toLocaleDateString(locale, {
 					year: "numeric",
 					month: "short",
 					day: "numeric",
 				});
 	}
 
-	const posLabel = (i: number) => `${i + 1}`;
-	const posCls = (i: number) =>
-		i === 0
-			? "medal-gold text-base font-black"
-			: i === 1
-				? "medal-silver text-base font-black"
-				: i === 2
-					? "medal-bronze text-base font-black"
-					: "bg-border/60 text-text-muted text-sm font-black";
-
-	function readServerHistory(list: HTMLElement): HistoryEntry[] {
-		const entries: HistoryEntry[] = [];
-		for (const card of list.querySelectorAll<HTMLElement>(
-			'.history-card[data-source="server"]',
-		)) {
-			const details = card.querySelector<HTMLElement>(
-				".history-view-details",
-			);
-			if (!details) continue;
-			try {
-				entries.push({
-					slug: card.dataset.slug || "",
-					title: details.dataset.title || card.dataset.slug || "",
-					cover: details.dataset.cover || undefined,
-					result: JSON.parse(
-						details.dataset.result || "[]",
-					) as RankedItem[],
-					ts: Number(card.dataset.ts) || 0,
-				});
-			} catch {
-				/* Ignore a corrupt row; local history can still provide a copy. */
-			}
-		}
-		return entries;
-	}
-
-	async function syncPendingResults(entries: HistoryEntry[]) {
-		// Sequential on purpose: signing in with a large local history should not
-		// generate a burst of simultaneous Worker/D1 requests.
-		for (const entry of entries) await syncResultToAccount(entry);
-	}
-
-	function renderHistory() {
-		const list = document.getElementById("history-list");
-		const empty = document.getElementById("history-empty");
-		if (!list) return;
-		const serverEntries = readServerHistory(list);
-
-		let entries: ReturnType<typeof getLocalHistory> = [];
-		try {
-			entries = getLocalHistory();
-		} catch {
-			entries = [];
-		}
-
-		const reconciled = reconcileMovedHistoryEntries(serverEntries, entries);
-		for (const slug of reconciled.movedSlugs) removeLocalResult(slug);
-		entries = reconciled.entries;
-
-		const localBySlug = new Map(entries.map((entry) => [entry.slug, entry]));
-		for (const server of serverEntries) {
-			const local = localBySlug.get(server.slug);
-			if (local && server.ts >= local.ts) saveHistoryEntry(server);
-		}
-
-		const serverBySlug = new Map(
-			serverEntries.map((entry) => [entry.slug, entry]),
+	function isHistoryEntry(value: unknown): value is HistoryEntry {
+		return (
+			typeof value === "object" &&
+			value !== null &&
+			"slug" in value &&
+			"title" in value &&
+			"result" in value &&
+			"ts" in value &&
+			typeof value.slug === "string" &&
+			typeof value.title === "string" &&
+			Array.isArray(value.result) &&
+			typeof value.ts === "number"
 		);
-		const merged = mergeHistory(serverEntries, entries);
-		list.replaceChildren();
+	}
 
-		for (const e of merged) {
-			const thumb = e.cover || e.result[0]?.image || "";
+	function readServerSummaries(): HistorySummary[] {
+		const data = document.getElementById("history-server-data");
+		if (!data) return [];
+		try {
+			const parsed = JSON.parse(data.textContent || "[]");
+			return Array.isArray(parsed) ? (parsed as HistorySummary[]) : [];
+		} catch {
+			return [];
+		}
+	}
 
-			const rows = e.result
-				.map(
-					(item, i) => `
-				<li class="flex items-center gap-3 p-2 rounded-xl transition-colors ${i === 0 ? "bg-amber-400/[0.06] border border-amber-400/15" : "hover:bg-surface-hover"}">
-					<span class="flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${posCls(i)}">${posLabel(i)}</span>
-					<div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
-						${item.image ? `<img src="${escapeHtml(item.image)}" alt="" class="w-full h-full object-cover" />` : ""}
-					</div>
-					<span class="text-sm font-medium text-text-primary truncate flex-1">${escapeHtml(item.name)}</span>
-				</li>`,
-				)
-				.join("");
+	async function fetchRemoteEntry(slug: string): Promise<HistoryEntry | null> {
+		try {
+			const response = await fetch(
+				`/api/me/history?slug=${encodeURIComponent(slug)}`,
+				{ headers: { Accept: "application/json" } },
+			);
+			if (!response.ok) return null;
+			const data = (await response.json()) as { entry?: unknown };
+			if (!isHistoryEntry(data.entry)) return null;
+			saveHistoryEntry(data.entry);
+			return data.entry;
+		} catch {
+			return null;
+		}
+	}
 
-			const card = document.createElement("div");
-			card.dataset.slug = e.slug;
-			card.dataset.ts = String(e.ts);
-			card.dataset.source =
-				serverBySlug.get(e.slug) === e ? "server" : "local";
-			card.className =
-				"history-card group rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden";
-			card.innerHTML = `
-				<button type="button" class="history-toggle w-full flex items-center gap-4 p-4 text-left" aria-expanded="false">
+	async function reconcileMovedLocalEntries(
+		serverSummaries: HistorySummary[],
+		localEntries: HistoryEntry[],
+		details: Map<string, HistoryEntry>,
+	): Promise<HistoryEntry[]> {
+		const serverSlugs = new Set(
+			serverSummaries.map((summary) => summary.slug),
+		);
+		const kept: HistoryEntry[] = [];
+
+		for (const local of localEntries) {
+			if (serverSlugs.has(local.slug)) {
+				kept.push(local);
+				continue;
+			}
+
+			const thumb = local.cover || local.result[0]?.image || "";
+			const candidates = serverSummaries.filter(
+				(summary) =>
+					summary.title === local.title &&
+					(summary.cover ?? "") === (local.cover ?? "") &&
+					summary.thumb === thumb &&
+					summary.itemCount === local.result.length &&
+					Math.abs(summary.ts - local.ts) <= 10_000,
+			);
+
+			let moved = false;
+			for (const candidate of candidates) {
+				const remote = await fetchRemoteEntry(candidate.slug);
+				if (!remote) continue;
+				const reconciliation = reconcileMovedHistoryEntries(
+					[remote],
+					[local],
+				);
+				if (reconciliation.movedSlugs.length === 0) continue;
+				removeLocalResult(local.slug);
+				details.set(remote.slug, remote);
+				moved = true;
+				break;
+			}
+
+			if (!moved) kept.push(local);
+		}
+		return kept;
+	}
+
+	function cardMarkup(summary: HistorySummary): string {
+		const detailsId = `history-details-${summary.slug.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+		return `
+			<div class="history-card group rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden" data-slug="${escapeHtml(summary.slug)}">
+				<button type="button" class="history-toggle w-full flex items-center gap-4 p-4 text-left" aria-expanded="false" aria-controls="${escapeHtml(detailsId)}">
 					<div class="w-24 aspect-4/3 rounded-xl overflow-hidden bg-surface border border-border shrink-0">
-						${thumb ? `<img src="${escapeHtml(thumb)}" alt="" class="w-full h-full object-cover" />` : ""}
+						${summary.thumb ? `<img src="${escapeHtml(summary.thumb)}" alt="" class="w-full h-full object-cover" />` : ""}
 					</div>
 					<div class="flex-1 min-w-0">
-						<p class="font-semibold text-base text-text-primary truncate group-hover:text-white transition-colors">${escapeHtml(e.title)}</p>
+						<p class="font-semibold text-base text-text-primary truncate group-hover:text-white transition-colors">${escapeHtml(summary.title)}</p>
 						<div class="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
-							<span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-list-ol text-[10px]"></i>${escapeHtml(t("history.items", { n: e.result.length }))}</span>
-							<span class="inline-flex items-center gap-1.5"><i class="fa-regular fa-clock text-[10px]"></i>${fmtDate(e.ts)}</span>
+							<span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-list-ol text-[10px]"></i>${escapeHtml(t("history.items", { n: summary.itemCount }))}</span>
+							<span class="inline-flex items-center gap-1.5"><i class="fa-regular fa-clock text-[10px]"></i>${fmtDate(summary.ts)}</span>
 						</div>
 					</div>
 					<span class="shrink-0 w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-text-primary group-hover:border-border-hover transition-colors">
 						<i class="history-chevron fa-solid fa-chevron-down text-xs transition-transform duration-300"></i>
 					</span>
 				</button>
-				<div class="history-details grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out">
+				<div id="${escapeHtml(detailsId)}" class="history-details grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out" data-loaded="false">
 					<div class="overflow-hidden">
-						<div class="px-4 pb-4 pt-1">
-							<div class="flex items-center gap-3 mb-3">
-								<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">${escapeHtml(t("history.fullRanking"))}</span>
-								<div class="flex-1 h-px bg-border/60"></div>
-							</div>
-							<ol class="space-y-1.5">${rows}</ol>
-							<div class="flex justify-end gap-2 mt-4">
-								<a href="${escapeHtml(L(`/template/${encodeURIComponent(e.slug)}`))}" data-slug="${escapeHtml(e.slug)}" class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"><i class="fa-solid fa-rotate text-xs text-primary/70"></i>${escapeHtml(t("history.rankAgain"))}</a>
-								<a href="${escapeHtml(L(`/template/${encodeURIComponent(e.slug)}`))}" data-slug="${escapeHtml(e.slug)}" data-title="${escapeHtml(e.title)}" data-cover="${escapeHtml(e.cover || "")}" data-result="${escapeHtml(JSON.stringify(e.result))}" class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"><i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12"></i>${escapeHtml(t("history.viewDetails"))}</a>
-							</div>
-						</div>
+						<div class="history-details-content px-4 pb-4 pt-1"></div>
 					</div>
-				</div>`;
-			list.appendChild(card);
+				</div>
+			</div>`;
+	}
+
+	function positionClass(index: number): string {
+		return index === 0
+			? "medal-gold text-base font-black"
+			: index === 1
+				? "medal-silver text-base font-black"
+				: index === 2
+					? "medal-bronze text-base font-black"
+					: "bg-border/60 text-text-muted text-sm font-black";
+	}
+
+	function detailsMarkup(entry: HistoryEntry): string {
+		const rows = entry.result
+			.map(
+				(item: RankedItem, index: number) => `
+					<li class="flex items-center gap-3 p-2 rounded-xl transition-colors ${index === 0 ? "bg-amber-400/[0.06] border border-amber-400/15" : "hover:bg-surface-hover"}">
+						<span class="flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${positionClass(index)}">${index + 1}</span>
+						<div class="w-10 h-10 rounded-lg overflow-hidden bg-surface shrink-0 border border-border">
+							${item.image ? `<img src="${escapeHtml(item.image)}" alt="" class="w-full h-full object-cover" />` : ""}
+						</div>
+						<span class="text-sm font-medium text-text-primary truncate flex-1">${escapeHtml(item.name)}</span>
+					</li>`,
+			)
+			.join("");
+
+		const href = escapeHtml(
+			L(`/template/${encodeURIComponent(entry.slug)}`),
+		);
+		return `
+			<div class="flex items-center gap-3 mb-3">
+				<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">${escapeHtml(t("history.fullRanking"))}</span>
+				<div class="flex-1 h-px bg-border/60"></div>
+			</div>
+			<ol class="space-y-1.5">${rows}</ol>
+			<div class="flex flex-wrap justify-end gap-2 mt-4">
+				<a href="${href}" data-slug="${escapeHtml(entry.slug)}" class="history-rank-again inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"><i class="fa-solid fa-rotate text-xs text-primary/70"></i>${escapeHtml(t("history.rankAgain"))}</a>
+				<a href="${href}" data-slug="${escapeHtml(entry.slug)}" class="history-view-details group/details inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold hover:opacity-90 transition-all"><i class="fa-solid fa-trophy text-xs transition-transform group-hover/details:-rotate-12"></i>${escapeHtml(t("history.viewDetails"))}</a>
+			</div>`;
+	}
+
+	function renderNextPage() {
+		if (!state) return;
+		const next = state.summaries.slice(
+			state.renderedCount,
+			state.renderedCount + PAGE_SIZE,
+		);
+		state.list.insertAdjacentHTML(
+			"beforeend",
+			next.map(cardMarkup).join(""),
+		);
+		state.renderedCount += next.length;
+		state.loadMore.classList.toggle(
+			"hidden",
+			state.renderedCount >= state.summaries.length,
+		);
+		state.loadMore.classList.toggle(
+			"inline-flex",
+			state.renderedCount < state.summaries.length,
+		);
+	}
+
+	async function loadDetails(card: HTMLElement, slug: string) {
+		if (!state) return;
+		const details = card.querySelector<HTMLElement>(".history-details");
+		const content = card.querySelector<HTMLElement>(
+			".history-details-content",
+		);
+		if (!details || !content || details.dataset.loaded === "true") return;
+
+		details.dataset.loaded = "loading";
+		content.innerHTML = `<p class="py-5 text-center text-sm text-text-muted" role="status"><i class="fa-solid fa-spinner fa-spin mr-2 text-primary"></i>${escapeHtml(t("history.loading"))}</p>`;
+		const entry = state.details.get(slug) ?? (await fetchRemoteEntry(slug));
+		if (!card.isConnected) return;
+		if (!entry) {
+			details.dataset.loaded = "error";
+			content.innerHTML = `<p class="py-5 text-center text-sm text-red-300" role="status">${escapeHtml(t("history.loadError"))}</p>`;
+			return;
 		}
+		state.details.set(slug, entry);
+		details.dataset.loaded = "true";
+		content.innerHTML = detailsMarkup(entry);
+	}
 
-		if (empty) empty.classList.toggle("hidden", list.children.length > 0);
-
-		if (list.dataset.loggedIn === "true") {
-			const pending = entries.filter((entry) => {
-				const server = serverBySlug.get(entry.slug);
-				return !server || entry.ts > server.ts;
-			});
-			if (pending.length > 0) void syncPendingResults(pending);
+	async function syncPendingResults(
+		entries: HistoryEntry[],
+		serverBySlug: Map<string, HistorySummary>,
+	) {
+		for (const entry of entries) {
+			const server = serverBySlug.get(entry.slug);
+			if (server && entry.ts <= server.ts) continue;
+			const synced = await syncResultToAccount(entry);
+			if (synced) state?.details.set(synced.slug, synced);
 		}
 	}
 
-	// One delegated handler covers both SSR- and client-rendered cards. The
-	// expand uses a grid-rows 0fr→1fr trick so height animates without JS
-	// measurement (and collapses to instant under prefers-reduced-motion).
-	function onClick(ev: MouseEvent) {
-		// "View details" → hand the result to the template page (via
-		// sessionStorage) so it opens straight on the results view. Then let the
-		// link navigate normally.
-		const viewBtn = (ev.target as HTMLElement)?.closest<HTMLElement>(
-			".history-view-details",
+	async function initializeHistory() {
+		const list = document.getElementById("history-list");
+		const empty = document.getElementById("history-empty");
+		const loading = document.getElementById("history-loading");
+		const loadMore = document.getElementById(
+			"history-load-more",
+		) as HTMLButtonElement | null;
+		if (!list || !empty || !loading || !loadMore) return;
+
+		const serverSummaries = readServerSummaries();
+		const serverBySlug = new Map(
+			serverSummaries.map((summary) => [summary.slug, summary]),
 		);
-		if (viewBtn) {
-			const slug = viewBtn.dataset.slug || "";
-			try {
-				setPendingResult({
-					slug,
-					title: viewBtn.dataset.title || slug,
-					result: JSON.parse(
-						viewBtn.dataset.result || "[]",
-					) as RankedItem[],
-					ts: Date.now(),
-					cover: viewBtn.dataset.cover || undefined,
-				});
-			} catch {
-				/* malformed data — fall back to the template page's own lookup */
+		let localEntries = getLocalHistory();
+		const details = new Map<string, HistoryEntry>();
+		localEntries = await reconcileMovedLocalEntries(
+			serverSummaries,
+			localEntries,
+			details,
+		);
+
+		// A newer server summary means the complete local snapshot is stale. Drop
+		// it now; it will be fetched only if the user expands that card.
+		localEntries = localEntries.filter((entry) => {
+			const server = serverBySlug.get(entry.slug);
+			if (server && server.ts >= entry.ts) {
+				removeLocalResult(entry.slug);
+				return false;
 			}
+			details.set(entry.slug, entry);
+			return true;
+		});
+
+		if (document.getElementById("history-list") !== list) return;
+		state = {
+			list,
+			empty,
+			loading,
+			loadMore,
+			summaries: mergeHistorySummaries(serverSummaries, localEntries),
+			details,
+			renderedCount: 0,
+		};
+
+		list.replaceChildren();
+		loading.classList.add("hidden");
+		empty.classList.toggle("hidden", state.summaries.length > 0);
+		renderNextPage();
+
+		list.removeEventListener("click", onListClick);
+		list.addEventListener("click", onListClick);
+		loadMore.removeEventListener("click", renderNextPage);
+		loadMore.addEventListener("click", renderNextPage);
+
+		if (list.dataset.loggedIn === "true") {
+			void syncPendingResults(localEntries, serverBySlug);
+		}
+	}
+
+	function onListClick(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+		const view = target.closest<HTMLElement>(".history-view-details");
+		if (view) {
+			const entry = state?.details.get(view.dataset.slug || "");
+			if (entry) setPendingResult(entry);
 			return;
 		}
 
-		// "Rank again" → tell the template page to skip the saved-results view and
-		// show the normal detail/START flow for a fresh ranking.
-		const again = (ev.target as HTMLElement)?.closest<HTMLElement>(
-			".history-rank-again",
-		);
+		const again = target.closest<HTMLElement>(".history-rank-again");
 		if (again) {
 			setForceFresh(again.dataset.slug || "");
 			return;
 		}
 
-		const toggle = (ev.target as HTMLElement)?.closest<HTMLElement>(
-			".history-toggle",
-		);
+		const toggle = target.closest<HTMLElement>(".history-toggle");
 		if (!toggle) return;
 		const card = toggle.closest<HTMLElement>(".history-card");
 		const details = card?.querySelector<HTMLElement>(".history-details");
 		const chevron = toggle.querySelector<HTMLElement>(".history-chevron");
-		if (!details) return;
+		if (!card || !details) return;
+
 		const open = !details.classList.contains("grid-rows-[1fr]");
 		details.classList.toggle("grid-rows-[1fr]", open);
 		details.classList.toggle("grid-rows-[0fr]", !open);
 		toggle.setAttribute("aria-expanded", String(open));
 		chevron?.classList.toggle("rotate-180", open);
+		if (open && details.dataset.loaded !== "true") {
+			void loadDetails(card, card.dataset.slug || "");
+		}
 	}
 
 	document.addEventListener("astro:page-load", () => {
-		renderHistory();
-		const list = document.getElementById("history-list");
-		// Re-bind per page-load; remove first so we never stack duplicate handlers.
-		list?.removeEventListener("click", onClick);
-		list?.addEventListener("click", onClick);
+		void initializeHistory();
 	});
 </script>

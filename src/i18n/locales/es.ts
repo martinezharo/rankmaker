@@ -193,6 +193,10 @@ export const es: LocaleDict = {
 		fullRanking: 'Ranking completo',
 		rankAgain: 'Clasificar de nuevo',
 		viewDetails: 'Ver detalles',
+		loadMore: 'Mostrar más',
+		loading: 'Cargando rankings…',
+		loadError:
+			'No se pudo cargar este ranking. Cierra la tarjeta y vuelve a intentarlo.',
 		emptyBody: 'Todavía no has clasificado nada.',
 		findSomething: 'Encuentra algo que clasificar',
 	},

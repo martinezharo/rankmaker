@@ -193,6 +193,10 @@ export const fr: LocaleDict = {
 		fullRanking: 'Classement complet',
 		rankAgain: 'Classer à nouveau',
 		viewDetails: 'Voir les détails',
+		loadMore: 'Afficher plus',
+		loading: 'Chargement des classements…',
+		loadError:
+			'Impossible de charger ce classement. Fermez la carte et réessayez.',
 		emptyBody: "Vous n'avez encore rien classé.",
 		findSomething: 'Trouvez quelque chose à classer',
 	},

@@ -4,6 +4,8 @@ import {
 	upsertHistory,
 	historyToList,
 	mergeHistory,
+	historyEntryToSummary,
+	mergeHistorySummaries,
 	reconcileMovedHistoryEntries,
 	getLocalResult,
 	setPendingResult,
@@ -118,6 +120,44 @@ describe('mergeHistory', () => {
 		const server = { ...entry('a', 10), title: 'SERVER' };
 		const local = { ...entry('a', 10), title: 'LOCAL' };
 		expect(mergeHistory([server], [local])).toEqual([server]);
+	});
+});
+
+describe('history summaries', () => {
+	it('derives lightweight card metadata from a complete entry', () => {
+		expect(
+			historyEntryToSummary({
+				...entry('a', 10),
+				cover: 'cover.webp',
+				result: [
+					{ id: 1, name: 'winner', image: 'winner.webp' },
+					{ id: 2, name: 'second', image: 'second.webp' },
+				],
+			})
+		).toEqual({
+			slug: 'a',
+			title: 'A',
+			itemCount: 2,
+			ts: 10,
+			thumb: 'cover.webp',
+			cover: 'cover.webp',
+		});
+	});
+
+	it('merges summaries without requiring complete server results', () => {
+		const server = [
+			{
+				slug: 'a',
+				title: 'SERVER',
+				itemCount: 10,
+				ts: 10,
+				thumb: 'server.webp',
+			},
+		];
+		const local = { ...entry('a', 20), title: 'LOCAL' };
+		expect(mergeHistorySummaries(server, [local])).toEqual([
+			historyEntryToSummary(local),
+		]);
 	});
 });
 

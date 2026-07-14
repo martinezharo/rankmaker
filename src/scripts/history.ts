@@ -24,6 +24,15 @@ export type HistoryEntry = {
 	cover?: string;
 };
 
+export type HistorySummary = {
+	slug: string;
+	title: string;
+	itemCount: number;
+	ts: number;
+	thumb: string;
+	cover?: string;
+};
+
 const PLAYED_KEY = 'rankmaker_played';
 const HISTORY_KEY = 'rankmaker_history';
 const EXCLUDED_KEY = 'rankmaker_excluded';
@@ -84,6 +93,35 @@ export function mergeHistory(
 	for (const local of localEntries) {
 		const server = merged.get(local.slug);
 		if (!server || local.ts > server.ts) merged.set(local.slug, local);
+	}
+	return [...merged.values()].sort((a, b) => b.ts - a.ts);
+}
+
+/** Lightweight card data that does not carry the complete ordered result. */
+export function historyEntryToSummary(entry: HistoryEntry): HistorySummary {
+	return {
+		slug: entry.slug,
+		title: entry.title,
+		itemCount: entry.result.length,
+		ts: entry.ts,
+		thumb: entry.cover || entry.result[0]?.image || '',
+		cover: entry.cover,
+	};
+}
+
+/** Merge server summaries with complete local entries without inflating SSR. */
+export function mergeHistorySummaries(
+	serverSummaries: HistorySummary[],
+	localEntries: HistoryEntry[]
+): HistorySummary[] {
+	const merged = new Map(
+		serverSummaries.map((summary) => [summary.slug, summary])
+	);
+	for (const local of localEntries) {
+		const server = merged.get(local.slug);
+		if (!server || local.ts > server.ts) {
+			merged.set(local.slug, historyEntryToSummary(local));
+		}
 	}
 	return [...merged.values()].sort((a, b) => b.ts - a.ts);
 }

@@ -191,6 +191,10 @@ export const ms: LocaleDict = {
 		fullRanking: 'Ranking penuh',
 		rankAgain: 'Rank semula',
 		viewDetails: 'Lihat butiran',
+		loadMore: 'Tunjukkan lagi',
+		loading: 'Memuatkan ranking…',
+		loadError:
+			'Ranking ini tidak dapat dimuatkan. Tutup kad dan cuba lagi.',
 		emptyBody: 'Anda belum meranking apa-apa lagi.',
 		findSomething: 'Cari sesuatu untuk diranking',
 	},

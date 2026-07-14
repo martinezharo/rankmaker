@@ -193,6 +193,10 @@ export const de: LocaleDict = {
 		fullRanking: 'Vollständiges Ranking',
 		rankAgain: 'Erneut ranken',
 		viewDetails: 'Details ansehen',
+		loadMore: 'Mehr anzeigen',
+		loading: 'Rankings werden geladen…',
+		loadError:
+			'Dieses Ranking konnte nicht geladen werden. Schließe die Karte und versuche es erneut.',
 		emptyBody: 'Du hast noch nichts gerankt.',
 		findSomething: 'Finde etwas zum Ranken',
 	},
