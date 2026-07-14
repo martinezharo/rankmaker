@@ -75,6 +75,53 @@ export function historyToList(
 	return Object.values(map).sort((a, b) => b.ts - a.ts);
 }
 
+/** Merge server and device histories, keeping the newest result per template. */
+export function mergeHistory(
+	serverEntries: HistoryEntry[],
+	localEntries: HistoryEntry[]
+): HistoryEntry[] {
+	const merged = new Map(serverEntries.map((entry) => [entry.slug, entry]));
+	for (const local of localEntries) {
+		const server = merged.get(local.slug);
+		if (!server || local.ts > server.ts) merged.set(local.slug, local);
+	}
+	return [...merged.values()].sort((a, b) => b.ts - a.ts);
+}
+
+function sameSnapshot(a: HistoryEntry, b: HistoryEntry): boolean {
+	return (
+		a.title === b.title &&
+		(a.cover ?? '') === (b.cover ?? '') &&
+		JSON.stringify(a.result) === JSON.stringify(b.result)
+	);
+}
+
+/**
+ * Detect a server-side slug move for a result that is still stored locally
+ * under the old slug. The result snapshots must be identical and their save
+ * timestamps close together, which avoids conflating two genuinely different
+ * templates that happen to contain the same options.
+ */
+export function reconcileMovedHistoryEntries(
+	serverEntries: HistoryEntry[],
+	localEntries: HistoryEntry[]
+): { entries: HistoryEntry[]; movedSlugs: string[] } {
+	const serverSlugs = new Set(serverEntries.map((entry) => entry.slug));
+	const movedSlugs: string[] = [];
+	const entries = localEntries.filter((local) => {
+		if (serverSlugs.has(local.slug)) return true;
+		const moved = serverEntries.some(
+			(server) =>
+				server.slug !== local.slug &&
+				Math.abs(server.ts - local.ts) <= 10_000 &&
+				sameSnapshot(server, local)
+		);
+		if (moved) movedSlugs.push(local.slug);
+		return !moved;
+	});
+	return { entries, movedSlugs };
+}
+
 /**
  * Upsert one template's excluded option ids into the exclusions map. An empty
  * `ids` removes the slug's entry entirely; the map is capped by dropping the
@@ -127,13 +174,72 @@ export function saveResult(
 	title: string,
 	result: RankedItem[],
 	cover?: string
-): void {
-	if (!slug) return;
+): HistoryEntry | null {
+	if (!slug) return null;
 	const entry: HistoryEntry = { slug, title, result, ts: Date.now() };
 	if (cover) entry.cover = cover;
-	write(HISTORY_KEY, upsertHistory(read(HISTORY_KEY, {}), entry));
+	saveHistoryEntry(entry);
 	// Saving a result also counts as having played it.
 	recordStart(slug);
+	return entry;
+}
+
+/** Store an already timestamped entry, such as the canonical D1 response. */
+export function saveHistoryEntry(entry: HistoryEntry): void {
+	if (!entry?.slug || !Array.isArray(entry.result)) return;
+	write(HISTORY_KEY, upsertHistory(read(HISTORY_KEY, {}), entry));
+}
+
+/** Remove a stale local result, for example after its template slug moved. */
+export function removeLocalResult(slug: string): void {
+	if (!slug) return;
+	const map = read<Record<string, HistoryEntry>>(HISTORY_KEY, {});
+	if (!(slug in map)) return;
+	delete map[slug];
+	write(HISTORY_KEY, map);
+}
+
+/**
+ * Persist a local result to the signed-in account. The endpoint canonicalizes
+ * it; on success, replace the local snapshot with the timestamped server copy.
+ * Anonymous requests deliberately return null.
+ */
+export async function syncResultToAccount(
+	entry: HistoryEntry
+): Promise<HistoryEntry | null> {
+	try {
+		const response = await fetch('/api/me/history', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				slug: entry.slug,
+				result: entry.result.map((item) => ({ id: item.id })),
+			}),
+			keepalive: true,
+		});
+		if (!response.ok) return null;
+		const data = (await response.json()) as { entry?: unknown };
+		const synced = data.entry;
+		if (
+			typeof synced !== 'object' ||
+			synced === null ||
+			!('slug' in synced) ||
+			!('title' in synced) ||
+			!('result' in synced) ||
+			!('ts' in synced) ||
+			typeof synced.slug !== 'string' ||
+			typeof synced.title !== 'string' ||
+			!Array.isArray(synced.result) ||
+			typeof synced.ts !== 'number'
+		) {
+			return null;
+		}
+		const canonical = synced as HistoryEntry;
+		saveHistoryEntry(canonical);
+		return canonical;
+	} catch {
+		return null;
+	}
 }
 
 /** Slugs this browser has played — union of the played list and history keys. */

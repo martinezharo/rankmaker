@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from "../layouts/Layout.astro";
 import { getSessionUser } from "../lib/auth";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import { rankingResultTimestamp } from "../lib/ranking-results";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -22,7 +23,7 @@ type HistoryRow = {
 	title: string;
 	result: RankedItem[];
 	cover: string;
-	date: string;
+	ts: number;
 };
 
 let serverEntries: HistoryRow[] = [];
@@ -45,7 +46,7 @@ if (user) {
 		serverEntries = results.map((r) => ({
 			slug: r.slug,
 			title: r.title,
-			date: r.updated_at,
+			ts: rankingResultTimestamp(r.updated_at),
 			cover: r.cover ?? "",
 			result: (() => {
 				try {
@@ -108,13 +109,19 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			}
 		</p>
 
-		<div id="history-list" class="space-y-3">
+		<div
+			id="history-list"
+			class="space-y-3"
+			data-logged-in={user ? "true" : "false"}
+		>
 			{
 				serverEntries.map((e) => {
 					const thumb = e.cover || e.result[0]?.image || "";
 					return (
 						<div
 							data-slug={e.slug}
+							data-ts={e.ts}
+							data-source="server"
 							class="history-card group rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden"
 						>
 							<button
@@ -142,7 +149,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 										</span>
 										<span class="inline-flex items-center gap-1.5">
 											<i class="fa-regular fa-clock text-[10px]" />
-											{fmtDate(e.date)}
+											{fmtDate(e.ts)}
 										</span>
 									</div>
 								</div>
@@ -252,8 +259,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
 	// Astro template above so both kinds of card look and behave identically.
 	import {
 		getLocalHistory,
+		mergeHistory,
+		reconcileMovedHistoryEntries,
+		removeLocalResult,
+		saveHistoryEntry,
+		syncResultToAccount,
 		setPendingResult,
 		setForceFresh,
+		type HistoryEntry,
 		type RankedItem,
 	} from "../scripts/history";
 	import { clientT, getClientLocale } from "../i18n/client";
@@ -298,16 +311,43 @@ Astro.response.headers.set("Cache-Control", "no-store");
 					? "medal-bronze text-base font-black"
 					: "bg-border/60 text-text-muted text-sm font-black";
 
-	function renderLocal() {
+	function readServerHistory(list: HTMLElement): HistoryEntry[] {
+		const entries: HistoryEntry[] = [];
+		for (const card of list.querySelectorAll<HTMLElement>(
+			'.history-card[data-source="server"]',
+		)) {
+			const details = card.querySelector<HTMLElement>(
+				".history-view-details",
+			);
+			if (!details) continue;
+			try {
+				entries.push({
+					slug: card.dataset.slug || "",
+					title: details.dataset.title || card.dataset.slug || "",
+					cover: details.dataset.cover || undefined,
+					result: JSON.parse(
+						details.dataset.result || "[]",
+					) as RankedItem[],
+					ts: Number(card.dataset.ts) || 0,
+				});
+			} catch {
+				/* Ignore a corrupt row; local history can still provide a copy. */
+			}
+		}
+		return entries;
+	}
+
+	async function syncPendingResults(entries: HistoryEntry[]) {
+		// Sequential on purpose: signing in with a large local history should not
+		// generate a burst of simultaneous Worker/D1 requests.
+		for (const entry of entries) await syncResultToAccount(entry);
+	}
+
+	function renderHistory() {
 		const list = document.getElementById("history-list");
 		const empty = document.getElementById("history-empty");
 		if (!list) return;
-
-		const seen = new Set(
-			Array.from(list.querySelectorAll<HTMLElement>("[data-slug]")).map(
-				(el) => el.dataset.slug,
-			),
-		);
+		const serverEntries = readServerHistory(list);
 
 		let entries: ReturnType<typeof getLocalHistory> = [];
 		try {
@@ -316,9 +356,23 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			entries = [];
 		}
 
-		for (const e of entries) {
-			if (seen.has(e.slug)) continue;
-			seen.add(e.slug);
+		const reconciled = reconcileMovedHistoryEntries(serverEntries, entries);
+		for (const slug of reconciled.movedSlugs) removeLocalResult(slug);
+		entries = reconciled.entries;
+
+		const localBySlug = new Map(entries.map((entry) => [entry.slug, entry]));
+		for (const server of serverEntries) {
+			const local = localBySlug.get(server.slug);
+			if (local && server.ts >= local.ts) saveHistoryEntry(server);
+		}
+
+		const serverBySlug = new Map(
+			serverEntries.map((entry) => [entry.slug, entry]),
+		);
+		const merged = mergeHistory(serverEntries, entries);
+		list.replaceChildren();
+
+		for (const e of merged) {
 			const thumb = e.cover || e.result[0]?.image || "";
 
 			const rows = e.result
@@ -336,6 +390,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
 
 			const card = document.createElement("div");
 			card.dataset.slug = e.slug;
+			card.dataset.ts = String(e.ts);
+			card.dataset.source =
+				serverBySlug.get(e.slug) === e ? "server" : "local";
 			card.className =
 				"history-card group rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden";
 			card.innerHTML = `
@@ -373,6 +430,14 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		}
 
 		if (empty) empty.classList.toggle("hidden", list.children.length > 0);
+
+		if (list.dataset.loggedIn === "true") {
+			const pending = entries.filter((entry) => {
+				const server = serverBySlug.get(entry.slug);
+				return !server || entry.ts > server.ts;
+			});
+			if (pending.length > 0) void syncPendingResults(pending);
+		}
 	}
 
 	// One delegated handler covers both SSR- and client-rendered cards. The
@@ -429,7 +494,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 	}
 
 	document.addEventListener("astro:page-load", () => {
-		renderLocal();
+		renderHistory();
 		const list = document.getElementById("history-list");
 		// Re-bind per page-load; remove first so we never stack duplicate handlers.
 		list?.removeEventListener("click", onClick);

@@ -542,6 +542,8 @@ try {
         import {
             recordStart,
             saveResult,
+            saveHistoryEntry,
+            syncResultToAccount,
             getLocalResult,
             consumePendingResult,
             consumeForceFresh,
@@ -611,7 +613,13 @@ try {
                     name: it.name,
                     image: it.image,
                 }));
-                saveResult(templateSlug, templateTitle, result, templateCover);
+                const localEntry = saveResult(
+                    templateSlug,
+                    templateTitle,
+                    result,
+                    templateCover,
+                );
+                if (!localEntry) return;
                 // Tell the comments thread to refresh once the result is saved:
                 // the author's ranking badge is resolved live from ranking_results,
                 // so it can now appear on their comments without a page reload.
@@ -621,18 +629,12 @@ try {
                             detail: { slug: templateSlug },
                         }),
                     );
-                fetch("/api/me/history", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        slug: templateSlug,
-                        title: templateTitle,
-                        cover: templateCover,
-                        result,
-                    }),
-                })
-                    .then(notify)
-                    .catch(notify);
+                // Explicitly track the request and only announce a saved ranking
+                // after D1 accepted it. The helper uses keepalive and retains the
+                // local copy for a later retry if the request fails.
+                void syncResultToAccount(localEntry).then((synced) => {
+                    if (synced) notify();
+                });
             }
 
             // ─── DOM refs ────────────────────────────────────
@@ -1827,24 +1829,31 @@ try {
                 const local = getLocalResult(templateSlug);
                 if (local && local.result) {
                     showSavedResult(local.result);
-                    return;
                 }
-                // Fallback for logged-in users on a device without a local copy.
+                // Always check D1: another device may have a newer result, while
+                // a newer local result may need retrying after a failed save.
                 fetch(
                     `/api/me/history?slug=${encodeURIComponent(templateSlug)}`,
                     { headers: { Accept: "application/json" } },
                 )
                     .then((r) => (r.ok ? r.json() : null))
                     .then((data) => {
-                        // Bail if the user already moved off the detail view
-                        // (e.g. pressed START) while the fetch was in flight.
-                        if (
-                            data &&
-                            data.result &&
-                            !detailView.classList.contains("hidden")
-                        ) {
-                            showSavedResult(data.result);
+                        const remote = data?.entry;
+                        if (!remote?.result) return;
+
+                        if (local && local.ts > remote.ts) {
+                            void syncResultToAccount(local);
+                            return;
                         }
+
+                        // Bail if the user started a fresh ranking while the
+                        // remote lookup was in flight.
+                        if (!battleView.classList.contains("hidden")) return;
+                        if (!local && detailView.classList.contains("hidden")) {
+                            return;
+                        }
+                        saveHistoryEntry(remote);
+                        showSavedResult(remote.result);
                     })
                     .catch(() => {});
             }

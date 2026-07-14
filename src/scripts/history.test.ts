@@ -3,6 +3,8 @@ import {
 	addToPlayed,
 	upsertHistory,
 	historyToList,
+	mergeHistory,
+	reconcileMovedHistoryEntries,
 	getLocalResult,
 	setPendingResult,
 	consumePendingResult,
@@ -90,6 +92,52 @@ describe('historyToList', () => {
 			c: entry('c', 2),
 		};
 		expect(historyToList(map).map((e) => e.slug)).toEqual(['b', 'c', 'a']);
+	});
+});
+
+describe('mergeHistory', () => {
+	it('keeps the newest copy of each slug and sorts the combined list', () => {
+		const server = [entry('shared', 10), entry('server-only', 30)];
+		const local = [
+			{ ...entry('shared', 20), title: 'LOCAL NEWER' },
+			entry('local-only', 40),
+		];
+
+		const merged = mergeHistory(server, local);
+		expect(merged.map((item) => item.slug)).toEqual([
+			'local-only',
+			'server-only',
+			'shared',
+		]);
+		expect(merged.find((item) => item.slug === 'shared')?.title).toBe(
+			'LOCAL NEWER'
+		);
+	});
+
+	it('keeps the server copy when it is equally recent', () => {
+		const server = { ...entry('a', 10), title: 'SERVER' };
+		const local = { ...entry('a', 10), title: 'LOCAL' };
+		expect(mergeHistory([server], [local])).toEqual([server]);
+	});
+});
+
+describe('reconcileMovedHistoryEntries', () => {
+	it('removes the old local slug when D1 has the same snapshot under a new slug', () => {
+		const local = entry('old-slug', 1_000);
+		const server = { ...local, slug: 'new-secret-slug', ts: 1_500 };
+		expect(reconcileMovedHistoryEntries([server], [local])).toEqual({
+			entries: [],
+			movedSlugs: ['old-slug'],
+		});
+	});
+
+	it('does not conflate similar snapshots saved at unrelated times', () => {
+		const local = entry('different-template', 1_000);
+		const server = { ...local, slug: 'another-template', ts: 20_000 };
+		expect(reconcileMovedHistoryEntries([server], [local])).toEqual({
+			entries: [local],
+			movedSlugs: [],
+		});
 	});
 });
 

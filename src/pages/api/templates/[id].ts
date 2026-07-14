@@ -144,9 +144,40 @@ export const PUT: APIRoute = async (context) => {
                 ),
             ...(becameUnlisted
                 ? [
+                      // Slug-backed records cover official and user templates,
+                      // so move every reference atomically with the template.
+                      // Otherwise history cards, comments, saves and
+                      // notifications would keep linking to the invalidated URL.
                       db
                           .prepare(
                               'UPDATE rankings SET slug = ? WHERE slug = ? COLLATE NOCASE'
+                          )
+                          .bind(slug, owned.slug),
+                      db
+                          .prepare(
+                              'UPDATE ranking_results SET slug = ? WHERE slug = ? COLLATE NOCASE'
+                          )
+                          .bind(slug, owned.slug),
+                      db
+                          .prepare(
+                              'UPDATE comments SET slug = ? WHERE slug = ? COLLATE NOCASE'
+                          )
+                          .bind(slug, owned.slug),
+                      db
+                          .prepare(
+                              'UPDATE template_saves SET slug = ? WHERE slug = ? COLLATE NOCASE'
+                          )
+                          .bind(slug, owned.slug),
+                      db
+                          .prepare(
+                              `UPDATE votes SET subject_id = ?
+                               WHERE subject_type = 'template'
+                                 AND subject_id = ? COLLATE NOCASE`
+                          )
+                          .bind(slug, owned.slug),
+                      db
+                          .prepare(
+                              'UPDATE notifications SET slug = ? WHERE slug = ? COLLATE NOCASE'
                           )
                           .bind(slug, owned.slug),
                   ]

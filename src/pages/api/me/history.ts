@@ -2,16 +2,39 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
-import { templateExists } from '../../../lib/templates';
+import {
+	canAccessTemplate,
+	getTemplateBySlug,
+} from '../../../lib/templates';
+import {
+	canonicalizeRankingResult,
+	rankingResultTimestamp,
+	type RankedItem,
+} from '../../../lib/ranking-results';
 
-// Bounds so a logged-in user can't bloat the row. A result is the ordered list
-// of options they ranked — typically small, but cap it defensively.
-const MAX_TITLE_LEN = 200;
-const MAX_RESULT_ITEMS = 200;
-const MAX_NAME_LEN = 200;
-const MAX_IMAGE_LEN = 1024;
+type StoredResult = {
+	slug: string;
+	title: string;
+	cover: string | null;
+	result: string;
+	updated_at: string;
+};
 
-type RankedItem = { id: number | string; name: string; image: string };
+function storedEntry(row: StoredResult) {
+	try {
+		const result = JSON.parse(row.result);
+		if (!Array.isArray(result)) return null;
+		return {
+			slug: row.slug,
+			title: row.title,
+			cover: row.cover ?? undefined,
+			result: result as RankedItem[],
+			ts: rankingResultTimestamp(row.updated_at),
+		};
+	} catch {
+		return null;
+	}
+}
 
 /**
  * GET — two shapes, both per-user and never cached:
@@ -32,19 +55,15 @@ export const GET: APIRoute = async (context) => {
 		if (slug) {
 			if (!user) return json({ result: null }, 200, headers);
 			const row = await env.DB.prepare(
-				'SELECT result FROM ranking_results WHERE user_id = ? AND slug = ?'
+				`SELECT slug, title, cover, result, updated_at
+				 FROM ranking_results WHERE user_id = ? AND slug = ?`
 			)
 				.bind(user.id, slug)
-				.first<{ result: string }>();
-			let result: RankedItem[] | null = null;
-			if (row) {
-				try {
-					result = JSON.parse(row.result) as RankedItem[];
-				} catch {
-					result = null;
-				}
-			}
-			return json({ result }, 200, headers);
+				.first<StoredResult>();
+			const entry = row ? storedEntry(row) : null;
+			// Keep `result` for older clients while exposing timestamped metadata so
+			// current clients can resolve local/server conflicts correctly.
+			return json({ result: entry?.result ?? null, entry }, 200, headers);
 		}
 
 		if (!user) return json({ slugs: [] }, 200, headers);
@@ -76,53 +95,56 @@ export const POST: APIRoute = async (context) => {
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ ok: true, skipped: true }, 200);
 
-		let body: {
-			slug?: string;
-			title?: string;
-			cover?: string;
-			result?: RankedItem[];
-		};
+		let body: { slug?: unknown; result?: unknown };
 		try {
 			body = await context.request.json();
 		} catch {
 			return json({ error: 'Invalid JSON' }, 400);
 		}
 
-		const slug = typeof body.slug === 'string' ? body.slug : '';
-		if (!slug) return json({ ok: true, skipped: true }, 200);
+		const slug = typeof body.slug === 'string' ? body.slug.trim() : '';
+		if (!slug) return json({ error: 'Invalid template.' }, 400);
 
-		// Only persist results for a slug that maps to a real template.
-		if (!(await templateExists(env.DB, slug))) {
-			return json({ ok: true, skipped: true }, 200);
+		const template = await getTemplateBySlug(env.DB, slug);
+		if (!template || !canAccessTemplate(template, user.username)) {
+			// Same response for missing and inaccessible private templates.
+			return json({ error: 'Template not found.' }, 404);
 		}
 
-		const title = (body.title || slug).slice(0, MAX_TITLE_LEN);
-		const cover =
-			typeof body.cover === 'string'
-				? body.cover.slice(0, MAX_IMAGE_LEN)
-				: null;
-		const result = Array.isArray(body.result)
-			? body.result.slice(0, MAX_RESULT_ITEMS).map((it) => ({
-					id: it?.id ?? null,
-					name: String(it?.name ?? '').slice(0, MAX_NAME_LEN),
-					image: String(it?.image ?? '').slice(0, MAX_IMAGE_LEN),
-				}))
-			: [];
-		if (result.length === 0) return json({ ok: true, skipped: true }, 200);
+		const canonical = canonicalizeRankingResult(template, body.result);
+		if (!canonical.ok) return json({ error: canonical.error }, 400);
+		const title = template.title;
+		const cover = template.cover_image;
+		const result = canonical.result;
 
-		await env.DB.prepare(
-			`INSERT INTO ranking_results (user_id, slug, title, cover, result)
-			 VALUES (?, ?, ?, ?, ?)
+		const saved = await env.DB.prepare(
+			`INSERT INTO ranking_results
+			   (user_id, slug, title, cover, result, updated_at)
+			 VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 			 ON CONFLICT(user_id, slug) DO UPDATE SET
 			   result = excluded.result,
 			   title = excluded.title,
 			   cover = excluded.cover,
-			   updated_at = datetime('now')`
+			   updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+			 RETURNING updated_at`
 		)
 			.bind(user.id, slug, title, cover, JSON.stringify(result))
-			.run();
+			.first<{ updated_at: string }>();
+		if (!saved) throw new Error('Ranking result was not saved.');
 
-		return json({ ok: true }, 200);
+		return json(
+			{
+				ok: true,
+				entry: {
+					slug,
+					title,
+					cover: cover ?? undefined,
+					result,
+					ts: rankingResultTimestamp(saved.updated_at),
+				},
+			},
+			200
+		);
 	} catch (error) {
 		console.error('History POST error:', error);
 		return json({ error: 'Internal server error' }, 500);
