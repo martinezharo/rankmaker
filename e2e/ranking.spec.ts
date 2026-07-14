@@ -4,6 +4,13 @@ import { test, expect, type Page } from '@playwright/test';
 const A = { slug: 'best-social-networks-ranking', titleNeedle: 'Social Networks' };
 const B = { slug: 'most-popular-stephen-king-books', titleNeedle: 'Stephen King' };
 
+type FirstBattle = {
+	leftId: number;
+	rightId: number;
+	leftName: string;
+	rightName: string;
+};
+
 /** Parse the JSON the ranking engine actually reads (#ranking-data). */
 async function readRankingData(
 	page: Page
@@ -13,7 +20,7 @@ async function readRankingData(
 }
 
 /** Drive an official template through the 1v1 battles until results appear. */
-async function rankToResults(page: Page, slug: string): Promise<void> {
+async function rankToResults(page: Page, slug: string): Promise<FirstBattle> {
 	await page.goto(`/template/${slug}`);
 	await page.locator('#start-ranking-btn').click();
 	await expect(page.locator('#battle-view')).toBeVisible();
@@ -23,12 +30,23 @@ async function rankToResults(page: Page, slug: string): Promise<void> {
 	// Track every matchup shown: the engine must never re-ask a settled pair.
 	const seenPairs = new Set<string>();
 	const results = page.locator('#results-view');
+	let firstBattle: FirstBattle | null = null;
 	for (let i = 0; i < 300; i++) {
 		if (await results.isVisible().catch(() => false)) break;
 		const cardA = page.locator('#battle-card-a');
 		if (!(await cardA.isVisible().catch(() => false))) break;
 		const before = (await page.locator('#battle-name-a').textContent())?.trim();
 		const nameB = (await page.locator('#battle-name-b').textContent())?.trim();
+		if (!firstBattle) {
+			firstBattle = {
+				leftId: Number(await cardA.getAttribute('data-item-id')),
+				rightId: Number(
+					await page.locator('#battle-card-b').getAttribute('data-item-id')
+				),
+				leftName: before ?? '',
+				rightName: nameB ?? '',
+			};
+		}
 		const pairKey = [before, nameB].sort().join(' ⚔ ');
 		expect(seenPairs.has(pairKey), `repeated battle: ${pairKey}`).toBe(false);
 		seenPairs.add(pairKey);
@@ -49,6 +67,8 @@ async function rankToResults(page: Page, slug: string): Promise<void> {
 			.catch(() => {});
 	}
 	await expect(results).toBeVisible();
+	if (!firstBattle) throw new Error('ranking completed without a visible battle');
+	return firstBattle;
 }
 
 /** Pointer-drag the drag handle of one row over the top edge of another row. */
@@ -121,6 +141,37 @@ test('manual reorder moves a row up and re-renders the podium', async ({ page })
 	const namesAfter = await rows.locator('p').allInnerTexts();
 	expect(namesAfter.indexOf(draggedName)).toBeLessThan(3);
 	await expect(page.locator('#results-podium')).toContainText(draggedName);
+});
+
+test('persists battle sides and restores the history after a reload', async ({
+	page,
+}) => {
+	test.setTimeout(90_000);
+	const firstBattle = await rankToResults(page, A.slug);
+
+	const stored = await page.evaluate((slug) => {
+		const history = JSON.parse(localStorage.getItem('rankmaker_history') ?? '{}');
+		return history[slug];
+	}, A.slug);
+	expect(stored.battles.version).toBe(1);
+	expect(stored.battles.decisions[0]).toEqual([
+		firstBattle.leftId,
+		firstBattle.rightId,
+		0,
+	]);
+
+	await page.reload();
+	await expect(page.locator('#results-view')).toBeVisible();
+	await page.getByRole('button', { name: 'Battle History' }).click();
+
+	const dialog = page.getByRole('dialog', { name: 'Battle History' });
+	await expect(dialog).toBeVisible();
+	const rows = dialog.locator('#history-list > div');
+	await expect(rows).toHaveCount(stored.battles.decisions.length);
+	const firstRowText = await rows.first().innerText();
+	expect(firstRowText.indexOf(firstBattle.leftName)).toBeLessThan(
+		firstRowText.indexOf(firstBattle.rightName)
+	);
 });
 
 test('client-side navigation keeps options in sync with the template (regression)', async ({

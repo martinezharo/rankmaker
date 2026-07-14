@@ -12,6 +12,8 @@
 // localStorage wrappers are thin and fail-safe (storage may be unavailable or
 // full — never let tracking break the ranking UI).
 
+import type { BattleHistory } from '../lib/battle-history';
+
 export type RankedItem = { id: number | string; name: string; image: string };
 
 export type HistoryEntry = {
@@ -22,6 +24,9 @@ export type HistoryEntry = {
 	// Snapshot of the template's cover image at completion time. Optional:
 	// entries saved before covers were tracked fall back to the winner's image.
 	cover?: string;
+	// Direct user decisions in display order. Optional for results saved before
+	// battle-history persistence was introduced.
+	battles?: BattleHistory;
 };
 
 export type HistorySummary = {
@@ -211,11 +216,13 @@ export function saveResult(
 	slug: string,
 	title: string,
 	result: RankedItem[],
-	cover?: string
+	cover?: string,
+	battles?: BattleHistory
 ): HistoryEntry | null {
 	if (!slug) return null;
 	const entry: HistoryEntry = { slug, title, result, ts: Date.now() };
 	if (cover) entry.cover = cover;
+	if (battles) entry.battles = battles;
 	saveHistoryEntry(entry);
 	// Saving a result also counts as having played it.
 	recordStart(slug);
@@ -252,6 +259,7 @@ export async function syncResultToAccount(
 			body: JSON.stringify({
 				slug: entry.slug,
 				result: entry.result.map((item) => ({ id: item.id })),
+				battles: entry.battles,
 			}),
 			keepalive: true,
 		});

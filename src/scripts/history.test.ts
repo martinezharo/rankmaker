@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
 	addToPlayed,
 	upsertHistory,
@@ -13,11 +13,16 @@ import {
 	setForceFresh,
 	consumeForceFresh,
 	saveResult,
+	syncResultToAccount,
 	upsertExcluded,
 	getExcludedIds,
 	setExcludedIds,
 	type HistoryEntry,
 } from './history';
+
+afterEach(() => {
+	vi.unstubAllGlobals();
+});
 
 // Minimal in-memory Storage stub — the unit env is plain Node (no DOM), and the
 // storage wrappers in history.ts are fail-safe, so we inject globals to exercise
@@ -187,10 +192,20 @@ describe('localStorage-backed helpers', () => {
 	});
 
 	it('getLocalResult returns the saved entry for a slug', () => {
-		saveResult('a', 'A', [{ id: 1, name: 'a', image: 'x' }]);
+		saveResult(
+			'a',
+			'A',
+			[{ id: 1, name: 'a', image: 'x' }],
+			undefined,
+			{ version: 1, decisions: [[1, 2, 0]] }
+		);
 		const got = getLocalResult('a');
 		expect(got?.slug).toBe('a');
 		expect(got?.result).toHaveLength(1);
+		expect(got?.battles).toEqual({
+			version: 1,
+			decisions: [[1, 2, 0]],
+		});
 	});
 
 	it('getLocalResult returns null for an unknown slug', () => {
@@ -201,6 +216,27 @@ describe('localStorage-backed helpers', () => {
 		// @ts-expect-error — simulate missing storage
 		delete globalThis.localStorage;
 		expect(getLocalResult('a')).toBeNull();
+	});
+
+	it('includes compact battle decisions when syncing to the account', async () => {
+		const saved: HistoryEntry = {
+			...entry('a', 10),
+			battles: { version: 1, decisions: [[1, 2, 1]] },
+		};
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify({ entry: saved }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' },
+			})
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(syncResultToAccount(saved)).resolves.toEqual(saved);
+		const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+		expect(JSON.parse(String(request.body))).toMatchObject({
+			slug: 'a',
+			battles: saved.battles,
+		});
 	});
 });
 
