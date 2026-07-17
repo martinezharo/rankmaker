@@ -34,7 +34,7 @@ const initialAvatar = randomAvatarKey();
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title={t("signup.title")}>
+<Layout title={t("signup.title")} noindex={true}>
     <section
         class="mx-auto max-w-lg px-4 sm:px-6 py-12"
         id="signup-page"

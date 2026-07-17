@@ -74,7 +74,6 @@ function urlEntries(entry: SitemapEntry): string {
 export const GET: APIRoute = async (context) => {
     const staticPages: SitemapEntry[] = [
         '/',
-        '/search',
         '/about',
         '/contact',
         '/cookie-policy',

@@ -43,6 +43,13 @@ const {
     preloadImage,
 } = Astro.props;
 
+// Keep the HTTP and HTML indexing directives in sync for every page that
+// opts out. Centralising this here avoids pages accidentally adding the meta
+// tag but forgetting the equivalent response header (or vice versa).
+if (noindex) {
+    Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+}
+
 const SITE_URL = "https://rankmaker.net";
 // After the i18n middleware rewrite, Astro.url.pathname is the canonical
 // (unprefixed) path. Build per-locale URLs from it for canonical + hreflang.

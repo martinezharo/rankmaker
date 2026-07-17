@@ -61,7 +61,7 @@ const resolveImg = (path: string | null) => {
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title={tr("me.title")}>
+<Layout title={tr("me.title")} noindex={true}>
     <section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
         <!-- Profile header -->
         <div

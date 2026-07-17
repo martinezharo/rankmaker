@@ -45,7 +45,10 @@ const template = { ...row, options: await loadOptions(db, row.id) };
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title={t("editTemplate.title", { title: template.title })}>
+<Layout
+    title={t("editTemplate.title", { title: template.title })}
+    noindex={true}
+>
     <section class="mx-auto max-w-3xl px-4 sm:px-6 py-10 pb-20">
         <div class="mb-8">
             <a

@@ -75,7 +75,11 @@ const templatesForClient = templates.map((t) => ({
 Astro.response.headers.set("Cache-Control", "public, max-age=60");
 ---
 
-<Layout title={tr("search.title")} description={tr("search.metaDescription")}>
+<Layout
+    title={tr("search.title")}
+    description={tr("search.metaDescription")}
+    noindex={true}
+>
     <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
         <!-- Page Header -->
         <div class="text-center mb-10">

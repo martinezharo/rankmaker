@@ -93,7 +93,6 @@ const TYPE_META: Record<
 };
 
 Astro.response.headers.set("Cache-Control", "no-store");
-Astro.response.headers.set("X-Robots-Tag", "noindex");
 ---
 
 <Layout title={t("notifications.title")} noindex={true}>
