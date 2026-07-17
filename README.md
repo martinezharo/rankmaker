@@ -26,10 +26,6 @@ RANKMAKER is a web application that lets users build precise, personalized ranki
 
 Pick a template — movies, music, sports, anime, food, and many more — or **create your own** and let the battles decide what *really* comes out on top.
 
-## Demo
-
-> **Live site:** [rankmaker.net](https://rankmaker.net)
-
 ## Features
 
 - **1v1 Battle System** — Fast, tap-friendly matchup interface that minimizes decision fatigue.  
