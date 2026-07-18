@@ -112,11 +112,11 @@ const basePath = unlocalizePath(Astro.url.pathname);
 
             <!-- Col 2: Pages -->
             <div class="space-y-4">
-                <h4
+                <h2
                     class="text-xs font-semibold uppercase tracking-widest text-text-muted"
                 >
                     {t("footer.pages")}
-                </h4>
+                </h2>
                 <ul class="space-y-2.5">
                     <li>
                         <a
@@ -137,11 +137,11 @@ const basePath = unlocalizePath(Astro.url.pathname);
 
             <!-- Col 3: Information -->
             <div class="space-y-4">
-                <h4
+                <h2
                     class="text-xs font-semibold uppercase tracking-widest text-text-muted"
                 >
                     {t("footer.information")}
-                </h4>
+                </h2>
                 <ul class="space-y-2.5">
                     <li>
                         <a
@@ -162,11 +162,11 @@ const basePath = unlocalizePath(Astro.url.pathname);
 
             <!-- Col 4: Legal -->
             <div class="space-y-4">
-                <h4
+                <h2
                     class="text-xs font-semibold uppercase tracking-widest text-text-muted"
                 >
                     {t("footer.legal")}
-                </h4>
+                </h2>
                 <ul class="space-y-2.5">
                     <li>
                         <a
@@ -218,7 +218,7 @@ const basePath = unlocalizePath(Astro.url.pathname);
                     class="lang-switcher-btn w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
                     aria-haspopup="true"
                     aria-expanded="false"
-                    aria-label={t("nav.language")}
+                    aria-label={`${t("nav.language")}: ${localeNames[locale]}`}
                 >
                     <span class="flex items-center gap-2">
                         <i class="fa-solid fa-globe text-xs"></i>

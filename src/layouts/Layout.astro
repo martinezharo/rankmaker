@@ -4,6 +4,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import CookieConsent from "../components/CookieConsent.astro";
 import { ViewTransitions } from "astro:transitions";
+import outfitFontUrl from "@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url";
 import {
     CONTENT_LOCALIZED,
     defaultLocale,
@@ -174,6 +175,13 @@ const ogImageHeight =
         <!-- Fonts: Outfit is self-hosted via @fontsource-variable/outfit
              (imported in global.css) — no external font CDN on the critical
              path anymore. -->
+        <link
+            rel="preload"
+            href={outfitFontUrl}
+            as="font"
+            type="font/woff2"
+            crossorigin="anonymous"
+        />
 
         <!-- Font Awesome — self-hosted (public/fonts/fontawesome) instead of
              cdnjs, so it's same-origin and carries no extra DNS/TLS round-trip
@@ -194,6 +202,19 @@ const ogImageHeight =
         <noscript>
             <link rel="stylesheet" href="/fonts/fontawesome/css/all.min.css" />
         </noscript>
+        <!-- Match Font Awesome's eventual box metrics before its non-blocking
+             stylesheet arrives. This prevents icon slots from appearing late
+             and moving surrounding text without putting the full CSS back on
+             the render-critical path. -->
+        <style is:inline>
+            :is(.fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands) {
+                display: inline-block;
+                width: 1.25em;
+                line-height: 1;
+                text-align: center;
+                font-style: normal;
+            }
+        </style>
 
         <!-- Google Analytics is loaded only after cookie consent — see
              CookieConsent.astro (gtag is injected on Accept / stored consent). -->

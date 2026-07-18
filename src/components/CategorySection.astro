@@ -33,7 +33,7 @@ if (templates.length === 0) return;
 const anchorId = `cat-${category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
 ---
 
-<section id={anchorId} class="py-8">
+<section id={anchorId} class="category-section py-8">
     <!-- Section Header -->
     <div class="flex items-center gap-3 mb-5">
         <div
@@ -71,3 +71,13 @@ const anchorId = `cat-${category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
         }
     </div>
 </section>
+
+<style>
+    /* The homepage contains many card rows. Keep their estimated footprint in
+       the document, but defer style/layout/paint until a row approaches the
+       viewport. `auto` makes Chromium remember the real size after first use. */
+    .category-section {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 460px;
+    }
+</style>

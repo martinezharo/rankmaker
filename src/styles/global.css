@@ -17,7 +17,9 @@
     --color-border-hover: #2a2a3a;
     --color-text-primary: #f0f0f5;
     --color-text-secondary: #8888a0;
-    --color-text-muted: #55556a;
+    /* Secondary copy still reads as subdued, while meeting WCAG AA against
+       both the base and elevated dark surfaces at small text sizes. */
+    --color-text-muted: #808098;
     --font-sans: "Outfit Variable", "Outfit", ui-sans-serif, system-ui, sans-serif;
     --breakpoint-xs: 22.5rem;
 }
