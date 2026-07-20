@@ -211,6 +211,63 @@ test('persists battle sides and restores the history after a reload', async ({
 		.toEqual({ root: '', body: '' });
 });
 
+test('does not shift the template page when remote history arrives', async ({
+	page,
+}) => {
+	const remoteEntry = {
+		slug: A.slug,
+		title: 'Saved remotely',
+		ts: Date.now(),
+		result: [
+			{ id: 1, name: 'First', image: '' },
+			{ id: 2, name: 'Second', image: '' },
+		],
+	};
+	let releaseRemoteResponse!: () => void;
+	const remoteResponseReleased = new Promise<void>((resolve) => {
+		releaseRemoteResponse = resolve;
+	});
+	let markRemoteRequest!: () => void;
+	const remoteRequestStarted = new Promise<void>((resolve) => {
+		markRemoteRequest = resolve;
+	});
+	await page.route(`**/api/me/history?slug=${A.slug}`, async (route) => {
+		// Hold the D1 response until the detail view is already painted. This
+		// reproduces the layout-shift race without relying on an arbitrary delay.
+		markRemoteRequest();
+		await remoteResponseReleased;
+		await route.fulfill({ json: { entry: remoteEntry, result: remoteEntry.result } });
+	});
+
+	const remoteResponse = page.waitForResponse(
+		(response) =>
+			response.url().includes(`/api/me/history?slug=${A.slug}`) &&
+			response.status() === 200
+	);
+	await page.goto(`/template/${A.slug}`);
+	await remoteRequestStarted;
+	await expect(page.locator('#detail-view')).toBeVisible();
+	const detailHeightBefore = await page.locator('#detail-view').evaluate((detail) =>
+		Math.round(detail.getBoundingClientRect().height)
+	);
+
+	releaseRemoteResponse();
+	await remoteResponse;
+	await expect(page.locator('#results-view')).toBeHidden();
+	await expect
+		.poll(() =>
+			page.evaluate((slug) => {
+				const history = JSON.parse(localStorage.getItem('rankmaker_history') ?? '{}');
+				return history[slug]?.result?.length;
+			}, A.slug)
+		)
+		.toBe(2);
+	const detailHeightAfter = await page.locator('#detail-view').evaluate((detail) =>
+		Math.round(detail.getBoundingClientRect().height)
+	);
+	expect(detailHeightAfter).toBe(detailHeightBefore);
+});
+
 test('client-side navigation keeps options in sync with the template (regression)', async ({
 	page,
 }) => {

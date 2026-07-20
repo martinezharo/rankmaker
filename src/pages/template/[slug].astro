@@ -1873,8 +1873,16 @@ try {
                 if (local && local.result) {
                     showSavedResult(local);
                 }
-                // Always check D1: another device may have a newer result, while
-                // a newer local result may need retrying after a failed save.
+                // Fetch a newer cross-device result in the background. It must
+                // not replace the already-painted detail view: doing so removes
+                // a long page of content after first paint and creates a large
+                // layout shift (including a jump of the persistent footer).
+                //
+                // The result is still cached locally for the next visit, where
+                // the pre-paint guard above can select the results view before
+                // it becomes visible. The explicit "View details" action on
+                // /history continues to open it immediately via the pending
+                // sessionStorage handoff.
                 fetch(
                     `/api/me/history?slug=${encodeURIComponent(templateSlug)}`,
                     { headers: { Accept: "application/json" } },
@@ -1889,14 +1897,7 @@ try {
                             return;
                         }
 
-                        // Bail if the user started a fresh ranking while the
-                        // remote lookup was in flight.
-                        if (!battleView.classList.contains("hidden")) return;
-                        if (!local && detailView.classList.contains("hidden")) {
-                            return;
-                        }
                         saveHistoryEntry(remote);
-                        showSavedResult(remote);
                     })
                     .catch(() => {});
             }

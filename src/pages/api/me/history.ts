@@ -54,8 +54,8 @@ function storedEntry(row: StoredResult) {
 /**
  * GET — two shapes, both per-user and never cached:
  *   - `?slug=…` → `{ result: RankedItem[] | null }`, the saved result for that
- *     template, so a logged-in user lands on their results view even on a fresh
- *     device (where this browser's localStorage has no copy).
+ *     template. Template pages cache it locally for a later, pre-paint restore;
+ *     the explicit history "View details" flow opens it immediately.
  *   - no slug → `{ slugs: [] }`, the "played" slugs that drive the client-side
  *     recommendation filter.
  * Anonymous visitors get the empty shape (they read localStorage instead).
