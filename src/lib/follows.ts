@@ -7,7 +7,7 @@
  */
 import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
-import { mapTemplateRow, type Template } from './templates';
+import { TEMPLATE_LIST_SELECT, mapTemplateRow, type Template } from './templates';
 
 export type FollowCounts = { followers: number; following: number };
 
@@ -156,11 +156,7 @@ export async function listFollowingTemplates(
 ): Promise<Template[]> {
     const { results } = await db
         .prepare(
-            `SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
-                    t.created_at, t.updated_at, t.visibility,
-                    u.username, u.avatar, u.is_verified
-             FROM templates t
-             JOIN users u ON u.id = t.creator_id
+            `${TEMPLATE_LIST_SELECT}
              JOIN follows f ON f.following_id = t.creator_id
              WHERE f.follower_id = ? AND t.visibility = 'public'
              ORDER BY t.created_at DESC

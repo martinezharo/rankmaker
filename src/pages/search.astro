@@ -66,6 +66,7 @@ const templatesForClient = templates.map((t) => ({
     description: t.description,
     category: t.category,
     cover_image: t.cover_image,
+    collage: t.collage,
     times_ranked: t.times_ranked,
     votes: t.votes ?? 0,
     optionNames: t.optionNames ?? "",
@@ -196,6 +197,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
         import { clientT, getClientLocale } from "../i18n/client";
         import { localizePath } from "../i18n";
         import { initSaveButtons } from "../scripts/save-template";
+        import { collageHtml, resolveImageUrl } from "../lib/covers";
 
         document.addEventListener("astro:page-load", () => {
             const templates: any[] = (window as any).__SEARCH_TEMPLATES__;
@@ -229,15 +231,6 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             )
                 return;
 
-            // Helper: resolve image path
-            function resolveImg(path: string | null): string | null {
-                if (!path) return null;
-                if (path.startsWith("http")) return path;
-                if (path.startsWith("public/"))
-                    return path.replace("public/", "/");
-                return path;
-            }
-
             // Escape user-provided text/attributes (titles, descriptions and
             // image URLs can come from user-created templates).
             function esc(s: string): string {
@@ -261,10 +254,11 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                 const icon = t.category
                     ? iconMap[t.category] || "fa-ellipsis-h"
                     : "fa-ellipsis-h";
-                const coverSrc = resolveImg(t.cover_image);
+                const coverSrc = resolveImageUrl(t.cover_image);
                 const imgHtml = coverSrc
                     ? `<img src="${esc(coverSrc)}" alt="${esc(t.title)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />`
-                    : `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    : collageHtml(t.collage || [], t.title) ||
+                      `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                         <span class="text-text-muted text-xs text-center px-3 font-medium leading-tight">${esc(t.title)}</span>
                        </div>`;
 

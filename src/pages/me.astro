@@ -3,7 +3,7 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import Avatar from "../components/Avatar.astro";
-import SmartImage from "../components/SmartImage.astro";
+import TemplateCover from "../components/TemplateCover.astro";
 import { getSessionUser } from "../lib/auth";
 import { MAX_BIO_LEN } from "./api/me/profile";
 import { categoryIcon } from "../lib/categories";
@@ -50,13 +50,6 @@ try {
 } catch {
     // keep zeros
 }
-
-const resolveImg = (path: string | null) => {
-    if (!path) return null;
-    if (path.startsWith("http")) return path;
-    if (path.startsWith("public/")) return path.replace("public/", "/");
-    return path;
-};
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
@@ -200,10 +193,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                 href={L(`/template/${t.slug}`)}
                                 class="w-16 h-16 sm:w-24 sm:h-18 shrink-0 rounded-lg overflow-hidden bg-surface border border-border"
                             >
-                                <SmartImage
-                                    src={resolveImg(t.cover_image)}
-                                    alt={t.title}
-                                    text={t.title}
+                                <TemplateCover
+                                    cover={t.cover_image}
+                                    collage={t.collage}
+                                    title={t.title}
                                     className="w-full h-full object-cover"
                                 />
                             </a>

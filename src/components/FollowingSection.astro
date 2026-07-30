@@ -73,6 +73,7 @@ const t = useTranslations(locale);
 <script>
 	import { categoryIcon } from "../lib/categories";
 	import { avatarHtml } from "../lib/avatars";
+	import { collageHtml, resolveImageUrl } from "../lib/covers";
 	import { clientT, getClientLocale } from "../i18n/client";
 	import { localizePath } from "../i18n";
 	import { initSaveButtons } from "../scripts/save-template";
@@ -89,6 +90,7 @@ const t = useTranslations(locale);
 		description: string | null;
 		category: string | null;
 		cover_image: string | null;
+		collage?: string[];
 		times_ranked: number;
 		votes: number;
 		creator?: Creator;
@@ -102,21 +104,16 @@ const t = useTranslations(locale);
 			.replace(/"/g, "&quot;");
 	}
 
-	function resolveImg(path: string | null): string | null {
-		if (!path) return null;
-		if (path.startsWith("http")) return path;
-		if (path.startsWith("public/")) return path.replace("public/", "/");
-		return path;
-	}
-
 	function cardHtml(tpl: Card, t: ReturnType<typeof clientT>, L: (p: string) => string): string {
 		const href = L(`/template/${tpl.slug}`);
 		const icon = categoryIcon(tpl.category);
-		const cover = resolveImg(tpl.cover_image);
+		const cover = resolveImageUrl(tpl.cover_image);
+		const collage = cover ? "" : collageHtml(tpl.collage || [], tpl.title);
 		const coverInner = cover
 			? `<img src="${esc(cover)}" alt="${esc(tpl.title)}" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
 			   <div class="absolute inset-0 hidden flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface"><span class="font-bold text-text-primary/90 leading-tight text-xl line-clamp-3">${esc(tpl.title)}</span></div>`
-			: `<div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface"><span class="font-bold text-text-primary/90 leading-tight text-xl line-clamp-3">${esc(tpl.title)}</span><div class="mt-2 w-12 h-1 bg-primary/50 rounded-full"></div></div>`;
+			: collage ||
+				`<div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface"><span class="font-bold text-text-primary/90 leading-tight text-xl line-clamp-3">${esc(tpl.title)}</span><div class="mt-2 w-12 h-1 bg-primary/50 rounded-full"></div></div>`;
 
 		const categoryBadge = tpl.category
 			? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>`

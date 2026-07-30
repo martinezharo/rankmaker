@@ -183,6 +183,9 @@ const inputClass =
                 class="w-full h-full object-cover transition-opacity"
                 style="display:none;"
             />
+            <!-- Live preview of the collage that will stand in for a missing
+                 cover (filled by the script from the option images). -->
+            <div id="tf-cover-collage" class="absolute inset-0" style="display:none;"></div>
             <div
                 id="tf-cover-uploading"
                 class="absolute inset-0 flex items-center justify-center bg-black/25 pointer-events-none"
@@ -224,6 +227,9 @@ const inputClass =
                 </button>
             </div>
         </div>
+        <p id="tf-cover-collage-note" class="text-xs text-text-muted" style="display:none;">
+            {t("form.coverCollageNote")}
+        </p>
         <p id="tf-cover-error" class="text-xs text-red-400 min-h-4"></p>
     </section>
 
@@ -405,6 +411,7 @@ const inputClass =
     import { uploadTemplateImage } from "../scripts/image-upload";
     import { clientT, getClientLocale } from "../i18n/client";
     import { localizePath } from "../i18n";
+    import { COLLAGE_TILES, collageHtml, collageImages } from "../lib/covers";
 
     document.addEventListener("astro:page-load", () => {
         const form = document.getElementById(
@@ -445,6 +452,12 @@ const inputClass =
         const coverUploading = document.getElementById("tf-cover-uploading")!;
         const coverActions = document.getElementById("tf-cover-actions")!;
         const coverError = document.getElementById("tf-cover-error")!;
+        const coverCollage = document.getElementById("tf-cover-collage")!;
+        const coverCollageNote = document.getElementById(
+            "tf-cover-collage-note",
+        )!;
+        const coverIcon = document.getElementById("tf-cover-icon")!;
+        const coverHint = document.getElementById("tf-cover-hint")!;
         const optionFile = document.getElementById(
             "tf-option-file",
         ) as HTMLInputElement;
@@ -525,6 +538,47 @@ const inputClass =
             coverPreview.style.display = "";
         }
 
+        // ── Collage stand-in ─────────────────────────────────────────
+        // With no cover uploaded, the template shows a collage of its option
+        // images (see src/lib/covers.ts). Preview it in the empty cover box
+        // so it's obvious a cover is optional — and what it will look like.
+        function optionImages(): string[] {
+            return rows().map((row) => row.dataset.image || "");
+        }
+
+        function hasCollage(): boolean {
+            return collageImages(optionImages()).length === COLLAGE_TILES;
+        }
+
+        function renderCoverCollage() {
+            const html = coverUrl
+                ? ""
+                : collageHtml(
+                      collageImages(optionImages()),
+                      title.value.trim(),
+                  );
+            coverCollage.innerHTML = html;
+            coverCollage.style.display = html ? "" : "none";
+            coverCollageNote.style.display = html ? "" : "none";
+            // With a collage behind it the full-box upload CTA would sit on
+            // top of the images (unreadable over light artwork), so it shrinks
+            // to a bar pinned to the bottom edge instead.
+            const over = !!html;
+            coverTrigger.classList.toggle("inset-0", !over);
+            coverTrigger.classList.toggle("flex-col", !over);
+            coverTrigger.classList.toggle("hover:bg-white/5", !over);
+            coverTrigger.classList.toggle("text-text-muted", !over);
+            coverTrigger.classList.toggle("inset-x-0", over);
+            coverTrigger.classList.toggle("bottom-0", over);
+            coverTrigger.classList.toggle("py-2.5", over);
+            coverTrigger.classList.toggle("bg-black/70", over);
+            coverTrigger.classList.toggle("hover:bg-black/85", over);
+            coverTrigger.classList.toggle("text-white", over);
+            coverIcon.classList.toggle("text-2xl", !over);
+            coverIcon.classList.toggle("text-sm", over);
+            coverHint.style.display = over ? "none" : "";
+        }
+
         async function handleCoverFile(file: File) {
             const token = ++coverToken;
             coverError.textContent = "";
@@ -546,6 +600,7 @@ const inputClass =
                 renderCover(coverUrl ? "set" : "empty");
                 coverError.textContent = uploadErrorMessage(result.error);
             }
+            renderCoverCollage();
         }
 
         coverTrigger.addEventListener("click", () => coverFile.click());
@@ -558,6 +613,7 @@ const inputClass =
                 coverUrl = "";
                 coverError.textContent = "";
                 renderCover("empty");
+                renderCoverCollage();
             },
         );
         coverFile.addEventListener("change", () => {
@@ -644,6 +700,7 @@ const inputClass =
                 thumb.title = t("form.optionAddImage");
                 thumb.setAttribute("aria-label", t("form.optionAddImage"));
             }
+            renderCoverCollage();
         }
 
         async function handleOptionFile(row: HTMLElement, file: File) {
@@ -716,6 +773,7 @@ const inputClass =
                 () => {
                     row.remove();
                     updateCount();
+                    renderCoverCollage();
                 },
             );
 
@@ -776,7 +834,10 @@ const inputClass =
             if (isPublic && !skipDescLength && desc.value.trim().length < 15)
                 return t("form.errDescription");
             if (isPublic && !category.value) return t("form.errCategory");
-            if (!coverUrl && isPublic) return t("form.errCoverRequired");
+            // A public template needs a cover — uploaded, or the collage
+            // built from its option images.
+            if (!coverUrl && isPublic && !hasCollage())
+                return t("form.errCoverRequired");
             const opts = rows();
             const named = opts.filter(
                 (r) =>

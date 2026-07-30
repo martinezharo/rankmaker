@@ -26,6 +26,7 @@ export const GET: APIRoute = async (context) => {
 			description: t.description,
 			category: t.category,
 			cover_image: t.cover_image,
+			collage: t.collage,
 			times_ranked: t.times_ranked,
 			votes: t.votes ?? 0,
 			creator: t.creator,

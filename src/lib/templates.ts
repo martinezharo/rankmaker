@@ -5,6 +5,13 @@
  */
 import templatesJson from '../data/templates.json';
 import { CATEGORY_NAMES } from './categories';
+import {
+    COLLAGE_TILES,
+    canBuildCollage,
+    collageFromOptions,
+    collageImages,
+    parseOptionImages,
+} from './covers';
 import { extractImageKey } from './images';
 import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
@@ -32,6 +39,12 @@ export type Template = {
     description: string | null;
     category: string | null;
     cover_image: string | null;
+    /**
+     * Option images backing the collage cover, resolved and ready to render.
+     * Empty unless the template has at least COLLAGE_TILES of them. Only
+     * meaningful when `cover_image` is null — see src/lib/covers.ts.
+     */
+    collage: string[];
     times_ranked: number;
     /** Net up/down vote score — merged by pages via getTemplateVotes(db). */
     votes?: number;
@@ -56,6 +69,11 @@ export const OFFICIAL_CREATOR: Creator = {
 // ── Official (JSON) templates ────────────────────────────────────────────────
 
 function mapOfficial(t: any): Template {
+    const options: TemplateOption[] = (t.options || []).map((o: any) => ({
+        id: o.id,
+        name: o.name,
+        image: o.image ?? null,
+    }));
     return {
         id: t.id,
         slug: t.slug,
@@ -63,14 +81,11 @@ function mapOfficial(t: any): Template {
         description: t.description ?? null,
         category: t.category ?? null,
         cover_image: t.cover_image ?? null,
+        collage: collageFromOptions(options),
         times_ranked: t.times_ranked ?? 0,
         created_at: t.created_at,
         updated_at: t.updated_at,
-        options: (t.options || []).map((o: any) => ({
-            id: o.id,
-            name: o.name,
-            image: o.image ?? null,
-        })),
+        options,
         creator: OFFICIAL_CREATOR,
         source: 'official',
         visibility: 'public',
@@ -107,6 +122,8 @@ type TemplateRow = {
     is_verified: number;
     visibility: string;
     option_names?: string | null;
+    /** Newline-joined option images, from list queries — see parseOptionImages. */
+    option_images?: string | null;
 };
 
 export function mapTemplateRow(
@@ -124,6 +141,11 @@ function mapRow(row: TemplateRow, options: TemplateOption[] = []): Template {
         description: row.description,
         category: row.category,
         cover_image: row.cover_image,
+        // Single-template queries load the option rows; list queries fetch
+        // just the first few images in the same statement.
+        collage: options.length
+            ? collageFromOptions(options)
+            : collageImages(parseOptionImages(row.option_images)),
         times_ranked: 0, // pages merge real counts via getCounts(db)
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -147,12 +169,26 @@ const TEMPLATE_SELECT = `
            u.username, u.avatar, u.is_verified
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
-const TEMPLATE_LIST_SELECT = `
+/**
+ * List views never load option rows, but they still need the first few option
+ * images to paint a collage cover for templates without one — fetched here as
+ * a newline-joined column so the list stays a single statement.
+ * Exported so follows.ts can extend it with its own JOIN instead of keeping a
+ * near-copy of the projection.
+ */
+export const TEMPLATE_LIST_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
            t.created_at, t.updated_at, t.visibility,
            u.username, u.avatar, u.is_verified,
            (SELECT GROUP_CONCAT(o.name, ' ') FROM template_options o
-             WHERE o.template_id = t.id) AS option_names
+             WHERE o.template_id = t.id) AS option_names,
+           (SELECT GROUP_CONCAT(img, char(10)) FROM (
+                SELECT o.image AS img FROM template_options o
+                 WHERE o.template_id = t.id
+                   AND o.image IS NOT NULL AND o.image != ''
+                 ORDER BY o.position, o.id
+                 LIMIT ${COLLAGE_TILES}
+            )) AS option_images
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
 export async function loadOptions(
@@ -534,14 +570,10 @@ export function validateTemplateInput(
         return err('Pick a valid category.');
     }
 
-    // A cover image is only required for public templates (including editing a
-    // template to public). Private/unlisted ones may omit it. When present it
-    // must still be a valid URL regardless of visibility.
+    // The cover URL itself must always be valid; whether one is *required*
+    // depends on the options, so that check waits until they're parsed.
     const cover =
         typeof body?.cover_image === 'string' ? body.cover_image.trim() : '';
-    if (!cover && isPublic) {
-        return err('Cover image is required.');
-    }
     if (cover && !isAllowedImageUrl(cover, imagePolicy)) {
         return err('Cover image must be an uploaded image.');
     }
@@ -572,6 +604,14 @@ export function validateTemplateInput(
         }
         const image: string | null = rawImage || null;
         options.push({ name, image });
+    }
+
+    // Public templates need *a* cover, but it may be the collage built from
+    // their option images. Private/unlisted ones may show the text placeholder.
+    if (!cover && isPublic && !canBuildCollage(options)) {
+        return err(
+            `Cover image is required (or give at least ${COLLAGE_TILES} options an image).`
+        );
     }
 
     return {
