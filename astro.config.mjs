@@ -40,5 +40,9 @@ export default defineConfig({
     }
   },
 
-  adapter: cloudflare()
+  adapter: cloudflare({
+    platformProxy: {
+      remoteBindings: false
+    }
+  })
 });

@@ -22,7 +22,7 @@
     "db:counts:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.12",
+    "@astrojs/cloudflare": "^12.6.13",
     "@fontsource-variable/outfit": "^5.2.8",
     "@fortawesome/fontawesome-free": "^7.3.0",
     "@tailwindcss/vite": "^4.1.18",
