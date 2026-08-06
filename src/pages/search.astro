@@ -3,6 +3,7 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import TemplateCard from "../components/TemplateCard.astro";
+import Select from "../components/ui/Select.astro";
 import {
     CATEGORIES as categories,
     CATEGORY_ICONS as categoryIconMap,
@@ -118,24 +119,23 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             </div>
 
             <!-- Category Dropdown -->
-            <div class="relative sm:w-52">
-                <select
-                    id="category-select"
-                    class="w-full appearance-none px-4 py-3 pr-10 rounded-xl bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all cursor-pointer"
-                >
-                    <option value="">{tr("search.allCategories")}</option>
+            <Select
+                id="category-select"
+                class="sm:w-56"
+                value=""
+                options={[
                     {
-                        categories.map((cat) => (
-                            <option value={cat.name}>
-                                {tr(`categories.${cat.name}`)}
-                            </option>
-                        ))
-                    }
-                </select>
-                <i
-                    class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-text-muted text-xs pointer-events-none"
-                ></i>
-            </div>
+                        value: "",
+                        label: tr("search.allCategories"),
+                        icon: "fa-layer-group",
+                    },
+                    ...categories.map((cat) => ({
+                        value: cat.name,
+                        label: tr(`categories.${cat.name}`),
+                        icon: cat.icon,
+                    })),
+                ]}
+            />
         </div>
 
         <!-- Results Info -->
@@ -197,6 +197,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
         import { clientT, getClientLocale } from "../i18n/client";
         import { localizePath } from "../i18n";
         import { initSaveButtons } from "../scripts/save-template";
+        import { setSelectValue } from "../scripts/select";
         import { collageHtml, resolveImageUrl } from "../lib/covers";
 
         document.addEventListener("astro:page-load", () => {
@@ -397,7 +398,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             if (resetBtn) {
                 resetBtn.addEventListener("click", () => {
                     searchInput.value = "";
-                    categorySelect.value = "";
+                    setSelectValue(categorySelect, "");
                     filterAndRender();
                 });
             }
@@ -407,7 +408,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             const q = params.get("q");
             const cat = params.get("category");
             if (q) searchInput.value = q;
-            if (cat) categorySelect.value = cat;
+            if (cat) setSelectValue(categorySelect, cat);
 
             // Initial render — only when the URL carries a filter. Without one,
             // the server-rendered grid already shows the full, correctly-ordered

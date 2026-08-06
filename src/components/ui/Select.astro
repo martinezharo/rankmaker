@@ -1,0 +1,196 @@
+---
+/**
+ * Select.astro — RANKMAKER's custom select.
+ *
+ * Renders an accessible listbox (icons, hints, optional filter box) on top of a
+ * visually hidden native <select> that stays the single source of truth for the
+ * value. Everything is server-rendered, so the control paints with its final
+ * look before the enhancing script runs; the script only wires interaction.
+ *
+ * Consumers read the value through the native element, e.g.
+ * `document.getElementById("tf-category") as HTMLSelectElement`.
+ */
+import { defaultLocale, useTranslations } from "../../i18n";
+
+export interface SelectOption {
+    value: string;
+    label: string;
+    /** FontAwesome class, e.g. "fa-film". */
+    icon?: string;
+    /** Secondary line shown under the label in the menu. */
+    hint?: string;
+}
+
+interface Props {
+    /** Id of the native <select> — the handle consumers query by. */
+    id: string;
+    options: SelectOption[];
+    value?: string;
+    name?: string;
+    /** Visible field label rendered above the control. */
+    label?: string;
+    /** Shown until something is picked; also adds a disabled empty option. */
+    placeholder?: string;
+    /** Icon shown alongside the placeholder. */
+    placeholderIcon?: string;
+    /** Filter box in the menu. Defaults to on for long lists. */
+    searchable?: boolean;
+    /** Extra classes for the wrapper (sizing/layout). */
+    class?: string;
+}
+
+const {
+    id,
+    options,
+    value = "",
+    name,
+    label,
+    placeholder,
+    placeholderIcon,
+    searchable = options.length >= 10,
+    class: className = "",
+} = Astro.props;
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
+const selected = options.find((o) => o.value === value) ?? null;
+const listboxId = `${id}-listbox`;
+const labelId = `${id}-label`;
+const valueId = `${id}-value`;
+const triggerId = `${id}-trigger`;
+const currentIcon = selected?.icon ?? (selected ? undefined : placeholderIcon);
+---
+
+<div class:list={["rm-select", className]} data-rm-select>
+    {
+        label && (
+            <label id={labelId} for={triggerId} class="rm-select-caption">
+                {label}
+            </label>
+        )
+    }
+
+    {/* Source of truth for the value: hidden from view and from assistive tech,
+        which reads the listbox below instead. */}
+    <select
+        id={id}
+        name={name ?? id}
+        class="rm-select-native"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+        {
+            placeholder && (
+                <option value="" disabled selected={!selected}>
+                    {placeholder}
+                </option>
+            )
+        }
+        {
+            options.map((o) => (
+                <option value={o.value} selected={o.value === selected?.value}>
+                    {o.label}
+                </option>
+            ))
+        }
+    </select>
+
+    <button
+        type="button"
+        id={triggerId}
+        class="rm-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        aria-controls={listboxId}
+        aria-labelledby={label ? `${labelId} ${valueId}` : valueId}
+        data-placeholder={placeholder}
+        data-placeholder-icon={placeholderIcon}
+    >
+        <span class="rm-select-value" id={valueId}>
+            <i
+                class:list={["rm-select-icon", currentIcon && `fa-solid ${currentIcon}`]}
+                hidden={!currentIcon}
+                aria-hidden="true"></i>
+            <span
+                class:list={[
+                    "rm-select-text",
+                    !selected && "rm-select-text-placeholder",
+                ]}>{selected ? selected.label : placeholder}</span
+            >
+        </span>
+        <i class="fa-solid fa-chevron-down rm-select-chevron" aria-hidden="true"
+        ></i>
+    </button>
+
+    <div class="rm-select-popover" hidden>
+        <div class="rm-select-menu">
+            {
+                searchable && (
+                    <div class="rm-select-search">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true" />
+                        <input
+                            type="text"
+                            class="rm-select-search-input"
+                            placeholder={t("select.searchPlaceholder")}
+                            autocomplete="off"
+                            role="combobox"
+                            aria-expanded="true"
+                            aria-autocomplete="list"
+                            aria-controls={listboxId}
+                            aria-label={t("select.searchPlaceholder")}
+                        />
+                    </div>
+                )
+            }
+            <div
+                class="rm-select-list"
+                id={listboxId}
+                role="listbox"
+                aria-labelledby={label ? labelId : valueId}
+                tabindex="-1"
+            >
+                {
+                    options.map((o, i) => (
+                        <div
+                            class="rm-select-option"
+                            id={`${id}-opt-${i}`}
+                            role="option"
+                            aria-selected={o.value === selected?.value}
+                            data-value={o.value}
+                            data-label={o.label}
+                            data-hint={o.hint}
+                            data-icon={o.icon}
+                        >
+                            <i
+                                class:list={[
+                                    "rm-select-option-icon",
+                                    o.icon && `fa-solid ${o.icon}`,
+                                ]}
+                                hidden={!o.icon}
+                                aria-hidden="true"
+                            />
+                            <span class="rm-select-option-body">
+                                <span class="rm-select-option-label">{o.label}</span>
+                                {o.hint && (
+                                    <span class="rm-select-option-hint">{o.hint}</span>
+                                )}
+                            </span>
+                            <i
+                                class="fa-solid fa-check rm-select-option-check"
+                                aria-hidden="true"
+                            />
+                        </div>
+                    ))
+                }
+            </div>
+            <p class="rm-select-empty" hidden>{t("select.noResults")}</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    import { initSelects } from "../../scripts/select";
+
+    document.addEventListener("astro:page-load", () => initSelects());
+</script>

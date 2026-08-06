@@ -211,45 +211,55 @@ const basePath = unlocalizePath(Astro.url.pathname);
             <!-- Language switcher — hrefs refreshed on the client since the
                  footer is transition:persist. -->
             <div
-                class="lang-switcher relative order-1 sm:order-2 w-full sm:w-auto sm:min-w-[200px]"
+                class="lang-switcher rm-select order-1 sm:order-2 w-full sm:w-auto sm:min-w-[210px]"
             >
                 <button
                     type="button"
-                    class="lang-switcher-btn w-full inline-flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
-                    aria-haspopup="true"
+                    class="lang-switcher-btn rm-select-trigger"
+                    aria-haspopup="menu"
                     aria-expanded="false"
                     aria-label={`${t("nav.language")}: ${localeNames[locale]}`}
                 >
-                    <span class="flex items-center gap-2">
-                        <i class="fa-solid fa-globe text-xs"></i>
-                        <span class="lang-current-name"
+                    <span class="rm-select-value">
+                        <i class="fa-solid fa-globe rm-select-icon"></i>
+                        <span class="rm-select-text lang-current-name"
                             >{localeNames[locale]}</span
                         >
                     </span>
                     <i
-                        class="fa-solid fa-chevron-down text-[10px] text-text-muted transition-transform lang-chevron"
-                    ></i>
+                        class="fa-solid fa-chevron-down rm-select-chevron"
+                        aria-hidden="true"></i>
                 </button>
-                <div
-                    class="lang-menu absolute left-0 right-0 bottom-full mb-2 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50"
-                    style="display:none;"
-                >
-                    {
-                        locales.map((loc) => (
-                            <a
-                                href={localizePath(basePath, loc)}
-                                hreflang={loc}
-                                data-lang={loc}
-                                data-astro-reload
-                                class={`lang-option flex items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${loc === locale ? "text-text-primary font-medium" : "text-text-secondary hover:text-text-primary"}`}
-                            >
-                                {localeNames[loc]}
-                                {loc === locale && (
-                                    <i class="fa-solid fa-check text-primary text-xs" />
-                                )}
-                            </a>
-                        ))
-                    }
+                <div class="lang-menu rm-select-popover" hidden>
+                    <div class="rm-select-menu">
+                        <div class="rm-select-list" role="menu">
+                            {
+                                locales.map((loc) => (
+                                    <a
+                                        href={localizePath(basePath, loc)}
+                                        hreflang={loc}
+                                        data-lang={loc}
+                                        data-astro-reload
+                                        role="menuitem"
+                                        aria-current={
+                                            loc === locale ? "true" : undefined
+                                        }
+                                        class="lang-option rm-select-option"
+                                    >
+                                        <span class="rm-select-option-body">
+                                            <span class="rm-select-option-label">
+                                                {localeNames[loc]}
+                                            </span>
+                                        </span>
+                                        <i
+                                            class="fa-solid fa-check rm-select-option-check"
+                                            aria-hidden="true"
+                                        />
+                                    </a>
+                                ))
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -259,6 +269,7 @@ const basePath = unlocalizePath(Astro.url.pathname);
 <script>
     import { getClientLocale } from "../i18n/client";
     import { localizePath, unlocalizePath, localeNames } from "../i18n";
+    import { closeOpenDropdown, createDropdown } from "../scripts/dropdown";
 
     // The footer is transition:persist, so the language switcher links (and the
     // current-locale label) are rendered once and must be refreshed on every
@@ -285,37 +296,40 @@ const basePath = unlocalizePath(Astro.url.pathname);
             );
     }
 
-    function closeLangMenus() {
-        document
-            .querySelectorAll<HTMLElement>(".lang-menu")
-            .forEach((m) => (m.style.display = "none"));
-        document
-            .querySelectorAll<HTMLElement>(".lang-chevron")
-            .forEach((c) => (c.style.transform = ""));
-        document
-            .querySelectorAll<HTMLElement>(".lang-switcher-btn")
-            .forEach((b) => b.setAttribute("aria-expanded", "false"));
-    }
-
+    // Same dropdown behaviour as the custom <Select> (outside click, Escape,
+    // arrow keys, flip-up placement, mobile sheet) — the items here are links,
+    // so navigation stays native and the highlight is real focus.
     function bindLangSwitchers() {
         document
-            .querySelectorAll<HTMLElement>(".lang-switcher-btn")
-            .forEach((btn) => {
-                if (btn.dataset.bound) return;
-                btn.dataset.bound = "1";
-                const menu =
-                    btn.parentElement?.querySelector<HTMLElement>(".lang-menu");
-                const chevron = btn.querySelector<HTMLElement>(".lang-chevron");
-                if (!menu) return;
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    const isOpen = menu.style.display !== "none";
-                    closeLangMenus();
-                    if (!isOpen) {
-                        menu.style.display = "";
-                        btn.setAttribute("aria-expanded", "true");
-                        if (chevron) chevron.style.transform = "rotate(180deg)";
-                    }
+            .querySelectorAll<HTMLElement>(".lang-switcher")
+            .forEach((root) => {
+                if (root.dataset.bound) return;
+                const trigger =
+                    root.querySelector<HTMLElement>(".lang-switcher-btn");
+                const popover = root.querySelector<HTMLElement>(".lang-menu");
+                if (!trigger || !popover) return;
+                root.dataset.bound = "1";
+
+                const items = () =>
+                    Array.from(
+                        popover.querySelectorAll<HTMLElement>(".lang-option"),
+                    );
+
+                const dropdown = createDropdown({
+                    root,
+                    trigger,
+                    popover,
+                    items,
+                    activate: (item) => item.click(),
+                    setActive: (item) => item?.focus(),
+                    getActive: () =>
+                        items().find((i) => i === document.activeElement) ??
+                        null,
+                    textOf: (item) => item.textContent?.trim() ?? "",
+                });
+
+                popover.addEventListener("click", (event) => {
+                    if (event.target === popover) dropdown.close();
                 });
             });
     }
@@ -323,10 +337,6 @@ const basePath = unlocalizePath(Astro.url.pathname);
     document.addEventListener("astro:page-load", () => {
         refreshLangLinks();
         bindLangSwitchers();
-        closeLangMenus();
+        closeOpenDropdown();
     });
-
-    // Close the menu when clicking outside the switcher. Bound once (the footer
-    // persists across view transitions).
-    document.addEventListener("click", () => closeLangMenus());
 </script>
