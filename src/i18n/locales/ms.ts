@@ -6,6 +6,10 @@
 import type { LocaleDict } from "../types";
 
 export const ms: LocaleDict = {
+	select: {
+		searchPlaceholder: 'Cari…',
+		noResults: 'Tiada padanan',
+	},
 	common: {
 		save: 'Simpan',
 		cancel: 'Batal',

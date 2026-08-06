@@ -9,6 +9,10 @@
  * "Showing {n} results" → t('search.results', { n: 12 }).
  */
 export const en = {
+	select: {
+		searchPlaceholder: 'Search…',
+		noResults: 'No matches',
+	},
 	common: {
 		save: 'Save',
 		cancel: 'Cancel',

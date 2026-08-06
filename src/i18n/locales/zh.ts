@@ -6,6 +6,10 @@
 import type { LocaleDict } from "../types";
 
 export const zh: LocaleDict = {
+	select: {
+		searchPlaceholder: '搜索…',
+		noResults: '无匹配结果',
+	},
 	common: {
 		save: '保存',
 		cancel: '取消',

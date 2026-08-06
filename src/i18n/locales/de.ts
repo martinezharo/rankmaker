@@ -6,6 +6,10 @@
 import type { LocaleDict } from "../types";
 
 export const de: LocaleDict = {
+	select: {
+		searchPlaceholder: 'Suchen…',
+		noResults: 'Keine Treffer',
+	},
 	common: {
 		save: 'Speichern',
 		cancel: 'Abbrechen',

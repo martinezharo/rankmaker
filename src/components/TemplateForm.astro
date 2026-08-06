@@ -7,6 +7,7 @@
 import { CATEGORIES } from "../lib/categories";
 import { MAX_OPTIONS, MIN_OPTIONS, type Visibility } from "../lib/templates";
 import { defaultLocale, useTranslations } from "../i18n";
+import Select from "./ui/Select.astro";
 
 interface Props {
     mode: "create" | "edit";
@@ -26,6 +27,12 @@ const { mode, template } = Astro.props;
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
+
+const VISIBILITY_ICONS: Record<Visibility, string> = {
+    public: "fa-globe",
+    unlisted: "fa-link",
+    private: "fa-lock",
+};
 
 const VISIBILITY_CHOICES: {
     value: Visibility;
@@ -108,52 +115,31 @@ const inputClass =
                 class={inputClass + " resize-none"}>{initial.description}</textarea>
         </div>
 
-        <div>
-            <label for="tf-category" class="block text-sm font-semibold text-text-primary mb-2">{t("form.categoryLabel")}</label>
-            <div class="relative">
-                <select
-                    id="tf-category"
-                    class={inputClass + " appearance-none pr-10 cursor-pointer"}
-                >
-                    <option value="" disabled selected={!initial.category}>
-                        {t("form.categoryPlaceholder")}
-                    </option>
-                    {
-                        CATEGORIES.map((c) => (
-                            <option
-                                value={c.name}
-                                selected={c.name === initial.category}
-                            >
-                                {t(`categories.${c.name}`)}
-                            </option>
-                        ))
-                    }
-                </select>
-                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-text-muted text-xs pointer-events-none"></i>
-            </div>
-        </div>
+        <Select
+            id="tf-category"
+            label={t("form.categoryLabel")}
+            placeholder={t("form.categoryPlaceholder")}
+            placeholderIcon="fa-tag"
+            value={initial.category}
+            options={CATEGORIES.map((c) => ({
+                value: c.name,
+                label: t(`categories.${c.name}`),
+                icon: c.icon,
+            }))}
+        />
 
         <div>
-            <label for="tf-visibility" class="block text-sm font-semibold text-text-primary mb-2">{t("form.visibilityLabel")}</label>
-            <div class="relative">
-                <select
-                    id="tf-visibility"
-                    class={inputClass + " appearance-none pr-10 cursor-pointer"}
-                >
-                    {
-                        VISIBILITY_CHOICES.map((v) => (
-                            <option
-                                value={v.value}
-                                data-hint={v.hint}
-                                selected={v.value === initial.visibility}
-                            >
-                                {v.label}
-                            </option>
-                        ))
-                    }
-                </select>
-                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-text-muted text-xs pointer-events-none"></i>
-            </div>
+            <Select
+                id="tf-visibility"
+                label={t("form.visibilityLabel")}
+                value={initial.visibility}
+                options={VISIBILITY_CHOICES.map((v) => ({
+                    value: v.value,
+                    label: v.label,
+                    hint: v.hint,
+                    icon: VISIBILITY_ICONS[v.value],
+                }))}
+            />
             <p id="tf-visibility-hint" class="text-xs text-text-muted mt-2"></p>
         </div>
     </section>
@@ -807,9 +793,14 @@ const inputClass =
         bindCounter(desc, descCount);
 
         // ── Visibility hint ──────────────────────────────────────────
+        const visibilityHints: Record<string, string> = {
+            public: t("form.visibilityPublicHint"),
+            unlisted: t("form.visibilityUnlistedHint"),
+            private: t("form.visibilityPrivateHint"),
+        };
+
         function updateVisibilityHint() {
-            const selected = visibility.selectedOptions[0];
-            let hint = selected?.dataset.hint || "";
+            let hint = visibilityHints[visibility.value] || "";
             // Editing into unlisted regenerates the slug — warn about it,
             // since the edit page promises the URL stays the same otherwise.
             if (
