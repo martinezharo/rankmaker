@@ -1,3 +1,5 @@
+import { aggregateSlugValues } from './slug';
+
 /**
  * Aggregate real ranking counts per template slug from D1.
  * Returns a `{ slug: count }` map. Shared by the /api/counts endpoint
@@ -25,9 +27,7 @@ export async function getCounts(
         )
         .all<{ slug: string; n: number }>();
 
-    const counts: Record<string, number> = {};
-    for (const row of results) {
-        counts[row.slug] = row.n;
-    }
-    return counts;
+    return aggregateSlugValues(
+        results.map((row) => ({ slug: row.slug, value: row.n }))
+    );
 }

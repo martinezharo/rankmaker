@@ -46,7 +46,12 @@ export const GET: APIRoute = async (context) => {
 		if (!canAccessTemplate(template, user?.username)) {
 			return json({ error: 'Not found' }, 404, NO_STORE);
 		}
-		const comments = await listComments(env.DB, slug, user?.id ?? null);
+		const canonicalSlug = template.slug;
+		const comments = await listComments(
+			env.DB,
+			canonicalSlug,
+			user?.id ?? null
+		);
 
 		return json(
 			{
@@ -101,6 +106,7 @@ export const POST: APIRoute = async (context) => {
 		if (!canAccessTemplate(template, user.username)) {
 			return json({ error: 'Not found' }, 404);
 		}
+		const canonicalSlug = template.slug;
 
 		const text = typeof body.body === 'string' ? body.body.trim() : '';
 		if (!text) return json({ error: 'Comment is empty' }, 400);
@@ -110,7 +116,7 @@ export const POST: APIRoute = async (context) => {
 
 		let parentId: string | null = null;
 		if (typeof body.parentId === 'string' && body.parentId) {
-			if (!(await parentOnSlug(env.DB, body.parentId, slug))) {
+			if (!(await parentOnSlug(env.DB, body.parentId, canonicalSlug))) {
 				return json({ error: 'Invalid parent' }, 400);
 			}
 			parentId = body.parentId;
@@ -128,7 +134,7 @@ export const POST: APIRoute = async (context) => {
 		}
 
 		const id = await createComment(env.DB, {
-			slug,
+			slug: canonicalSlug,
 			userId: user.id,
 			parentId,
 			body: text,
@@ -140,7 +146,7 @@ export const POST: APIRoute = async (context) => {
 		try {
 			const recipientId = parentId
 				? await getCommentAuthorId(env.DB, parentId)
-				: await getTemplateOwnerId(env.DB, slug);
+				: await getTemplateOwnerId(env.DB, canonicalSlug);
 			if (recipientId) {
 				await dispatchNotification(
 					env,
@@ -153,7 +159,7 @@ export const POST: APIRoute = async (context) => {
 						type: parentId
 							? 'comment_reply'
 							: 'comment_on_template',
-						slug,
+						slug: canonicalSlug,
 						title: template.title,
 						commentId: id,
 					}

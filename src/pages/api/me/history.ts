@@ -4,6 +4,7 @@ import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
 import {
 	canAccessTemplate,
+	getCanonicalTemplateSlug,
 	getTemplateBySlug,
 } from '../../../lib/templates';
 import {
@@ -69,11 +70,14 @@ export const GET: APIRoute = async (context) => {
 
 		if (slug) {
 			if (!user) return json({ result: null }, 200, headers);
+			const canonicalSlug =
+				(await getCanonicalTemplateSlug(env.DB, slug)) ?? slug;
 			const row = await env.DB.prepare(
 				`SELECT slug, title, cover, result, battle_history, updated_at
-				 FROM ranking_results WHERE user_id = ? AND slug = ?`
+				 FROM ranking_results
+				 WHERE user_id = ? AND slug = ? COLLATE NOCASE`
 			)
-				.bind(user.id, slug)
+				.bind(user.id, canonicalSlug)
 				.first<StoredResult>();
 			const entry = row ? storedEntry(row) : null;
 			// Keep `result` for older clients while exposing timestamped metadata so
@@ -125,6 +129,7 @@ export const POST: APIRoute = async (context) => {
 			// Same response for missing and inaccessible private templates.
 			return json({ error: 'Template not found.' }, 404);
 		}
+		const canonicalSlug = template.slug;
 
 		const canonical = canonicalizeRankingResult(template, body.result);
 		if (!canonical.ok) return json({ error: canonical.error }, 400);
@@ -140,6 +145,16 @@ export const POST: APIRoute = async (context) => {
 		const result = canonical.result;
 		const battles = canonicalBattles.battles;
 
+		// Older rows could contain a case-only slug alias. Remove only those
+		// aliases before the canonical upsert so a user never gets two results
+		// for the same template while preserving the canonical row's timestamp.
+		await env.DB.prepare(
+			`DELETE FROM ranking_results
+			 WHERE user_id = ? AND slug = ? COLLATE NOCASE AND slug != ?`
+		)
+			.bind(user.id, canonicalSlug, canonicalSlug)
+			.run();
+
 		const saved = await env.DB.prepare(
 			`INSERT INTO ranking_results
 			   (user_id, slug, title, cover, result, battle_history, updated_at)
@@ -154,7 +169,7 @@ export const POST: APIRoute = async (context) => {
 		)
 			.bind(
 				user.id,
-				slug,
+				canonicalSlug,
 				title,
 				cover,
 				JSON.stringify(result),
@@ -167,7 +182,7 @@ export const POST: APIRoute = async (context) => {
 			{
 				ok: true,
 				entry: {
-					slug,
+					slug: canonicalSlug,
 					title,
 					cover: cover ?? undefined,
 					result,

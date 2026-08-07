@@ -29,10 +29,11 @@ export const GET: APIRoute = async (context) => {
 		if (!template || !canAccessTemplate(template, user?.username)) {
 			return json({ score: 0, myVote: 0, loggedIn: false }, 200, headers);
 		}
+		const canonicalSlug = template.slug;
 
-		const score = await getTemplateVoteScore(env.DB, slug);
+		const score = await getTemplateVoteScore(env.DB, canonicalSlug);
 		const myVote = user
-			? await getUserTemplateVote(env.DB, user.id, slug)
+			? await getUserTemplateVote(env.DB, user.id, canonicalSlug)
 			: 0;
 
 		return json({ score, myVote, loggedIn: user !== null }, 200, headers);
@@ -73,7 +74,12 @@ export const POST: APIRoute = async (context) => {
 			return json({ error: 'Template not found' }, 404);
 		}
 
-		const totals = await applyTemplateVote(env.DB, user.id, slug, value);
+		const totals = await applyTemplateVote(
+			env.DB,
+			user.id,
+			template.slug,
+			value
+		);
 		return json(totals, 200, { 'Cache-Control': 'private, no-store' });
 	} catch (error) {
 		console.error('Template vote POST error:', error);

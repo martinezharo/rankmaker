@@ -14,3 +14,23 @@ export function slugFromUrl(url: string | undefined | null): string | null {
         return null;
     }
 }
+
+/**
+ * Aggregate rows whose slug differs only by case and retain raw aliases for
+ * callers that still hold a legacy-cased template slug.
+ */
+export function aggregateSlugValues(
+    rows: readonly { slug: string; value: number }[]
+): Record<string, number> {
+    const totals: Record<string, number> = {};
+    for (const row of rows) {
+        const key = row.slug.toLowerCase();
+        totals[key] = (totals[key] ?? 0) + row.value;
+    }
+
+    const output: Record<string, number> = { ...totals };
+    for (const row of rows) {
+        output[row.slug] = totals[row.slug.toLowerCase()];
+    }
+    return output;
+}

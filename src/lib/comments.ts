@@ -67,9 +67,9 @@ export async function listComments(
 ): Promise<CommentNode[]> {
 	const { results } = await db
 		.prepare(
-			`WITH RECURSIVE roots AS (
-			   SELECT id FROM comments
-			   WHERE slug = ? AND parent_id IS NULL
+				`WITH RECURSIVE roots AS (
+				   SELECT id FROM comments
+				   WHERE slug = ? COLLATE NOCASE AND parent_id IS NULL
 			   ORDER BY (up_votes + down_votes) DESC, created_at DESC, id ASC
 			   LIMIT ?
 			 ),
@@ -89,7 +89,7 @@ export async function listComments(
 			   ON v.subject_type = 'comment' AND v.subject_id = c.id
 			      AND v.user_id = ?
 			 LEFT JOIN ranking_results rr
-			   ON rr.user_id = c.user_id AND rr.slug = c.slug`
+				   ON rr.user_id = c.user_id AND rr.slug = c.slug COLLATE NOCASE`
 		)
 		.bind(slug, MAX_ROOT_THREADS, currentUserId ?? '')
 		.all<CommentRow>();
@@ -138,7 +138,7 @@ export async function getComment(
 			   ON v.subject_type = 'comment' AND v.subject_id = c.id
 			      AND v.user_id = ?
 			 LEFT JOIN ranking_results rr
-			   ON rr.user_id = c.user_id AND rr.slug = c.slug
+				   ON rr.user_id = c.user_id AND rr.slug = c.slug COLLATE NOCASE
 			 WHERE c.id = ?`
 		)
 		.bind(currentUserId ?? '', id)
@@ -179,6 +179,19 @@ export async function getCommentAuthorId(
 	return row?.user_id ?? null;
 }
 
+/** Template context for a comment, used to authorize comment mutations. */
+export async function getCommentContext(
+	db: D1Database,
+	commentId: string
+): Promise<{ slug: string; isDeleted: boolean } | null> {
+	const row = await db
+		.prepare('SELECT slug, is_deleted FROM comments WHERE id = ?')
+		.bind(commentId)
+		.first<{ slug: string; is_deleted: number }>();
+	if (!row) return null;
+	return { slug: row.slug, isDeleted: row.is_deleted === 1 };
+}
+
 /** Does `parentId` exist on this slug? (Reject cross-template replies.) */
 export async function parentOnSlug(
 	db: D1Database,
@@ -186,7 +199,9 @@ export async function parentOnSlug(
 	slug: string
 ): Promise<boolean> {
 	const row = await db
-		.prepare('SELECT 1 AS x FROM comments WHERE id = ? AND slug = ?')
+		.prepare(
+			'SELECT 1 AS x FROM comments WHERE id = ? AND slug = ? COLLATE NOCASE'
+		)
 		.bind(parentId, slug)
 		.first();
 	return row !== null;
@@ -274,9 +289,10 @@ export async function detachUserComments(
 }
 
 /**
- * Apply `value` (1 up, -1 down, 0 clears) as this user's vote on `commentId`,
- * keeping the denormalized up_votes/down_votes counters correct. Runs the vote
- * row change and counter adjustment in one batch. Returns fresh totals.
+ * Apply `value` (1 up, -1 down, 0 clears) as this user's vote on `commentId`.
+ * The denormalized counters are recomputed from the vote rows in the same
+ * batch, so concurrent requests cannot permanently drift them via stale
+ * read/modify/write deltas.
  */
 export async function applyVote(
 	db: D1Database,
@@ -284,31 +300,6 @@ export async function applyVote(
 	commentId: string,
 	value: number
 ): Promise<{ up: number; down: number; myVote: number }> {
-	const prev = await db
-		.prepare(
-			`SELECT value FROM votes
-			 WHERE user_id = ? AND subject_type = 'comment' AND subject_id = ?`
-		)
-		.bind(userId, commentId)
-		.first<{ value: number }>();
-	const prevValue = prev?.value ?? 0;
-
-	if (value === prevValue) {
-		const row = await db
-			.prepare('SELECT up_votes, down_votes FROM comments WHERE id = ?')
-			.bind(commentId)
-			.first<{ up_votes: number; down_votes: number }>();
-		return {
-			up: row?.up_votes ?? 0,
-			down: row?.down_votes ?? 0,
-			myVote: prevValue,
-		};
-	}
-
-	// Counter deltas: remove the old vote's contribution, add the new one's.
-	const upDelta = (value === 1 ? 1 : 0) - (prevValue === 1 ? 1 : 0);
-	const downDelta = (value === -1 ? 1 : 0) - (prevValue === -1 ? 1 : 0);
-
 	const voteStmt =
 		value === 0
 			? db
@@ -329,21 +320,41 @@ export async function applyVote(
 	const countStmt = db
 		.prepare(
 			`UPDATE comments
-			 SET up_votes = MAX(0, up_votes + ?),
-			     down_votes = MAX(0, down_votes + ?)
+			 SET up_votes = (
+					 SELECT COUNT(*) FROM votes
+					 WHERE subject_type = 'comment'
+					   AND subject_id = comments.id AND value = 1
+				 ),
+			     down_votes = (
+					 SELECT COUNT(*) FROM votes
+					 WHERE subject_type = 'comment'
+					   AND subject_id = comments.id AND value = -1
+				 )
 			 WHERE id = ?`
 		)
-		.bind(upDelta, downDelta, commentId);
+		.bind(commentId);
 
 	await db.batch([voteStmt, countStmt]);
 
 	const row = await db
-		.prepare('SELECT up_votes, down_votes FROM comments WHERE id = ?')
-		.bind(commentId)
-		.first<{ up_votes: number; down_votes: number }>();
+		.prepare(
+			`SELECT c.up_votes, c.down_votes, COALESCE(v.value, 0) AS my_vote
+			 FROM comments c
+			 LEFT JOIN votes v
+			   ON v.subject_type = 'comment'
+			  AND v.subject_id = c.id
+			  AND v.user_id = ?
+			 WHERE c.id = ?`
+		)
+		.bind(userId, commentId)
+		.first<{
+			up_votes: number;
+			down_votes: number;
+			my_vote: number;
+		}>();
 	return {
 		up: row?.up_votes ?? 0,
 		down: row?.down_votes ?? 0,
-		myVote: value,
+		myVote: row?.my_vote ?? 0,
 	};
 }
