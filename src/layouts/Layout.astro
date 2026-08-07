@@ -416,5 +416,16 @@ const ogImageHeight =
                 });
             }
         </script>
+
+        <!-- Templates created as a guest live in localStorage; the first page
+             load with a session uploads them to the account. No-ops (and makes
+             no request) for the vast majority of visitors, who have none. -->
+        <script>
+            import { syncLocalTemplates } from "../scripts/local-templates-sync";
+
+            document.addEventListener("astro:page-load", () => {
+                void syncLocalTemplates();
+            });
+        </script>
     </body>
 </html>

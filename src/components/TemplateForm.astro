@@ -7,6 +7,7 @@
 import { CATEGORIES } from "../lib/categories";
 import { MAX_OPTIONS, MIN_OPTIONS, type Visibility } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import GuestBanner from "./GuestBanner.astro";
 import Select from "./ui/Select.astro";
 
 interface Props {
@@ -91,27 +92,13 @@ const inputClass =
 <form id="template-form" class="space-y-6" novalidate>
     {
         isGuest && (
-            <div class="rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/30 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-user-lock text-primary text-lg" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-text-primary">
-                        {t("form.guestBannerTitle")}
-                    </p>
-                    <p class="text-sm text-text-secondary mt-0.5">
-                        {t("form.guestBannerBody")}
-                    </p>
-                </div>
-                <a
-                    href={`/api/auth/login?next=${encodeURIComponent(loginNext)}`}
-                    data-astro-reload
-                    class="auth-login-link shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
-                >
-                    <i class="fa-brands fa-github" />
-                    {t("form.guestBannerCta")}
-                </a>
-            </div>
+            <GuestBanner
+                icon="fa-solid fa-user-lock"
+                title={t("form.guestBannerTitle")}
+                body={t("form.guestBannerBody")}
+                cta={t("form.guestBannerCta")}
+                href={`/api/auth/login?next=${encodeURIComponent(loginNext)}`}
+            />
         )
     }
     <!-- Details -->
@@ -463,6 +450,12 @@ const inputClass =
     import { clientT, getClientLocale } from "../i18n/client";
     import { localizePath } from "../i18n";
     import { setSelectValue } from "../scripts/select";
+    import {
+        MAX_LOCAL_TEMPLATES,
+        atLocalTemplateLimit,
+        localTemplatePath,
+        saveLocalTemplate,
+    } from "../lib/local-templates";
     import { COLLAGE_TILES, collageHtml, collageImages } from "../lib/covers";
 
     document.addEventListener("astro:page-load", () => {
@@ -1193,13 +1186,39 @@ const inputClass =
                 return;
             }
 
-            // The draft itself is valid — but guests can't actually create a
-            // template (the API requires a session). Prompt sign-in instead
-            // of firing a request that can only 401; their draft is already
-            // being kept in sync (see the guest-draft-handoff block above)
-            // and will refill this form once they're back, signed in.
+            // Guests get a real template — it just lives in this browser
+            // instead of D1 (the API requires a session). It is playable
+            // immediately and is uploaded to the account on their next
+            // sign-in; see src/lib/local-templates.ts.
             if (data.anonymous) {
-                openLoginPrompt(data.loginNext);
+                if (atLocalTemplateLimit()) {
+                    errorEl.textContent = t("form.errLocalLimit", {
+                        n: MAX_LOCAL_TEMPLATES,
+                    });
+                    openLoginPrompt(data.loginNext);
+                    return;
+                }
+                const local = saveLocalTemplate({
+                    title: title.value.trim(),
+                    description: desc.value.trim(),
+                    category: category.value,
+                    options: rows().map((r) => ({
+                        name: r
+                            .querySelector<HTMLInputElement>(".option-name")!
+                            .value.trim(),
+                    })),
+                });
+                // The half-finished-draft handoff is moot now that the whole
+                // template is stored.
+                try {
+                    sessionStorage.removeItem(GUEST_DRAFT_KEY);
+                } catch {
+                    /* storage unavailable — nothing to clear */
+                }
+                window.location.href = localizePath(
+                    localTemplatePath(local.id),
+                    getClientLocale(),
+                );
                 return;
             }
 

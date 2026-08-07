@@ -13,6 +13,7 @@
 // full — never let tracking break the ranking UI).
 
 import type { BattleHistory } from '../lib/battle-history';
+import { isLocalTemplateSlug } from '../lib/local-templates';
 
 export type RankedItem = { id: number | string; name: string; image: string };
 
@@ -252,6 +253,10 @@ export function removeLocalResult(slug: string): void {
 export async function syncResultToAccount(
 	entry: HistoryEntry
 ): Promise<HistoryEntry | null> {
+	// A local template has no D1 row to attach a result to. The ranking it
+	// produced stays in this browser until the template itself is imported
+	// (src/scripts/local-templates-sync.ts re-keys the result then).
+	if (isLocalTemplateSlug(entry.slug)) return null;
 	try {
 		const response = await fetch('/api/me/history', {
 			method: 'POST',

@@ -3,6 +3,7 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import Avatar from "../components/Avatar.astro";
+import LocalTemplates from "../components/LocalTemplates.astro";
 import TemplateCover from "../components/TemplateCover.astro";
 import { getSessionUser } from "../lib/auth";
 import { MAX_BIO_LEN } from "./api/me/profile";
@@ -18,376 +19,435 @@ const tr = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
 const db = Astro.locals.runtime.env.DB;
+// Guests are not bounced to GitHub: they may well have templates of their own,
+// saved in this browser (src/lib/local-templates.ts). They get the same page
+// minus the profile/account chrome, with <LocalTemplates> listing them — the
+// only route back to a guest template short of typing its URL.
 const user = await getSessionUser(Astro.cookies, db);
-if (!user) {
-    return Astro.redirect(
-        `/api/auth/login?next=${encodeURIComponent(localizePath("/me", locale))}`,
-        302,
-    );
-}
 
-// Bio isn't part of the session payload; fetch it for the owner editor.
-const bioRow = await db
-    .prepare("SELECT bio FROM users WHERE id = ?")
-    .bind(user.id)
-    .first<{ bio: string | null }>();
-const bio = bioRow?.bio ?? "";
+let bio = "";
+let templates: Awaited<ReturnType<typeof listTemplatesByUserId>> = [];
 
-// Owner view: include private/unlisted templates. Counts are merged here
-// server-side because the public /api/counts (used by the client counts
-// script) excludes hidden slugs.
-let templates = await listTemplatesByUserId(db, user.id, true);
-try {
-    const [counts, votes] = await Promise.all([
-        getCounts(db, true),
-        getTemplateVotes(db, true),
-    ]);
-    templates = templates.map((t) => ({
-        ...t,
-        times_ranked: counts[t.slug] ?? 0,
-        votes: votes[t.slug] ?? 0,
-    }));
-} catch {
-    // keep zeros
+if (user) {
+    // Bio isn't part of the session payload; fetch it for the owner editor.
+    const bioRow = await db
+        .prepare("SELECT bio FROM users WHERE id = ?")
+        .bind(user.id)
+        .first<{ bio: string | null }>();
+    bio = bioRow?.bio ?? "";
+
+    // Owner view: include private/unlisted templates. Counts are merged here
+    // server-side because the public /api/counts (used by the client counts
+    // script) excludes hidden slugs.
+    templates = await listTemplatesByUserId(db, user.id, true);
+    try {
+        const [counts, votes] = await Promise.all([
+            getCounts(db, true),
+            getTemplateVotes(db, true),
+        ]);
+        templates = templates.map((t) => ({
+            ...t,
+            times_ranked: counts[t.slug] ?? 0,
+            votes: votes[t.slug] ?? 0,
+        }));
+    } catch {
+        // keep zeros
+    }
 }
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Layout title={tr("me.title")} noindex={true}>
-    <section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
-        <!-- Profile header -->
-        <div
-            class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-10"
-        >
-            <Avatar avatar={user.avatar} size="xl" verified={user.isVerified} />
-            <div class="flex-1">
-                <h1
-                    class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
-                >
-                    @{user.username}
-                </h1>
-                <a
-                    href={L(`/u/${encodeURIComponent(user.username)}`)}
-                    class="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors mt-1"
-                >
-                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"
-                    ></i>
-                    {tr("me.viewPublicProfile")}
-                </a>
-            </div>
-            <a
-                href={L("/create")}
-                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
-            >
-                <i class="fa-solid fa-plus text-xs"></i>
-                {tr("me.createTemplate")}
-            </a>
-        </div>
-
-        <!-- Bio -->
-        <div
-            id="bio-card"
-            class="mb-10 rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6"
-            data-bio={bio}
-            data-max={MAX_BIO_LEN}
-        >
-            <div class="flex items-center justify-between gap-3 mb-3">
-                <h2
-                    class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2"
-                >
-                    <i class="fa-solid fa-quote-left text-xs text-primary/70"></i>
-                    {tr("me.bioHeading")}
-                </h2>
-                <button
-                    type="button"
-                    id="bio-edit-btn"
-                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-primary transition-colors"
-                >
-                    <i class="fa-solid fa-pen text-[10px]"></i>
-                    {tr("me.bioEdit")}
-                </button>
-            </div>
-
-            <!-- Display mode -->
-            <p
-                id="bio-display"
-                class="text-sm whitespace-pre-wrap break-words"
-                class:list={[bio ? "text-text-secondary" : "text-text-muted italic"]}
-            >
-                {bio || tr("me.bioEmpty")}
-            </p>
-
-            <!-- Edit mode -->
-            <div id="bio-editor" class="hidden">
-                <textarea
-                    id="bio-input"
-                    maxlength={MAX_BIO_LEN}
-                    rows="3"
-                    placeholder={tr("me.bioPlaceholder")}
-                    class="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all resize-none field-sizing-content"
-                    >{bio}</textarea
-                >
-                <div class="flex items-center justify-between gap-3 mt-3">
-                    <span
-                        id="bio-count"
-                        class="text-xs text-text-muted tabular-nums"></span>
-                    <div class="flex items-center gap-2">
-                        <button
-                            type="button"
-                            id="bio-cancel"
-                            class="px-4 py-2 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
-                        >
-                            {tr("common.cancel")}
-                        </button>
-                        <button
-                            type="button"
-                            id="bio-save"
-                            class="px-4 py-2 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity disabled:opacity-50"
-                        >
-                            {tr("common.save")}
-                        </button>
+<Layout title={user ? tr("me.title") : tr("local.mineTitle")} noindex={true}>
+    {
+        !user && (
+            <section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
+                {/* The "these live in this browser" message is the subtitle and
+                    nothing else: a banner repeating it would say the same thing
+                    twice on a page whose title already says it. */}
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-8">
+                    <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-mobile-screen text-primary text-lg" />
                     </div>
-                </div>
-                <p id="bio-error" class="text-xs text-red-400 mt-2 min-h-4"></p>
-            </div>
-        </div>
-
-        <!-- Templates -->
-        <div class="flex items-center gap-3 mb-5">
-            <h2 class="text-lg font-bold text-text-primary tracking-tight">
-                {tr("me.heading")}
-            </h2>
-            <div class="flex-1 h-px bg-border/50"></div>
-            <span class="text-xs text-text-muted font-medium">
-                {templates.length}{" "}
-                {templates.length === 1
-                    ? tr("me.templateSingular")
-                    : tr("me.templatePlural")}
-            </span>
-        </div>
-
-        {
-            templates.length === 0 ? (
-                <div class="rounded-2xl border border-dashed border-border p-10 text-center space-y-3">
-                    <i class="fa-solid fa-layer-group text-2xl text-text-muted" />
-                    <p class="text-sm text-text-secondary">
-                        {tr("me.emptyBody")}
-                    </p>
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
+                            {tr("me.heading")}
+                        </h1>
+                        <p class="text-sm text-text-secondary mt-1">
+                            {tr("local.sectionBody")}{" "}
+                            {/* Secondary on purpose: "Create template" is the
+                                only gold CTA here. LoginModal delegates clicks
+                                on .auth-login-link, so this opens the modal. */}
+                            <a
+                                href="/api/auth/login"
+                                data-astro-reload
+                                class="auth-login-link font-semibold text-primary hover:text-primary-light transition-colors whitespace-nowrap"
+                            >
+                                <i class="fa-brands fa-github text-xs" />{" "}
+                                {tr("local.bannerCta")}
+                            </a>
+                        </p>
+                    </div>
+                    {/* md:hidden — the fixed header owns this CTA from `md` up
+                        (Header.astro's nav is `hidden md:flex`), so showing it
+                        here too would put two identical gold buttons in the
+                        same eyeline. Below `md` the header hides it behind the
+                        hamburger and this is the only one. */}
                     <a
                         href={L("/create")}
-                        class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+                        data-astro-reload
+                        class="md:hidden inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
                     >
-                        {tr("me.createFirst")}
-                        <i class="fa-solid fa-arrow-right text-xs" />
+                        <i class="fa-solid fa-plus text-xs" />
+                        {tr("me.createTemplate")}
                     </a>
                 </div>
-            ) : (
-                <div class="space-y-3">
-                    {templates.map((t) => (
-                        <div
-                            class="my-template-row flex items-start gap-3 sm:gap-4 p-3 rounded-xl bg-surface-elevated border border-border"
-                            data-template-id={t.id}
-                        >
-                            <a
-                                href={L(`/template/${t.slug}`)}
-                                class="w-16 h-16 sm:w-24 sm:h-18 shrink-0 rounded-lg overflow-hidden bg-surface border border-border"
+
+                <LocalTemplates />
+            </section>
+        )
+    }
+    {
+        user && (
+            <Fragment>
+                <section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 pb-20">
+                    <!-- Profile header -->
+                    <div
+                        class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-10"
+                    >
+                        <Avatar avatar={user.avatar} size="xl" verified={user.isVerified} />
+                        <div class="flex-1">
+                            <h1
+                                class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
                             >
-                                <TemplateCover
-                                    cover={t.cover_image}
-                                    collage={t.collage}
-                                    title={t.title}
-                                    className="w-full h-full object-cover"
-                                />
+                                @{user.username}
+                            </h1>
+                            <a
+                                href={L(`/u/${encodeURIComponent(user.username)}`)}
+                                class="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors mt-1"
+                            >
+                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"
+                                ></i>
+                                {tr("me.viewPublicProfile")}
                             </a>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-start justify-between gap-2">
-                                    <a
-                                        href={L(`/template/${t.slug}`)}
-                                        class="block font-semibold text-sm text-text-primary hover:text-white transition-colors line-clamp-2 sm:truncate"
+                        </div>
+                        {/* md:hidden for the same reason as the guest view: the
+                            header's own Create CTA takes over from `md` up. */}
+                        <a
+                            href={L("/create")}
+                            class="md:hidden inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
+                        >
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            {tr("me.createTemplate")}
+                        </a>
+                    </div>
+
+                    <!-- Bio -->
+                    <div
+                        id="bio-card"
+                        class="mb-10 rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6"
+                        data-bio={bio}
+                        data-max={MAX_BIO_LEN}
+                    >
+                        <div class="flex items-center justify-between gap-3 mb-3">
+                            <h2
+                                class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2"
+                            >
+                                <i class="fa-solid fa-quote-left text-xs text-primary/70"></i>
+                                {tr("me.bioHeading")}
+                            </h2>
+                            <button
+                                type="button"
+                                id="bio-edit-btn"
+                                class="inline-flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-primary transition-colors"
+                            >
+                                <i class="fa-solid fa-pen text-[10px]"></i>
+                                {tr("me.bioEdit")}
+                            </button>
+                        </div>
+
+                        <!-- Display mode -->
+                        <p
+                            id="bio-display"
+                            class="text-sm whitespace-pre-wrap break-words"
+                            class:list={[bio ? "text-text-secondary" : "text-text-muted italic"]}
+                        >
+                            {bio || tr("me.bioEmpty")}
+                        </p>
+
+                        <!-- Edit mode -->
+                        <div id="bio-editor" class="hidden">
+                            <textarea
+                                id="bio-input"
+                                maxlength={MAX_BIO_LEN}
+                                rows="3"
+                                placeholder={tr("me.bioPlaceholder")}
+                                class="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all resize-none field-sizing-content"
+                                >{bio}</textarea
+                            >
+                            <div class="flex items-center justify-between gap-3 mt-3">
+                                <span
+                                    id="bio-count"
+                                    class="text-xs text-text-muted tabular-nums"></span>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        id="bio-cancel"
+                                        class="px-4 py-2 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
                                     >
-                                        {t.title}
-                                    </a>
-                                    <div class="flex items-center gap-1.5 shrink-0 -mt-0.5">
-                                        <a
-                                            href={L(`/edit/${t.slug}`)}
-                                            class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-primary border border-border hover:border-primary/50 transition-all"
-                                            aria-label={tr("me.editTemplateAria")}
-                                        >
-                                            <i class="fa-solid fa-pen text-xs" />
-                                        </a>
-                                        <button
-                                            type="button"
-                                            class="delete-template-btn w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-red-400 border border-border hover:border-red-400/50 transition-all"
-                                            data-id={t.id}
-                                            data-title={t.title}
-                                            aria-label={tr("me.deleteTemplateAria")}
-                                        >
-                                            <i class="fa-solid fa-trash text-xs" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="text-xs text-text-muted mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                    <span class="inline-flex items-center gap-1.5 min-w-0">
-                                        <i
-                                            class={`fa-solid ${categoryIcon(t.category)} text-[10px] text-primary/70 shrink-0`}
-                                        />
-                                        <span class="truncate">
-                                            {tr(`categories.${t.category}`)}
-                                        </span>
-                                    </span>
-                                    <span
-                                        class="inline-flex items-center gap-1.5 whitespace-nowrap"
-                                        data-count-slug={
-                                            t.visibility === "public"
-                                                ? t.slug
-                                                : undefined
-                                        }
+                                        {tr("common.cancel")}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        id="bio-save"
+                                        class="px-4 py-2 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity disabled:opacity-50"
                                     >
-                                        {tr("card.ranked", {
-                                            n: t.times_ranked.toLocaleString(),
-                                        })}
-                                    </span>
-                                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
-                                        <i
-                                            class="fa-solid fa-arrow-up text-[10px] text-primary/70"
-                                        />
-                                        {tr("card.votes", {
-                                            n: (t.votes ?? 0).toLocaleString(),
-                                        })}
-                                    </span>
-                                    {t.visibility !== "public" && (
-                                        <span class="inline-flex items-center gap-1.5 whitespace-nowrap uppercase tracking-wider font-semibold text-text-muted">
-                                            <i
-                                                class={`fa-solid ${t.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
-                                            />
-                                            {t.visibility === "private"
-                                                ? tr("me.visibilityPrivate")
-                                                : tr("me.visibilityUnlisted")}
-                                        </span>
-                                    )}
+                                        {tr("common.save")}
+                                    </button>
                                 </div>
                             </div>
+                            <p id="bio-error" class="text-xs text-red-400 mt-2 min-h-4"></p>
                         </div>
-                    ))}
+                    </div>
+
+                    <!-- Templates -->
+                    <div class="flex items-center gap-3 mb-5">
+                        <h2 class="text-lg font-bold text-text-primary tracking-tight">
+                            {tr("me.heading")}
+                        </h2>
+                        <div class="flex-1 h-px bg-border/50"></div>
+                        <span class="text-xs text-text-muted font-medium">
+                            {templates.length}{" "}
+                            {templates.length === 1
+                                ? tr("me.templateSingular")
+                                : tr("me.templatePlural")}
+                        </span>
+                    </div>
+
+                    {
+                        templates.length === 0 ? (
+                            <div class="rounded-2xl border border-dashed border-border p-10 text-center space-y-3">
+                                <i class="fa-solid fa-layer-group text-2xl text-text-muted" />
+                                <p class="text-sm text-text-secondary">
+                                    {tr("me.emptyBody")}
+                                </p>
+                                <a
+                                    href={L("/create")}
+                                    class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+                                >
+                                    {tr("me.createFirst")}
+                                    <i class="fa-solid fa-arrow-right text-xs" />
+                                </a>
+                            </div>
+                        ) : (
+                            <div class="space-y-3">
+                                {templates.map((t) => (
+                                    <div
+                                        class="my-template-row flex items-start gap-3 sm:gap-4 p-3 rounded-xl bg-surface-elevated border border-border"
+                                        data-template-id={t.id}
+                                    >
+                                        <a
+                                            href={L(`/template/${t.slug}`)}
+                                            class="w-16 h-16 sm:w-24 sm:h-18 shrink-0 rounded-lg overflow-hidden bg-surface border border-border"
+                                        >
+                                            <TemplateCover
+                                                cover={t.cover_image}
+                                                collage={t.collage}
+                                                title={t.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </a>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <a
+                                                    href={L(`/template/${t.slug}`)}
+                                                    class="block font-semibold text-sm text-text-primary hover:text-white transition-colors line-clamp-2 sm:truncate"
+                                                >
+                                                    {t.title}
+                                                </a>
+                                                <div class="flex items-center gap-1.5 shrink-0 -mt-0.5">
+                                                    <a
+                                                        href={L(`/edit/${t.slug}`)}
+                                                        class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-primary border border-border hover:border-primary/50 transition-all"
+                                                        aria-label={tr("me.editTemplateAria")}
+                                                    >
+                                                        <i class="fa-solid fa-pen text-xs" />
+                                                    </a>
+                                                    <button
+                                                        type="button"
+                                                        class="delete-template-btn w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-red-400 border border-border hover:border-red-400/50 transition-all"
+                                                        data-id={t.id}
+                                                        data-title={t.title}
+                                                        aria-label={tr("me.deleteTemplateAria")}
+                                                    >
+                                                        <i class="fa-solid fa-trash text-xs" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="text-xs text-text-muted mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                <span class="inline-flex items-center gap-1.5 min-w-0">
+                                                    <i
+                                                        class={`fa-solid ${categoryIcon(t.category)} text-[10px] text-primary/70 shrink-0`}
+                                                    />
+                                                    <span class="truncate">
+                                                        {tr(`categories.${t.category}`)}
+                                                    </span>
+                                                </span>
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 whitespace-nowrap"
+                                                    data-count-slug={
+                                                        t.visibility === "public"
+                                                            ? t.slug
+                                                            : undefined
+                                                    }
+                                                >
+                                                    {tr("card.ranked", {
+                                                        n: t.times_ranked.toLocaleString(),
+                                                    })}
+                                                </span>
+                                                <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
+                                                    <i
+                                                        class="fa-solid fa-arrow-up text-[10px] text-primary/70"
+                                                    />
+                                                    {tr("card.votes", {
+                                                        n: (t.votes ?? 0).toLocaleString(),
+                                                    })}
+                                                </span>
+                                                {t.visibility !== "public" && (
+                                                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap uppercase tracking-wider font-semibold text-text-muted">
+                                                        <i
+                                                            class={`fa-solid ${t.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
+                                                        />
+                                                        {t.visibility === "private"
+                                                            ? tr("me.visibilityPrivate")
+                                                            : tr("me.visibilityUnlisted")}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    }
+
+                    <!-- Danger zone -->
+                    <div class="mt-16 rounded-2xl border border-red-500/25 p-5 sm:p-6">
+                        <h2
+                            class="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2"
+                        >
+                            <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                            {tr("me.dangerZone")}
+                        </h2>
+                        <p class="text-sm text-text-secondary mt-3">
+                            {tr("me.dangerBody")}
+                        </p>
+                        <button
+                            type="button"
+                            id="delete-account-open"
+                            class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 border border-red-500/40 hover:bg-red-500/10 transition-all"
+                        >
+                            <i class="fa-solid fa-user-xmark text-xs"></i>
+                            {tr("me.deleteMyAccount")}
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Delete template modal -->
+                <div
+                    id="delete-template-modal"
+                    class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-template-modal-title"
+                >
+                    <div
+                        class="delete-template-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
+                    >
+                    </div>
+                    <div
+                        class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4"
+                    >
+                        <h3 id="delete-template-modal-title" class="text-lg font-bold text-text-primary">
+                            {tr("me.deleteTemplateTitle")}
+                        </h3>
+                        <p id="delete-template-body" class="text-sm text-text-secondary"></p>
+                        <div class="flex gap-3 pt-1">
+                            <button
+                                type="button"
+                                id="delete-template-cancel"
+                                class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
+                            >
+                                {tr("common.cancel")}
+                            </button>
+                            <button
+                                type="button"
+                                id="delete-template-confirm"
+                                class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
+                            >
+                                {tr("common.delete")}
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            )
-        }
 
-        <!-- Danger zone -->
-        <div class="mt-16 rounded-2xl border border-red-500/25 p-5 sm:p-6">
-            <h2
-                class="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2"
-            >
-                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
-                {tr("me.dangerZone")}
-            </h2>
-            <p class="text-sm text-text-secondary mt-3">
-                {tr("me.dangerBody")}
-            </p>
-            <button
-                type="button"
-                id="delete-account-open"
-                class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 border border-red-500/40 hover:bg-red-500/10 transition-all"
-            >
-                <i class="fa-solid fa-user-xmark text-xs"></i>
-                {tr("me.deleteMyAccount")}
-            </button>
-        </div>
-    </section>
-
-    <!-- Delete template modal -->
-    <div
-        id="delete-template-modal"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-template-modal-title"
-    >
-        <div
-            class="delete-template-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
-        >
-        </div>
-        <div
-            class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-border p-6 space-y-4"
-        >
-            <h3 id="delete-template-modal-title" class="text-lg font-bold text-text-primary">
-                {tr("me.deleteTemplateTitle")}
-            </h3>
-            <p id="delete-template-body" class="text-sm text-text-secondary"></p>
-            <div class="flex gap-3 pt-1">
-                <button
-                    type="button"
-                    id="delete-template-cancel"
-                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
+                <!-- Delete account modal -->
+                <div
+                    id="delete-account-modal"
+                    class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+                    data-username={user.username}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-account-modal-title"
                 >
-                    {tr("common.cancel")}
-                </button>
-                <button
-                    type="button"
-                    id="delete-template-confirm"
-                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-50"
-                >
-                    {tr("common.delete")}
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete account modal -->
-    <div
-        id="delete-account-modal"
-        class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
-        data-username={user.username}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-account-modal-title"
-    >
-        <div
-            class="delete-account-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
-        >
-        </div>
-        <div
-            class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-red-500/30 p-6 space-y-4"
-        >
-            <h3 id="delete-account-modal-title" class="text-lg font-bold text-red-400">
-                {tr("me.deleteAccountTitle")}
-            </h3>
-            <p
-                class="text-sm text-text-secondary"
-                set:html={tr("me.deleteAccountBody", {
-                    username: user.username,
-                })}
-            />
-            <input
-                id="delete-account-input"
-                type="text"
-                autocomplete="off"
-                spellcheck="false"
-                placeholder={user.username}
-                class="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:border-red-400/60 transition-all"
-            />
-            <p id="delete-account-error" class="text-xs text-red-400 min-h-4">
-            </p>
-            <div class="flex gap-3 pt-1">
-                <button
-                    type="button"
-                    id="delete-account-cancel"
-                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
-                >
-                    {tr("common.cancel")}
-                </button>
-                <button
-                    type="button"
-                    id="delete-account-confirm"
-                    disabled
-                    class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                    {tr("me.deleteForever")}
-                </button>
-            </div>
-        </div>
-    </div>
+                    <div
+                        class="delete-account-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm"
+                    >
+                    </div>
+                    <div
+                        class="relative w-full max-w-sm rounded-2xl bg-surface-elevated border border-red-500/30 p-6 space-y-4"
+                    >
+                        <h3 id="delete-account-modal-title" class="text-lg font-bold text-red-400">
+                            {tr("me.deleteAccountTitle")}
+                        </h3>
+                        <p
+                            class="text-sm text-text-secondary"
+                            set:html={tr("me.deleteAccountBody", {
+                                username: user.username,
+                            })}
+                        />
+                        <input
+                            id="delete-account-input"
+                            type="text"
+                            autocomplete="off"
+                            spellcheck="false"
+                            placeholder={user.username}
+                            class="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:border-red-400/60 transition-all"
+                        />
+                        <p id="delete-account-error" class="text-xs text-red-400 min-h-4">
+                        </p>
+                        <div class="flex gap-3 pt-1">
+                            <button
+                                type="button"
+                                id="delete-account-cancel"
+                                class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium text-text-secondary border border-border hover:border-border-hover transition-all"
+                            >
+                                {tr("common.cancel")}
+                            </button>
+                            <button
+                                type="button"
+                                id="delete-account-confirm"
+                                disabled
+                                class="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {tr("me.deleteForever")}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Fragment>
+        )
+    }
 </Layout>
 
 <script>

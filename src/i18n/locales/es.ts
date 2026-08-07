@@ -204,6 +204,28 @@ export const es: LocaleDict = {
 		emptyBody: 'Todavía no has clasificado nada.',
 		findSomething: 'Encuentra algo que clasificar',
 	},
+	local: {
+		pageTitle: 'Mi plantilla — RANKMAKER',
+		metaDescription: 'Una plantilla guardada en este navegador.',
+		backToMine: 'Mis plantillas en este dispositivo',
+		mineTitle: 'Mis plantillas — RANKMAKER',
+		bannerTitle: 'Guardada en este dispositivo',
+		bannerBody:
+			'Esta plantilla solo existe en este navegador. Si inicias sesión pasará a tu cuenta, junto con los rankings que hayas jugado con ella.',
+		bannerCta: 'Iniciar sesión con GitHub',
+		missingTitle: 'Esta plantilla no está en este dispositivo',
+		missingBody:
+			'Las plantillas de invitado se guardan en el navegador que las creó, así que puede que la crearas en otro sitio, que ya esté en una cuenta o que se borrara junto con los datos de navegación.',
+		missingCta: 'Crear una plantilla',
+		sectionBody:
+			'Guardadas solo en este navegador. Si inicias sesión pasarán a tu cuenta, junto con los rankings que hayas jugado con ellas.',
+		emptyBody: 'Aún no has creado ninguna plantilla en este navegador.',
+		emptyCta: 'Crea la primera',
+		itemOptions: '{n} opciones',
+		play: 'Clasificarla',
+		delete: 'Eliminar',
+		deleteConfirm: '¿Eliminar esta plantilla de este navegador? No se podrá recuperar.',
+	},
 	saved: {
 		title: 'Plantillas guardadas — RANKMAKER',
 		heading: 'Plantillas guardadas',
@@ -262,7 +284,7 @@ export const es: LocaleDict = {
 		details: 'Detalles',
 		guestBannerTitle: 'Creando como invitado',
 		guestBannerBody:
-			'Como invitado puedes crear un ranking privado sin imágenes. Inicia sesión con GitHub para hacerlo público, añadir fotos y guardarlo para siempre.',
+			'Tu plantilla se guarda en este navegador y puedes jugarla al momento: privada y sin imágenes. Inicia sesión con GitHub para pasarla a tu cuenta, hacerla pública y añadir fotos.',
 		guestBannerCta: 'Iniciar sesión con GitHub',
 		titleLabel: 'Título',
 		titlePlaceholder: 'Ranking de los mejores ingredientes para pizza',
@@ -303,6 +325,8 @@ export const es: LocaleDict = {
 		removeOption: 'Eliminar opción',
 		optionNamePlaceholder: 'Nombre de la opción',
 		submitCreate: 'Crear plantilla',
+		errLocalLimit:
+			'Puedes guardar {n} plantillas en este navegador. Inicia sesión para pasarlas a tu cuenta y crear más.',
 		submitSave: 'Guardar cambios',
 		busyCreating: 'Creando…',
 		busySaving: 'Guardando…',

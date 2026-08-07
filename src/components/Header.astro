@@ -137,6 +137,11 @@ const L = (p: string) => localizePath(p, locale);
 
 <script>
     import { avatarHtml } from "../lib/avatars";
+    import {
+        LOCAL_TEMPLATES_CHANGED,
+        listLocalTemplates,
+    } from "../lib/local-templates";
+    import { loginUrl } from "../scripts/auth-prompt";
     import { clientT, getClientLocale } from "../i18n/client";
     import { localizePath } from "../i18n";
 
@@ -218,10 +223,10 @@ const L = (p: string) => localizePath(p, locale);
                 document.documentElement.classList.toggle("rm-authed", !!user);
                 if (!user) {
                     // Session gone (expired / logged out elsewhere) — undo any
-                    // optimistic paint and restore the server login markup.
+                    // optimistic paint and go back to the signed-out slot.
                     document
                         .querySelectorAll<HTMLElement>(".auth-slot")
-                        .forEach(renderLoginSlot);
+                        .forEach(renderAnonSlot);
                     clearMobileLinks();
                     applyNotifCount(0);
                     return;
@@ -258,16 +263,97 @@ const L = (p: string) => localizePath(p, locale);
             initialSlotHtml.set(slot.dataset.authSlot ?? "", slot.innerHTML),
         );
 
+    // Which variant a slot is currently showing — "login", "guest:<n>" or
+    // "user:<username>" — so every render is idempotent and a re-render only
+    // touches the DOM when the state actually changed.
+    function slotState(slot: HTMLElement): string {
+        return slot.dataset.slotState ?? "";
+    }
+
     function renderLoginSlot(slot: HTMLElement) {
-        if (!slot.dataset.user) return; // already showing the login link
+        if (slotState(slot) === "login") return;
+        slot.dataset.slotState = "login";
         delete slot.dataset.user;
         slot.innerHTML = initialSlotHtml.get(slot.dataset.authSlot ?? "") ?? "";
-        const next = encodeURIComponent(
-            window.location.pathname + window.location.search,
+        pointLoginLinks(slot);
+    }
+
+    function pointLoginLinks(root: ParentNode) {
+        root.querySelectorAll<HTMLAnchorElement>(".auth-login-link").forEach(
+            (a) => (a.href = loginUrl()),
         );
-        slot.querySelectorAll<HTMLAnchorElement>(".auth-login-link").forEach(
-            (a) => (a.href = `/api/auth/login?next=${next}`),
-        );
+    }
+
+    /** How many templates this browser holds for a guest (0 when signed in). */
+    function localTemplateCount(): number {
+        try {
+            return listLocalTemplates().length;
+        } catch {
+            return 0;
+        }
+    }
+
+    /**
+     * Signed-out slot. A guest who created templates in this browser gets a
+     * menu instead of a bare login link: those templates exist nowhere else and
+     * the guest view of /me is the only way back to them, so the header has to
+     * expose it. A first-time visitor still gets the plain login link — no
+     * extra click on the app's main conversion action.
+     */
+    function renderAnonSlot(slot: HTMLElement) {
+        const count = localTemplateCount();
+        if (count === 0) {
+            renderLoginSlot(slot);
+            return;
+        }
+        if (slotState(slot) === `guest:${count}`) return;
+        slot.dataset.slotState = `guest:${count}`;
+        delete slot.dataset.user;
+
+        const compact = slot.dataset.authSlot === "mobile";
+        const t = clientT();
+        const L = (p: string) => localizePath(p, getClientLocale());
+        slot.innerHTML = `
+            <button type="button" class="auth-guest-btn relative inline-flex items-center gap-2 ${compact ? "px-3 py-1.5" : "px-4 py-2"} rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all" aria-haspopup="true" aria-expanded="false">
+                <i class="fa-brands fa-github"></i>
+                ${compact ? "" : `<span>${escapeHtml(t("nav.login"))}</span>`}
+                <i class="fa-solid fa-chevron-down text-[10px] text-text-muted"></i>
+                <span class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] leading-none font-bold flex items-center justify-center ring-2 ring-surface">${count}</span>
+            </button>
+            <div class="auth-dropdown absolute right-0 top-full mt-2 w-56 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50" style="display:none;">
+                <a href="${L("/me")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-layer-group w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myTemplates"))}<span class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-primary/15 text-primary text-[10px] leading-none font-bold inline-flex items-center justify-center">${count}</span></a>
+                <div class="my-1.5 h-px bg-border/60"></div>
+                <a href="${loginUrl()}" data-astro-reload class="auth-login-link block px-4 py-2 text-sm font-semibold text-text-primary hover:bg-white/5 transition-colors"><i class="fa-brands fa-github w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.login"))}</a>
+            </div>`;
+
+        bindDropdown(slot, ".auth-guest-btn");
+    }
+
+    /** Wire a slot's trigger button to its dropdown (guest and user menus). */
+    function bindDropdown(slot: HTMLElement, triggerSelector: string) {
+        const btn = slot.querySelector<HTMLElement>(triggerSelector);
+        const menu = slot.querySelector<HTMLElement>(".auth-dropdown");
+        if (!btn || !menu) return;
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = menu.style.display !== "none";
+            closeAllDropdowns();
+            menu.style.display = isOpen ? "none" : "";
+            btn.setAttribute("aria-expanded", String(!isOpen));
+        });
+    }
+
+    /**
+     * Re-render every signed-out slot, leaving a confirmed signed-in slot
+     * alone (the guest menu must never replace the user chip).
+     */
+    function refreshAnonSlots() {
+        document
+            .querySelectorAll<HTMLElement>(".auth-slot")
+            .forEach((slot) => {
+                if (slotState(slot).startsWith("user:")) return;
+                renderAnonSlot(slot);
+            });
     }
 
     function clearMobileLinks() {
@@ -280,6 +366,7 @@ const L = (p: string) => localizePath(p, locale);
     function renderUserSlot(slot: HTMLElement, user: NonNullable<Me>) {
         if (slot.dataset.user === user.username) return;
         slot.dataset.user = user.username;
+        slot.dataset.slotState = `user:${user.username}`;
         const compact = slot.dataset.authSlot === "mobile";
         const t = clientT();
         const locale = getClientLocale();
@@ -298,15 +385,7 @@ const L = (p: string) => localizePath(p, locale);
                 <button type="button" class="auth-logout-btn block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.logout"))}</button>
             </div>`;
 
-        const btn = slot.querySelector<HTMLElement>(".auth-user-btn")!;
-        const menu = slot.querySelector<HTMLElement>(".auth-dropdown")!;
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const isOpen = menu.style.display !== "none";
-            closeAllDropdowns();
-            menu.style.display = isOpen ? "none" : "";
-            btn.setAttribute("aria-expanded", String(!isOpen));
-        });
+        bindDropdown(slot, ".auth-user-btn");
         slot.querySelector(".auth-logout-btn")!.addEventListener(
             "click",
             async () => {
@@ -336,13 +415,12 @@ const L = (p: string) => localizePath(p, locale);
     }
 
     function applyAuthState() {
+        // Guest menu first: it reads localStorage, so it can paint before
+        // /api/auth/me answers (and the count may have changed on the page we
+        // just came from — creating or deleting a template).
+        refreshAnonSlots();
         // Point login links at the current page so users come back here.
-        const next = encodeURIComponent(
-            window.location.pathname + window.location.search,
-        );
-        document
-            .querySelectorAll<HTMLAnchorElement>(".auth-login-link")
-            .forEach((a) => (a.href = `/api/auth/login?next=${next}`));
+        pointLoginLinks(document);
 
         refreshMe();
     }
@@ -397,7 +475,17 @@ const L = (p: string) => localizePath(p, locale);
             .forEach((slot) => renderUserSlot(slot, cachedMe));
         renderMobileLinks(cachedMe);
         applyNotifCount(cachedMe.unreadNotifications ?? 0);
+    } else {
+        refreshAnonSlots();
     }
+
+    // Creating, deleting or importing a guest template changes what (and
+    // whether) the guest menu should show.
+    document.addEventListener(LOCAL_TEMPLATES_CHANGED, refreshAnonSlots);
+    document.addEventListener(
+        "rankmaker:local-templates-imported",
+        refreshAnonSlots,
+    );
 
     document.addEventListener("astro:page-load", () => {
         applyAuthState();

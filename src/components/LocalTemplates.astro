@@ -1,0 +1,135 @@
+---
+/**
+ * This browser's guest templates (src/lib/local-templates.ts), listed for the
+ * guest view of /me — the only way back to them without knowing their URL.
+ *
+ * Rendered client-side: the server has no idea these templates exist. The
+ * section starts empty and the script below fills it (or shows the empty
+ * state), so nothing flashes on first paint.
+ */
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
+---
+
+<section id="local-templates" class="hidden">
+    {/* No heading: the page's own <h1> already names this list, and a second
+        "Templates on this device" title above it only repeated the subtitle. */}
+    <p
+        id="local-templates-count"
+        class="text-xs text-text-muted font-medium mb-3"
+    >
+    </p>
+    <div id="local-templates-list" class="space-y-3"></div>
+</section>
+
+<div
+    id="local-templates-empty"
+    class="hidden rounded-2xl border border-dashed border-border p-10 text-center space-y-3"
+>
+    <i class="fa-solid fa-layer-group text-2xl text-text-muted"></i>
+    <p class="text-sm text-text-secondary">{t("local.emptyBody")}</p>
+    <a
+        href={L("/create")}
+        data-astro-reload
+        class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-light transition-colors"
+    >
+        {t("local.emptyCta")}
+        <i class="fa-solid fa-arrow-right text-xs"></i>
+    </a>
+</div>
+
+<script>
+    import {
+        deleteLocalTemplate,
+        listLocalTemplates,
+        localTemplatePath,
+    } from "../lib/local-templates";
+    import { categoryIcon } from "../lib/categories";
+    import { clientT, getClientLocale } from "../i18n/client";
+    import { localizePath } from "../i18n";
+
+    function escapeHtml(value: string): string {
+        return value.replace(
+            /[&<>"']/g,
+            (char) =>
+                ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;",
+                })[char]!,
+        );
+    }
+
+    function render() {
+        const section = document.getElementById("local-templates");
+        const list = document.getElementById("local-templates-list");
+        const empty = document.getElementById("local-templates-empty");
+        const count = document.getElementById("local-templates-count");
+        if (!section || !list || !empty || !count) return;
+
+        const t = clientT();
+        const L = (path: string) => localizePath(path, getClientLocale());
+        const templates = listLocalTemplates();
+
+        section.classList.toggle("hidden", templates.length === 0);
+        empty.classList.toggle("hidden", templates.length > 0);
+        if (templates.length === 0) {
+            list.replaceChildren();
+            return;
+        }
+
+        count.textContent = `${templates.length} ${t(
+            templates.length === 1
+                ? "me.templateSingular"
+                : "me.templatePlural",
+        )}`;
+
+        list.innerHTML = templates
+            .map((template) => {
+                // Category over another "this device" icon: the row sits under a
+                // header that already says where these live, so spend the tile
+                // on the one thing it doesn't tell you.
+                const options = t("local.itemOptions", {
+                    n: template.options.length,
+                });
+                const meta = template.category
+                    ? `${t(`categories.${template.category}`)} · ${options}`
+                    : options;
+                return `
+                <div class="flex items-center gap-3 rounded-2xl border border-border bg-surface-elevated p-3 sm:p-4">
+                    <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <i class="fa-solid ${categoryIcon(template.category)} text-primary text-sm"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-text-primary truncate">${escapeHtml(template.title)}</p>
+                        <p class="text-xs text-text-muted truncate">${escapeHtml(meta)}</p>
+                    </div>
+                    <a href="${escapeHtml(L(localTemplatePath(template.id)))}" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold whitespace-nowrap hover:opacity-90 transition-all"><i class="fa-solid fa-play text-xs"></i><span class="hidden sm:inline">${escapeHtml(t("local.play"))}</span></a>
+                    <button type="button" class="local-template-delete w-10 h-10 shrink-0 rounded-xl border border-border text-text-muted hover:text-red-400 hover:border-red-400/40 transition-colors" data-id="${escapeHtml(template.id)}" aria-label="${escapeHtml(t("local.delete"))}"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                </div>`;
+            })
+            .join("");
+
+        list.removeEventListener("click", onListClick);
+        list.addEventListener("click", onListClick);
+    }
+
+    function onListClick(event: MouseEvent) {
+        const button = (event.target as HTMLElement).closest<HTMLElement>(
+            ".local-template-delete",
+        );
+        if (!button?.dataset.id) return;
+        if (!window.confirm(clientT()("local.deleteConfirm"))) return;
+        deleteLocalTemplate(button.dataset.id);
+        render();
+    }
+
+    document.addEventListener("astro:page-load", render);
+    // Signing in moves them into the account (Layout runs the import).
+    document.addEventListener("rankmaker:local-templates-imported", render);
+</script>
