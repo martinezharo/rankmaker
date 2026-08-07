@@ -1,4 +1,6 @@
 ---
+import { stringToColor } from "../lib/placeholder-color";
+
 interface Props {
     src: string | null;
     alt: string;
@@ -43,15 +45,8 @@ const intrinsicH = priority ? (height ?? PRIORITY_DEFAULT_H) : height;
 // <img> in cards rely on their container's aspect-ratio and would be lied
 // to by guessed dimensions.
 const hasIntrinsic = priority && !!intrinsicW && !!intrinsicH;
-// Generate a consistent color based on the text string
-const stringToColor = (str: string) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
-    return "#" + "00000".substring(0, 6 - c.length) + c;
-};
+// Consistent color per text string — shared with the client-rendered
+// placeholders on the guest-local template page (src/lib/placeholder-color.ts).
 
 // Check if src is a placeholder or null/empty
 // We treat "null" string or "undefined" string as invalid too, just in case
@@ -93,13 +88,15 @@ const seedColor = stringToColor(text);
         ) : null
     }
 
-    <!-- Fallback Container (initially hidden if img exists, visible if not) -->
+    <!-- Fallback Container (initially hidden if img exists, visible if not).
+         The `smart-image-fallback*` classes are stable hooks for surfaces that
+         fill this in the browser (the guest-local template page). -->
     <div
-        class={`absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 ${isValidSrc ? "hidden" : "flex"}`}
+        class={`smart-image-fallback absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-surface-elevated to-surface border border-white/5 ${isValidSrc ? "hidden" : "flex"}`}
         style={`--tw-gradient-to: ${seedColor}40;`}
     >
         <span
-            class={`font-bold text-text-primary/90 leading-tight ${isOption ? "text-xs line-clamp-2" : "text-xl sm:text-2xl line-clamp-3"}`}
+            class={`smart-image-fallback-text font-bold text-text-primary/90 leading-tight ${isOption ? "text-xs line-clamp-2" : "text-xl sm:text-2xl line-clamp-3"}`}
         >
             {text}
         </span>
