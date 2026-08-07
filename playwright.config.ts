@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4321';
+
 // E2E runs against `astro dev` (miniflare-backed, deterministic port 4321).
 // The behaviours we guard — ViewTransitions client navigation and the ranking
 // engine's script execution — are identical to production in dev. Tests only
@@ -16,16 +18,18 @@ export default defineConfig({
 	workers: 1,
 	reporter: 'list',
 	use: {
-		baseURL: 'http://localhost:4321',
+		baseURL,
 		trace: 'on-first-retry',
 	},
 	projects: [
 		{ name: 'chromium', use: { ...devices['Desktop Chrome'] } },
 	],
-	webServer: {
-		command: 'pnpm dev',
-		url: 'http://localhost:4321',
-		reuseExistingServer: !process.env.CI,
-		timeout: 120_000,
-	},
+	webServer: process.env.PLAYWRIGHT_BASE_URL
+		? undefined
+		: {
+				command: 'pnpm dev',
+				url: baseURL,
+				reuseExistingServer: !process.env.CI,
+				timeout: 120_000,
+			},
 });

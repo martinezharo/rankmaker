@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+	await page.addInitScript(() => {
+		localStorage.setItem('rankmaker_cookie_consent', 'false');
+	});
+});
+
 test('paginates history cards and renders full results only when expanded', async ({
 	page,
 }) => {
