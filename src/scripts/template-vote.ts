@@ -5,19 +5,13 @@
  * from /api/templates/vote rather than rendered server-side.
  *
  * Every `.template-vote` control on the page shares one state; clicking the
- * active arrow again clears the vote (sends 0). Logged-out users are sent to
- * GitHub login.
+ * active arrow again clears the vote (sends 0). Logged-out users are prompted
+ * to sign in.
  */
 import { clientT } from '../i18n/client';
+import { openLoginPrompt } from './auth-prompt';
 
 type VoteState = { score: number; myVote: number; loggedIn: boolean };
-
-function redirectToLogin() {
-	const next = encodeURIComponent(
-		window.location.pathname + window.location.search
-	);
-	window.location.href = `/api/auth/login?next=${next}`;
-}
 
 function readSlug(): string | null {
 	const el = document.getElementById('ranking-data');
@@ -67,7 +61,7 @@ export function initTemplateVote() {
 	const cast = async (value: number) => {
 		if (pending) return;
 		if (!state.loggedIn) {
-			redirectToLogin();
+			openLoginPrompt();
 			return;
 		}
 		// Toggle off when the active arrow is clicked again.
@@ -80,7 +74,8 @@ export function initTemplateVote() {
 				body: JSON.stringify({ slug, value: next }),
 			});
 			if (res.status === 401) {
-				redirectToLogin();
+				pending = false;
+				openLoginPrompt();
 				return;
 			}
 			if (res.ok) {

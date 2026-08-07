@@ -4,18 +4,16 @@ export const prerender = false;
 import Layout from "../layouts/Layout.astro";
 import TemplateForm from "../components/TemplateForm.astro";
 import { getSessionUser } from "../lib/auth";
-import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import { defaultLocale, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 
+// Guests can build a template too — restricted to private, no images (see
+// TemplateForm's `anonymous` mode) — instead of being bounced to login. The
+// login modal (triggered from the form) is what eventually gets them signed
+// in, at which point a real submit is required (see /api/templates POST).
 const user = await getSessionUser(Astro.cookies, Astro.locals.runtime.env.DB);
-if (!user) {
-    return Astro.redirect(
-        `/api/auth/login?next=${encodeURIComponent(localizePath("/create", locale))}`,
-        302,
-    );
-}
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
@@ -33,6 +31,6 @@ Astro.response.headers.set("Cache-Control", "no-store");
             </p>
         </div>
 
-        <TemplateForm mode="create" />
+        <TemplateForm mode="create" anonymous={!user} />
     </section>
 </Layout>

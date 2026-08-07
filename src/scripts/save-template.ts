@@ -8,6 +8,7 @@
  * `<i>` bookmark icon (regular = unsaved, solid = saved), and optionally a
  * `.save-label` span with `data-label-save` / `data-label-saved` text.
  */
+import { openLoginPrompt } from './auth-prompt';
 
 let savedSlugsPromise: Promise<Set<string>> | null = null;
 
@@ -40,13 +41,6 @@ function paint(btn: HTMLElement, saved: boolean) {
 	}
 }
 
-function redirectToLogin() {
-	const next = encodeURIComponent(
-		window.location.pathname + window.location.search
-	);
-	window.location.href = `/api/auth/login?next=${next}`;
-}
-
 export function initSaveButtons() {
 	const buttons = Array.from(
 		document.querySelectorAll<HTMLElement>('.save-btn')
@@ -75,7 +69,11 @@ export function initSaveButtons() {
 					}),
 				});
 				if (res.status === 401) {
-					redirectToLogin();
+					// Not navigating away anymore — the modal keeps them on
+					// this page, so undo the optimistic paint ourselves.
+					paint(btn, !next);
+					delete btn.dataset.savePending;
+					openLoginPrompt();
 					return;
 				}
 				if (res.ok) {

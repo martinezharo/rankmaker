@@ -87,6 +87,7 @@ const t = useTranslations(locale);
 <script>
 	import { avatarHtml } from "../../lib/avatars";
 	import { openModal, closeModal } from "../../scripts/modal-a11y";
+	import { openLoginPrompt } from "../../scripts/auth-prompt";
 	import {
 		MAX_BODY_LEN,
 		type CommentNode,
@@ -169,7 +170,7 @@ const t = useTranslations(locale);
 					<i class="fa-solid fa-comment-dots text-primary"></i>
 				</div>
 				<p class="text-sm text-text-secondary flex-1 min-w-[12rem]">${esc(t("comments.joinConversation"))}</p>
-				<a href="/api/auth/login?next=${next}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-zinc-950 bg-gradient-gold hover:opacity-90 transition-all">
+				<a href="/api/auth/login?next=${next}" data-astro-reload class="auth-login-link inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-zinc-950 bg-gradient-gold hover:opacity-90 transition-all">
 					<i class="fa-brands fa-github text-xs"></i> ${esc(t("nav.login"))}
 				</a>
 			</div>`;
@@ -320,7 +321,7 @@ const t = useTranslations(locale);
 
 	async function vote(article: HTMLElement, dir: number): Promise<void> {
 		if (!state?.currentUser) {
-			location.href = `/api/auth/login?next=${encodeURIComponent(location.pathname)}`;
+			openLoginPrompt();
 			return;
 		}
 		const id = article.dataset.id ?? "";
