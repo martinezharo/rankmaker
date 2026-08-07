@@ -1,5 +1,6 @@
 ---
 import { defaultLocale, useTranslations } from "../i18n";
+import { serializeJsonForScript } from "../lib/safe-json";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -127,7 +128,7 @@ const clientItems = demoItems.map((item, idx) => ({ idx, ...item }));
 	type="application/json"
 	id="hero-demo-data"
 	is:inline
-	set:html={JSON.stringify(clientItems)}
+	set:html={serializeJsonForScript(clientItems)}
 />
 
 <script>

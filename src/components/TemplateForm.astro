@@ -6,6 +6,7 @@
 // markup source.
 import { CATEGORIES } from "../lib/categories";
 import { MAX_OPTIONS, MIN_OPTIONS, type Visibility } from "../lib/templates";
+import { serializeJsonForScript } from "../lib/safe-json";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 import GuestBanner from "./GuestBanner.astro";
 import Select from "./ui/Select.astro";
@@ -440,7 +441,8 @@ const inputClass =
 <script
     type="application/json"
     id="template-form-data"
-    set:html={JSON.stringify(initial).replace(/</g, "\\u003c")}
+    is:inline
+    set:html={serializeJsonForScript(initial)}
 />
 
 <script>

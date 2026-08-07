@@ -117,15 +117,30 @@ async function hmacKey(secret: string): Promise<CryptoKey> {
 }
 
 function b64urlEncode(s: string): string {
-    return btoa(unescape(encodeURIComponent(s)))
+    const bytes = new TextEncoder().encode(s);
+    let binary = '';
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+        binary += String.fromCharCode(
+            ...bytes.subarray(offset, offset + 0x8000)
+        );
+    }
+    return btoa(binary)
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
 }
 
 function b64urlDecode(s: string): string {
-    const padded = s.replace(/-/g, '+').replace(/_/g, '/');
-    return decodeURIComponent(escape(atob(padded)));
+    if (!/^[A-Za-z0-9_-]*$/.test(s)) throw new Error('Invalid base64url');
+    const normalized = s.replace(/-/g, '+').replace(/_/g, '/');
+    const remainder = normalized.length % 4;
+    if (remainder === 1) throw new Error('Invalid base64url length');
+    const padded = normalized + '='.repeat((4 - remainder) % 4);
+    const binary = atob(padded);
+    const bytes = Uint8Array.from(binary, (character) =>
+        character.charCodeAt(0)
+    );
+    return new TextDecoder().decode(bytes);
 }
 
 /** Sign a JSON payload: base64url(json) + "." + hex(hmac). */
@@ -159,10 +174,11 @@ export async function verifyPayload<T extends { exp?: number }>(
     if (dot < 0) return null;
     const data = value.slice(0, dot);
     const sigHex = value.slice(dot + 1);
+    if (!/^[0-9a-f]{64}$/i.test(sigHex)) return null;
     try {
         const key = await hmacKey(secret);
         const sigBytes = new Uint8Array(
-            (sigHex.match(/.{2}/g) || []).map((h) => parseInt(h, 16))
+            sigHex.match(/.{2}/g)!.map((h) => parseInt(h, 16))
         );
         const ok = await crypto.subtle.verify(
             'HMAC',

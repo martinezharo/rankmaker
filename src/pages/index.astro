@@ -10,6 +10,7 @@ import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
 import { CATEGORIES as categories } from "../lib/categories";
 import { getOfficialTemplates, listUserTemplates } from "../lib/templates";
+import { serializeJsonForScript } from "../lib/safe-json";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -97,7 +98,7 @@ const siteJsonLd = {
 >
 	<script
 		type="application/ld+json"
-		set:html={JSON.stringify(siteJsonLd)}
+		set:html={serializeJsonForScript(siteJsonLd)}
 		is:inline
 	/>
 	<!-- Signed-in pre-paint guard: the page HTML is publicly cached (always the

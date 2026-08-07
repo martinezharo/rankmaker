@@ -4,7 +4,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import CookieConsent from "../components/CookieConsent.astro";
 import LoginModal from "../components/LoginModal.astro";
-import { ViewTransitions } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 import outfitFontUrl from "@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url";
 import {
     CONTENT_LOCALIZED,
@@ -195,11 +195,19 @@ const ogImageHeight =
              lets the LCP <img> paint without waiting on the stylesheet. The
              <noscript> fallback keeps icons visible for no-JS crawlers/users. -->
         <link
+            id="fontawesome-preload"
             rel="preload"
             href="/fonts/fontawesome/css/all.min.css"
             as="style"
-            onload="this.onload=null;this.rel='stylesheet'"
         />
+        <script is:inline>
+            document
+                .getElementById("fontawesome-preload")
+                ?.addEventListener("load", (event) => {
+                    const link = event.currentTarget;
+                    if (link instanceof HTMLLinkElement) link.rel = "stylesheet";
+                }, { once: true });
+        </script>
         <noscript>
             <link rel="stylesheet" href="/fonts/fontawesome/css/all.min.css" />
         </noscript>
@@ -244,7 +252,7 @@ const ogImageHeight =
         </script>
 
         <!-- View Transitions -->
-        <ViewTransitions />
+        <ClientRouter />
     </head>
     <body class="flex flex-col min-h-dvh">
         <!-- Navigation progress bar (feedback for slow connections during
