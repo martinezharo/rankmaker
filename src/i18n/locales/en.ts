@@ -1,7 +1,7 @@
 /**
  * English dictionary — the SOURCE OF TRUTH for every user-visible string.
  *
- * `es.ts` and `fr.ts` mirror this shape; missing keys there fall back here
+ * Translated locale files mirror this shape; missing keys there fall back here
  * (see `../index.ts`). When adding a UI string anywhere in the app, add the key
  * HERE first, then translate it in the other locale files.
  *

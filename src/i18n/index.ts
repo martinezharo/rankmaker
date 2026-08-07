@@ -7,7 +7,7 @@
  *   t('nav.home')                       → "Home"
  *   t('history.count', { n: 3 })        → "3 rankings" (interpolates {n})
  *
- * `en` is the source of truth. Missing keys in `es`/`fr` fall back to `en`, so
+ * `en` is the source of truth. Missing keys in translated locales fall back to `en`, so
  * partial translations never break a page; a truly unknown key returns the key
  * itself (and warns in dev).
  */
@@ -18,11 +18,12 @@ import { fr } from './locales/fr';
 import { zh } from './locales/zh';
 import { ms } from './locales/ms';
 import { de } from './locales/de';
+import { pt } from './locales/pt';
 import type { LocaleDict } from './types';
 
 export type { Dict };
 
-const dictionaries: Record<Locale, LocaleDict> = { en, es, fr, zh, ms, de };
+const dictionaries: Record<Locale, LocaleDict> = { en, es, fr, zh, ms, de, pt };
 
 function lookup(obj: unknown, path: string): unknown {
 	return path

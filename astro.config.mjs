@@ -19,12 +19,12 @@ export default defineConfig({
     '/explore': '/search',
   },
 
-  // English at the root (/template/x), Spanish/French prefixed (/es/…, /fr/…).
+  // English at the root; translated locales use a prefix (/es/…, /fr/…, /pt/…).
   // No pages are duplicated: src/middleware.ts strips the prefix and rewrites
   // to the canonical route, exposing the active locale as Astro.locals.locale.
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'es', 'fr', 'zh', 'ms', 'de'],
+    locales: ['en', 'es', 'fr', 'zh', 'ms', 'de', 'pt'],
     routing: { prefixDefaultLocale: false },
   },
 
