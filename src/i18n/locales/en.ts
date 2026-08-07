@@ -209,6 +209,30 @@ export const en = {
 		emptyBody: "You haven't ranked anything yet.",
 		findSomething: 'Find something to rank',
 	},
+	local: {
+		pageTitle: 'My template — RANKMAKER',
+		metaDescription: 'A template saved in this browser.',
+		backToMine: 'My templates on this device',
+		// Guest view of /me: this browser's templates, with no profile chrome.
+		mineTitle: 'My templates — RANKMAKER',
+		bannerTitle: 'Saved on this device',
+		bannerBody:
+			'This template lives in this browser only. Sign in and it moves to your account — with the rankings you played on it.',
+		bannerCta: 'Sign in with GitHub',
+		missingTitle: "This template isn't on this device",
+		missingBody:
+			'Guest templates are stored in the browser that created them, so it may have been created elsewhere, already moved to an account, or cleared with your browsing data.',
+		missingCta: 'Create a template',
+		// Subtitle of the guest view of /me, above the list (see LocalTemplates).
+		sectionBody:
+			'Saved in this browser only. Sign in and they move to your account, with the rankings you played on them.',
+		emptyBody: "You haven't created any templates in this browser yet.",
+		emptyCta: 'Create your first one',
+		itemOptions: '{n} options',
+		play: 'Rank it',
+		delete: 'Delete',
+		deleteConfirm: 'Delete this template from this browser? It cannot be recovered.',
+	},
 	saved: {
 		title: 'Saved templates — RANKMAKER',
 		heading: 'Saved templates',
@@ -254,8 +278,21 @@ export const en = {
 		genericError: 'Something went wrong. Try again.',
 		networkError: 'Network error. Try again.',
 	},
+	authModal: {
+		title: 'Sign in to RANKMAKER',
+		subtitle: 'Continue with GitHub — free, no password, takes five seconds.',
+		benefitPublic: 'Publish public rankings anyone can play',
+		benefitImages: 'Add cover and option images',
+		benefitSocial: 'Save, comment and vote on rankings',
+		continueWithGithub: 'Continue with GitHub',
+		maybeLater: 'Maybe later',
+	},
 	form: {
 		details: 'Details',
+		guestBannerTitle: 'Creating as a guest',
+		guestBannerBody:
+			'Your template is saved in this browser and you can play it right away — private and without images. Sign in with GitHub to move it to your account, go public and add photos.',
+		guestBannerCta: 'Sign in with GitHub',
 		titleLabel: 'Title',
 		titlePlaceholder: 'Best Pizza Toppings Ranking',
 		descriptionLabel: 'Description',
@@ -273,23 +310,30 @@ export const en = {
 		visibilityPrivateHint: 'Only you can see and rank this template.',
 		visibilityUnlistedSlugWarning:
 			' Saving will change the template URL to a new random one.',
+		visibilityUnlockCta: 'Sign in to unlock',
 		coverImage: 'Cover image',
 		coverPreviewAlt: 'Cover preview',
 		coverCollageNote: 'No cover yet — this collage of your option images will be used.',
 		uploadCta: 'Click or drop an image to upload',
 		uploadHint: 'JPG, PNG, WebP, AVIF or GIF · up to 10 MB',
+		lockedCoverCta: 'Sign in to add a cover image',
+		lockedCoverHint: 'Free with a GitHub account',
 		uploading: 'Uploading…',
 		replaceImage: 'Replace image',
 		removeImage: 'Remove image',
 		optionAddImage: 'Add image',
+		optionAddImageLocked: 'Sign in to add an image',
 		options: 'Options',
 		optionsMin: 'min {n}',
 		optionsHelp:
 			'The things people will rank in 1v1 battles. Images are optional — click the square next to a name to upload one.',
+		optionsLockedNote: 'Sign in to add images to your options',
 		addOption: 'Add option',
 		removeOption: 'Remove option',
 		optionNamePlaceholder: 'Option name',
 		submitCreate: 'Create template',
+		errLocalLimit:
+			'You can keep {n} templates in this browser. Sign in to move them to your account and create more.',
 		submitSave: 'Save changes',
 		busyCreating: 'Creating…',
 		busySaving: 'Saving…',

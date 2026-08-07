@@ -1,0 +1,77 @@
+---
+/**
+ * "You are not signed in" banner, shared by every guest surface (the create
+ * form, a guest template page, the guest view of /me). One component so the
+ * treatment — gradient card, icon tile, gold CTA — stays identical everywhere.
+ *
+ * Pass `href` for a direct GitHub redirect (the create form does: the OAuth
+ * hop has to be a full navigation). Without it the CTA is a button that opens
+ * the shared <LoginModal> mounted in Layout.
+ */
+interface Props {
+    /** Font Awesome classes for the icon tile, e.g. "fa-solid fa-user-lock". */
+    icon: string;
+    title: string;
+    body: string;
+    cta: string;
+    /** Direct login URL; omit to open the login modal instead. */
+    href?: string;
+    class?: string;
+}
+
+const { icon, title, body, cta, href, class: className } = Astro.props;
+---
+
+<div
+    class:list={[
+        "rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/30 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4",
+        className,
+    ]}
+>
+    <div
+        class="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0"
+    >
+        <i class={`${icon} text-primary text-lg`}></i>
+    </div>
+    <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-text-primary">{title}</p>
+        <p class="text-sm text-text-secondary mt-0.5">{body}</p>
+    </div>
+    {
+        href ? (
+            <a
+                href={href}
+                data-astro-reload
+                class="auth-login-link shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
+            >
+                <i class="fa-brands fa-github" />
+                {cta}
+            </a>
+        ) : (
+            <button
+                type="button"
+                class="guest-banner-login shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
+            >
+                <i class="fa-brands fa-github" />
+                {cta}
+            </button>
+        )
+    }
+</div>
+
+<script>
+    import { openLoginPrompt } from "../scripts/auth-prompt";
+
+    // Delegated once per document: banners can be swapped in by client code
+    // (the guest /me view) after this runs.
+    document.addEventListener("astro:page-load", () => {
+        if (document.body.dataset.guestBannerBound) return;
+        document.body.dataset.guestBannerBound = "1";
+        document.addEventListener("click", (event) => {
+            const button = (event.target as HTMLElement | null)?.closest(
+                ".guest-banner-login",
+            );
+            if (button) openLoginPrompt();
+        });
+    });
+</script>

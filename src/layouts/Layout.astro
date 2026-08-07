@@ -3,6 +3,7 @@ import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import CookieConsent from "../components/CookieConsent.astro";
+import LoginModal from "../components/LoginModal.astro";
 import { ViewTransitions } from "astro:transitions";
 import outfitFontUrl from "@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url";
 import {
@@ -265,6 +266,12 @@ const ogImageHeight =
         </main>
         <Footer />
         <CookieConsent />
+        <!-- Mounted once, globally: every login-gated action opens this
+             instead of hard-navigating to GitHub — see
+             src/scripts/auth-prompt.ts. Placed before the scripts below so
+             its delegated click handler runs (and calls preventDefault())
+             ahead of the nav-progress listener. -->
+        <LoginModal />
 
         <!-- Navigation progress bar: grows toward 90% while the next page is
              fetched, then snaps to 100% and fades out once it loads. Gives slow
@@ -408,6 +415,17 @@ const ogImageHeight =
                     if (href) window.location.href = href;
                 });
             }
+        </script>
+
+        <!-- Templates created as a guest live in localStorage; the first page
+             load with a session uploads them to the account. No-ops (and makes
+             no request) for the vast majority of visitors, who have none. -->
+        <script>
+            import { syncLocalTemplates } from "../scripts/local-templates-sync";
+
+            document.addEventListener("astro:page-load", () => {
+                void syncLocalTemplates();
+            });
         </script>
     </body>
 </html>

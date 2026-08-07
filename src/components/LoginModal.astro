@@ -1,0 +1,145 @@
+---
+// LoginModal.astro — global "sign in with GitHub" dialog, mounted once by
+// Layout.astro. Every login-gated action in the app (header nav, save, vote,
+// comment, follow, guest template creation) opens this instead of hard
+// navigating to GitHub — see src/scripts/auth-prompt.ts. The "Continue with
+// GitHub" link is the only element that actually leaves the page.
+import { defaultLocale, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
+const BENEFITS = [
+    { icon: "fa-globe", text: t("authModal.benefitPublic") },
+    { icon: "fa-image", text: t("authModal.benefitImages") },
+    { icon: "fa-comments", text: t("authModal.benefitSocial") },
+];
+---
+
+<div
+    id="login-modal"
+    class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="login-modal-title"
+>
+    <div
+        class="absolute inset-0 bg-black/70 backdrop-blur-sm animate-modal-bg"
+        id="login-modal-backdrop"
+    >
+    </div>
+    <div
+        class="relative bg-surface-elevated border border-border rounded-2xl w-full max-w-sm overflow-hidden animate-modal-content"
+    >
+        <!-- Gradient header -->
+        <div
+            class="relative px-6 pt-7 pb-8 bg-[radial-gradient(ellipse_at_top,rgba(132,0,255,0.35),transparent_70%)]"
+        >
+            <button
+                type="button"
+                id="login-modal-close"
+                aria-label={t("common.close")}
+                class="absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex flex-col items-center text-center gap-3">
+                <!-- The favicon is a square canvas with the mark centred in the
+                     middle third, so it is cropped with object-cover rather
+                     than padded out by object-contain. -->
+                <img
+                    src="/favicon.webp"
+                    alt="RANKMAKER"
+                    width="112"
+                    height="112"
+                    class="w-28 h-12 object-cover drop-shadow-[0_4px_16px_rgba(132,0,255,0.45)]"
+                />
+                <div>
+                    <h3
+                        id="login-modal-title"
+                        class="text-lg font-bold text-text-primary"
+                    >
+                        {t("authModal.title")}
+                    </h3>
+                    <p class="text-sm text-text-secondary mt-1.5 leading-relaxed">
+                        {t("authModal.subtitle")}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 pb-6 pt-5 space-y-5">
+            <ul class="space-y-2.5">
+                {
+                    BENEFITS.map((b) => (
+                        <li class="flex items-center gap-3 text-sm text-text-secondary">
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <i class={`fa-solid ${b.icon} text-primary text-xs`} />
+                            </span>
+                            {b.text}
+                        </li>
+                    ))
+                }
+            </ul>
+
+            <a
+                id="login-modal-continue"
+                href="/api/auth/login"
+                data-astro-reload
+                class="flex items-center justify-center gap-2.5 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
+            >
+                <i class="fa-brands fa-github text-base"></i>
+                {t("authModal.continueWithGithub")}
+            </a>
+
+            <button
+                type="button"
+                id="login-modal-later"
+                class="block w-full text-center text-xs font-medium text-text-muted hover:text-text-secondary transition-colors"
+            >
+                {t("authModal.maybeLater")}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    import { closeModal } from "../scripts/modal-a11y";
+    import { openLoginPrompt } from "../scripts/auth-prompt";
+
+    document.addEventListener("astro:page-load", () => {
+        const modal = document.getElementById("login-modal");
+        if (!modal || modal.dataset.bound) return;
+        modal.dataset.bound = "1";
+
+        const close = () => closeModal(modal);
+        document
+            .getElementById("login-modal-backdrop")
+            ?.addEventListener("click", close);
+        document
+            .getElementById("login-modal-close")
+            ?.addEventListener("click", close);
+        document
+            .getElementById("login-modal-later")
+            ?.addEventListener("click", close);
+    });
+
+    // Delegated so it keeps working for `.auth-login-link` elements that get
+    // replaced or added after load (Header's auth slot, restored login CTAs,
+    // etc.) without every one of them needing its own listener.
+    if (!(window as any).__rmLoginClickDelegate) {
+        (window as any).__rmLoginClickDelegate = true;
+        document.addEventListener("click", (e) => {
+            const link = (e.target as HTMLElement | null)?.closest?.(
+                "a.auth-login-link",
+            ) as HTMLAnchorElement | null;
+            if (!link) return;
+            if (e.defaultPrevented || e.button !== 0) return;
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            e.preventDefault();
+            const url = new URL(link.href, location.href);
+            const next = url.searchParams.get("next") ?? undefined;
+            openLoginPrompt(next);
+        });
+    }
+</script>

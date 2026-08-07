@@ -1,0 +1,66 @@
+---
+// One option in the "available options" grid of a ranking surface, with its
+// remove control. Shared by the DB-backed template page (rendered per option)
+// and the guest-local template page, which renders a single blank copy inside
+// a <template> and clones it once localStorage has been read — so both grids
+// stay one markup source.
+//
+// The ranking engine finds these by `[data-option-card]` / `[data-remove-option]`
+// and toggles `.option-removed-badge` / `.option-media`; keep those hooks.
+import SmartImage from "../SmartImage.astro";
+import { resolveImageUrl } from "../../lib/covers";
+import { defaultLocale, useTranslations } from "../../i18n";
+
+interface Props {
+    id: number | string;
+    name: string;
+    image?: string | null;
+}
+const { id, name, image = null } = Astro.props;
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+---
+
+<div
+    class="group relative rounded-xl bg-surface-elevated border border-border hover:border-primary/30 transition-all overflow-hidden"
+    data-option-card={id}
+>
+    <!-- Image -->
+    <div
+        class="option-media relative aspect-square overflow-hidden bg-surface transition-all"
+    >
+        <SmartImage
+            src={resolveImageUrl(image)}
+            alt={name}
+            text={name}
+            isOption={true}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <span
+            class="option-removed-badge hidden absolute inset-0 items-center justify-center bg-black/40"
+        >
+            <span
+                class="px-2.5 py-1 rounded-full bg-black/70 text-white text-[10px] font-bold uppercase tracking-wider"
+            >
+                {t("ranking.removedBadge")}
+            </span>
+        </span>
+    </div>
+    <button
+        type="button"
+        data-remove-option={id}
+        data-option-name={name}
+        aria-label={t("ranking.removeOptionAria", { name })}
+        class="absolute top-2 right-2 z-10 w-8 h-8 rounded-lg bg-black/55 backdrop-blur-sm text-white/80 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+    >
+        <i class="fa-solid fa-trash-can text-xs"></i>
+    </button>
+    <div class="p-3">
+        <p
+            class="option-name text-sm font-medium text-text-primary text-center line-clamp-1"
+        >
+            {name}
+        </p>
+    </div>
+</div>

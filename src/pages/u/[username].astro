@@ -248,6 +248,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
 <script>
     import { avatarHtml } from "../../lib/avatars";
     import { openModal, closeModal } from "../../scripts/modal-a11y";
+    import { openLoginPrompt } from "../../scripts/auth-prompt";
     import { clientT, getClientLocale } from "../../i18n/client";
     import { localizePath } from "../../i18n";
 
@@ -273,13 +274,6 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;");
-    }
-
-    function redirectToLogin(): void {
-        const next = encodeURIComponent(
-            location.pathname + location.search,
-        );
-        location.href = `/api/auth/login?next=${next}`;
     }
 
     function init(): void {
@@ -318,7 +312,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
         async function toggleFollow(): Promise<void> {
             if (!status || pending) return;
             if (!status.loggedIn) {
-                redirectToLogin();
+                openLoginPrompt();
                 return;
             }
             const next = !status.isFollowing;
@@ -341,7 +335,17 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                     }),
                 });
                 if (res.status === 401) {
-                    redirectToLogin();
+                    // Session expired between page load and click — revert
+                    // the optimistic update (we're not navigating away
+                    // anymore, the modal keeps them on this page).
+                    status.isFollowing = !next;
+                    status.followers += next ? -1 : 1;
+                    paintButton();
+                    if (followersCountEl)
+                        followersCountEl.textContent =
+                            status.followers.toLocaleString();
+                    pending = false;
+                    openLoginPrompt();
                     return;
                 }
                 if (res.ok) {

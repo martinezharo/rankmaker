@@ -6,7 +6,8 @@
 // markup source.
 import { CATEGORIES } from "../lib/categories";
 import { MAX_OPTIONS, MIN_OPTIONS, type Visibility } from "../lib/templates";
-import { defaultLocale, useTranslations } from "../i18n";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import GuestBanner from "./GuestBanner.astro";
 import Select from "./ui/Select.astro";
 
 interface Props {
@@ -21,12 +22,21 @@ interface Props {
         visibility?: Visibility;
         options: { name: string; image: string | null }[];
     };
+    /**
+     * Guest mode (create only): the visitor isn't signed in, so creation is
+     * restricted to private / no images and submitting opens the login modal
+     * instead of posting. See the `anonymous` branches below and the client
+     * script's guest guards.
+     */
+    anonymous?: boolean;
 }
 
-const { mode, template } = Astro.props;
+const { mode, template, anonymous = false } = Astro.props;
+const isGuest = mode === "create" && anonymous;
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
+const loginNext = localizePath("/create", locale);
 
 const VISIBILITY_ICONS: Record<Visibility, string> = {
     public: "fa-globe",
@@ -58,12 +68,14 @@ const VISIBILITY_CHOICES: {
 
 const initial = {
     mode,
+    anonymous: isGuest,
+    loginNext,
     id: template?.id ?? null,
     slug: template?.slug ?? null,
     title: template?.title ?? "",
     description: template?.description ?? "",
     category: template?.category ?? "",
-    visibility: template?.visibility ?? "public",
+    visibility: isGuest ? "private" : (template?.visibility ?? "public"),
     cover_image: template?.cover_image ?? "",
     options: template?.options?.map((o) => ({
         name: o.name,
@@ -78,6 +90,17 @@ const inputClass =
 ---
 
 <form id="template-form" class="space-y-6" novalidate>
+    {
+        isGuest && (
+            <GuestBanner
+                icon="fa-solid fa-user-lock"
+                title={t("form.guestBannerTitle")}
+                body={t("form.guestBannerBody")}
+                cta={t("form.guestBannerCta")}
+                href={`/api/auth/login?next=${encodeURIComponent(loginNext)}`}
+            />
+        )
+    }
     <!-- Details -->
     <section class="rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6 space-y-5">
         <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
@@ -129,17 +152,37 @@ const inputClass =
         />
 
         <div>
-            <Select
-                id="tf-visibility"
-                label={t("form.visibilityLabel")}
-                value={initial.visibility}
-                options={VISIBILITY_CHOICES.map((v) => ({
-                    value: v.value,
-                    label: v.label,
-                    hint: v.hint,
-                    icon: VISIBILITY_ICONS[v.value],
-                }))}
-            />
+            {
+                isGuest ? (
+                    <>
+                        <span class="block text-sm font-semibold text-text-primary mb-2">
+                            {t("form.visibilityLabel")}
+                        </span>
+                        <div class="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm flex items-center gap-2.5 cursor-not-allowed">
+                            <i class="fa-solid fa-lock text-text-muted text-xs" />
+                            <span class="text-text-primary font-medium">
+                                {t("form.visibilityPrivateLabel")}
+                            </span>
+                        </div>
+                        {/* Not a real <select> — the native element the
+                            script reads is the hidden input below, which
+                            exposes the same `.value` API. */}
+                        <input type="hidden" id="tf-visibility" value="private" />
+                    </>
+                ) : (
+                    <Select
+                        id="tf-visibility"
+                        label={t("form.visibilityLabel")}
+                        value={initial.visibility}
+                        options={VISIBILITY_CHOICES.map((v) => ({
+                            value: v.value,
+                            label: v.label,
+                            hint: v.hint,
+                            icon: VISIBILITY_ICONS[v.value],
+                        }))}
+                    />
+                )
+            }
             <p id="tf-visibility-hint" class="text-xs text-text-muted mt-2"></p>
         </div>
     </section>
@@ -184,9 +227,9 @@ const inputClass =
                 id="tf-cover-trigger"
                 class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-muted hover:text-text-secondary hover:bg-white/5 transition-colors cursor-pointer"
             >
-                <i id="tf-cover-icon" class="fa-solid fa-cloud-arrow-up text-2xl"></i>
-                <span id="tf-cover-cta" class="text-xs font-medium">{t("form.uploadCta")}</span>
-                <span id="tf-cover-hint" class="text-[11px] text-text-muted/70">{t("form.uploadHint")}</span>
+                <i id="tf-cover-icon" class={`fa-solid ${isGuest ? "fa-lock" : "fa-cloud-arrow-up"} text-2xl`}></i>
+                <span id="tf-cover-cta" class="text-xs font-medium">{isGuest ? t("form.lockedCoverCta") : t("form.uploadCta")}</span>
+                <span id="tf-cover-hint" class="text-[11px] text-text-muted/70">{isGuest ? t("form.lockedCoverHint") : t("form.uploadHint")}</span>
             </button>
             <div
                 id="tf-cover-actions"
@@ -234,6 +277,14 @@ const inputClass =
         <p class="text-xs text-text-muted -mt-2">
             {t("form.optionsHelp")}
         </p>
+        {
+            isGuest && (
+                <p class="text-xs text-primary/90 -mt-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-lock text-[10px]" />
+                    {t("form.optionsLockedNote")}
+                </p>
+            )
+        }
 
         <input
             id="tf-option-file"
@@ -395,8 +446,16 @@ const inputClass =
 <script>
     import { openModal, closeModal } from "../scripts/modal-a11y";
     import { uploadTemplateImage } from "../scripts/image-upload";
+    import { openLoginPrompt } from "../scripts/auth-prompt";
     import { clientT, getClientLocale } from "../i18n/client";
     import { localizePath } from "../i18n";
+    import { setSelectValue } from "../scripts/select";
+    import {
+        MAX_LOCAL_TEMPLATES,
+        atLocalTemplateLimit,
+        localTemplatePath,
+        saveLocalTemplate,
+    } from "../lib/local-templates";
     import { COLLAGE_TILES, collageHtml, collageImages } from "../lib/covers";
 
     document.addEventListener("astro:page-load", () => {
@@ -421,9 +480,12 @@ const inputClass =
         const category = document.getElementById(
             "tf-category",
         ) as HTMLSelectElement;
-        const visibility = document.getElementById(
-            "tf-visibility",
-        ) as HTMLSelectElement;
+        // A real <select> normally, but a plain hidden <input> in guest mode
+        // (visibility is locked to "private" — see the markup above). Both
+        // expose the same `.value` API, which is all this script needs.
+        const visibility = document.getElementById("tf-visibility") as
+            | HTMLSelectElement
+            | HTMLInputElement;
         const visibilityHint = document.getElementById("tf-visibility-hint")!;
         const coverFile = document.getElementById(
             "tf-cover-file",
@@ -589,7 +651,13 @@ const inputClass =
             renderCoverCollage();
         }
 
-        coverTrigger.addEventListener("click", () => coverFile.click());
+        coverTrigger.addEventListener("click", () => {
+            if (data.anonymous) {
+                openLoginPrompt(data.loginNext);
+                return;
+            }
+            coverFile.click();
+        });
         document
             .getElementById("tf-cover-replace")!
             .addEventListener("click", () => coverFile.click());
@@ -619,6 +687,10 @@ const inputClass =
         coverBox.addEventListener("drop", (e) => {
             e.preventDefault();
             coverBox.classList.remove("border-primary/60");
+            if (data.anonymous) {
+                openLoginPrompt(data.loginNext);
+                return;
+            }
             const file = e.dataTransfer?.files?.[0];
             if (file) handleCoverFile(file);
         });
@@ -681,10 +753,14 @@ const inputClass =
                 img.classList.remove("opacity-40");
                 img.removeAttribute("src");
                 icon.style.display = "";
-                icon.className =
-                    "option-thumb-icon fa-solid fa-camera text-text-muted text-sm";
-                thumb.title = t("form.optionAddImage");
-                thumb.setAttribute("aria-label", t("form.optionAddImage"));
+                icon.className = data.anonymous
+                    ? "option-thumb-icon fa-solid fa-lock text-text-muted text-sm"
+                    : "option-thumb-icon fa-solid fa-camera text-text-muted text-sm";
+                const label = data.anonymous
+                    ? t("form.optionAddImageLocked")
+                    : t("form.optionAddImage");
+                thumb.title = label;
+                thumb.setAttribute("aria-label", label);
             }
             renderCoverCollage();
         }
@@ -741,6 +817,10 @@ const inputClass =
             row.querySelector<HTMLButtonElement>(
                 ".option-thumb",
             )!.addEventListener("click", () => {
+                if (data.anonymous) {
+                    openLoginPrompt(data.loginNext);
+                    return;
+                }
                 if (row.dataset.uploading === "1") return;
                 optionUploadRow = row;
                 optionFile.click();
@@ -780,6 +860,68 @@ const inputClass =
             for (let i = 0; i < data.minOptions; i++) addRow();
         }
 
+        // ── Guest draft handoff ─────────────────────────────────────
+        // Guests can't actually submit (see the submit handler below) —
+        // signing in sends them through GitHub and back to /create as a
+        // normal user. Stash the draft as they type so it survives that
+        // round trip, and pick it back up here once they're signed in.
+        // Nothing to restore for images: guests can't add any.
+        const GUEST_DRAFT_KEY = "rm:createDraft";
+
+        if (data.anonymous) {
+            const saveDraft = () => {
+                try {
+                    sessionStorage.setItem(
+                        GUEST_DRAFT_KEY,
+                        JSON.stringify({
+                            title: title.value,
+                            description: desc.value,
+                            category: category.value,
+                            options: rows().map((r) => ({
+                                name: r.querySelector<HTMLInputElement>(
+                                    ".option-name",
+                                )!.value,
+                            })),
+                        }),
+                    );
+                } catch {
+                    /* storage unavailable — draft just won't persist */
+                }
+            };
+            form.addEventListener("input", saveDraft);
+        } else if (data.mode === "create") {
+            try {
+                const raw = sessionStorage.getItem(GUEST_DRAFT_KEY);
+                if (raw) {
+                    sessionStorage.removeItem(GUEST_DRAFT_KEY);
+                    const draft = JSON.parse(raw);
+                    if (!title.value && typeof draft.title === "string") {
+                        title.value = draft.title;
+                        title.dispatchEvent(new Event("input"));
+                    }
+                    if (!desc.value && typeof draft.description === "string") {
+                        desc.value = draft.description;
+                        desc.dispatchEvent(new Event("input"));
+                    }
+                    if (!category.value && draft.category) {
+                        setSelectValue(category, draft.category);
+                    }
+                    const draftOptions = Array.isArray(draft.options)
+                        ? draft.options.filter((o: any) => o?.name)
+                        : [];
+                    if (draftOptions.length > 0) {
+                        optionsEl.innerHTML = "";
+                        draftOptions.forEach((o: { name: string }) =>
+                            addRow(o.name),
+                        );
+                        while (rows().length < data.minOptions) addRow();
+                    }
+                }
+            } catch {
+                /* corrupt draft — ignore, form just starts empty */
+            }
+        }
+
         // ── Char counters ────────────────────────────────────────────
         function bindCounter(
             el: HTMLInputElement | HTMLTextAreaElement,
@@ -800,6 +942,12 @@ const inputClass =
         };
 
         function updateVisibilityHint() {
+            if (data.anonymous) {
+                // innerHTML (not textContent): this is the one hint that
+                // carries a clickable sign-in link.
+                visibilityHint.innerHTML = `${visibilityHints.private} <a href="/api/auth/login?next=${encodeURIComponent(data.loginNext)}" data-astro-reload class="auth-login-link text-primary hover:underline font-medium">${t("form.visibilityUnlockCta")}</a>`;
+                return;
+            }
             let hint = visibilityHints[visibility.value] || "";
             // Editing into unlisted regenerates the slug — warn about it,
             // since the edit page promises the URL stays the same otherwise.
@@ -1035,6 +1183,42 @@ const inputClass =
             const problem = validate(descShort && canAiAssist);
             if (problem) {
                 errorEl.textContent = problem;
+                return;
+            }
+
+            // Guests get a real template — it just lives in this browser
+            // instead of D1 (the API requires a session). It is playable
+            // immediately and is uploaded to the account on their next
+            // sign-in; see src/lib/local-templates.ts.
+            if (data.anonymous) {
+                if (atLocalTemplateLimit()) {
+                    errorEl.textContent = t("form.errLocalLimit", {
+                        n: MAX_LOCAL_TEMPLATES,
+                    });
+                    openLoginPrompt(data.loginNext);
+                    return;
+                }
+                const local = saveLocalTemplate({
+                    title: title.value.trim(),
+                    description: desc.value.trim(),
+                    category: category.value,
+                    options: rows().map((r) => ({
+                        name: r
+                            .querySelector<HTMLInputElement>(".option-name")!
+                            .value.trim(),
+                    })),
+                });
+                // The half-finished-draft handoff is moot now that the whole
+                // template is stored.
+                try {
+                    sessionStorage.removeItem(GUEST_DRAFT_KEY);
+                } catch {
+                    /* storage unavailable — nothing to clear */
+                }
+                window.location.href = localizePath(
+                    localTemplatePath(local.id),
+                    getClientLocale(),
+                );
                 return;
             }
 

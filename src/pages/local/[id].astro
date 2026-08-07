@@ -1,0 +1,324 @@
+---
+export const prerender = false;
+
+/**
+ * Guest-local template page — the ranking surface for a template this browser
+ * created without an account (see src/lib/local-templates.ts).
+ *
+ * The server knows nothing about it: the template lives in localStorage, so
+ * this page renders the same surface as /template/[slug] with empty slots and
+ * the script below fills them (title, options grid, #ranking-data) before
+ * handing over to the shared ranking engine. Everything that needs a D1 row —
+ * comments, votes, saving, link sharing, recommendations — is left out.
+ *
+ * Signing in imports these templates and redirects here-to-there; see
+ * src/scripts/local-templates-sync.ts.
+ */
+
+import Layout from "../../layouts/Layout.astro";
+import BattleView from "../../components/ranking/BattleView.astro";
+import GuestBanner from "../../components/GuestBanner.astro";
+import OptionCard from "../../components/ranking/OptionCard.astro";
+import ResultsView from "../../components/ranking/ResultsView.astro";
+import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
+import RemoveOptionModal from "../../components/ranking/RemoveOptionModal.astro";
+import BattleHistoryModal from "../../components/ranking/BattleHistoryModal.astro";
+import { defaultLocale, localizePath, useTranslations } from "../../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+const L = (p: string) => localizePath(p, locale);
+
+// Nothing here is shared or indexable: the content only exists in one browser.
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+---
+
+<Layout title={t("local.pageTitle")} description={t("local.metaDescription")} noindex>
+    <div id="local-template-page" data-id={Astro.params.id}>
+        <!-- Shown when this browser has no such local template (another
+             device, cleared storage, or already imported and removed). -->
+        <section
+            id="local-missing"
+            class="hidden mx-auto max-w-2xl px-4 sm:px-6 py-20 text-center"
+        >
+            <div
+                class="w-14 h-14 mx-auto rounded-2xl bg-surface-elevated border border-border flex items-center justify-center"
+            >
+                <i class="fa-solid fa-ghost text-text-muted text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-text-primary mt-5">
+                {t("local.missingTitle")}
+            </h1>
+            <p class="text-sm text-text-secondary mt-2">
+                {t("local.missingBody")}
+            </p>
+            <a
+                href={L("/create")}
+                data-astro-reload
+                class="inline-flex items-center gap-2 mt-6 px-5 py-3 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
+            >
+                <i class="fa-solid fa-plus"></i>
+                {t("local.missingCta")}
+            </a>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             VIEW 1: TEMPLATE DETAIL (default)
+             ═══════════════════════════════════════════════════ -->
+        <article
+            id="detail-view"
+            class="hidden mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 pb-28"
+        >
+            <a
+                href={L("/me")}
+                class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-8 group"
+            >
+                <i
+                    class="fa-solid fa-arrow-left text-xs transition-transform group-hover:-translate-x-1"
+                ></i>
+                {t("local.backToMine")}
+            </a>
+
+            <!-- "Only on this device" banner + sign-in CTA -->
+            <GuestBanner
+                icon="fa-solid fa-mobile-screen"
+                title={t("local.bannerTitle")}
+                body={t("local.bannerBody")}
+                cta={t("local.bannerCta")}
+                class="mb-8"
+            />
+
+            <div class="space-y-5">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span
+                        id="local-category"
+                        class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider"
+                    >
+                        <i id="local-category-icon" class="fa-solid text-[10px]"
+                        ></i>
+                        <span id="local-category-label"></span>
+                    </span>
+                    <span
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border text-text-muted text-xs font-semibold uppercase tracking-wider"
+                    >
+                        <i class="fa-solid fa-lock text-[10px]"></i>
+                        {t("me.visibilityPrivate")}
+                    </span>
+                </div>
+
+                <h1
+                    id="local-title"
+                    class="text-3xl sm:text-4xl font-bold tracking-tight text-text-primary leading-tight"
+                >
+                </h1>
+
+                <p
+                    id="local-description"
+                    class="hidden text-text-secondary leading-relaxed"
+                >
+                </p>
+
+                <div class="flex items-center gap-6 text-sm">
+                    <div class="flex items-center gap-2 text-text-muted">
+                        <i class="fa-solid fa-layer-group text-primary/70 text-xs"
+                        ></i>
+                        <span id="local-options-count" class="font-medium"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Options Grid (cloned from the blank card below) -->
+            <section class="mt-14">
+                <div class="flex items-center gap-3 mb-6">
+                    <h2
+                        class="text-lg font-bold text-text-primary tracking-tight"
+                    >
+                        {t("ranking.availableOptions")}
+                    </h2>
+                    <div class="flex-1 h-px bg-border/50"></div>
+                    <span
+                        id="local-items-count"
+                        class="text-xs text-text-muted font-medium"></span>
+                </div>
+                <div
+                    id="local-options"
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+                >
+                </div>
+            </section>
+        </article>
+
+        <!-- One blank option card, cloned per option by the script below so the
+             grid stays the same markup as the DB-backed template page. -->
+        <template id="local-option-card">
+            <OptionCard id="" name="" />
+        </template>
+
+        <!-- Floating CTA Button (no "save": there's no template to bookmark) -->
+        <div
+            id="start-ranking-cta"
+            class="hidden fixed bottom-20 md:bottom-6 right-6 z-40 flex items-center gap-3"
+        >
+            <button
+                id="start-ranking-btn"
+                class="group flex items-center gap-3 px-7 py-4 rounded-2xl bg-gradient-gold text-zinc-950 font-black text-sm glow-gold hover:shadow-[0_8px_60px_rgba(255,215,0,0.5)] hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 cursor-pointer"
+            >
+                <i class="fa-solid fa-play text-xs"></i>
+                {t("ranking.startRanking")}
+                <i
+                    class="fa-solid fa-arrow-right text-xs transition-transform group-hover:translate-x-1"
+                ></i>
+            </button>
+        </div>
+
+        <!-- VIEW 2: BATTLE VIEW -->
+        <BattleView title="" />
+
+        <FinishEarlyModal />
+
+        <RemoveOptionModal />
+
+        <!-- VIEW 3: RESULTS VIEW — no votes and no link sharing: neither has
+             anything to act on until the template is imported. -->
+        <ResultsView title="" votable={false} shareable={false} />
+
+        <BattleHistoryModal />
+
+        <div id="transition-overlay" class="hidden transition-overlay"></div>
+
+        <!-- Filled by the script below, then read by the ranking engine. -->
+        <script type="application/json" id="ranking-data" is:inline>{}</script>
+    </div>
+</Layout>
+
+<script>
+    import { rankingInit } from "../../scripts/ranking-engine";
+    import {
+        getLocalTemplate,
+        localTemplateSlug,
+    } from "../../lib/local-templates";
+    import { buildRankingData } from "../../lib/ranking-data";
+    import { stringToColor } from "../../lib/placeholder-color";
+    import { CATEGORY_ICONS } from "../../lib/categories";
+    import { clientT, getClientLocale } from "../../i18n/client";
+    import { localizePath } from "../../i18n";
+
+    // Signing in imports every local template (Layout runs the sync). When the
+    // one this page is showing lands in the account, follow it to its real
+    // template page — replace, so Back doesn't return to a page whose template
+    // no longer exists locally.
+    document.addEventListener("rankmaker:local-templates-imported", (event) => {
+        const page = document.getElementById("local-template-page");
+        if (!page) return;
+        const imported = (event as CustomEvent).detail?.imported as
+            | { id: string; slug: string }[]
+            | undefined;
+        const mine = imported?.find((entry) => entry.id === page.dataset.id);
+        if (!mine) return;
+        window.location.replace(
+            localizePath(`/template/${mine.slug}`, getClientLocale()),
+        );
+    });
+
+    document.addEventListener("astro:page-load", () => {
+        const page = document.getElementById("local-template-page");
+        if (!page) return; // navigated to some other page
+        const t = clientT();
+
+        const template = getLocalTemplate(page.dataset.id || "");
+        if (!template) {
+            document.getElementById("local-missing")!.classList.remove("hidden");
+            return;
+        }
+
+        // ── Detail view ──────────────────────────────────────────────
+        document.title = t("ranking.pageTitle", { title: template.title });
+
+        const titleEl = document.getElementById("local-title")!;
+        titleEl.textContent = template.title;
+        document.getElementById("battle-title")!.textContent = template.title;
+        document.getElementById("results-title")!.textContent = template.title;
+
+        if (template.description) {
+            const descEl = document.getElementById("local-description")!;
+            descEl.textContent = template.description;
+            descEl.classList.remove("hidden");
+        }
+
+        if (template.category) {
+            const chip = document.getElementById("local-category")!;
+            document.getElementById("local-category-icon")!.classList.add(
+                CATEGORY_ICONS[template.category] || "fa-ellipsis-h",
+            );
+            document.getElementById("local-category-label")!.textContent = t(
+                `categories.${template.category}`,
+            );
+            chip.classList.remove("hidden");
+            chip.classList.add("inline-flex");
+        }
+
+        const count = template.options.length;
+        document.getElementById("local-options-count")!.textContent = t(
+            "ranking.optionsCount",
+            { n: count },
+        );
+        document.getElementById("local-items-count")!.textContent = t(
+            "ranking.itemsCount",
+            { n: count },
+        );
+
+        // ── Options grid ─────────────────────────────────────────────
+        const cardTemplate = document.getElementById(
+            "local-option-card",
+        ) as HTMLTemplateElement;
+        const grid = document.getElementById("local-options")!;
+        grid.innerHTML = "";
+        for (const option of template.options) {
+            const card = cardTemplate.content.firstElementChild!.cloneNode(
+                true,
+            ) as HTMLElement;
+            card.dataset.optionCard = String(option.id);
+            card.querySelector(".option-name")!.textContent = option.name;
+
+            const removeBtn = card.querySelector<HTMLButtonElement>(
+                "[data-remove-option]",
+            )!;
+            removeBtn.dataset.removeOption = String(option.id);
+            removeBtn.dataset.optionName = option.name;
+            removeBtn.setAttribute(
+                "aria-label",
+                t("ranking.removeOptionAria", { name: option.name }),
+            );
+
+            // Guests can't upload images, so every card shows SmartImage's
+            // text fallback — tinted with the same seed colour the server
+            // would have used.
+            const fallback = card.querySelector<HTMLElement>(
+                ".smart-image-fallback",
+            )!;
+            fallback.style.setProperty(
+                "--tw-gradient-to",
+                `${stringToColor(option.name)}40`,
+            );
+            card.querySelector(".smart-image-fallback-text")!.textContent =
+                option.name;
+
+            grid.appendChild(card);
+        }
+
+        // ── Hand over to the shared ranking engine ───────────────────
+        document.getElementById("ranking-data")!.textContent = JSON.stringify(
+            buildRankingData({
+                slug: localTemplateSlug(template.id),
+                title: template.title,
+                options: template.options,
+            }),
+        );
+        document.getElementById("detail-view")!.classList.remove("hidden");
+        document
+            .getElementById("start-ranking-cta")!
+            .classList.remove("hidden");
+        rankingInit();
+    });
+</script>

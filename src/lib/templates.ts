@@ -5,6 +5,7 @@
  */
 import templatesJson from '../data/templates.json';
 import { CATEGORY_NAMES } from './categories';
+import { MAX_OPTIONS, MIN_OPTIONS } from './template-limits';
 import {
     COLLAGE_TILES,
     canBuildCollage,
@@ -495,9 +496,11 @@ export async function generateUnlistedSlug(
 
 // ── Input validation (shared by POST create / PUT update) ────────────────────
 
-export const MIN_OPTIONS = 4;
-export const MAX_OPTIONS = 50;
-export const MAX_TEMPLATES_PER_USER = 50;
+export {
+    MIN_OPTIONS,
+    MAX_OPTIONS,
+    MAX_TEMPLATES_PER_USER,
+} from './template-limits';
 
 export type TemplateInput = {
     title: string;

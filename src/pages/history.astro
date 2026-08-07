@@ -153,6 +153,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		type HistorySummary,
 		type RankedItem,
 	} from "../scripts/history";
+	import {
+		localTemplateIdFromSlug,
+		localTemplatePath,
+	} from "../lib/local-templates";
 	import { clientT, getClientLocale } from "../i18n/client";
 	import { localizePath } from "../i18n";
 
@@ -323,6 +327,16 @@ Astro.response.headers.set("Cache-Control", "no-store");
 					: "bg-border/60 text-text-muted text-sm font-black";
 	}
 
+	/** Where a played template lives — local templates have their own page. */
+	function templateHref(slug: string): string {
+		const localId = localTemplateIdFromSlug(slug);
+		return L(
+			localId
+				? localTemplatePath(localId)
+				: `/template/${encodeURIComponent(slug)}`,
+		);
+	}
+
 	function detailsMarkup(entry: HistoryEntry): string {
 		const rows = entry.result
 			.map(
@@ -337,9 +351,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 			)
 			.join("");
 
-		const href = escapeHtml(
-			L(`/template/${encodeURIComponent(entry.slug)}`),
-		);
+		const href = escapeHtml(templateHref(entry.slug));
 		return `
 			<div class="flex items-center gap-3 mb-3">
 				<span class="text-xs font-semibold uppercase tracking-widest text-text-muted">${escapeHtml(t("history.fullRanking"))}</span>
