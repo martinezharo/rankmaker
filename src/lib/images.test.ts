@@ -4,6 +4,7 @@ import {
     collectImageKeys,
     evaluateImageModeration,
     extractImageKey,
+    readUploadBody,
     sniffImageType,
 } from './images';
 
@@ -88,6 +89,28 @@ describe('sniffImageType', () => {
         ).toBeNull();
         expect(sniffImageType(bytes(0x00, 0x01, 0x02, 0x03))).toBeNull();
     });
+});
+
+describe('readUploadBody', () => {
+	it('returns the body when it stays within the limit', async () => {
+		const request = new Request('https://rankmaker.test/upload', {
+			method: 'POST',
+			body: 'abc',
+		});
+
+		expect(await readUploadBody(request, 3)).toEqual(
+			new TextEncoder().encode('abc').buffer
+		);
+	});
+
+	it('stops reading once the limit is exceeded', async () => {
+		const request = new Request('https://rankmaker.test/upload', {
+			method: 'POST',
+			body: 'abcd',
+		});
+
+		expect(await readUploadBody(request, 3)).toBeNull();
+	});
 });
 
 describe('evaluateImageModeration', () => {
