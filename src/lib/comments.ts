@@ -67,9 +67,9 @@ export async function listComments(
 ): Promise<CommentNode[]> {
 	const { results } = await db
 		.prepare(
-				`WITH RECURSIVE roots AS (
-				   SELECT id FROM comments
-				   WHERE slug = ? COLLATE NOCASE AND parent_id IS NULL
+			`WITH RECURSIVE roots AS (
+			   SELECT id FROM comments
+			   WHERE slug = ? COLLATE NOCASE AND parent_id IS NULL
 			   ORDER BY (up_votes + down_votes) DESC, created_at DESC, id ASC
 			   LIMIT ?
 			 ),
@@ -89,7 +89,7 @@ export async function listComments(
 			   ON v.subject_type = 'comment' AND v.subject_id = c.id
 			      AND v.user_id = ?
 			 LEFT JOIN ranking_results rr
-				   ON rr.user_id = c.user_id AND rr.slug = c.slug COLLATE NOCASE`
+			   ON rr.user_id = c.user_id AND rr.slug = c.slug COLLATE NOCASE`
 		)
 		.bind(slug, MAX_ROOT_THREADS, currentUserId ?? '')
 		.all<CommentRow>();
@@ -138,7 +138,7 @@ export async function getComment(
 			   ON v.subject_type = 'comment' AND v.subject_id = c.id
 			      AND v.user_id = ?
 			 LEFT JOIN ranking_results rr
-				   ON rr.user_id = c.user_id AND rr.slug = c.slug COLLATE NOCASE
+			   ON rr.user_id = c.user_id AND rr.slug = c.slug COLLATE NOCASE
 			 WHERE c.id = ?`
 		)
 		.bind(currentUserId ?? '', id)

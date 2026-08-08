@@ -40,7 +40,7 @@ export const POST: APIRoute = async (context) => {
         if (kindParam !== 'cover' && kindParam !== 'option') {
             return json({ error: 'invalid_kind' }, 400);
         }
-        const kind = kindParam as UploadKind;
+        const kind: UploadKind = kindParam;
 
         // Reject oversized bodies before buffering when the header is
         // present; the byteLength check below is the real gate.
