@@ -28,6 +28,20 @@ deployment, or data-retention decision rather than a safe correctness fix.
   remove an R2 object if its D1 ownership row cannot be created. Account
   deletion now removes owned R2 objects before the user row is deleted.
 - Deprecated Astro `ViewTransitions` usage was replaced with `ClientRouter`.
+  The Font Awesome stylesheet is marked `transition:persist` so the element
+  promoted from `rel="preload"` to `rel="stylesheet"` survives the head swap.
+  Without it the router reinserted a bare preload link and left every icon
+  unstyled for the rest of the session; `e2e/icons.spec.ts` guards this.
+- Case-insensitive slug lookups have matching `COLLATE NOCASE` indexes
+  (migration 0015). SQLite only uses an index whose collation matches the
+  predicate's, so `WHERE slug = ? COLLATE NOCASE` was scanning `comments`,
+  `rankings`, `votes`, `ranking_results`, and `template_saves` outright.
+  `templates.slug` needed nothing: that column is already declared NOCASE.
+- Template votes apply their alias cleanup and upsert in one `batch()`, and no
+  longer delete the canonical row they are about to reinsert.
+- Slug-keyed aggregates (`getCounts`, `getTemplateVotes`) are keyed only by the
+  lowercased slug and read through `slugValue()`, instead of duplicating every
+  total under both the lowercased and the raw spelling.
 - Playwright tests can target an externally started server, isolate Miniflare
   state from a user's running dev server, establish cookie-consent state before
   page scripts run, and use a stable mouse path for SortableJS fallback drags.
@@ -134,10 +148,11 @@ Cloudflare Rate Limiting, or another centralized mechanism.
 ### 8. One-time legacy slug migration
 
 Runtime reads now tolerate case-only slug aliases and aggregate their counts and
-votes. Existing databases may still contain duplicate aliases across ranking
-results, comments, saves, votes, and notification references. Automatically
-merging them requires rules for result precedence, comment timestamps, vote
-identity, and notification delivery.
+votes, and migration 0015 gives those reads NOCASE indexes so the compatibility
+layer is not paid for with table scans. Existing databases may still contain
+duplicate aliases across ranking results, comments, saves, votes, and
+notification references. Automatically merging them requires rules for result
+precedence, comment timestamps, vote identity, and notification delivery.
 
 Decision needed: choose whether to keep the compatibility layer permanently or
 run a one-time migration with explicit merge rules and a rollback plan.
@@ -153,9 +168,10 @@ possibly materialized counters or caching.
 
 During the migrated local-browser run, the same SSR/API surfaces ranged from
 sub-second responses to roughly 4–76 seconds under the existing VPS CPU load.
-This is not a production benchmark, but it is enough evidence to keep the
-query shape and deployment load visible rather than assuming the current
-parallel requests scale indefinitely.
+Part of that was the missing NOCASE indexes now added in migration 0015; the
+rest is deployment load and query shape. This is not a production benchmark,
+but it is enough evidence to keep both visible rather than assuming the
+current parallel requests scale indefinitely.
 
 Decision needed: choose pagination boundaries and freshness guarantees before
 changing the response shapes or adding durable aggregate tables.
