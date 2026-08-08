@@ -16,21 +16,42 @@ export function slugFromUrl(url: string | undefined | null): string | null {
 }
 
 /**
- * Aggregate rows whose slug differs only by case and retain raw aliases for
- * callers that still hold a legacy-cased template slug.
+ * Slug-keyed aggregate (ranking counts, vote scores). Always keyed by
+ * `slugKey`, never by a raw slug — see `aggregateSlugValues`.
+ */
+export type SlugValues = Record<string, number>;
+
+/**
+ * The key a slug-keyed aggregate is stored under. Slugs are matched
+ * case-insensitively because rows written before slugs were canonicalized may
+ * differ from a template's own spelling (see AUDIT.md #8).
+ */
+export function slugKey(slug: string): string {
+    return slug.toLowerCase();
+}
+
+/**
+ * Aggregate rows whose slug differs only by case into a single entry.
+ *
+ * Emitting the raw spellings as extra keys as well would let a caller read the
+ * map directly, but it duplicates every total under two keys and inflates the
+ * public /api/counts payload. Callers go through `slugValue` instead.
  */
 export function aggregateSlugValues(
     rows: readonly { slug: string; value: number }[]
-): Record<string, number> {
-    const totals: Record<string, number> = {};
+): SlugValues {
+    const totals: SlugValues = {};
     for (const row of rows) {
-        const key = row.slug.toLowerCase();
+        const key = slugKey(row.slug);
         totals[key] = (totals[key] ?? 0) + row.value;
     }
+    return totals;
+}
 
-    const output: Record<string, number> = { ...totals };
-    for (const row of rows) {
-        output[row.slug] = totals[row.slug.toLowerCase()];
-    }
-    return output;
+/** Read a slug-keyed aggregate, ignoring case-only spelling differences. */
+export function slugValue(
+    values: SlugValues | undefined,
+    slug: string
+): number {
+    return values?.[slugKey(slug)] ?? 0;
 }

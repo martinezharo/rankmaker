@@ -14,6 +14,7 @@ import {
     type Template,
 } from "../lib/templates";
 import { getTemplateVotes } from "../lib/template-votes";
+import { slugValue, type SlugValues } from "../lib/slug";
 import { avatarHtml } from "../lib/avatars";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
@@ -26,7 +27,7 @@ const L = (p: string) => localizePath(p, locale);
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
 let userTemplates: Template[] = [];
-let votes: Record<string, number> = {};
+let votes: SlugValues = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
     if (db) {
@@ -41,7 +42,7 @@ try {
 
 // Sort by most ranked (live counts re-sort client-side via rm:counts)
 const templates = [...getOfficialTemplates(), ...userTemplates]
-    .map((t) => ({ ...t, votes: votes[t.slug] ?? 0 }))
+    .map((t) => ({ ...t, votes: slugValue(votes, t.slug) }))
     .sort((a, b) => b.times_ranked - a.times_ranked);
 
 const escapeHtml = (s: string) =>
@@ -199,6 +200,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
         import { initSaveButtons } from "../scripts/save-template";
         import { setSelectValue } from "../scripts/select";
         import { collageHtml, resolveImageUrl } from "../lib/covers";
+        import { slugValue, type SlugValues } from "../lib/slug";
 
         document.addEventListener("astro:page-load", () => {
             const templates: any[] = (window as any).__SEARCH_TEMPLATES__;
@@ -322,12 +324,13 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                 // Sort by real ranking counts (from D1) when available,
                 // falling back to the build-time order otherwise.
                 const counts = (window as any).__rmCounts as
-                    | Record<string, number>
+                    | SlugValues
                     | undefined;
                 if (counts) {
                     filtered.sort(
                         (a, b) =>
-                            (counts[b.slug] || 0) - (counts[a.slug] || 0),
+                            slugValue(counts, b.slug) -
+                            slugValue(counts, a.slug),
                     );
                 }
 
