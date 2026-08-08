@@ -8,6 +8,8 @@
  * JSON), so the net score is aggregated live — mirroring src/lib/counts.ts.
  */
 
+import { aggregateSlugValues } from './slug';
+
 export const VOTE_SUBJECT_TEMPLATE = 'template';
 
 /**
@@ -37,11 +39,9 @@ export async function getTemplateVotes(
         )
         .all<{ slug: string; score: number }>();
 
-    const scores: Record<string, number> = {};
-    for (const row of results) {
-        scores[row.slug] = row.score;
-    }
-    return scores;
+    return aggregateSlugValues(
+        results.map((row) => ({ slug: row.slug, value: row.score }))
+    );
 }
 
 /** Net score for a single slug. */
@@ -52,7 +52,7 @@ export async function getTemplateVoteScore(
     const row = await db
         .prepare(
             `SELECT COALESCE(SUM(value), 0) AS score FROM votes
-             WHERE subject_type = 'template' AND subject_id = ?`
+             WHERE subject_type = 'template' AND subject_id = ? COLLATE NOCASE`
         )
         .bind(slug)
         .first<{ score: number }>();
@@ -68,7 +68,8 @@ export async function getUserTemplateVote(
     const row = await db
         .prepare(
             `SELECT value FROM votes
-             WHERE user_id = ? AND subject_type = 'template' AND subject_id = ?`
+             WHERE user_id = ? AND subject_type = 'template'
+               AND subject_id = ? COLLATE NOCASE`
         )
         .bind(userId, slug)
         .first<{ value: number }>();
@@ -90,20 +91,34 @@ export async function applyTemplateVote(
         await db
             .prepare(
                 `DELETE FROM votes
-                 WHERE user_id = ? AND subject_type = 'template' AND subject_id = ?`
+                 WHERE user_id = ? AND subject_type = 'template'
+                   AND subject_id = ? COLLATE NOCASE`
             )
             .bind(userId, slug)
             .run();
     } else {
-        await db
-            .prepare(
-                `INSERT INTO votes (user_id, subject_type, subject_id, value)
-                 VALUES (?, 'template', ?, ?)
-                 ON CONFLICT(user_id, subject_type, subject_id)
-                 DO UPDATE SET value = excluded.value`
-            )
-            .bind(userId, slug, value)
-            .run();
+        // Clear only case-only aliases left by pre-canonicalization writes; the
+        // canonical row is upserted below. Deleting it here too would make the
+        // ON CONFLICT clause dead code and turn every vote into a
+        // delete-then-insert pair that loses the vote if the second half fails.
+        // Both statements go in one batch so the row is never briefly missing.
+        await db.batch([
+            db
+                .prepare(
+                    `DELETE FROM votes
+                     WHERE user_id = ? AND subject_type = 'template'
+                       AND subject_id = ? COLLATE NOCASE AND subject_id != ?`
+                )
+                .bind(userId, slug, slug),
+            db
+                .prepare(
+                    `INSERT INTO votes (user_id, subject_type, subject_id, value)
+                     VALUES (?, 'template', ?, ?)
+                     ON CONFLICT(user_id, subject_type, subject_id)
+                     DO UPDATE SET value = excluded.value`
+                )
+                .bind(userId, slug, value),
+        ]);
     }
 
     return { score: await getTemplateVoteScore(db, slug), myVote: value };

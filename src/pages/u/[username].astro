@@ -6,6 +6,7 @@ import Avatar from "../../components/Avatar.astro";
 import TemplateCard from "../../components/TemplateCard.astro";
 import { getCounts } from "../../lib/counts";
 import { getTemplateVotes } from "../../lib/template-votes";
+import { slugValue } from "../../lib/slug";
 import { listTemplatesByUserId } from "../../lib/templates";
 import { getFollowCounts } from "../../lib/follows";
 import { defaultLocale, useTranslations } from "../../i18n";
@@ -47,8 +48,8 @@ try {
     ]);
     templates = templates.map((t) => ({
         ...t,
-        times_ranked: counts[t.slug] ?? 0,
-        votes: votes[t.slug] ?? 0,
+        times_ranked: slugValue(counts, t.slug),
+        votes: slugValue(votes, t.slug),
     }));
 } catch {
     // keep fallback numbers

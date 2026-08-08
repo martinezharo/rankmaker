@@ -7,6 +7,7 @@
  */
 import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
+import { slugValue } from './slug';
 import { TEMPLATE_LIST_SELECT, mapTemplateRow, type Template } from './templates';
 
 export type FollowCounts = { followers: number; following: number };
@@ -174,8 +175,8 @@ export async function listFollowingTemplates(
         ]);
         templates = templates.map((t) => ({
             ...t,
-            times_ranked: counts[t.slug] ?? 0,
-            votes: votes[t.slug] ?? 0,
+            times_ranked: slugValue(counts, t.slug),
+            votes: slugValue(votes, t.slug),
         }));
     } catch {
         // keep zeroed counts on error

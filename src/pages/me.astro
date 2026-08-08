@@ -10,6 +10,7 @@ import { MAX_BIO_LEN } from "./api/me/profile";
 import { categoryIcon } from "../lib/categories";
 import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
+import { slugValue } from "../lib/slug";
 import { listTemplatesByUserId } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
@@ -47,8 +48,8 @@ if (user) {
         ]);
         templates = templates.map((t) => ({
             ...t,
-            times_ranked: counts[t.slug] ?? 0,
-            votes: votes[t.slug] ?? 0,
+            times_ranked: slugValue(counts, t.slug),
+            votes: slugValue(votes, t.slug),
         }));
     } catch {
         // keep zeros

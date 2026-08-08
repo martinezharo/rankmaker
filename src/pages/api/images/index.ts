@@ -11,6 +11,7 @@ import {
     imageKeyToUrl,
     imagePublicBase,
     moderateImage,
+    readUploadBody,
     sniffImageType,
     type UploadKind,
 } from '../../../lib/images';
@@ -36,7 +37,10 @@ export const POST: APIRoute = async (context) => {
         if (!user) return json({ error: 'You must be logged in.' }, 401);
 
         const kindParam = context.url.searchParams.get('kind');
-        const kind: UploadKind = kindParam === 'cover' ? 'cover' : 'option';
+        if (kindParam !== 'cover' && kindParam !== 'option') {
+            return json({ error: 'invalid_kind' }, 400);
+        }
+        const kind: UploadKind = kindParam;
 
         // Reject oversized bodies before buffering when the header is
         // present; the byteLength check below is the real gate.
@@ -48,17 +52,8 @@ export const POST: APIRoute = async (context) => {
             return json({ error: 'too_large' }, 413);
         }
 
-        // Soft daily cost/abuse cap, same KV pattern as /api/templates/describe.
-        const kv = env['rm-times-ranked'];
-        const day = new Date().toISOString().slice(0, 10);
-        const rlKey = `img-up:${user.id}:${day}`;
-        const used = parseInt((await kv.get(rlKey)) ?? '0', 10) || 0;
-        if (used >= DAILY_UPLOAD_LIMIT) {
-            return json({ error: 'rate_limited' }, 429);
-        }
-        await kv.put(rlKey, String(used + 1), { expirationTtl: 60 * 60 * 48 });
-
-        const original = await context.request.arrayBuffer();
+        const original = await readUploadBody(context.request, MAX_UPLOAD_BYTES);
+        if (original === null) return json({ error: 'too_large' }, 413);
         if (original.byteLength === 0) return json({ error: 'unsupported_type' }, 400);
         if (original.byteLength > MAX_UPLOAD_BYTES) {
             return json({ error: 'too_large' }, 413);
@@ -67,6 +62,18 @@ export const POST: APIRoute = async (context) => {
         if (!sniffed) {
             return json({ error: 'unsupported_type' }, 415);
         }
+
+        // Soft daily cost/abuse cap, same KV pattern as /api/templates/describe.
+        // Reserve a slot only after cheap validation, so malformed requests do
+        // not consume a user's quota.
+        const kv = env['rm-times-ranked'];
+        const day = new Date().toISOString().slice(0, 10);
+        const rlKey = `img-up:${user.id}:${day}`;
+        const used = parseInt((await kv.get(rlKey)) ?? '0', 10) || 0;
+        if (used >= DAILY_UPLOAD_LIMIT) {
+            return json({ error: 'rate_limited' }, 429);
+        }
+        await kv.put(rlKey, String(used + 1), { expirationTtl: 60 * 60 * 48 });
 
         // Re-encode to WebP, longest edge capped per kind. scale-down never
         // upscales and preserves aspect ratio. A decode failure here means
@@ -133,11 +140,21 @@ export const POST: APIRoute = async (context) => {
                 cacheControl: 'public, max-age=31536000, immutable',
             },
         });
-        await env.DB.prepare(
-            'INSERT INTO images (key, user_id) VALUES (?, ?)'
-        )
-            .bind(key, user.id)
-            .run();
+        try {
+            await env.DB.prepare(
+                'INSERT INTO images (key, user_id) VALUES (?, ?)'
+            )
+                .bind(key, user.id)
+                .run();
+        } catch (error) {
+            // R2 and D1 are separate systems. Do not leave an untracked object
+            // behind when the ownership row cannot be created; orphan cleanup
+            // only sees rows that made it into D1.
+            await env.IMAGES_BUCKET.delete(key).catch((cleanupError) =>
+                console.error('Failed to roll back uploaded image:', cleanupError)
+            );
+            throw error;
+        }
 
         // Piggyback abandoned-upload cleanup for this user on the response.
         ctx.waitUntil(

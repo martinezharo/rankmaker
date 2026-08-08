@@ -48,23 +48,35 @@ export const POST: APIRoute = async (context) => {
 		}
 
 		const slug = typeof body.slug === 'string' ? body.slug : '';
-		const action = body.action === 'unsave' ? 'unsave' : 'save';
+		if (body.action !== 'save' && body.action !== 'unsave') {
+			return json({ error: 'Invalid action' }, 400);
+		}
+		const action = body.action;
 		const template = slug ? await getTemplateBySlug(env.DB, slug) : null;
 		if (!template || !canAccessTemplate(template, user.username)) {
 			return json({ error: 'Template not found' }, 404);
 		}
+		const canonicalSlug = template.slug;
 
 		if (action === 'save') {
-			await env.DB.prepare(
-				'INSERT OR IGNORE INTO template_saves (user_id, slug) VALUES (?, ?)'
-			)
-				.bind(user.id, slug)
-				.run();
+			await env.DB.batch([
+				env.DB
+					.prepare(
+						`DELETE FROM template_saves
+						 WHERE user_id = ? AND slug = ? COLLATE NOCASE AND slug != ?`
+					)
+					.bind(user.id, canonicalSlug, canonicalSlug),
+				env.DB
+					.prepare(
+						'INSERT OR IGNORE INTO template_saves (user_id, slug) VALUES (?, ?)'
+					)
+					.bind(user.id, canonicalSlug),
+			]);
 		} else {
 			await env.DB.prepare(
-				'DELETE FROM template_saves WHERE user_id = ? AND slug = ?'
+				'DELETE FROM template_saves WHERE user_id = ? AND slug = ? COLLATE NOCASE'
 			)
-				.bind(user.id, slug)
+				.bind(user.id, canonicalSlug)
 				.run();
 		}
 

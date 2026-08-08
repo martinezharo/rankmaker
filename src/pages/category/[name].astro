@@ -15,6 +15,7 @@ import {
     type Template,
 } from "../../lib/templates";
 import { getTemplateVotes } from "../../lib/template-votes";
+import { slugValue } from "../../lib/slug";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -48,7 +49,7 @@ try {
 
 const templates = [...getOfficialTemplates(), ...userTemplates]
     .filter((tpl) => tpl.category === categoryName)
-    .map((tpl) => ({ ...tpl, votes: votes[tpl.slug] ?? 0 }))
+    .map((tpl) => ({ ...tpl, votes: slugValue(votes, tpl.slug) }))
     .sort((a, b) => b.times_ranked - a.times_ranked);
 
 const icon = categoryIcon(categoryName);

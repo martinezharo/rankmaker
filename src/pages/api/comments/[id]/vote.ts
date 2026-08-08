@@ -2,7 +2,14 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../../lib/auth';
-import { applyVote } from '../../../../lib/comments';
+import {
+	applyVote,
+	getCommentContext,
+} from '../../../../lib/comments';
+import {
+	canAccessTemplate,
+	getTemplateBySlug,
+} from '../../../../lib/templates';
 
 /**
  * POST /api/comments/:id/vote — cast/clear this user's vote. Login +
@@ -30,6 +37,15 @@ export const POST: APIRoute = async (context) => {
 		const value = body.value;
 		if (value !== 1 && value !== -1 && value !== 0) {
 			return json({ error: 'Invalid vote' }, 400);
+		}
+
+		const comment = await getCommentContext(env.DB, id);
+		if (!comment || comment.isDeleted) {
+			return json({ error: 'Comment not found' }, 404);
+		}
+		const template = await getTemplateBySlug(env.DB, comment.slug);
+		if (!template || !canAccessTemplate(template, user.username)) {
+			return json({ error: 'Comment not found' }, 404);
 		}
 
 		const totals = await applyVote(env.DB, user.id, id, value);

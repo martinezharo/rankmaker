@@ -114,7 +114,10 @@ export const POST: APIRoute = async (context) => {
 		}
 
 		const username = typeof body.username === 'string' ? body.username : '';
-		const follow = body.action !== 'unfollow';
+		if (body.action !== 'follow' && body.action !== 'unfollow') {
+			return json({ error: 'Invalid action' }, 400);
+		}
+		const follow = body.action === 'follow';
 
 		const targetId = username
 			? await userIdByUsername(env.DB, username)

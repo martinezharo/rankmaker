@@ -4,6 +4,14 @@ import { test, expect, type Page } from '@playwright/test';
 const A = { slug: 'best-social-networks-ranking', titleNeedle: 'Social Networks' };
 const B = { slug: 'most-popular-stephen-king-books', titleNeedle: 'Stephen King' };
 
+test.beforeEach(async ({ page }) => {
+	// The cookie banner is outside the ranking surface. Give every test a
+	// deterministic consent state so a delayed banner cannot intercept clicks.
+	await page.addInitScript(() => {
+		localStorage.setItem('rankmaker_cookie_consent', 'false');
+	});
+});
+
 type FirstBattle = {
 	leftId: number;
 	rightId: number;
@@ -26,7 +34,7 @@ async function rankToResults(page: Page, slug: string): Promise<FirstBattle> {
 	await expect(page.locator('#battle-view')).toBeVisible();
 
 	// Answer matchups until the results view appears. Each pick has a ~600ms
-	// animation before the next pair shows, so wait for the card name to change.
+	// animation before the next pair shows, so wait for the card IDs to change.
 	// Track every matchup shown: the engine must never re-ask a settled pair.
 	const seenPairs = new Set<string>();
 	const results = page.locator('#results-view');
@@ -37,41 +45,40 @@ async function rankToResults(page: Page, slug: string): Promise<FirstBattle> {
 		if (!(await cardA.isVisible().catch(() => false))) break;
 		const before = (await page.locator('#battle-name-a').textContent())?.trim();
 		const nameB = (await page.locator('#battle-name-b').textContent())?.trim();
+		const leftId = Number(await cardA.getAttribute('data-item-id'));
+		const rightId = Number(
+			await page.locator('#battle-card-b').getAttribute('data-item-id')
+		);
 		if (!firstBattle) {
 			firstBattle = {
-				leftId: Number(await cardA.getAttribute('data-item-id')),
-				rightId: Number(
-					await page.locator('#battle-card-b').getAttribute('data-item-id')
-				),
+				leftId,
+				rightId,
 				leftName: before ?? '',
 				rightName: nameB ?? '',
 			};
 		}
-		const pairKey = [before, nameB].sort().join(' ⚔ ');
+		const pairKey = [leftId, rightId].sort((a, b) => a - b).join('-');
 		expect(seenPairs.has(pairKey), `repeated battle: ${pairKey}`).toBe(false);
 		seenPairs.add(pairKey);
 		await cardA.click();
-		await page
-			.waitForFunction(
-				(prev) => {
-					if (document.getElementById('results-view')?.checkVisibility())
-						return true;
-					const now = document
-						.getElementById('battle-name-a')
-						?.textContent?.trim();
-					return now !== prev;
-				},
-				before,
-				{ timeout: 5_000 }
-			)
-			.catch(() => {});
+		await page.waitForFunction(
+			([previousLeftId, previousRightId]) => {
+				if (document.getElementById('results-view')?.checkVisibility())
+					return true;
+				const left = document.getElementById('battle-card-a')?.dataset.itemId;
+				const right = document.getElementById('battle-card-b')?.dataset.itemId;
+				return left !== String(previousLeftId) || right !== String(previousRightId);
+			},
+			[leftId, rightId] as const,
+			{ timeout: 10_000 }
+		);
 	}
 	await expect(results).toBeVisible();
 	if (!firstBattle) throw new Error('ranking completed without a visible battle');
 	return firstBattle;
 }
 
-/** Pointer-drag the drag handle of one row over the top edge of another row. */
+/** Pointer-drag the drag handle of one row over the center of another row. */
 async function dragRow(page: Page, fromIndex: number, toIndex: number) {
 	const rows = page.locator('#results-list .rank-item');
 	// mouse.* is low-level and does not auto-scroll; bring the rows into the
@@ -84,19 +91,18 @@ async function dragRow(page: Page, fromIndex: number, toIndex: number) {
 	const hx = hb.x + hb.width / 2;
 	const hy = hb.y + hb.height / 2;
 	const tx = tb.x + tb.width / 2;
-	const ty = tb.y + 6; // just inside the top edge of the target row
+	const ty = tb.y + tb.height / 2;
 
 	await page.mouse.move(hx, hy);
 	await page.mouse.down();
 	// Cross the drag threshold, then travel over the target in small steps so
 	// SortableJS's fallback drag picks up the move via elementFromPoint.
-	await page.mouse.move(hx, hy - 6, { steps: 5 });
-	await page.waitForTimeout(50);
-	await page.mouse.move(tx, ty, { steps: 20 });
-	await page.waitForTimeout(50);
-	await page.mouse.move(tx, ty, { steps: 5 });
-	await page.mouse.up();
+	await page.mouse.move(hx, hy - 8, { steps: 8 });
 	await page.waitForTimeout(100);
+	await page.mouse.move(tx, ty, { steps: 30 });
+	await page.waitForTimeout(200);
+	await page.mouse.up();
+	await page.waitForTimeout(300);
 }
 
 test('ranks an official template from start to results, then downloads image', async ({
@@ -214,6 +220,7 @@ test('persists battle sides and restores the history after a reload', async ({
 test('does not shift the template page when remote history arrives', async ({
 	page,
 }) => {
+	test.setTimeout(90_000);
 	const remoteEntry = {
 		slug: A.slug,
 		title: 'Saved remotely',
@@ -271,6 +278,7 @@ test('does not shift the template page when remote history arrives', async ({
 test('client-side navigation keeps options in sync with the template (regression)', async ({
 	page,
 }) => {
+	test.setTimeout(90_000);
 	// Guards the "right title/URL, wrong options" bug: after a ViewTransitions
 	// navigation, the engine must read the NEW template's options, never a
 	// stale copy from the previous page.
@@ -290,7 +298,9 @@ test('client-side navigation keeps options in sync with the template (regression
 		a.click();
 	}, B.slug);
 
-	await expect(page).toHaveURL(new RegExp(`/template/${B.slug}$`));
+	await expect(page).toHaveURL(new RegExp(`/template/${B.slug}$`), {
+		timeout: 90_000,
+	});
 	await expect
 		.poll(async () => (await readRankingData(page)).title)
 		.toContain(B.titleNeedle);

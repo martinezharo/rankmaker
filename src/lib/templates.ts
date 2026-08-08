@@ -104,7 +104,11 @@ export function getOfficialTemplates(): Template[] {
 }
 
 export function getOfficialTemplateBySlug(slug: string): Template | null {
-    return getOfficialTemplates().find((t) => t.slug === slug) ?? null;
+    return (
+        getOfficialTemplates().find(
+            (t) => t.slug.toLowerCase() === slug.toLowerCase()
+        ) ?? null
+    );
 }
 
 // ── User (D1) templates ──────────────────────────────────────────────────────
@@ -226,6 +230,25 @@ export async function getTemplateBySlug(
     return (
         getOfficialTemplateBySlug(slug) ?? (await getUserTemplateBySlug(db, slug))
     );
+}
+
+/**
+ * Resolve a user-provided slug to the exact spelling used by its source.
+ * Slug lookups are intentionally case-insensitive, but writes must use one
+ * canonical value or the same template can accumulate duplicate rows.
+ */
+export async function getCanonicalTemplateSlug(
+    db: D1Database,
+    slug: string
+): Promise<string | null> {
+    const official = getOfficialTemplateBySlug(slug);
+    if (official) return official.slug;
+
+    const row = await db
+        .prepare('SELECT slug FROM templates WHERE slug = ? COLLATE NOCASE')
+        .bind(slug)
+        .first<{ slug: string }>();
+    return row?.slug ?? null;
 }
 
 /**

@@ -10,6 +10,8 @@ import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
 import { CATEGORIES as categories } from "../lib/categories";
 import { getOfficialTemplates, listUserTemplates } from "../lib/templates";
+import { serializeJsonForScript } from "../lib/safe-json";
+import { slugValue } from "../lib/slug";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -41,8 +43,10 @@ try {
 const templates = [...getOfficialTemplates(), ...userTemplates]
 	.map((t) => ({
 		...t,
-		times_ranked: haveCounts ? (counts[t.slug] ?? 0) : t.times_ranked,
-		votes: votes[t.slug] ?? 0,
+		times_ranked: haveCounts
+			? slugValue(counts, t.slug)
+			: t.times_ranked,
+		votes: slugValue(votes, t.slug),
 	}))
 	.sort((a, b) => b.times_ranked - a.times_ranked);
 
@@ -97,7 +101,7 @@ const siteJsonLd = {
 >
 	<script
 		type="application/ld+json"
-		set:html={JSON.stringify(siteJsonLd)}
+		set:html={serializeJsonForScript(siteJsonLd)}
 		is:inline
 	/>
 	<!-- Signed-in pre-paint guard: the page HTML is publicly cached (always the

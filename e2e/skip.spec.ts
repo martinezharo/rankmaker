@@ -2,6 +2,12 @@ import { test, expect, type Page } from '@playwright/test';
 
 const A = { slug: 'best-social-networks-ranking' };
 
+test.beforeEach(async ({ page }) => {
+	await page.addInitScript(() => {
+		localStorage.setItem('rankmaker_cookie_consent', 'false');
+	});
+});
+
 async function optionCount(page: Page): Promise<number> {
 	const raw = await page.locator('#ranking-data').textContent();
 	return JSON.parse(raw ?? '{}').options.length;

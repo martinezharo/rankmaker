@@ -16,6 +16,7 @@ import { getTemplateBySlug, getRecommendedTemplates } from "../../lib/templates"
 import { categoryIcon } from "../../lib/categories";
 import { resolveImageUrl } from "../../lib/covers";
 import { buildRankingData } from "../../lib/ranking-data";
+import { serializeJsonForScript } from "../../lib/safe-json";
 import { getSessionUser } from "../../lib/auth";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n";
 
@@ -56,7 +57,13 @@ if (template.visibility === "private") {
         console.error("session lookup failed:", err);
     }
     if (!viewer || viewer.username !== template.creator.username) {
-        return new Response(null, { status: 404 });
+        return new Response(null, {
+            status: 404,
+            headers: {
+                "Cache-Control": "private, no-store",
+                "X-Robots-Tag": "noindex, nofollow",
+            },
+        });
     }
 }
 
@@ -88,7 +95,7 @@ if (isHidden) {
     // real count here server-side instead of via the client counts script.
     try {
         const row = await db
-            .prepare("SELECT COUNT(*) AS n FROM rankings WHERE slug = ?")
+            .prepare("SELECT COUNT(*) AS n FROM rankings WHERE slug = ? COLLATE NOCASE")
             .bind(template.slug)
             .first<{ n: number }>();
         template.times_ranked = row?.n ?? 0;
@@ -106,7 +113,7 @@ let voteScore = 0;
 try {
     const voteRow = await db
         .prepare(
-            "SELECT COALESCE(SUM(value), 0) AS score FROM votes WHERE subject_type = 'template' AND subject_id = ?",
+            "SELECT COALESCE(SUM(value), 0) AS score FROM votes WHERE subject_type = 'template' AND subject_id = ? COLLATE NOCASE",
         )
         .bind(template.slug)
         .first<{ score: number }>();
@@ -168,7 +175,7 @@ try {
         !isHidden && (
             <script
                 type="application/ld+json"
-                set:html={JSON.stringify(jsonLd)}
+                set:html={serializeJsonForScript(jsonLd)}
                 is:inline
             />
         )
@@ -475,7 +482,7 @@ try {
         type="application/json"
         id="ranking-data"
         is:inline
-        set:html={JSON.stringify(rankingData)}
+        set:html={serializeJsonForScript(rankingData)}
     />
 
     <!-- ═══════════════════════════════════════════════════

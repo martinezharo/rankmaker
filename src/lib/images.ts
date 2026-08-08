@@ -73,6 +73,50 @@ export function collectImageKeys(
 
 export type SniffedType = 'jpeg' | 'png' | 'gif' | 'webp' | 'avif';
 
+/**
+ * Read an upload without ever buffering more than `maxBytes`.
+ *
+ * Content-Length is optional for HTTP requests, so checking that header alone
+ * still lets a chunked request grow until the runtime's memory limit. Returning
+ * null lets the route report a normal 413 before allocating an oversized
+ * buffer.
+ */
+export async function readUploadBody(
+    request: Request,
+    maxBytes: number
+): Promise<ArrayBuffer | null> {
+    if (!request.body) return new ArrayBuffer(0);
+
+    const reader = request.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (!value) continue;
+
+            total += value.byteLength;
+            if (total > maxBytes) {
+                await reader.cancel().catch(() => undefined);
+                return null;
+            }
+            chunks.push(value);
+        }
+    } finally {
+        reader.releaseLock();
+    }
+
+    const output = new Uint8Array(total);
+    let offset = 0;
+    for (const chunk of chunks) {
+        output.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+    return output.buffer;
+}
+
 /** Magic-byte sniffing — the client's Content-Type header is untrusted. */
 export function sniffImageType(bytes: Uint8Array): SniffedType | null {
     if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
@@ -327,6 +371,26 @@ export async function deleteTemplateImages(
     templateId: string
 ): Promise<void> {
     await deleteUnusedTemplateImages(db, bucket, templateId, []);
+}
+
+/** Delete every uploaded object owned by a user before their account is removed. */
+export async function deleteUserImages(
+    db: D1Database,
+    bucket: R2Bucket,
+    userId: string
+): Promise<void> {
+    const { results } = await db
+        .prepare('SELECT key FROM images WHERE user_id = ?')
+        .bind(userId)
+        .all<{ key: string }>();
+    if (results.length === 0) return;
+
+    // R2's multi-delete endpoint has a bounded request size. Chunking also
+    // keeps account deletion predictable for users with many templates.
+    for (let i = 0; i < results.length; i += 1000) {
+        await bucket.delete(results.slice(i, i + 1000).map((row) => row.key));
+    }
+    await db.prepare('DELETE FROM images WHERE user_id = ?').bind(userId).run();
 }
 
 /**

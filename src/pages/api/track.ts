@@ -1,9 +1,9 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
-import { checkOrigin, getSessionUser } from '../../lib/auth';
+import { checkOrigin, getSessionUser, randomHex } from '../../lib/auth';
 import { slugFromUrl } from '../../lib/slug';
-import { templateExists } from '../../lib/templates';
+import { getCanonicalTemplateSlug } from '../../lib/templates';
 
 // Counts feed the public "X ranked" numbers AND the home/search ordering, so
 // this write path is abuse-sensitive: require a same-origin Origin (as every
@@ -50,7 +50,8 @@ export const POST: APIRoute = async (context) => {
                 headers: { 'Content-Type': 'application/json' },
             });
         }
-        if (!(await templateExists(env.DB, slug))) {
+        const canonicalSlug = await getCanonicalTemplateSlug(env.DB, slug);
+        if (!canonicalSlug) {
             return new Response(JSON.stringify({ ok: true, skipped: true }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' },
@@ -58,7 +59,7 @@ export const POST: APIRoute = async (context) => {
         }
 
         // Create a unique key based on timestamp + random suffix
-        const key = `ranking_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const key = `ranking_${Date.now()}_${randomHex(4)}`;
 
         const value = JSON.stringify({
             url,
@@ -79,7 +80,7 @@ export const POST: APIRoute = async (context) => {
             await env.DB.prepare(
                 'INSERT INTO rankings (slug, url, date, country, user_id) VALUES (?, ?, ?, ?, ?)'
             )
-                .bind(slug, url, date, country, user?.id ?? null)
+                .bind(canonicalSlug, url, date, country, user?.id ?? null)
                 .run();
         } catch (dbError) {
             // Don't fail the request if D1 write fails; KV log still captured it.

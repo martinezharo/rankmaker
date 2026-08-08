@@ -8,6 +8,7 @@ import {
     json,
 } from '../../../lib/auth';
 import { detachUserComments } from '../../../lib/comments';
+import { deleteUserImages } from '../../../lib/images';
 
 /**
  * Permanently deletes the account. The DELETE on `users` cascades to
@@ -44,6 +45,13 @@ export const POST: APIRoute = async (context) => {
         }
 
         await detachUserComments(db, user.id);
+        // The images table cascades on user deletion, but R2 objects do not.
+        // Remove both sides while the ownership rows still identify the keys.
+        await deleteUserImages(
+            db,
+            context.locals.runtime.env.IMAGES_BUCKET,
+            user.id
+        );
         await db.prepare('DELETE FROM users WHERE id = ?').bind(user.id).run();
         context.cookies.delete(SESSION_COOKIE, { path: '/' });
 

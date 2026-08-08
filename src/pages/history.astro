@@ -5,6 +5,7 @@ import Layout from "../layouts/Layout.astro";
 import { getSessionUser } from "../lib/auth";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 import { rankingResultTimestamp } from "../lib/ranking-results";
+import { serializeJsonForScript } from "../lib/safe-json";
 import type { HistorySummary } from "../scripts/history";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -57,10 +58,7 @@ if (user) {
 }
 
 // Prevent a user-controlled title/URL from closing the JSON script element.
-const serverHistoryJson = JSON.stringify(serverSummaries).replaceAll(
-	"<",
-	"\\u003c",
-);
+const serverHistoryJson = serializeJsonForScript(serverSummaries);
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
