@@ -8,6 +8,10 @@
     --color-primary: #8400FF;
     --color-primary-light: #a033ff;
     --color-primary-dark: #6600cc;
+    /* Opaque accent for text on dark surfaces. The brand accent remains
+       unchanged for fills and borders, while this token meets WCAG AA for
+       normal-size copy on both base and elevated surfaces. */
+    --color-primary-contrast: #a855f7;
     --color-gold-start: #FFD700;
     --color-gold-end: #FFBA00;
     --color-surface: #0a0a0f;

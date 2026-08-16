@@ -199,6 +199,7 @@ const inputClass =
             id="tf-cover-file"
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            aria-label={t("form.coverImage")}
             class="sr-only"
             tabindex="-1"
         />
@@ -230,7 +231,7 @@ const inputClass =
             >
                 <i id="tf-cover-icon" class={`fa-solid ${isGuest ? "fa-lock" : "fa-cloud-arrow-up"} text-2xl`}></i>
                 <span id="tf-cover-cta" class="text-xs font-medium">{isGuest ? t("form.lockedCoverCta") : t("form.uploadCta")}</span>
-                <span id="tf-cover-hint" class="text-[11px] text-text-muted/70">{isGuest ? t("form.lockedCoverHint") : t("form.uploadHint")}</span>
+                <span id="tf-cover-hint" class="text-[11px] text-text-muted">{isGuest ? t("form.lockedCoverHint") : t("form.uploadHint")}</span>
             </button>
             <div
                 id="tf-cover-actions"
@@ -272,7 +273,7 @@ const inputClass =
             </h2>
             <span class="text-xs font-medium text-text-muted">
                 <span id="tf-option-count">0</span>/{MAX_OPTIONS}
-                <span class="ml-2 text-text-muted/70">{t("form.optionsMin", { n: MIN_OPTIONS })}</span>
+                <span class="ml-2 text-text-muted">{t("form.optionsMin", { n: MIN_OPTIONS })}</span>
             </span>
         </div>
         <p class="text-xs text-text-muted -mt-2">
@@ -280,7 +281,7 @@ const inputClass =
         </p>
         {
             isGuest && (
-                <p class="text-xs text-primary/90 -mt-1 flex items-center gap-1.5">
+                <p class="text-xs text-primary-contrast -mt-1 flex items-center gap-1.5">
                     <i class="fa-solid fa-lock text-[10px]" />
                     {t("form.optionsLockedNote")}
                 </p>
@@ -291,6 +292,7 @@ const inputClass =
             id="tf-option-file"
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            aria-label={t("form.optionAddImage")}
             class="sr-only"
             tabindex="-1"
         />
@@ -947,7 +949,7 @@ const inputClass =
             if (data.anonymous) {
                 // innerHTML (not textContent): this is the one hint that
                 // carries a clickable sign-in link.
-                visibilityHint.innerHTML = `${visibilityHints.private} <a href="/api/auth/login?next=${encodeURIComponent(data.loginNext)}" data-astro-reload class="auth-login-link text-primary hover:underline font-medium">${t("form.visibilityUnlockCta")}</a>`;
+                visibilityHint.innerHTML = `${visibilityHints.private} <a href="/api/auth/login?next=${encodeURIComponent(data.loginNext)}" data-astro-reload class="auth-login-link text-primary-contrast hover:underline font-medium">${t("form.visibilityUnlockCta")}</a>`;
                 return;
             }
             let hint = visibilityHints[visibility.value] || "";

@@ -23,9 +23,11 @@ interface Props {
         votes?: number;
         creator?: Creator;
     };
+    /** Heading level for the card title in the surrounding page outline. */
+    headingLevel?: "h2" | "h3";
 }
 
-const { template } = Astro.props;
+const { template, headingLevel = "h3" } = Astro.props;
 const creator = template.creator;
 
 const icon = categoryIcon(template.category);
@@ -75,11 +77,17 @@ const icon = categoryIcon(template.category);
 
     <!-- Content -->
     <div class="flex-1 p-4 space-y-2">
-        <h3
-            class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors"
-        >
-            {template.title}
-        </h3>
+        {
+            headingLevel === "h2" ? (
+                <h2 class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors">
+                    {template.title}
+                </h2>
+            ) : (
+                <h3 class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors">
+                    {template.title}
+                </h3>
+            )
+        }
 
         {
             creator && (
