@@ -8,165 +8,81 @@
   <strong>Rank your stuff — no tiers, no noise, just accurate 1v1 rankings.</strong>
 </p>
 
-<p align="center">
-  <a href="#features">Features</a> •
-  <a href="#demo">Demo</a> •
-  <a href="#tech-stack">Tech Stack</a> •
-  <a href="#getting-started">Getting Started</a> •
-  <a href="#deployment">Deployment</a> •
-  <a href="#contributing">Contributing</a> •
-  <a href="#license">License</a>
-</p>
+RANKMAKER turns preferences into an ordered list through fast head-to-head
+comparisons. Browse official templates, create your own, or rank a guest
+template locally without an account.
 
----
+## Highlights
 
-## What is RANKMAKER?
+- A comparison-based ranking flow with undo, skip, finish early, battle
+  history, and manual reordering.
+- Official and community templates with 4–50 options. Signed-in creators can
+  create templates with public, unlisted, or private visibility.
+- Search and category browsing, public creator profiles, saves, follows, and
+  comments.
+- Live “Times Ranked” counts, shareable template links, downloadable result
+  images, and sharing to X.
+- AI-assisted description suggestions for signed-in template creators.
+- A multilingual interface with seven locale options.
 
-RANKMAKER is a web application that lets users build precise, personalized rankings through fast **1-on-1 matchups**. Instead of dragging items into broad tiers, users are presented with head-to-head battles and their choices are compiled into an ordered ranking using an efficient sorting algorithm.
+## Development
 
-Pick a template — movies, music, sports, anime, food, and many more — or **create your own** and let the battles decide what *really* comes out on top.
+Requirements:
 
-## Features
+- Node.js 22 or newer.
+- pnpm 9 or newer.
 
-- **1v1 Battle System** — Fast, tap-friendly matchup interface that minimizes decision fatigue.  
-- **Smart Sorting Algorithm** — Generates accurate rankings from the fewest comparisons possible.  
-- **Pre-built Templates** — Across 18 categories: Movies, Music, Sports, Games, TV, Anime, Food, and more.  
-- **User Accounts** — Sign in with GitHub, pick a username and avatar, and manage your account.  
-- **User-created Templates** — Logged-in users can create, edit, and delete their own templates (4–50 options each).  
-- **AI Description Suggestions** — Workers AI (Llama 3.3 70B) polishes or rewrites template descriptions during creation.  
-- **Public Profiles** — Every creator gets a profile page at `/u/<username>` listing their templates.  
-- **Live "Times Ranked" Counter** — Real ranking counts per template, shown on cards, search results, and template pages.  
-- **Full-text Search** — Search templates by title, description, or individual options.  
-- **Podium & Full Results** — Animated podium for the top 3 plus a complete ordered list.  
-- **Share & Export** — Download your ranking as an image, share the template link, or post to X (Twitter).  
-- **Battle History** — Review every matchup you made during a ranking session.  
-- **Undo & Finish Early** — Changed your mind? Undo the last matchup or finish early at any time.  
-- **Manual Reorder** — Fine-tune your final ranking by dragging items into position.  
-- **Responsive Design** — Fully responsive, looks great on phones, tablets, and desktops.  
-- **View Transitions** — Smooth page transitions powered by Astro's View Transitions API.  
-- **SEO Optimized** — Dynamic sitemap, proper meta tags, and semantic HTML.  
-- **Cookie Consent** — GDPR-compliant cookie consent banner.
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Framework** | [Astro](https://astro.build/) 5 (hybrid: prerendered pages + SSR routes) |
-| **Styling** | [Tailwind CSS](https://tailwindcss.com/) 4 |
-| **Language** | TypeScript |
-| **Fonts** | [Outfit](https://fonts.google.com/specimen/Outfit) (Google Fonts) |
-| **Icons** | [Font Awesome](https://fontawesome.com/) 6 |
-| **Data** | Official templates in `src/data/templates.json` + user templates in [Cloudflare D1](https://developers.cloudflare.com/d1/) |
-| **Database** | Cloudflare D1 (users, sessions, templates, ranking counts) |
-| **Storage** | [Cloudflare KV](https://developers.cloudflare.com/kv/) (raw tracking event log) |
-| **AI** | [Workers AI](https://developers.cloudflare.com/workers-ai/) — Llama 3.3 70B for description suggestions |
-| **Auth** | GitHub OAuth + D1-backed sessions |
-| **Hosting** | [Cloudflare Workers](https://workers.cloudflare.com/) (static assets + SSR) via `@astrojs/cloudflare` adapter |
-| **Package Manager** | [pnpm](https://pnpm.io/) |
-
-## Getting Started
-
-### Prerequisites
-
-- **Node.js** ≥ 18  
-- **pnpm** ≥ 8 (install with `npm install -g pnpm` if needed)
-
-### Installation
+Install dependencies and start the local Cloudflare-backed development server:
 
 ```bash
-# Clone the repository
-git clone https://github.com/martinezharo/rankmaker.git
-cd rankmaker
-
-# Install dependencies
 pnpm install
-```
-
-### Database & Auth setup (user accounts + user templates)
-
-User accounts (GitHub OAuth) and user-created templates live in **Cloudflare D1**.
-
-1. Apply the migrations to the local D1 database:
-
-```bash
-pnpm run db:migrate:local    # rankings table (times-ranked counts)
-pnpm run db:migrate3:local   # users, sessions, templates, template_options (+ RANKMAKER seed)
-```
-
-2. Create a **dev GitHub OAuth App** at <https://github.com/settings/developers>:
-   - Homepage URL: `http://localhost:4321`
-   - Authorization callback URL: `http://localhost:4321/api/auth/callback`
-
-3. Create a `.dev.vars` file (gitignored) in the project root:
-
-```ini
-GITHUB_CLIENT_ID=<dev oauth app client id>
-GITHUB_CLIENT_SECRET=<dev oauth app client secret>
-SESSION_SECRET=<any random 32+ char string>
-```
-
-For production, create a second OAuth App with the live callback URL
-(`https://rankmaker.net/api/auth/callback`) and set the secrets once:
-
-```bash
-npx wrangler secret put GITHUB_CLIENT_ID
-npx wrangler secret put GITHUB_CLIENT_SECRET
-npx wrangler secret put SESSION_SECRET
-pnpm run db:migrate:remote
-pnpm run db:migrate3:remote
-```
-
-### Development
-
-```bash
-# Start the dev server (http://localhost:4321)
-# Local D1/KV/AI bindings are emulated via miniflare automatically
 pnpm dev
 ```
 
-### Build
+Open <http://localhost:4321>. Official templates and guest-local workflows can
+be explored without an account. To exercise GitHub sign-in and account-backed
+templates, copy [.dev.vars.example](.dev.vars.example) to `.dev.vars`, set
+`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `SESSION_SECRET`, then apply
+the local D1 migrations:
 
 ```bash
-# Build for production
-pnpm build
+cp .dev.vars.example .dev.vars
+pnpm run db:migrate:local
+```
 
-# Preview the production build locally
+Use `http://localhost:4321/api/auth/callback` as the development GitHub OAuth
+callback URL. Resend is optional in local development; notifications remain
+available in the app when email delivery is not configured.
+
+## Checks and scripts
+
+```bash
+pnpm check
+pnpm test
+pnpm test:e2e
+pnpm build
 pnpm preview
 ```
 
-## Ranking Tracking & Counts
-
-Whenever a user clicks "Start Ranking", the **`/api/track`** endpoint records the event twice:
-
-- A row in the **D1 `rankings` table**, which powers the live **"Times Ranked" counters** shown across the site (aggregated per template slug).
-- A raw entry in **Cloudflare KV** kept as a backup event log.
-
-Counts are read through `/api/counts` and on the SSR homepage, and templates are ordered by popularity.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow and
+available database commands.
 
 ## Deployment
 
-RANKMAKER deploys to **Cloudflare Workers** (static assets + server-side rendering) using the `@astrojs/cloudflare` adapter. Bindings for D1, KV, and Workers AI are declared in `wrangler.jsonc`.
+RANKMAKER is deployed to Cloudflare Workers. Bindings and the D1 migration
+directory are declared in [wrangler.jsonc](wrangler.jsonc). Before a release,
+check production readiness and apply any accepted remote migrations:
 
 ```bash
-# Build the project
+pnpm run check:deploy
+pnpm run db:migrate:remote
 pnpm build
-
-# Deploy to Cloudflare
-npx wrangler deploy
+pnpm exec wrangler deploy
 ```
 
-On first deploy, remember to set the production secrets and apply the remote migrations (see [Database & Auth setup](#database--auth-setup-user-accounts--user-templates)).
-
-## Contributing
-
-Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) before submitting a pull request.
+Set the production secrets listed in [.dev.vars.example](.dev.vars.example)
+through Wrangler or the Cloudflare dashboard.
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
-<p align="center">
-  Made with ❤️ by <strong><a href="https://olivermartinezharo.com">Oli</a></strong>
-</p>
+RANKMAKER is released under the [MIT License](LICENSE).
