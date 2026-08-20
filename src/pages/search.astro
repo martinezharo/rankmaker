@@ -10,9 +10,14 @@ import {
 } from "../lib/categories";
 import {
     getOfficialTemplates,
-    listUserTemplates,
+    listBrowseTemplates,
     type Template,
 } from "../lib/templates";
+import {
+    filterMature,
+    listingCacheControl,
+    readMaturePref,
+} from "../lib/mature";
 import { getTemplateVotes } from "../lib/template-votes";
 import { slugValue, type SlugValues } from "../lib/slug";
 import { avatarHtml } from "../lib/avatars";
@@ -24,15 +29,18 @@ const locale = Astro.locals.locale ?? defaultLocale;
 const tr = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
+// Templates flagged as mature stay out of search unless the visitor opted in.
+const showMature = readMaturePref(Astro.cookies);
+
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
-let userTemplates: Template[] = [];
+let browse: Template[] = filterMature(getOfficialTemplates(), showMature);
 let votes: SlugValues = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
     if (db) {
-        [userTemplates, votes] = await Promise.all([
-            listUserTemplates(db),
+        [browse, votes] = await Promise.all([
+            listBrowseTemplates(db, showMature),
             getTemplateVotes(db),
         ]);
     }
@@ -41,7 +49,7 @@ try {
 }
 
 // Sort by most ranked (live counts re-sort client-side via rm:counts)
-const templates = [...getOfficialTemplates(), ...userTemplates]
+const templates = browse
     .map((t) => ({ ...t, votes: slugValue(votes, t.slug) }))
     .sort((a, b) => b.times_ranked - a.times_ranked);
 
@@ -71,11 +79,12 @@ const templatesForClient = templates.map((t) => ({
     collage: t.collage,
     times_ranked: t.times_ranked,
     votes: t.votes ?? 0,
+    is_mature: t.is_mature,
     optionNames: t.optionNames ?? "",
     creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${L(`/u/${encodeURIComponent(t.creator.username)}`)}" title="${escapeHtml(tr("card.viewProfile", { username: t.creator.username }))}">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified)}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
 }));
 
-Astro.response.headers.set("Cache-Control", "public, max-age=60");
+Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
 ---
 
 <Layout
@@ -273,6 +282,7 @@ Astro.response.headers.set("Cache-Control", "public, max-age=60");
                     <div class="relative aspect-4/3 overflow-hidden bg-surface">
                         ${imgHtml}
                         ${t.category ? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>` : ""}
+                        ${t.is_mature ? `<span class="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm text-red-300 text-[10px] font-bold uppercase tracking-wider" title="${esc(tt("mature.badgeTitle"))}"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i>${esc(tt("mature.badge"))}</span>` : ""}
                         <button class="save-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100" aria-label="${esc(tt("card.saveAria"))}" data-save-aria="${esc(tt("card.saveAria"))}" data-unsave-aria="${esc(tt("card.unsaveAria"))}" data-slug="${esc(t.slug)}"><i class="fa-regular fa-bookmark text-xs"></i></button>
                     </div>
                     <div class="flex-1 p-4 space-y-2">

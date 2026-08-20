@@ -21,6 +21,9 @@ interface Props {
         category: string | null;
         cover_image: string | null;
         visibility?: Visibility;
+        is_mature?: boolean;
+        /** Flag decided by a moderator — the creator can't clear it. */
+        mature_locked?: boolean;
         options: { name: string; image: string | null }[];
     };
     /**
@@ -77,6 +80,8 @@ const initial = {
     description: template?.description ?? "",
     category: template?.category ?? "",
     visibility: isGuest ? "private" : (template?.visibility ?? "public"),
+    is_mature: template?.is_mature ?? false,
+    matureLocked: template?.mature_locked ?? false,
     cover_image: template?.cover_image ?? "",
     options: template?.options?.map((o) => ({
         name: o.name,
@@ -186,6 +191,37 @@ const inputClass =
             }
             <p id="tf-visibility-hint" class="text-xs text-text-muted mt-2"></p>
         </div>
+
+        {/* Mature content — a manual, self-declared flag. It only takes effect
+            once the template is public (see src/lib/mature.ts), which is why
+            guests (whose templates live in this browser and are always
+            private) are not asked. */}
+        {!isGuest && (
+        <div class="rounded-xl bg-surface border border-border p-4">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                    type="checkbox"
+                    id="tf-mature"
+                    checked={initial.is_mature}
+                    disabled={initial.matureLocked}
+                    class="mt-0.5 w-4 h-4 shrink-0 accent-primary cursor-pointer disabled:cursor-not-allowed"
+                />
+                <span class="min-w-0">
+                    <span class="block text-sm font-semibold text-text-primary">
+                        <i class="fa-solid fa-triangle-exclamation text-red-400 text-xs mr-1.5" />
+                        {t("mature.formLabel")}
+                    </span>
+                    <span class="block text-xs text-text-muted mt-1">
+                        {
+                            initial.matureLocked
+                                ? t("mature.formLockedHint")
+                                : t("mature.formHint")
+                        }
+                    </span>
+                </span>
+            </label>
+        </div>
+        )}
     </section>
 
     <!-- Cover image -->
@@ -489,6 +525,11 @@ const inputClass =
             | HTMLSelectElement
             | HTMLInputElement;
         const visibilityHint = document.getElementById("tf-visibility-hint")!;
+        // Absent in guest mode: a local template never reaches a public
+        // listing, so there is nothing for the flag to do there.
+        const mature = document.getElementById(
+            "tf-mature",
+        ) as HTMLInputElement | null;
         const coverFile = document.getElementById(
             "tf-cover-file",
         ) as HTMLInputElement;
@@ -1004,6 +1045,7 @@ const inputClass =
             category: string;
             cover_image: string;
             visibility: string;
+            is_mature: boolean;
             options: { name: string; image: string | null }[];
         };
 
@@ -1230,6 +1272,9 @@ const inputClass =
                 category: category.value,
                 cover_image: coverUrl,
                 visibility: visibility.value,
+                // Ignored by the API when a moderator locked the flag; the
+                // input is disabled in that case anyway.
+                is_mature: !!mature?.checked,
                 options: rows()
                     .map((r) => ({
                         name: r

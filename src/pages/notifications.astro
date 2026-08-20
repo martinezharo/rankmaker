@@ -5,7 +5,6 @@ import Layout from "../layouts/Layout.astro";
 import Avatar from "../components/Avatar.astro";
 import { getSessionUser } from "../lib/auth";
 import {
-	getEmailPref,
 	listNotifications,
 	type NotificationItem,
 	type NotificationType,
@@ -22,13 +21,9 @@ const db = Astro.locals.runtime.env.DB;
 const user = await getSessionUser(Astro.cookies, db);
 
 let items: NotificationItem[] = [];
-let emailPref = true;
 if (user) {
 	try {
-		[items, emailPref] = await Promise.all([
-			listNotifications(db, user.id),
-			getEmailPref(db, user.id),
-		]);
+		items = await listNotifications(db, user.id);
 	} catch {
 		// Degrade to an empty list rather than 500 the page.
 	}
@@ -131,41 +126,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
 				</div>
 			) : (
 				<>
-					{/* Email preference */}
-					<div class="flex items-center justify-between gap-4 rounded-2xl bg-surface-elevated border border-border p-4 mb-6">
-						<div class="min-w-0">
-							<p class="text-sm font-semibold text-text-primary">
-								{t("notifications.emailPrefHeading")}
-							</p>
-							<p class="text-xs text-text-muted mt-0.5">
-								{t("notifications.emailPrefDesc")}
-							</p>
-							<p
-								id="email-pref-error"
-								role="status"
-								data-msg={t("notifications.emailPrefError")}
-								class="text-xs text-red-400 mt-1 empty:hidden"
-							/>
-						</div>
-						<button
-							id="email-pref-toggle"
-							type="button"
-							role="switch"
-							aria-checked={emailPref ? "true" : "false"}
-							aria-label={t("notifications.emailPrefToggle")}
-							class:list={[
-								"relative shrink-0 w-12 h-7 rounded-full transition-colors",
-								emailPref ? "bg-primary" : "bg-border",
-							]}
-						>
-							<span
-								class:list={[
-									"absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform",
-									emailPref && "translate-x-5",
-								]}
-							/>
-						</button>
-					</div>
+					{/* Notification emails are configured with every other
+					    preference, on /preferences. */}
+					<a
+						href={L("/preferences")}
+						class="inline-flex items-center gap-2 mb-6 text-sm text-text-muted hover:text-text-primary transition-colors"
+					>
+						<i class="fa-solid fa-sliders text-xs" />
+						{t("notifications.emailPrefLink")}
+					</a>
 
 					{/* Filters */}
 					<div
@@ -342,46 +311,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
 		});
 	}
 
-	function bindEmailToggle() {
-		const toggle = document.getElementById("email-pref-toggle");
-		if (!toggle || toggle.dataset.bound) return;
-		toggle.dataset.bound = "1";
-		const knob = toggle.querySelector<HTMLElement>("span");
-		const errorEl = document.getElementById("email-pref-error");
-		toggle.addEventListener("click", async () => {
-			const next = toggle.getAttribute("aria-checked") !== "true";
-			// Optimistic UI.
-			if (errorEl) errorEl.textContent = "";
-			toggle.setAttribute("aria-checked", String(next));
-			toggle.classList.toggle("bg-primary", next);
-			toggle.classList.toggle("bg-border", !next);
-			knob?.classList.toggle("translate-x-5", next);
-			try {
-				const res = await fetch("/api/me/notifications/prefs", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ emailNotifications: next }),
-				});
-				if (!res.ok) throw new Error("prefs " + res.status);
-			} catch {
-				// Revert on failure.
-				toggle.setAttribute("aria-checked", String(!next));
-				toggle.classList.toggle("bg-primary", !next);
-				toggle.classList.toggle("bg-border", next);
-				knob?.classList.toggle("translate-x-5", !next);
-				// Inline error next to the toggle (role="status" announces it);
-				// setting textContent (vs. a hidden class) is what triggers the
-				// live-region announcement.
-				if (errorEl) errorEl.textContent = errorEl.dataset.msg ?? "";
-			}
-		});
-	}
-
 	document.addEventListener("astro:page-load", () => {
-		// All three are no-ops off the notifications page (they guard on their
-		// own elements), so no path check is needed.
+		// Both are no-ops off the notifications page (they guard on their own
+		// elements), so no path check is needed.
 		bindFilters();
-		bindEmailToggle();
 		markRead();
 	});
 </script>

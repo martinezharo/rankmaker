@@ -20,7 +20,8 @@ if (!user) {
 }
 
 const row = await Astro.locals.runtime.env.DB.prepare(
-    `SELECT id, creator_id, slug, title, description, category, cover_image, visibility
+    `SELECT id, creator_id, slug, title, description, category, cover_image, visibility,
+            is_mature, mature_locked
      FROM templates WHERE slug = ? COLLATE NOCASE`,
 )
     .bind(Astro.params.slug)
@@ -33,6 +34,8 @@ const row = await Astro.locals.runtime.env.DB.prepare(
         category: string;
         cover_image: string | null;
         visibility: import("../../lib/templates").Visibility;
+        is_mature: number;
+        mature_locked: number;
     }>();
 
 // Same 404 for "doesn't exist" and "not yours".
@@ -40,7 +43,14 @@ if (!row || row.creator_id !== user.id) {
     return new Response(null, { status: 404 });
 }
 
-const template = { ...row, options: await loadOptions(db, row.id) };
+const template = {
+    ...row,
+    is_mature: row.is_mature === 1,
+    // A flag set by moderation can't be cleared from the form — the API
+    // enforces it too, this only keeps the UI honest.
+    mature_locked: row.mature_locked === 1,
+    options: await loadOptions(db, row.id),
+};
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---

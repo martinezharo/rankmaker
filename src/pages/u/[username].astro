@@ -8,6 +8,7 @@ import { getCounts } from "../../lib/counts";
 import { getTemplateVotes } from "../../lib/template-votes";
 import { slugValue } from "../../lib/slug";
 import { listTemplatesByUserId } from "../../lib/templates";
+import { listingCacheControl, readMaturePref } from "../../lib/mature";
 import { getFollowCounts } from "../../lib/follows";
 import { defaultLocale, useTranslations } from "../../i18n";
 
@@ -37,8 +38,10 @@ if (!user) {
 
 const isVerified = user.is_verified === 1;
 
-// For the official account this includes every JSON template.
-let templates = await listTemplatesByUserId(db, user.id);
+// For the official account this includes every JSON template. A public
+// profile hides mature templates the same way the home page does.
+const showMature = readMaturePref(Astro.cookies);
+let templates = await listTemplatesByUserId(db, user.id, { showMature });
 
 // Merge live counts (keep JSON numbers as fallback, like the homepage).
 try {
@@ -73,7 +76,7 @@ const memberSince = new Date(
         : user.created_at.replace(" ", "T") + "Z",
 ).toLocaleDateString(locale, { month: "long", year: "numeric" });
 
-Astro.response.headers.set("Cache-Control", "public, max-age=60");
+Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
 ---
 
 <Layout

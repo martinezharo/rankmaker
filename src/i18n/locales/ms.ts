@@ -67,6 +67,7 @@ export const ms: LocaleDict = {
 		notifications: 'Pemberitahuan',
 		toggleMenu: 'Togol menu',
 		language: 'Bahasa',
+		preferences: 'Keutamaan',
 	},
 	footer: {
 		tagline: 'Platform muktamad untuk membina ranking tepat melalui pertarungan 1v1.',
@@ -501,6 +502,45 @@ export const ms: LocaleDict = {
 		Nature: 'Alam Semula Jadi',
 		Others: 'Lain-lain',
 	},
+	preferences: {
+		title: 'Keutamaan — RANKMAKER',
+		metaDescription:
+			'Pilih bahasa anda dan tentukan sama ada RANKMAKER menunjukkan templat yang ditanda sebagai kandungan dewasa.',
+		heading: 'Keutamaan',
+		subtitle: 'Cara RANKMAKER berkelakuan untuk anda.',
+		savedInBrowser: 'Disimpan dalam pelayar ini.',
+		savedOnAccount: 'Disimpan dalam akaun anda, pada semua peranti.',
+		signInHint: 'Log masuk untuk mengekalkan keutamaan ini pada semua peranti anda.',
+		languageHeading: 'Bahasa',
+		languageDesc: 'Bahasa antara muka. Kandungan templat belum diterjemahkan.',
+		contentHeading: 'Kandungan',
+		matureLabel: 'Tunjukkan kandungan dewasa',
+		matureDesc:
+			'Templat yang ditanda sebagai kandungan dewasa disembunyikan daripada laman utama, carian, kategori dan profil. Hidupkan untuk melihatnya di mana-mana.',
+		matureToggle: 'Togol kandungan dewasa',
+		notificationsHeading: 'Pemberitahuan',
+		emailPrefHeading: 'Pemberitahuan e-mel',
+		emailPrefDesc: 'Hantar e-mel kepada saya mengenai ulasan pada templat saya dan balasan kepada ulasan saya.',
+		emailPrefToggle: 'Togol pemberitahuan e-mel',
+		emailPrefLoginHint: 'Log masuk untuk memilih sama ada kami menghantar e-mel tentang aktiviti.',
+		saveError: 'Tidak dapat menyimpan keutamaan anda. Cuba lagi.',
+	},
+	mature: {
+		badge: 'Dewasa',
+		badgeTitle: 'Ditanda sebagai kandungan dewasa',
+		gateTitle: 'Templat ini mungkin mengandungi kandungan dewasa',
+		gateBody:
+			'Ia telah ditanda sebagai kandungan dewasa. Anda boleh menghidupkan kandungan dewasa untuk melihatnya, atau kembali ke laman utama.',
+		gateEnable: 'Tunjukkan kandungan dewasa',
+		gateHome: 'Ke laman utama',
+		gateSettingsHint: 'Anda boleh mengubahnya bila-bila masa dalam keutamaan anda.',
+		gateError: 'Tidak dapat mengemas kini keutamaan anda. Cuba lagi.',
+		formLabel: 'Kandungan dewasa',
+		formHint:
+			'Tanda templat ini sebagai kandungan dewasa. Setelah awam, ia tidak akan muncul dalam senarai melainkan pelawat menghidupkan kandungan dewasa.',
+		formLockedHint:
+			'Seorang moderator menanda templat ini sebagai kandungan dewasa, jadi tanda itu tidak boleh dibuang lagi.',
+	},
 	notifications: {
 		title: 'Pemberitahuan — RANKMAKER',
 		heading: 'Pemberitahuan',
@@ -518,10 +558,7 @@ export const ms: LocaleDict = {
 		msgCommentOnTemplate: '{actor} mengulas templat anda “{title}”',
 		msgCommentReply: '{actor} membalas ulasan anda pada “{title}”',
 		msgNewTemplate: '{actor} menerbitkan templat baharu: “{title}”',
-		emailPrefHeading: 'Pemberitahuan e-mel',
-		emailPrefDesc: 'Hantar e-mel kepada saya mengenai ulasan pada templat saya dan balasan kepada ulasan saya.',
-		emailPrefToggle: 'Togol pemberitahuan e-mel',
-		emailPrefError: 'Tidak dapat mengemas kini keutamaan anda. Cuba lagi.',
+		emailPrefLink: 'Urus e-mel pemberitahuan dalam keutamaan anda',
 	},
 	email: {
 		cta: 'Lihat di RANKMAKER',

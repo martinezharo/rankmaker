@@ -16,6 +16,7 @@ import {
 import { extractImageKey } from './images';
 import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
+import { filterMature, matureSqlFilter } from './mature';
 import { recommendTemplates } from '../scripts/recommend';
 
 export const VISIBILITIES = ['public', 'private', 'unlisted'] as const;
@@ -55,6 +56,14 @@ export type Template = {
     creator: Creator;
     source: 'official' | 'user';
     visibility: Visibility;
+    /**
+     * Manually flagged as adult/mature content — hidden from every public
+     * listing unless the viewer opted in, and gated behind a confirmation
+     * modal on its own page. See src/lib/mature.ts.
+     */
+    is_mature: boolean;
+    /** The flag was decided by an admin; the creator can no longer clear it. */
+    mature_locked: boolean;
     /** Space-joined option names — only populated by list queries for search. */
     optionNames?: string;
 };
@@ -90,6 +99,8 @@ function mapOfficial(t: any): Template {
         creator: OFFICIAL_CREATOR,
         source: 'official',
         visibility: 'public',
+        is_mature: t.is_mature === true,
+        mature_locked: false,
         optionNames: (t.options || []).map((o: any) => o.name).join(' '),
     };
 }
@@ -126,6 +137,8 @@ type TemplateRow = {
     avatar: string;
     is_verified: number;
     visibility: string;
+    is_mature?: number;
+    mature_locked?: number;
     option_names?: string | null;
     /** Newline-joined option images, from list queries — see parseOptionImages. */
     option_images?: string | null;
@@ -164,13 +177,15 @@ function mapRow(row: TemplateRow, options: TemplateOption[] = []): Template {
         visibility: (VISIBILITIES as readonly string[]).includes(row.visibility)
             ? (row.visibility as Visibility)
             : 'public',
+        is_mature: row.is_mature === 1,
+        mature_locked: row.mature_locked === 1,
         optionNames: row.option_names ?? undefined,
     };
 }
 
 const TEMPLATE_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
-           t.created_at, t.updated_at, t.visibility,
+           t.created_at, t.updated_at, t.visibility, t.is_mature, t.mature_locked,
            u.username, u.avatar, u.is_verified
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
@@ -183,7 +198,7 @@ const TEMPLATE_SELECT = `
  */
 export const TEMPLATE_LIST_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
-           t.created_at, t.updated_at, t.visibility,
+           t.created_at, t.updated_at, t.visibility, t.is_mature, t.mature_locked,
            u.username, u.avatar, u.is_verified,
            (SELECT GROUP_CONCAT(o.name, ' ') FROM template_options o
              WHERE o.template_id = t.id) AS option_names,
@@ -302,11 +317,19 @@ export async function getTemplateOwnerId(
     return row?.creator_id ?? null;
 }
 
-/** Public user templates (no per-option rows) for home/search list views. */
-export async function listUserTemplates(db: D1Database): Promise<Template[]> {
+/**
+ * Public user templates (no per-option rows) for home/search list views.
+ * Templates flagged as mature are excluded unless the viewer opted in — see
+ * src/lib/mature.ts.
+ */
+export async function listUserTemplates(
+    db: D1Database,
+    showMature = false
+): Promise<Template[]> {
     const { results } = await db
         .prepare(
             `${TEMPLATE_LIST_SELECT} WHERE t.visibility = 'public'
+             ${matureSqlFilter(showMature)}
              ORDER BY t.created_at DESC`
         )
         .all<TemplateRow>();
@@ -314,25 +337,46 @@ export async function listUserTemplates(db: D1Database): Promise<Template[]> {
 }
 
 /**
+ * The full browse pool for the home / search / category pages: every official
+ * (JSON) template plus every public user template, with the viewer's mature
+ * filter applied to both sources in one place.
+ */
+export async function listBrowseTemplates(
+    db: D1Database,
+    showMature = false
+): Promise<Template[]> {
+    return [
+        ...filterMature(getOfficialTemplates(), showMature),
+        ...(await listUserTemplates(db, showMature)),
+    ];
+}
+
+/**
  * Templates created by a user. RANKMAKER also owns every JSON template.
- * Public ones only by default; pass `includeHidden` for owner views (/me).
+ *
+ * Public ones only by default; `includeHidden` is for owner views (/me), which
+ * also see their own mature templates — the filter is about what a *visitor*
+ * is shown on someone's public profile, not about hiding your own work from
+ * yourself.
  */
 export async function listTemplatesByUserId(
     db: D1Database,
     userId: string,
-    includeHidden = false
+    options: { includeHidden?: boolean; showMature?: boolean } = {}
 ): Promise<Template[]> {
+    const { includeHidden = false, showMature = includeHidden } = options;
     const { results } = await db
         .prepare(
             `${TEMPLATE_LIST_SELECT} WHERE t.creator_id = ?
              ${includeHidden ? '' : "AND t.visibility = 'public'"}
+             ${matureSqlFilter(showMature)}
              ORDER BY t.created_at DESC`
         )
         .bind(userId)
         .all<TemplateRow>();
     const own = results.map((r) => mapRow(r));
     return userId === OFFICIAL_USER_ID
-        ? [...getOfficialTemplates(), ...own]
+        ? [...filterMature(getOfficialTemplates(), showMature), ...own]
         : own;
 }
 
@@ -410,7 +454,8 @@ export async function listSavedTemplates(
 /**
  * Templates to recommend alongside the one being viewed. The candidate pool is
  * every official template plus every PUBLIC user template (hidden ones are
- * never surfaced — see CLAUDE.md), scored by lexical similarity in
+ * never surfaced — see CLAUDE.md; mature ones only when the viewer opted in),
+ * scored by lexical similarity in
  * `recommendTemplates`. Real ranking counts are merged so cards show live
  * numbers, matching the homepage. On any D1 error we degrade to officials only
  * so the page never breaks.
@@ -418,14 +463,15 @@ export async function listSavedTemplates(
 export async function getRecommendedTemplates(
     db: D1Database,
     target: Template,
-    limit = 8
+    limit = 8,
+    showMature = false
 ): Promise<Template[]> {
     let userTemplates: Template[] = [];
     let counts: Record<string, number> = {};
     let votes: Record<string, number> = {};
     try {
         [userTemplates, counts, votes] = await Promise.all([
-            listUserTemplates(db),
+            listUserTemplates(db, showMature),
             getCounts(db),
             getTemplateVotes(db),
         ]);
@@ -433,7 +479,10 @@ export async function getRecommendedTemplates(
         // officials-only fallback
     }
 
-    const pool = [...getOfficialTemplates(), ...userTemplates].map((t) => ({
+    const pool = [
+        ...filterMature(getOfficialTemplates(), showMature),
+        ...userTemplates,
+    ].map((t) => ({
         ...t,
         times_ranked: counts[t.slug] ?? t.times_ranked,
         votes: votes[t.slug] ?? 0,
@@ -531,6 +580,8 @@ export type TemplateInput = {
     category: string;
     cover_image: string | null;
     visibility: Visibility;
+    /** Creator's own "this is adult content" flag — see src/lib/mature.ts. */
+    is_mature: boolean;
     options: { name: string; image: string | null }[];
 };
 
@@ -574,6 +625,10 @@ export function validateTemplateInput(
         return err('Pick a valid visibility.');
     }
     const isPublic = visibility === 'public';
+
+    // Mature flag: a plain opt-in checkbox, allowed on any visibility (it only
+    // takes effect once the template is public). Missing means "not mature".
+    const is_mature = body?.is_mature === true;
 
     // Description: required (>= 15 chars) only for public templates;
     // private/unlisted may omit it. The 300-char cap always applies.
@@ -648,6 +703,7 @@ export function validateTemplateInput(
             category,
             cover_image: cover || null,
             visibility,
+            is_mature,
             options,
         },
     };

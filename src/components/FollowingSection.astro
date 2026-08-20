@@ -93,6 +93,7 @@ const t = useTranslations(locale);
 		collage?: string[];
 		times_ranked: number;
 		votes: number;
+		is_mature?: boolean;
 		creator?: Creator;
 	};
 
@@ -119,6 +120,12 @@ const t = useTranslations(locale);
 			? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>`
 			: "";
 
+		// Only ever rendered for viewers who opted into mature content, so this
+		// is a label rather than a warning — mirrors TemplateCard.astro.
+		const matureBadge = tpl.is_mature
+			? `<span class="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm text-red-300 text-[10px] font-bold uppercase tracking-wider" title="${esc(t("mature.badgeTitle"))}"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i>${esc(t("mature.badge"))}</span>`
+			: "";
+
 		const creatorBlock = tpl.creator
 			? `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${esc(L(`/u/${encodeURIComponent(tpl.creator.username)}`))}" title="${esc(t("card.viewProfile", { username: tpl.creator.username }))}">
 					${avatarHtml(tpl.creator.avatar, 20, tpl.creator.isVerified)}
@@ -136,6 +143,7 @@ const t = useTranslations(locale);
 					<div class="relative aspect-4/3 overflow-hidden bg-surface">
 						${coverInner}
 						${categoryBadge}
+						${matureBadge}
 						<button class="save-btn absolute top-3 right-12 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100" aria-label="${esc(t("card.saveAria"))}" data-save-aria="${esc(t("card.saveAria"))}" data-unsave-aria="${esc(t("card.unsaveAria"))}" data-slug="${esc(tpl.slug)}">
 							<i class="fa-regular fa-bookmark text-xs"></i>
 						</button>

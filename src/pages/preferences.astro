@@ -1,0 +1,203 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Toggle from "../components/ui/Toggle.astro";
+import { getSessionUser } from "../lib/auth";
+import { getEmailPref } from "../lib/notifications";
+import { readMaturePref } from "../lib/mature";
+import {
+    defaultLocale,
+    localeNames,
+    locales,
+    localizePath,
+    useTranslations,
+} from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
+// Everything here is per-visitor state, so the page is never cached.
+Astro.response.headers.set("Cache-Control", "private, no-store");
+
+const db = Astro.locals.runtime.env.DB;
+
+// The mature preference is read from the cookie (the same value the render
+// path uses everywhere else); the account value is what /api/auth/me stamps
+// into that cookie, so they agree for signed-in users.
+const showMature = readMaturePref(Astro.cookies);
+
+let user: Awaited<ReturnType<typeof getSessionUser>> = null;
+let emailPref = true;
+try {
+    user = await getSessionUser(Astro.cookies, db);
+    if (user) emailPref = await getEmailPref(db, user.id);
+} catch (error) {
+    // Preferences that need a session degrade to the signed-out view rather
+    // than 500-ing the page — the language and mature switches still work.
+    console.error("preferences: session lookup failed:", error);
+}
+
+// Same pattern as /saved: send the visitor back here after signing in.
+const loginHref = `/api/auth/login?next=${encodeURIComponent(
+    localizePath("/preferences", locale),
+)}`;
+
+const cardClass = "rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6";
+const rowClass = "flex items-center justify-between gap-4";
+---
+
+<Layout
+    title={t("preferences.title")}
+    description={t("preferences.metaDescription")}
+    noindex
+>
+    <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-12 space-y-6">
+        <header class="space-y-2">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-text-primary">
+                <i class="fa-solid fa-sliders text-primary text-xl mr-2"></i>
+                {t("preferences.heading")}
+            </h1>
+            <p class="text-sm text-text-muted">{t("preferences.subtitle")}</p>
+        </header>
+
+        <!-- Language ------------------------------------------------------->
+        <section class={cardClass}>
+            <div class="mb-4">
+                <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-globe text-primary text-xs"></i>
+                    {t("preferences.languageHeading")}
+                </h2>
+                <p class="text-xs text-text-muted mt-1">
+                    {t("preferences.languageDesc")}
+                </p>
+            </div>
+
+            <!-- Plain links: the locale lives in the URL prefix, so switching
+                 language is a navigation, not a stored preference. -->
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {
+                    locales.map((loc) => (
+                        <li>
+                            <a
+                                href={localizePath("/preferences", loc)}
+                                hreflang={loc}
+                                data-astro-reload
+                                aria-current={loc === locale ? "true" : undefined}
+                                class:list={[
+                                    "flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors",
+                                    loc === locale
+                                        ? "border-primary/50 bg-primary/10 text-text-primary"
+                                        : "border-border bg-surface text-text-secondary hover:text-text-primary hover:border-border-hover",
+                                ]}
+                            >
+                                {localeNames[loc]}
+                                {loc === locale && (
+                                    <i class="fa-solid fa-check text-primary text-xs" />
+                                )}
+                            </a>
+                        </li>
+                    ))
+                }
+            </ul>
+        </section>
+
+        <!-- Content -------------------------------------------------------->
+        <section class={cardClass}>
+            <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-eye text-primary text-xs"></i>
+                {t("preferences.contentHeading")}
+            </h2>
+
+            <div class={rowClass}>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-text-primary">
+                        {t("preferences.matureLabel")}
+                    </p>
+                    <p class="text-xs text-text-muted mt-0.5">
+                        {t("preferences.matureDesc")}
+                    </p>
+                    <p class="text-xs text-text-muted/80 mt-1">
+                        {
+                            user
+                                ? t("preferences.savedOnAccount")
+                                : t("preferences.savedInBrowser")
+                        }
+                    </p>
+                    <p
+                        id="mature-pref-error"
+                        role="status"
+                        class="text-xs text-red-400 mt-1 empty:hidden"
+                    >
+                    </p>
+                </div>
+                <Toggle
+                    id="mature-pref-toggle"
+                    checked={showMature}
+                    label={t("preferences.matureToggle")}
+                    prefKey="showMature"
+                    errorId="mature-pref-error"
+                />
+            </div>
+        </section>
+
+        <!-- Notifications -------------------------------------------------->
+        <section class={cardClass}>
+            <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-bell text-primary text-xs"></i>
+                {t("preferences.notificationsHeading")}
+            </h2>
+
+            {
+                user ? (
+                    <div class={rowClass}>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-text-primary">
+                                {t("preferences.emailPrefHeading")}
+                            </p>
+                            <p class="text-xs text-text-muted mt-0.5">
+                                {t("preferences.emailPrefDesc")}
+                            </p>
+                            <p
+                                id="email-pref-error"
+                                role="status"
+                                class="text-xs text-red-400 mt-1 empty:hidden"
+                            />
+                        </div>
+                        <Toggle
+                            id="email-pref-toggle"
+                            checked={emailPref}
+                            label={t("preferences.emailPrefToggle")}
+                            prefKey="emailNotifications"
+                            errorId="email-pref-error"
+                        />
+                    </div>
+                ) : (
+                    <p class="text-sm text-text-muted">
+                        {t("preferences.emailPrefLoginHint")}
+                    </p>
+                )
+            }
+        </section>
+
+        {
+            !user && (
+                <p class="text-xs text-text-muted text-center">
+                    <a
+                        href={loginHref}
+                        data-astro-reload
+                        class="auth-login-link text-primary hover:underline font-medium"
+                    >
+                        {t("preferences.signInHint")}
+                    </a>
+                </p>
+            )
+        }
+    </div>
+</Layout>
+
+<script>
+    import { bindPreferenceToggles } from "../scripts/preference-toggle";
+
+    document.addEventListener("astro:page-load", bindPreferenceToggles);
+</script>

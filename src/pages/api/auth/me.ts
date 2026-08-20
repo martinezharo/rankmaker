@@ -3,6 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { getSessionUser, json } from '../../../lib/auth';
 import { countUnread } from '../../../lib/notifications';
+import { readMaturePref, writeMaturePref } from '../../../lib/mature';
 
 /**
  * Returns the logged-in user (or null) plus their unread notification count.
@@ -14,6 +15,14 @@ export const GET: APIRoute = async (context) => {
         const db = context.locals.runtime.env.DB;
         const user = await getSessionUser(context.cookies, db);
         const unreadNotifications = user ? await countUnread(db, user.id) : 0;
+
+        // The header calls this on every navigation, which makes it the sync
+        // point for the mature-content preference: the account value wins for
+        // signed-in users, so a change made on another device lands here.
+        // Signed-out visitors keep whatever cookie they set locally.
+        if (user && readMaturePref(context.cookies) !== user.showMature) {
+            writeMaturePref(context.cookies, user.showMature);
+        }
         return json(
             {
                 user: user

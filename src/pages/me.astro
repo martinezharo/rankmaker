@@ -40,7 +40,9 @@ if (user) {
     // Owner view: include private/unlisted templates. Counts are merged here
     // server-side because the public /api/counts (used by the client counts
     // script) excludes hidden slugs.
-    templates = await listTemplatesByUserId(db, user.id, true);
+    templates = await listTemplatesByUserId(db, user.id, {
+        includeHidden: true,
+    });
     try {
         const [counts, votes] = await Promise.all([
             getCounts(db, true),

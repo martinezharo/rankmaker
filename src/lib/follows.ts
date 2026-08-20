@@ -9,6 +9,7 @@ import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
 import { slugValue } from './slug';
 import { TEMPLATE_LIST_SELECT, mapTemplateRow, type Template } from './templates';
+import { matureSqlFilter } from './mature';
 
 export type FollowCounts = { followers: number; following: number };
 
@@ -148,18 +149,21 @@ export async function listFollowing(
  * Latest PUBLIC templates created by the accounts `userId` follows, newest
  * first. Powers the homepage "Following" row. Live ranking counts and vote
  * scores are merged so the cards match every other row. Hidden templates are
- * never surfaced (the visibility filter), like listUserTemplates.
+ * never surfaced (the visibility filter), like listUserTemplates, and mature
+ * ones only when the viewer opted in.
  */
 export async function listFollowingTemplates(
     db: D1Database,
     userId: string,
-    limit = 8
+    limit = 8,
+    showMature = false
 ): Promise<Template[]> {
     const { results } = await db
         .prepare(
             `${TEMPLATE_LIST_SELECT}
              JOIN follows f ON f.following_id = t.creator_id
              WHERE f.follower_id = ? AND t.visibility = 'public'
+             ${matureSqlFilter(showMature)}
              ORDER BY t.created_at DESC
              LIMIT ?`
         )

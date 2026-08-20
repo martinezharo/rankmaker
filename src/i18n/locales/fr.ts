@@ -68,6 +68,7 @@ export const fr: LocaleDict = {
 		notifications: 'Notifications',
 		toggleMenu: 'Ouvrir le menu',
 		language: 'Langue',
+		preferences: 'Préférences',
 	},
 	footer: {
 		tagline: 'La plateforme définitive pour créer des classements précis grâce à des duels 1 contre 1.',
@@ -503,6 +504,45 @@ export const fr: LocaleDict = {
 		Nature: 'Nature',
 		Others: 'Autres',
 	},
+	preferences: {
+		title: 'Préférences — RANKMAKER',
+		metaDescription:
+			'Choisissez votre langue et décidez si RANKMAKER vous montre les modèles signalés comme contenu pour adultes.',
+		heading: 'Préférences',
+		subtitle: 'Le comportement de RANKMAKER pour vous.',
+		savedInBrowser: 'Enregistré dans ce navigateur.',
+		savedOnAccount: 'Enregistré sur votre compte, sur tous vos appareils.',
+		signInHint: 'Connectez-vous pour conserver ces préférences sur tous vos appareils.',
+		languageHeading: 'Langue',
+		languageDesc: "La langue de l'interface. Le contenu des modèles n'est pas encore traduit.",
+		contentHeading: 'Contenu',
+		matureLabel: 'Afficher le contenu pour adultes',
+		matureDesc:
+			"Les modèles signalés comme contenu pour adultes sont masqués de l'accueil, de la recherche, des catégories et des profils. Activez cette option pour les voir partout.",
+		matureToggle: 'Activer/désactiver le contenu pour adultes',
+		notificationsHeading: 'Notifications',
+		emailPrefHeading: 'Notifications par e-mail',
+		emailPrefDesc: 'Envoyez-moi des e-mails concernant les commentaires sur mes modèles et les réponses à mes commentaires.',
+		emailPrefToggle: 'Activer/désactiver les notifications par e-mail',
+		emailPrefLoginHint: "Connectez-vous pour choisir si nous vous envoyons des e-mails sur l'activité.",
+		saveError: 'Impossible d’enregistrer votre préférence. Réessayez.',
+	},
+	mature: {
+		badge: 'Adulte',
+		badgeTitle: 'Signalé comme contenu pour adultes',
+		gateTitle: 'Ce modèle peut contenir du contenu pour adultes',
+		gateBody:
+			"Il a été signalé comme contenu pour adultes. Vous pouvez activer le contenu pour adultes pour le voir, ou revenir à l'accueil.",
+		gateEnable: 'Afficher le contenu pour adultes',
+		gateHome: "Aller à l'accueil",
+		gateSettingsHint: 'Vous pouvez changer cela à tout moment dans vos préférences.',
+		gateError: 'Impossible de mettre à jour votre préférence. Réessayez.',
+		formLabel: 'Contenu pour adultes',
+		formHint:
+			"Signalez ce modèle comme contenu pour adultes. Une fois public, il n'apparaîtra pas dans les listes sauf si le visiteur active le contenu pour adultes.",
+		formLockedHint:
+			'Un modérateur a signalé ce modèle comme contenu pour adultes ; la marque ne peut plus être retirée.',
+	},
 	notifications: {
 		title: 'Notifications — RANKMAKER',
 		heading: 'Notifications',
@@ -520,10 +560,7 @@ export const fr: LocaleDict = {
 		msgCommentOnTemplate: '{actor} a commenté votre modèle « {title} »',
 		msgCommentReply: '{actor} a répondu à votre commentaire sur « {title} »',
 		msgNewTemplate: '{actor} a publié un nouveau modèle : « {title} »',
-		emailPrefHeading: 'Notifications par e-mail',
-		emailPrefDesc: 'Envoyez-moi des e-mails concernant les commentaires sur mes modèles et les réponses à mes commentaires.',
-		emailPrefToggle: 'Activer/désactiver les notifications par e-mail',
-		emailPrefError: 'Impossible de mettre à jour votre préférence. Réessayez.',
+		emailPrefLink: 'Gérez les e-mails de notification dans vos préférences',
 	},
 	email: {
 		cta: 'Voir sur RANKMAKER',

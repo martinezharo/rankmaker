@@ -297,7 +297,7 @@ async function sendNotificationEmail(
 		intro: t(`email.${key}.intro`, vars),
 		ctaLabel: t('email.cta'),
 		ctaUrl,
-		footer: t('email.footer', { url: `${base}/notifications` }),
+		footer: t('email.footer', { url: `${base}/preferences` }),
 	});
 
 	return sendEmail(env, {

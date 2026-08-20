@@ -1013,3 +1013,25 @@ html.rm-authed #home-hero {
         opacity: 0;
     }
 }
+
+/* ── Mature-content gate ───────────────────────────────────────────────────
+   Applied to <main> by Layout.astro when a template flagged as mature content
+   is opened by someone who hasn't opted in (see src/lib/mature.ts). The page
+   still renders — the visitor can tell there is something there — but it is
+   unreadable and inert until they choose in MatureGate.astro.
+
+   `pointer-events: none` is what makes it inert; `user-select: none` stops the
+   text being selected (and thus read) through the blur. */
+.mature-blurred {
+    filter: blur(22px);
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Reduced-motion users are not the target here, but a heavy blur is also a
+   rendering cost on low-end devices; the gate stays correct either way. */
+@media (prefers-reduced-motion: reduce) {
+    .mature-blurred {
+        filter: blur(16px);
+    }
+}

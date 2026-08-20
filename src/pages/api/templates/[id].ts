@@ -128,9 +128,16 @@ export const PUT: APIRoute = async (context) => {
         await db.batch([
             db
                 .prepare(
+                    // `is_mature` is only writable while an admin hasn't
+                    // decided it: once `mature_locked` is set, the creator's
+                    // value is ignored (they must not be able to un-flag a
+                    // template moderation flagged). Doing it in the UPDATE
+                    // keeps the check atomic instead of read-then-write.
                     `UPDATE templates
                      SET title = ?, description = ?, category = ?, cover_image = ?,
-                         visibility = ?, slug = ?, updated_at = datetime('now')
+                         visibility = ?, slug = ?,
+                         is_mature = CASE WHEN mature_locked = 1 THEN is_mature ELSE ? END,
+                         updated_at = datetime('now')
                      WHERE id = ?`
                 )
                 .bind(
@@ -140,6 +147,7 @@ export const PUT: APIRoute = async (context) => {
                     data.cover_image,
                     data.visibility,
                     slug,
+                    data.is_mature ? 1 : 0,
                     owned.id
                 ),
             ...(becameUnlisted

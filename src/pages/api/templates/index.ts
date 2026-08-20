@@ -79,8 +79,8 @@ export const POST: APIRoute = async (context) => {
         const results = await db.batch([
             db
                 .prepare(
-                    `INSERT INTO templates (id, creator_id, slug, title, description, category, cover_image, visibility)
-                     SELECT ?, ?, ?, ?, ?, ?, ?, ?
+                    `INSERT INTO templates (id, creator_id, slug, title, description, category, cover_image, visibility, is_mature)
+                     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
                      WHERE (SELECT COUNT(*) FROM templates WHERE creator_id = ?) < ?`
                 )
                 .bind(
@@ -92,6 +92,7 @@ export const POST: APIRoute = async (context) => {
                     data.category,
                     data.cover_image,
                     data.visibility,
+                    data.is_mature ? 1 : 0,
                     user.id,
                     MAX_TEMPLATES_PER_USER
                 ),

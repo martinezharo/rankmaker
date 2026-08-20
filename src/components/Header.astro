@@ -125,6 +125,14 @@ const L = (p: string) => localizePath(p, locale);
                         t("nav.createTemplate")
                     }
                 </a>
+                <a
+                    href={L("/preferences")}
+                    class="block px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"
+                >
+                    <i class="fa-solid fa-sliders w-5 mr-2 text-xs"></i>{
+                        t("nav.preferences")
+                    }
+                </a>
                 <!-- Extra links injected here by JS when logged in -->
                 <div id="mobile-auth-links"></div>
             </div>
@@ -322,6 +330,7 @@ const L = (p: string) => localizePath(p, locale);
             </button>
             <div class="auth-dropdown absolute right-0 top-full mt-2 w-56 rounded-xl bg-surface-elevated border border-border shadow-xl shadow-black/40 py-1.5 z-50" style="display:none;">
                 <a href="${L("/me")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-layer-group w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myTemplates"))}<span class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-primary/15 text-primary text-[10px] leading-none font-bold inline-flex items-center justify-center">${count}</span></a>
+                <a href="${L("/preferences")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-sliders w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.preferences"))}</a>
                 <div class="my-1.5 h-px bg-border/60"></div>
                 <a href="${loginUrl()}" data-astro-reload class="auth-login-link block px-4 py-2 text-sm font-semibold text-text-primary hover:bg-white/5 transition-colors"><i class="fa-brands fa-github w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.login"))}</a>
             </div>`;
@@ -382,6 +391,7 @@ const L = (p: string) => localizePath(p, locale);
                 <a href="${L("/notifications")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bell w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.notifications"))}<span data-notif-count class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold inline-flex items-center justify-center" style="display:none"></span></a>
                 <a href="${L("/saved")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-bookmark w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.mySaved"))}</a>
                 <a href="${L("/history")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-clock-rotate-left w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myHistory"))}</a>
+                <a href="${L("/preferences")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-sliders w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.preferences"))}</a>
                 <button type="button" class="auth-logout-btn block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 transition-colors"><i class="fa-solid fa-arrow-right-from-bracket w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.logout"))}</button>
             </div>`;
 

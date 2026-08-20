@@ -64,6 +64,7 @@ export const pt: LocaleDict = {
 		notifications: 'Notificações',
 		toggleMenu: 'Abrir menu',
 		language: 'Idioma',
+		preferences: 'Preferências',
 	},
 	footer: {
 		tagline: 'A plataforma definitiva para criar rankings precisos por meio de duelos 1 contra 1.',
@@ -503,6 +504,45 @@ export const pt: LocaleDict = {
 		Nature: 'Natureza',
 		Others: 'Outros',
 	},
+	preferences: {
+		title: 'Preferências — RANKMAKER',
+		metaDescription:
+			'Escolha o seu idioma e decida se o RANKMAKER lhe mostra modelos marcados como conteúdo adulto.',
+		heading: 'Preferências',
+		subtitle: 'Como o RANKMAKER se comporta para si.',
+		savedInBrowser: 'Guardado neste navegador.',
+		savedOnAccount: 'Guardado na sua conta, em todos os dispositivos.',
+		signInHint: 'Inicie sessão para manter estas preferências em todos os seus dispositivos.',
+		languageHeading: 'Idioma',
+		languageDesc: 'O idioma da interface. O conteúdo dos modelos ainda não está traduzido.',
+		contentHeading: 'Conteúdo',
+		matureLabel: 'Mostrar conteúdo adulto',
+		matureDesc:
+			'Os modelos marcados como conteúdo adulto ficam ocultos na página inicial, na pesquisa, nas categorias e nos perfis. Ative para os ver em todo o lado.',
+		matureToggle: 'Ativar ou desativar conteúdo adulto',
+		notificationsHeading: 'Notificações',
+		emailPrefHeading: 'Notificações por e-mail',
+		emailPrefDesc: 'Envie-me e-mails sobre comentários nos meus modelos e respostas aos meus comentários.',
+		emailPrefToggle: 'Ativar ou desativar notificações por e-mail',
+		emailPrefLoginHint: 'Inicie sessão para escolher se lhe enviamos e-mails sobre a atividade.',
+		saveError: 'Não foi possível guardar a sua preferência. Tente novamente.',
+	},
+	mature: {
+		badge: 'Adulto',
+		badgeTitle: 'Marcado como conteúdo adulto',
+		gateTitle: 'Este modelo pode conter conteúdo adulto',
+		gateBody:
+			'Foi marcado como conteúdo adulto. Pode ativar o conteúdo adulto para o ver ou voltar à página inicial.',
+		gateEnable: 'Mostrar conteúdo adulto',
+		gateHome: 'Ir para a página inicial',
+		gateSettingsHint: 'Pode alterar isto a qualquer momento nas suas preferências.',
+		gateError: 'Não foi possível atualizar a sua preferência. Tente novamente.',
+		formLabel: 'Conteúdo adulto',
+		formHint:
+			'Marque este modelo como conteúdo adulto. Quando for público, não aparecerá nas listagens a não ser que o visitante ative o conteúdo adulto.',
+		formLockedHint:
+			'Um moderador marcou este modelo como conteúdo adulto, pelo que a marca já não pode ser removida.',
+	},
 	notifications: {
 		title: 'Notificações — RANKMAKER',
 		heading: 'Notificações',
@@ -520,10 +560,7 @@ export const pt: LocaleDict = {
 		msgCommentOnTemplate: '{actor} comentou no seu modelo “{title}”',
 		msgCommentReply: '{actor} respondeu ao seu comentário em “{title}”',
 		msgNewTemplate: '{actor} publicou um novo modelo: “{title}”',
-		emailPrefHeading: 'Notificações por e-mail',
-		emailPrefDesc: 'Envie-me e-mails sobre comentários nos meus modelos e respostas aos meus comentários.',
-		emailPrefToggle: 'Ativar ou desativar notificações por e-mail',
-		emailPrefError: 'Não foi possível atualizar sua preferência. Tente novamente.',
+		emailPrefLink: 'Gerir e-mails de notificação nas preferências',
 	},
 	email: {
 		cta: 'Ver no RANKMAKER',
