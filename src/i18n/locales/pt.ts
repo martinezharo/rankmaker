@@ -11,6 +11,7 @@ export const pt: LocaleDict = {
 		skip: 'Deixe este confronto de lado — ele só volta se decidir uma posição',
 		finishEarly: 'Pare agora e deixe as posições restantes serem definidas pelo que já foi escolhido',
 		removeOption: 'Tire esta opção do ranking por completo',
+		restoreOption: 'Devolve esta opção ao ranking',
 		progress: 'É uma estimativa — com bons confrontos costuma terminar antes',
 		battleHistory: 'Reveja todos os confrontos que você decidiu, em ordem',
 		rankAgain: 'Apague este resultado e ranqueie o modelo do zero',

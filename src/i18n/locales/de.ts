@@ -11,6 +11,7 @@ export const de: LocaleDict = {
 		skip: 'Duell zurückstellen — es kommt nur wieder, wenn es eine Position entscheidet',
 		finishEarly: 'Jetzt aufhören — die restlichen Plätze ergeben sich aus den bisherigen Duellen',
 		removeOption: 'Diese Option ganz aus dem Ranking nehmen',
+		restoreOption: 'Diese Option wieder ins Ranking aufnehmen',
 		progress: 'Nur eine Schätzung — kluge Duelle enden oft früher',
 		battleHistory: 'Alle entschiedenen Duelle der Reihe nach ansehen',
 		rankAgain: 'Ergebnis verwerfen und die Vorlage von vorn ranken',

@@ -11,6 +11,7 @@ export const ms: LocaleDict = {
 		skip: 'Tangguhkan perlawanan ini — ia hanya kembali jika menentukan kedudukan',
 		finishEarly: 'Berhenti sekarang — baki kedudukan ditentukan oleh keputusan setakat ini',
 		removeOption: 'Keluarkan pilihan ini terus daripada ranking',
+		restoreOption: 'Masukkan semula pilihan ini ke dalam ranking',
 		progress: 'Anggaran sahaja — perlawanan yang bijak selalunya tamat lebih awal',
 		battleHistory: 'Semak semula setiap perlawanan yang anda putuskan, mengikut urutan',
 		rankAgain: 'Padam keputusan ini dan buat ranking templat dari awal',

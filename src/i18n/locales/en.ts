@@ -24,6 +24,7 @@ export const en = {
 		skip: "Park this matchup — you'll only be asked again if it decides a position",
 		finishEarly: 'Stop now and let the remaining spots be settled by the results so far',
 		removeOption: 'Drop this option out of the ranking entirely',
+		restoreOption: 'Put this option back into the ranking',
 		progress: 'An estimate — smart matchups often finish it sooner',
 		// Results view
 		battleHistory: 'Review every matchup you decided, in order',

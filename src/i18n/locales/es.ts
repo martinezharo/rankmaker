@@ -11,6 +11,7 @@ export const es: LocaleDict = {
 		skip: 'Aparca este enfrentamiento: solo volverá a salir si decide una posición',
 		finishEarly: 'Termina ya y deja que los puestos restantes se resuelvan con lo elegido hasta ahora',
 		removeOption: 'Deja esta opción fuera del ranking por completo',
+		restoreOption: 'Vuelve a incluir esta opción en el ranking',
 		progress: 'Es una estimación: con buenos enfrentamientos suele acabar antes',
 		battleHistory: 'Repasa todos los enfrentamientos que decidiste, en orden',
 		rankAgain: 'Borra este resultado y ordena la plantilla desde cero',

@@ -11,6 +11,7 @@ export const zh: LocaleDict = {
 		skip: '暂时跳过这组对决——只有在它决定名次时才会再出现',
 		finishEarly: '就此结束，剩下的名次按目前的战绩自动排定',
 		removeOption: '把这个选项彻底移出本次排名',
+		restoreOption: '把这个选项重新加回排名',
 		progress: '只是估算——对决安排得当往往会提前结束',
 		battleHistory: '按顺序回顾你判定过的每一组对决',
 		rankAgain: '清空这份结果，从头重新排一次',

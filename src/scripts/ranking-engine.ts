@@ -586,6 +586,18 @@ export function rankingInit() {
             });
     }
 
+    // Every remove control carries its own tooltip, so the state and the
+    // sentence explaining it are set together.
+    //
+    // `aria-disabled` rather than `disabled`: a disabled button receives no
+    // pointer or focus events, so the tooltip explaining *why* it can't be
+    // used would never open on the one control that needs it. The click
+    // handlers below check the flag instead.
+    function setRemoveState(btn, disabled, tip) {
+        btn.setAttribute("aria-disabled", String(disabled));
+        btn.dataset.rmTip = disabled ? t("ranking.removeMinNotice") : tip;
+    }
+
     // A ranking needs at least 2 options: at the floor, disable every
     // remove control (restore stays available on excluded cards).
     function refreshRemoveButtons() {
@@ -596,15 +608,19 @@ export function rankingInit() {
                 const excluded = excludedIds.has(
                     String(btn.dataset.removeOption),
                 );
-                btn.disabled = atMin && !excluded;
-                btn.title = btn.disabled
-                    ? t("ranking.removeMinNotice")
-                    : "";
+                setRemoveState(
+                    btn,
+                    atMin && !excluded,
+                    t(
+                        excluded
+                            ? "tooltip.restoreOption"
+                            : "tooltip.removeOption",
+                    ),
+                );
             });
         [battleRemoveA, battleRemoveB].forEach((btn) => {
             if (!btn) return;
-            btn.disabled = atMin;
-            btn.title = atMin ? t("ranking.removeMinNotice") : "";
+            setRemoveState(btn, atMin, t("tooltip.removeOption"));
         });
     }
 
@@ -612,6 +628,7 @@ export function rankingInit() {
         .querySelectorAll("[data-remove-option]")
         .forEach((btn) => {
             btn.addEventListener("click", () => {
+                if (btn.getAttribute("aria-disabled") === "true") return;
                 const id = btn.dataset.removeOption;
                 if (excludedIds.has(String(id))) {
                     restoreOption(id);
@@ -630,6 +647,7 @@ export function rankingInit() {
         // Don't let the click bubble to the card and count as a pick.
         e.stopPropagation();
         if (isProcessing) return;
+        if (e.currentTarget.getAttribute("aria-disabled") === "true") return;
         requestRemove(
             items.find((x) => x.id === parseInt(card.dataset.itemId)),
         );

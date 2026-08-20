@@ -11,6 +11,7 @@ export const fr: LocaleDict = {
 		skip: 'Mettez ce duel de côté — il ne reviendra que s\'il décide une place',
 		finishEarly: 'Arrêtez maintenant : les places restantes seront réglées par les résultats obtenus',
 		removeOption: 'Excluez complètement cette option du classement',
+		restoreOption: 'Remets cette option dans le classement',
 		progress: 'Une estimation — de bons duels terminent souvent plus tôt',
 		battleHistory: 'Revoyez tous les duels que vous avez tranchés, dans l\'ordre',
 		rankAgain: 'Effacez ce résultat et reclassez le modèle depuis le début',
