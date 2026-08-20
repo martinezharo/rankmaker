@@ -11,9 +11,14 @@ import {
 } from "../../lib/categories";
 import {
     getOfficialTemplates,
-    listUserTemplates,
+    listBrowseTemplates,
     type Template,
 } from "../../lib/templates";
+import {
+    filterMature,
+    listingCacheControl,
+    readMaturePref,
+} from "../../lib/mature";
 import { getTemplateVotes } from "../../lib/template-votes";
 import { slugValue } from "../../lib/slug";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n";
@@ -31,15 +36,18 @@ if (!categoryName) {
     return new Response(null, { status: 404 });
 }
 
+// Templates flagged as mature are left out unless the visitor opted in.
+const showMature = readMaturePref(Astro.cookies);
+
 // Official (JSON) + user-created (D1) templates, filtered to this category.
 // Same official-only fallback as /search if D1 is unavailable.
-let userTemplates: Template[] = [];
+let browse: Template[] = filterMature(getOfficialTemplates(), showMature);
 let votes: Record<string, number> = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
     if (db) {
-        [userTemplates, votes] = await Promise.all([
-            listUserTemplates(db),
+        [browse, votes] = await Promise.all([
+            listBrowseTemplates(db, showMature),
             getTemplateVotes(db),
         ]);
     }
@@ -47,7 +55,7 @@ try {
     // official-only fallback
 }
 
-const templates = [...getOfficialTemplates(), ...userTemplates]
+const templates = browse
     .filter((tpl) => tpl.category === categoryName)
     .map((tpl) => ({ ...tpl, votes: slugValue(votes, tpl.slug) }))
     .sort((a, b) => b.times_ranked - a.times_ranked);
@@ -62,7 +70,7 @@ const description = t("category.metaDescription", {
 // link equity flowing between indexable category pages).
 const otherCategories = CATEGORIES.filter((c) => c.name !== categoryName);
 
-Astro.response.headers.set("Cache-Control", "public, max-age=60");
+Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
 ---
 
 <Layout title={title} description={description}>

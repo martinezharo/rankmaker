@@ -1,0 +1,177 @@
+---
+export const prerender = false;
+
+import Layout from "../layouts/Layout.astro";
+import Toggle from "../components/ui/Toggle.astro";
+import LanguageSelect from "../components/LanguageSelect.astro";
+import { getSessionUser } from "../lib/auth";
+import { getEmailPref } from "../lib/notifications";
+import { readMaturePref, writeMaturePref } from "../lib/mature";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
+// Everything here is per-visitor state, so the page is never cached.
+Astro.response.headers.set("Cache-Control", "private, no-store");
+
+const db = Astro.locals.runtime.env.DB;
+
+let user: Awaited<ReturnType<typeof getSessionUser>> = null;
+let emailPref = true;
+try {
+    user = await getSessionUser(Astro.cookies, db);
+    if (user) emailPref = await getEmailPref(db, user.id);
+} catch (error) {
+    // Preferences that need a session degrade to the signed-out view rather
+    // than 500-ing the page — the language and mature switches still work.
+    console.error("preferences: session lookup failed:", error);
+}
+
+// Everywhere else the render path reads the cookie, but this page is where the
+// value is edited, so it shows the authoritative one: the account for signed-in
+// users (which may have been changed on another device), the cookie otherwise.
+// Re-stamping the cookie here means the rest of the site agrees immediately,
+// without waiting for the next /api/auth/me.
+const showMature = user ? user.showMature : readMaturePref(Astro.cookies);
+if (user && readMaturePref(Astro.cookies) !== showMature) {
+    writeMaturePref(Astro.cookies, showMature);
+}
+
+// Same pattern as /saved: send the visitor back here after signing in.
+const loginHref = `/api/auth/login?next=${encodeURIComponent(
+    localizePath("/preferences", locale),
+)}`;
+
+const cardClass = "rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6";
+const rowClass = "flex items-center justify-between gap-4";
+---
+
+<Layout
+    title={t("preferences.title")}
+    description={t("preferences.metaDescription")}
+    noindex
+>
+    <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-12 space-y-6">
+        <header class="space-y-2">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-text-primary">
+                <i class="fa-solid fa-sliders text-primary text-xl mr-2"></i>
+                {t("preferences.heading")}
+            </h1>
+            <p class="text-sm text-text-muted">{t("preferences.subtitle")}</p>
+        </header>
+
+        <!-- Language ------------------------------------------------------->
+        <section class={cardClass}>
+            <div class="mb-4">
+                <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-globe text-primary text-xs"></i>
+                    {t("preferences.languageHeading")}
+                </h2>
+                <p class="text-xs text-text-muted mt-1">
+                    {t("preferences.languageDesc")}
+                </p>
+            </div>
+
+            <LanguageSelect class="w-full sm:max-w-xs" />
+        </section>
+
+        <!-- Content -------------------------------------------------------->
+        <section class={cardClass}>
+            <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-eye text-primary text-xs"></i>
+                {t("preferences.contentHeading")}
+            </h2>
+
+            <div class={rowClass}>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-text-primary">
+                        {t("preferences.matureLabel")}
+                    </p>
+                    <p class="text-xs text-text-muted mt-0.5">
+                        {t("preferences.matureDesc")}
+                    </p>
+                    <p class="text-xs text-text-muted/80 mt-1">
+                        {
+                            user
+                                ? t("preferences.savedOnAccount")
+                                : t("preferences.savedInBrowser")
+                        }
+                    </p>
+                    <p
+                        id="mature-pref-error"
+                        role="status"
+                        class="text-xs text-red-400 mt-1 empty:hidden"
+                    >
+                    </p>
+                </div>
+                <Toggle
+                    id="mature-pref-toggle"
+                    checked={showMature}
+                    label={t("preferences.matureToggle")}
+                    prefKey="showMature"
+                    errorId="mature-pref-error"
+                />
+            </div>
+        </section>
+
+        <!-- Notifications -------------------------------------------------->
+        <section class={cardClass}>
+            <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
+                <i class="fa-solid fa-bell text-primary text-xs"></i>
+                {t("preferences.notificationsHeading")}
+            </h2>
+
+            {
+                user ? (
+                    <div class={rowClass}>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-text-primary">
+                                {t("preferences.emailPrefHeading")}
+                            </p>
+                            <p class="text-xs text-text-muted mt-0.5">
+                                {t("preferences.emailPrefDesc")}
+                            </p>
+                            <p
+                                id="email-pref-error"
+                                role="status"
+                                class="text-xs text-red-400 mt-1 empty:hidden"
+                            />
+                        </div>
+                        <Toggle
+                            id="email-pref-toggle"
+                            checked={emailPref}
+                            label={t("preferences.emailPrefToggle")}
+                            prefKey="emailNotifications"
+                            errorId="email-pref-error"
+                        />
+                    </div>
+                ) : (
+                    <p class="text-sm text-text-muted">
+                        {t("preferences.emailPrefLoginHint")}
+                    </p>
+                )
+            }
+        </section>
+
+        {
+            !user && (
+                <p class="text-xs text-text-muted text-center">
+                    <a
+                        href={loginHref}
+                        data-astro-reload
+                        class="auth-login-link text-primary hover:underline font-medium"
+                    >
+                        {t("preferences.signInHint")}
+                    </a>
+                </p>
+            )
+        }
+    </div>
+</Layout>
+
+<script>
+    import { bindPreferenceToggles } from "../scripts/preference-toggle";
+
+    document.addEventListener("astro:page-load", bindPreferenceToggles);
+</script>

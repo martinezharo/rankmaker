@@ -71,6 +71,7 @@ export const en = {
 		notifications: 'Notifications',
 		toggleMenu: 'Toggle menu',
 		language: 'Language',
+		preferences: 'Preferences',
 	},
 	footer: {
 		tagline: 'The definitive platform for building accurate rankings through 1v1 battles.',
@@ -566,6 +567,43 @@ export const en = {
 		Nature: 'Nature',
 		Others: 'Others',
 	},
+	preferences: {
+		title: 'Preferences — RANKMAKER',
+		metaDescription:
+			'Choose your language and decide whether RANKMAKER shows you templates flagged as mature content.',
+		heading: 'Preferences',
+		subtitle: 'How RANKMAKER behaves for you.',
+		savedInBrowser: 'Saved in this browser.',
+		savedOnAccount: 'Saved on your account, on every device.',
+		signInHint: 'Log in to keep these preferences on all your devices.',
+		languageHeading: 'Language',
+		languageDesc: 'The language of the interface. Template content is not translated yet.',
+		contentHeading: 'Content',
+		matureLabel: 'Show mature content',
+		matureDesc:
+			'Templates flagged as adult content are hidden from the home page, search, categories and profiles. Turn this on to see them everywhere.',
+		matureToggle: 'Toggle mature content',
+		notificationsHeading: 'Notifications',
+		emailPrefHeading: 'Email notifications',
+		emailPrefDesc: 'Email me about comments on my templates and replies to my comments.',
+		emailPrefToggle: 'Toggle notification emails',
+		emailPrefLoginHint: 'Log in to choose whether we email you about activity.',
+		saveError: "Couldn't save your preference. Try again.",
+	},
+	mature: {
+		gateTitle: 'This template may contain adult content',
+		gateBody:
+			'It has been flagged as mature content. You can turn mature content on to view it, or go back to the home page.',
+		gateEnable: 'Show mature content',
+		gateHome: 'Go to home',
+		gateSettingsHint: 'You can change this any time in your preferences.',
+		gateError: "Couldn't update your preference. Try again.",
+		formLabel: 'Mature content',
+		formHint:
+			'Flag this template as adult content. Once public, it stays out of listings unless a visitor turns mature content on.',
+		formLockedHint:
+			'A moderator flagged this template as mature content, so the flag can no longer be removed.',
+	},
 	notifications: {
 		title: 'Notifications — RANKMAKER',
 		heading: 'Notifications',
@@ -583,10 +621,7 @@ export const en = {
 		msgCommentOnTemplate: '{actor} commented on your template “{title}”',
 		msgCommentReply: '{actor} replied to your comment on “{title}”',
 		msgNewTemplate: '{actor} published a new template: “{title}”',
-		emailPrefHeading: 'Email notifications',
-		emailPrefDesc: 'Email me about comments on my templates and replies to my comments.',
-		emailPrefToggle: 'Toggle notification emails',
-		emailPrefError: "Couldn't update your preference. Try again.",
+		emailPrefLink: 'Manage notification emails in your preferences',
 	},
 	email: {
 		cta: 'View on RANKMAKER',

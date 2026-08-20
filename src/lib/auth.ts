@@ -15,6 +15,8 @@ export type SessionUser = {
     username: string;
     avatar: string;
     isVerified: boolean;
+    /** Account-level "show mature content" preference — see src/lib/mature.ts. */
+    showMature: boolean;
 };
 
 export function sessionCookieOptions() {
@@ -77,7 +79,8 @@ export async function getSessionUser(
 
     const row = await db
         .prepare(
-            `SELECT s.expires_at, u.id, u.username, u.avatar, u.is_verified
+            `SELECT s.expires_at, u.id, u.username, u.avatar, u.is_verified,
+                    u.show_mature
              FROM sessions s JOIN users u ON u.id = s.user_id
              WHERE s.id = ?`
         )
@@ -88,6 +91,7 @@ export async function getSessionUser(
             username: string;
             avatar: string;
             is_verified: number;
+            show_mature: number;
         }>();
     if (!row) return null;
 
@@ -101,6 +105,7 @@ export async function getSessionUser(
         username: row.username,
         avatar: row.avatar,
         isVerified: row.is_verified === 1,
+        showMature: row.show_mature === 1,
     };
 }
 
@@ -251,6 +256,7 @@ export const RESERVED_USERNAMES = [
     'legal',
     'privacy',
     'terms',
+    'preferences',
 ];
 
 export function usernameProblem(username: unknown): string | null {

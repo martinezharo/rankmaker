@@ -4,6 +4,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import CookieConsent from "../components/CookieConsent.astro";
 import LoginModal from "../components/LoginModal.astro";
+import MatureGate from "../components/MatureGate.astro";
 import { ClientRouter } from "astro:transitions";
 import outfitFontUrl from "@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url";
 import {
@@ -30,6 +31,11 @@ interface Props {
     noindex?: boolean;
     /** Preload this image as the LCP candidate (e.g. the template cover). */
     preloadImage?: string | null;
+    /**
+     * Blur the page and cover it with the (non-dismissible) mature-content
+     * confirmation dialog — see src/lib/mature.ts and MatureGate.astro.
+     */
+    matureGated?: boolean;
 }
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -43,6 +49,7 @@ const {
     imageHeight,
     noindex = false,
     preloadImage,
+    matureGated = false,
 } = Astro.props;
 
 // Keep the HTTP and HTML indexing directives in sync for every page that
@@ -265,7 +272,13 @@ const ogImageHeight =
         <!-- View Transitions -->
         <ClientRouter />
     </head>
-    <body class="flex flex-col min-h-dvh">
+    <body
+        class:list={[
+            "flex flex-col min-h-dvh",
+            // The gated page must not scroll behind the dialog.
+            matureGated && "overflow-hidden",
+        ]}
+    >
         <!-- Navigation progress bar (feedback for slow connections during
              ClientRouter page fetches) — persisted across swaps. -->
         <div id="nav-progress" transition:persist aria-hidden="true"></div>
@@ -280,7 +293,7 @@ const ogImageHeight =
         <!-- Header/Footer carry transition:persist on their root elements
              (the directive is ignored when placed on component tags). -->
         <Header />
-        <main class="flex-1">
+        <main class:list={["flex-1", matureGated && "mature-blurred"]}>
             <slot />
         </main>
         <Footer />
@@ -291,6 +304,7 @@ const ogImageHeight =
              its delegated click handler runs (and calls preventDefault())
              ahead of the nav-progress listener. -->
         <LoginModal />
+        {matureGated && <MatureGate />}
 
         <!-- Navigation progress bar: grows toward 90% while the next page is
              fetched, then snaps to 100% and fades out once it loads. Gives slow

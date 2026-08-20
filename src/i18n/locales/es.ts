@@ -68,6 +68,7 @@ export const es: LocaleDict = {
 		notifications: 'Notificaciones',
 		toggleMenu: 'Abrir menú',
 		language: 'Idioma',
+		preferences: 'Preferencias',
 	},
 	footer: {
 		tagline: 'La plataforma definitiva para crear rankings precisos mediante batallas 1 contra 1.',
@@ -545,6 +546,43 @@ export const es: LocaleDict = {
 		Nature: 'Naturaleza',
 		Others: 'Otros',
 	},
+	preferences: {
+		title: 'Preferencias — RANKMAKER',
+		metaDescription:
+			'Elige tu idioma y decide si RANKMAKER te muestra plantillas marcadas como contenido adulto.',
+		heading: 'Preferencias',
+		subtitle: 'Cómo se comporta RANKMAKER para ti.',
+		savedInBrowser: 'Se guarda en este navegador.',
+		savedOnAccount: 'Se guarda en tu cuenta, en todos tus dispositivos.',
+		signInHint: 'Inicia sesión para conservar estas preferencias en todos tus dispositivos.',
+		languageHeading: 'Idioma',
+		languageDesc: 'El idioma de la interfaz. El contenido de las plantillas aún no está traducido.',
+		contentHeading: 'Contenido',
+		matureLabel: 'Mostrar contenido adulto',
+		matureDesc:
+			'Las plantillas marcadas como contenido adulto no aparecen en la portada, la búsqueda, las categorías ni los perfiles. Actívalo para verlas en todas partes.',
+		matureToggle: 'Activar/desactivar contenido adulto',
+		notificationsHeading: 'Notificaciones',
+		emailPrefHeading: 'Notificaciones por correo',
+		emailPrefDesc: 'Envíame correos sobre comentarios en mis plantillas y respuestas a mis comentarios.',
+		emailPrefToggle: 'Activar/desactivar notificaciones por correo',
+		emailPrefLoginHint: 'Inicia sesión para elegir si quieres recibir correos sobre la actividad.',
+		saveError: 'No se pudo guardar tu preferencia. Inténtalo de nuevo.',
+	},
+	mature: {
+		gateTitle: 'Esta plantilla podría contener contenido adulto',
+		gateBody:
+			'Ha sido marcada como contenido adulto. Puedes activar el contenido adulto para verla o volver a la portada.',
+		gateEnable: 'Mostrar contenido adulto',
+		gateHome: 'Ir a la portada',
+		gateSettingsHint: 'Puedes cambiarlo cuando quieras en tus preferencias.',
+		gateError: 'No se pudo actualizar tu preferencia. Inténtalo de nuevo.',
+		formLabel: 'Contenido adulto',
+		formHint:
+			'Marca esta plantilla como contenido adulto. Cuando sea pública, no aparecerá en los listados salvo que el visitante active el contenido adulto.',
+		formLockedHint:
+			'Un moderador ha marcado esta plantilla como contenido adulto, así que ya no se puede quitar la marca.',
+	},
 	notifications: {
 		title: 'Notificaciones — RANKMAKER',
 		heading: 'Notificaciones',
@@ -562,10 +600,7 @@ export const es: LocaleDict = {
 		msgCommentOnTemplate: '{actor} ha comentado en tu plantilla “{title}”',
 		msgCommentReply: '{actor} ha respondido a tu comentario en “{title}”',
 		msgNewTemplate: '{actor} ha publicado una nueva plantilla: “{title}”',
-		emailPrefHeading: 'Notificaciones por correo',
-		emailPrefDesc: 'Envíame correos sobre comentarios en mis plantillas y respuestas a mis comentarios.',
-		emailPrefToggle: 'Activar/desactivar notificaciones por correo',
-		emailPrefError: 'No se pudo actualizar tu preferencia. Inténtalo de nuevo.',
+		emailPrefLink: 'Gestiona las notificaciones por correo en tus preferencias',
 	},
 	email: {
 		cta: 'Ver en RANKMAKER',

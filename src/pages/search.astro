@@ -10,9 +10,14 @@ import {
 } from "../lib/categories";
 import {
     getOfficialTemplates,
-    listUserTemplates,
+    listBrowseTemplates,
     type Template,
 } from "../lib/templates";
+import {
+    filterMature,
+    listingCacheControl,
+    readMaturePref,
+} from "../lib/mature";
 import { getTemplateVotes } from "../lib/template-votes";
 import { slugValue, type SlugValues } from "../lib/slug";
 import { avatarHtml } from "../lib/avatars";
@@ -24,15 +29,18 @@ const locale = Astro.locals.locale ?? defaultLocale;
 const tr = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
+// Templates flagged as mature stay out of search unless the visitor opted in.
+const showMature = readMaturePref(Astro.cookies);
+
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
-let userTemplates: Template[] = [];
+let browse: Template[] = filterMature(getOfficialTemplates(), showMature);
 let votes: SlugValues = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
     if (db) {
-        [userTemplates, votes] = await Promise.all([
-            listUserTemplates(db),
+        [browse, votes] = await Promise.all([
+            listBrowseTemplates(db, showMature),
             getTemplateVotes(db),
         ]);
     }
@@ -41,7 +49,7 @@ try {
 }
 
 // Sort by most ranked (live counts re-sort client-side via rm:counts)
-const templates = [...getOfficialTemplates(), ...userTemplates]
+const templates = browse
     .map((t) => ({ ...t, votes: slugValue(votes, t.slug) }))
     .sort((a, b) => b.times_ranked - a.times_ranked);
 
@@ -75,7 +83,7 @@ const templatesForClient = templates.map((t) => ({
     creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${L(`/u/${encodeURIComponent(t.creator.username)}`)}" title="${escapeHtml(tr("card.viewProfile", { username: t.creator.username }))}">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified)}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
 }));
 
-Astro.response.headers.set("Cache-Control", "public, max-age=60");
+Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
 ---
 
 <Layout

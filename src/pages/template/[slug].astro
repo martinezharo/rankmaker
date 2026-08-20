@@ -18,6 +18,7 @@ import { resolveImageUrl } from "../../lib/covers";
 import { buildRankingData } from "../../lib/ranking-data";
 import { serializeJsonForScript } from "../../lib/safe-json";
 import { getSessionUser } from "../../lib/auth";
+import { isMatureGated, readMaturePref } from "../../lib/mature";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -67,6 +68,13 @@ if (template.visibility === "private") {
     }
 }
 
+// Mature content: flagged templates are kept out of every listing, and a
+// PUBLIC one opened directly is blurred behind a confirmation dialog until the
+// visitor opts in. Private/unlisted templates carry the flag but nothing acts
+// on it — they are already unlisted (see src/lib/mature.ts).
+const showMature = readMaturePref(Astro.cookies);
+const matureGated = isMatureGated(template, showMature);
+
 const { options, creator } = template;
 
 // Official pages change rarely; user templates may be edited (≤60s staleness).
@@ -79,9 +87,14 @@ const { options, creator } = template;
 // refreshed client-side via /api/counts on every page-load, so a 1h HTML cache
 // can't surface stale ranking numbers to users. This keeps cold-cache visitors
 // off the Worker most of the time, dropping TTFB from ~1s to <50ms.
+//
+// A template flagged as mature renders two different pages (gated / not gated)
+// for the same URL depending on a cookie, so it is never cached at all —
+// a shared cache could otherwise hand the ungated page to someone who never
+// opted in.
 Astro.response.headers.set(
     "Cache-Control",
-    isHidden
+    isHidden || template.is_mature
         ? "no-store"
         : template.source === "official"
           ? "public, max-age=60, s-maxage=3600, stale-while-revalidate=86400"
@@ -158,7 +171,12 @@ let recommendations: Awaited<ReturnType<typeof getRecommendedTemplates>> = [];
 try {
     // Over-fetch: the client hides already-played templates and trims to 8,
     // so a few extra candidates keep the row full for returning users.
-    recommendations = await getRecommendedTemplates(db, template, 12);
+    recommendations = await getRecommendedTemplates(
+        db,
+        template,
+        12,
+        showMature,
+    );
 } catch {
     // non-fatal — the page renders without the row
 }
@@ -169,10 +187,11 @@ try {
     description={template.description || undefined}
     image={coverSrc}
     preloadImage={coverSrc}
-    noindex={isHidden}
+    noindex={isHidden || template.is_mature}
+    matureGated={matureGated}
 >
     {
-        !isHidden && (
+        !isHidden && !template.is_mature && (
             <script
                 type="application/ld+json"
                 set:html={serializeJsonForScript(jsonLd)}

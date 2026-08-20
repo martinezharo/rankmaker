@@ -1,0 +1,142 @@
+---
+// MatureGate.astro — the confirmation overlay shown when someone opens a
+// template flagged as mature content without having opted in.
+//
+// The page behind it is rendered as usual but blurred and inert (the
+// `.mature-blurred` rule in global.css, applied to <main> by Layout.astro), so
+// the visitor can see there IS something there without seeing what.
+//
+// Deliberately not built on modal-a11y: this dialog is not dismissible — there
+// is no close button and Escape must not reveal the page. The only ways out are
+// opting in or leaving.
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+---
+
+<div
+    id="mature-gate"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="mature-gate-title"
+    aria-describedby="mature-gate-body"
+    class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+>
+    <div
+        class="w-full max-w-md rounded-2xl bg-surface-elevated border border-border shadow-2xl shadow-black/50 p-6 sm:p-7 text-center space-y-4"
+    >
+        <div
+            class="w-14 h-14 mx-auto rounded-2xl bg-red-500/10 flex items-center justify-center"
+        >
+            <i class="fa-solid fa-triangle-exclamation text-red-400 text-xl"></i>
+        </div>
+
+        <h2
+            id="mature-gate-title"
+            class="text-lg font-bold text-text-primary text-balance"
+        >
+            {t("mature.gateTitle")}
+        </h2>
+        <p
+            id="mature-gate-body"
+            class="text-sm text-text-secondary leading-relaxed"
+        >
+            {t("mature.gateBody")}
+        </p>
+
+        <p
+            id="mature-gate-error"
+            role="status"
+            data-msg={t("mature.gateError")}
+            class="text-xs text-red-400 empty:hidden"
+        >
+        </p>
+
+        <div class="flex flex-col gap-2 pt-1">
+            <button
+                id="mature-gate-enable"
+                type="button"
+                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary hover:bg-primary-light text-white text-sm font-semibold transition-colors"
+            >
+                <i class="fa-solid fa-eye text-xs"></i>
+                {t("mature.gateEnable")}
+            </button>
+            <a
+                href={localizePath("/", locale)}
+                data-astro-reload
+                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-surface border border-border hover:border-border-hover text-text-secondary hover:text-text-primary text-sm font-semibold transition-colors"
+            >
+                <i class="fa-solid fa-house text-xs"></i>
+                {t("mature.gateHome")}
+            </a>
+        </div>
+
+        <p class="text-xs text-text-muted">
+            {t("mature.gateSettingsHint")}
+        </p>
+    </div>
+</div>
+
+<script>
+    import { savePreference } from "../scripts/preference-toggle";
+
+    function bindMatureGate() {
+        const gate = document.getElementById("mature-gate");
+        if (!gate || gate.dataset.bound) return;
+        gate.dataset.bound = "1";
+
+        const enable = document.getElementById(
+            "mature-gate-enable",
+        ) as HTMLButtonElement | null;
+        const error = document.getElementById("mature-gate-error");
+
+        // The gate is not dismissible, so focus must not wander into the
+        // blurred page behind it (it is inert to the pointer, but not to Tab).
+        const focusables = () =>
+            Array.from(
+                gate.querySelectorAll<HTMLElement>("button, a[href]"),
+            ).filter((el) => !(el as HTMLButtonElement).disabled);
+        document.addEventListener(
+            "keydown",
+            (e) => {
+                if (e.key !== "Tab" || !document.contains(gate)) return;
+                const items = focusables();
+                if (items.length === 0) return;
+                const first = items[0];
+                const last = items[items.length - 1];
+                const current = document.activeElement;
+                if (e.shiftKey && current === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && current === last) {
+                    e.preventDefault();
+                    first.focus();
+                } else if (
+                    current instanceof HTMLElement &&
+                    !gate.contains(current)
+                ) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            },
+            true,
+        );
+        requestAnimationFrame(() => focusables()[0]?.focus());
+
+        enable?.addEventListener("click", async () => {
+            if (error) error.textContent = "";
+            enable.disabled = true;
+            if (await savePreference("showMature", true)) {
+                // Re-render the page with the preference applied: the gate,
+                // the blur and every filtered listing are server-side.
+                window.location.reload();
+                return;
+            }
+            enable.disabled = false;
+            if (error) error.textContent = error.dataset.msg ?? "";
+        });
+    }
+
+    document.addEventListener("astro:page-load", bindMatureGate);
+</script>

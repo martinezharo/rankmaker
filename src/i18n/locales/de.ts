@@ -68,6 +68,7 @@ export const de: LocaleDict = {
 		notifications: 'Benachrichtigungen',
 		toggleMenu: 'Menü umschalten',
 		language: 'Sprache',
+		preferences: 'Einstellungen',
 	},
 	footer: {
 		tagline: 'Die ultimative Plattform für präzise Rankings durch 1v1-Duelle.',
@@ -503,6 +504,43 @@ export const de: LocaleDict = {
 		Nature: 'Natur',
 		Others: 'Sonstiges',
 	},
+	preferences: {
+		title: 'Einstellungen — RANKMAKER',
+		metaDescription:
+			'Wähle deine Sprache und entscheide, ob RANKMAKER dir als nicht jugendfrei markierte Vorlagen zeigt.',
+		heading: 'Einstellungen',
+		subtitle: 'Wie sich RANKMAKER für dich verhält.',
+		savedInBrowser: 'In diesem Browser gespeichert.',
+		savedOnAccount: 'In deinem Konto gespeichert, auf allen Geräten.',
+		signInHint: 'Melde dich an, um diese Einstellungen auf allen Geräten zu behalten.',
+		languageHeading: 'Sprache',
+		languageDesc: 'Die Sprache der Oberfläche. Vorlageninhalte sind noch nicht übersetzt.',
+		contentHeading: 'Inhalte',
+		matureLabel: 'Nicht jugendfreie Inhalte anzeigen',
+		matureDesc:
+			'Als nicht jugendfrei markierte Vorlagen werden auf der Startseite, in der Suche, in Kategorien und Profilen ausgeblendet. Aktiviere dies, um sie überall zu sehen.',
+		matureToggle: 'Nicht jugendfreie Inhalte umschalten',
+		notificationsHeading: 'Benachrichtigungen',
+		emailPrefHeading: 'E-Mail-Benachrichtigungen',
+		emailPrefDesc: 'Sende mir E-Mails über Kommentare zu meinen Vorlagen und Antworten auf meine Kommentare.',
+		emailPrefToggle: 'E-Mail-Benachrichtigungen umschalten',
+		emailPrefLoginHint: 'Melde dich an, um zu wählen, ob wir dir E-Mails über Aktivitäten senden.',
+		saveError: 'Deine Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.',
+	},
+	mature: {
+		gateTitle: 'Diese Vorlage könnte nicht jugendfreie Inhalte enthalten',
+		gateBody:
+			'Sie wurde als nicht jugendfrei markiert. Du kannst nicht jugendfreie Inhalte aktivieren, um sie zu sehen, oder zur Startseite zurückkehren.',
+		gateEnable: 'Nicht jugendfreie Inhalte anzeigen',
+		gateHome: 'Zur Startseite',
+		gateSettingsHint: 'Du kannst das jederzeit in deinen Einstellungen ändern.',
+		gateError: 'Deine Einstellung konnte nicht aktualisiert werden. Bitte versuche es erneut.',
+		formLabel: 'Nicht jugendfreier Inhalt',
+		formHint:
+			'Markiere diese Vorlage als nicht jugendfrei. Sobald sie öffentlich ist, erscheint sie nur in Listen, wenn Besucher nicht jugendfreie Inhalte aktivieren.',
+		formLockedHint:
+			'Ein Moderator hat diese Vorlage als nicht jugendfrei markiert; die Markierung kann nicht mehr entfernt werden.',
+	},
 	notifications: {
 		title: 'Benachrichtigungen — RANKMAKER',
 		heading: 'Benachrichtigungen',
@@ -520,10 +558,7 @@ export const de: LocaleDict = {
 		msgCommentOnTemplate: '{actor} hat deine Vorlage „{title}” kommentiert',
 		msgCommentReply: '{actor} hat auf deinen Kommentar zu „{title}” geantwortet',
 		msgNewTemplate: '{actor} hat eine neue Vorlage veröffentlicht: „{title}”',
-		emailPrefHeading: 'E-Mail-Benachrichtigungen',
-		emailPrefDesc: 'Sende mir E-Mails über Kommentare zu meinen Vorlagen und Antworten auf meine Kommentare.',
-		emailPrefToggle: 'E-Mail-Benachrichtigungen umschalten',
-		emailPrefError: 'Deine Einstellung konnte nicht aktualisiert werden. Bitte versuche es erneut.',
+		emailPrefLink: 'E-Mail-Benachrichtigungen in den Einstellungen verwalten',
 	},
 	email: {
 		cta: 'Auf RANKMAKER ansehen',

@@ -3,6 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { getSessionUser, json } from '../../../lib/auth';
 import { listFollowingTemplates } from '../../../lib/follows';
+import { readMaturePref } from '../../../lib/mature';
 
 /**
  * GET → `{ templates: [...] }`, the latest public templates from the accounts
@@ -18,7 +19,12 @@ export const GET: APIRoute = async (context) => {
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ templates: [] }, 200, headers);
 
-		const templates = await listFollowingTemplates(env.DB, user.id, 8);
+		const templates = await listFollowingTemplates(
+			env.DB,
+			user.id,
+			8,
+			readMaturePref(context.cookies)
+		);
 		// Trim the payload to what the card renderer needs.
 		const slim = templates.map((t) => ({
 			slug: t.slug,

@@ -9,13 +9,22 @@ import SEOContent from "../components/SEOContent.astro";
 import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
 import { CATEGORIES as categories } from "../lib/categories";
-import { getOfficialTemplates, listUserTemplates } from "../lib/templates";
+import { getOfficialTemplates, listBrowseTemplates } from "../lib/templates";
+import {
+	filterMature,
+	listingCacheControl,
+	readMaturePref,
+} from "../lib/mature";
 import { serializeJsonForScript } from "../lib/safe-json";
 import { slugValue } from "../lib/slug";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
+
+// Templates flagged as mature are excluded unless this visitor opted in
+// (default off) — see src/lib/mature.ts.
+const showMature = readMaturePref(Astro.cookies);
 
 // Official (JSON) + user-created (D1) templates, treated identically.
 // Fetch real ranking counts from D1 (SSR). Fall back to the JSON
@@ -24,13 +33,13 @@ const t = useTranslations(locale);
 let counts: Record<string, number> = {};
 let votes: Record<string, number> = {};
 let haveCounts = false;
-let userTemplates: ReturnType<typeof getOfficialTemplates> = [];
+let browse = filterMature(getOfficialTemplates(), showMature);
 try {
 	const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
 	if (db) {
-		[counts, userTemplates, votes] = await Promise.all([
+		[counts, browse, votes] = await Promise.all([
 			getCounts(db),
-			listUserTemplates(db),
+			listBrowseTemplates(db, showMature),
 			getTemplateVotes(db),
 		]);
 		haveCounts = true;
@@ -40,7 +49,7 @@ try {
 }
 
 // Use real counts (pure) when available; otherwise the JSON number.
-const templates = [...getOfficialTemplates(), ...userTemplates]
+const templates = browse
 	.map((t) => ({
 		...t,
 		times_ranked: haveCounts
@@ -58,8 +67,9 @@ for (const cat of categories) {
 		.slice(0, 4);
 }
 
-// Short edge cache so the homepage isn't a D1 hit on every request.
-Astro.response.headers.set("Cache-Control", "public, max-age=60");
+// Short edge cache so the homepage isn't a D1 hit on every request — but the
+// opted-in variant is personal and must never be stored in a shared cache.
+Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
 
 // Site-level structured data: identifies RANKMAKER as an entity (Organization)
 // and enables the sitelinks search box (WebSite + SearchAction). Emitted only

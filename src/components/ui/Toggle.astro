@@ -1,0 +1,45 @@
+---
+// Toggle.astro — the app's on/off switch (role="switch").
+//
+// Presentation only: the state lives in `aria-checked`, and something else
+// decides what flipping it means. Preference switches are wired by
+// src/scripts/preference-toggle.ts, which finds them by `data-pref-key`.
+interface Props {
+    id: string;
+    checked: boolean;
+    /** Accessible name — the visible label usually sits next to the switch. */
+    label: string;
+    /**
+     * Preference this switch writes to POST /api/me/preferences. Omit for a
+     * switch driven by page-specific code.
+     */
+    prefKey?: string;
+    /** Id of the element that shows a save error for this switch. */
+    errorId?: string;
+    disabled?: boolean;
+}
+
+const { id, checked, label, prefKey, errorId, disabled = false } = Astro.props;
+---
+
+<button
+    id={id}
+    type="button"
+    role="switch"
+    aria-checked={checked ? "true" : "false"}
+    aria-label={label}
+    disabled={disabled}
+    data-pref-key={prefKey}
+    data-pref-error={errorId}
+    class:list={[
+        "relative shrink-0 w-12 h-7 rounded-full transition-colors",
+        checked ? "bg-primary" : "bg-border",
+        disabled && "opacity-50 cursor-not-allowed",
+    ]}
+>
+    <span
+        class:list={[
+            "absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform",
+            checked && "translate-x-5",
+        ]}></span>
+</button>
