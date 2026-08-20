@@ -528,8 +528,6 @@ export const fr: LocaleDict = {
 		saveError: 'Impossible d’enregistrer votre préférence. Réessayez.',
 	},
 	mature: {
-		badge: 'Adulte',
-		badgeTitle: 'Signalé comme contenu pour adultes',
 		gateTitle: 'Ce modèle peut contenir du contenu pour adultes',
 		gateBody:
 			"Il a été signalé comme contenu pour adultes. Vous pouvez activer le contenu pour adultes pour le voir, ou revenir à l'accueil.",

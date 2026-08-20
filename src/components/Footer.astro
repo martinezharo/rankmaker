@@ -1,22 +1,13 @@
 ---
 // Footer.astro — Full footer with social, pages, categories, legal sections
-import {
-    defaultLocale,
-    localeNames,
-    locales,
-    localizePath,
-    unlocalizePath,
-    useTranslations,
-} from "../i18n";
+import LanguageSelect from "./LanguageSelect.astro";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
 const year = new Date().getFullYear();
-// Base (unprefixed) path for the language switcher links; refreshed on the
-// client on every navigation (the footer is transition:persist).
-const basePath = unlocalizePath(Astro.url.pathname);
 ---
 
 <footer
@@ -215,135 +206,7 @@ const basePath = unlocalizePath(Astro.url.pathname);
                 © {year} RANKMAKER
             </p>
 
-            <!-- Language switcher — hrefs refreshed on the client since the
-                 footer is transition:persist. -->
-            <div
-                class="lang-switcher rm-select order-1 sm:order-2 w-full sm:w-auto sm:min-w-[210px]"
-            >
-                <button
-                    type="button"
-                    class="lang-switcher-btn rm-select-trigger"
-                    aria-haspopup="menu"
-                    aria-expanded="false"
-                    aria-label={`${t("nav.language")}: ${localeNames[locale]}`}
-                >
-                    <span class="rm-select-value">
-                        <i class="fa-solid fa-globe rm-select-icon"></i>
-                        <span class="rm-select-text lang-current-name"
-                            >{localeNames[locale]}</span
-                        >
-                    </span>
-                    <i
-                        class="fa-solid fa-chevron-down rm-select-chevron"
-                        aria-hidden="true"></i>
-                </button>
-                <div class="lang-menu rm-select-popover" hidden>
-                    <div class="rm-select-menu">
-                        <div class="rm-select-list" role="menu">
-                            {
-                                locales.map((loc) => (
-                                    <a
-                                        href={localizePath(basePath, loc)}
-                                        hreflang={loc}
-                                        data-lang={loc}
-                                        data-astro-reload
-                                        role="menuitem"
-                                        aria-current={
-                                            loc === locale ? "true" : undefined
-                                        }
-                                        class="lang-option rm-select-option"
-                                    >
-                                        <span class="rm-select-option-body">
-                                            <span class="rm-select-option-label">
-                                                {localeNames[loc]}
-                                            </span>
-                                        </span>
-                                        <i
-                                            class="fa-solid fa-check rm-select-option-check"
-                                            aria-hidden="true"
-                                        />
-                                    </a>
-                                ))
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <LanguageSelect class="order-1 sm:order-2 w-full sm:w-auto sm:min-w-[210px]" />
         </div>
     </div>
 </footer>
-
-<script>
-    import { getClientLocale } from "../i18n/client";
-    import { localizePath, unlocalizePath, localeNames } from "../i18n";
-    import { closeOpenDropdown, createDropdown } from "../scripts/dropdown";
-
-    // The footer is transition:persist, so the language switcher links (and the
-    // current-locale label) are rendered once and must be refreshed on every
-    // navigation to point at the localized variant of the *current* page.
-    function refreshLangLinks() {
-        const locale = getClientLocale();
-        const base =
-            unlocalizePath(window.location.pathname) +
-            window.location.search +
-            window.location.hash;
-        document
-            .querySelectorAll<HTMLAnchorElement>(".lang-option")
-            .forEach((a) => {
-                const loc = a.dataset.lang;
-                if (loc) a.href = localizePath(base, loc as any);
-            });
-        document
-            .querySelectorAll<HTMLElement>(".lang-current-name")
-            .forEach(
-                (el) =>
-                    (el.textContent =
-                        localeNames[locale as keyof typeof localeNames] ??
-                        locale),
-            );
-    }
-
-    // Same dropdown behaviour as the custom <Select> (outside click, Escape,
-    // arrow keys, flip-up placement, mobile sheet) — the items here are links,
-    // so navigation stays native and the highlight is real focus.
-    function bindLangSwitchers() {
-        document
-            .querySelectorAll<HTMLElement>(".lang-switcher")
-            .forEach((root) => {
-                if (root.dataset.bound) return;
-                const trigger =
-                    root.querySelector<HTMLElement>(".lang-switcher-btn");
-                const popover = root.querySelector<HTMLElement>(".lang-menu");
-                if (!trigger || !popover) return;
-                root.dataset.bound = "1";
-
-                const items = () =>
-                    Array.from(
-                        popover.querySelectorAll<HTMLElement>(".lang-option"),
-                    );
-
-                const dropdown = createDropdown({
-                    root,
-                    trigger,
-                    popover,
-                    items,
-                    activate: (item) => item.click(),
-                    setActive: (item) => item?.focus(),
-                    getActive: () =>
-                        items().find((i) => i === document.activeElement) ??
-                        null,
-                    textOf: (item) => item.textContent?.trim() ?? "",
-                });
-
-                popover.addEventListener("click", (event) => {
-                    if (event.target === popover) dropdown.close();
-                });
-            });
-    }
-
-    document.addEventListener("astro:page-load", () => {
-        refreshLangLinks();
-        bindLangSwitchers();
-        closeOpenDropdown();
-    });
-</script>

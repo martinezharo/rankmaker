@@ -3,16 +3,11 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import Toggle from "../components/ui/Toggle.astro";
+import LanguageSelect from "../components/LanguageSelect.astro";
 import { getSessionUser } from "../lib/auth";
 import { getEmailPref } from "../lib/notifications";
-import { readMaturePref } from "../lib/mature";
-import {
-    defaultLocale,
-    localeNames,
-    locales,
-    localizePath,
-    useTranslations,
-} from "../i18n";
+import { readMaturePref, writeMaturePref } from "../lib/mature";
+import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -21,11 +16,6 @@ const t = useTranslations(locale);
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
 const db = Astro.locals.runtime.env.DB;
-
-// The mature preference is read from the cookie (the same value the render
-// path uses everywhere else); the account value is what /api/auth/me stamps
-// into that cookie, so they agree for signed-in users.
-const showMature = readMaturePref(Astro.cookies);
 
 let user: Awaited<ReturnType<typeof getSessionUser>> = null;
 let emailPref = true;
@@ -36,6 +26,16 @@ try {
     // Preferences that need a session degrade to the signed-out view rather
     // than 500-ing the page — the language and mature switches still work.
     console.error("preferences: session lookup failed:", error);
+}
+
+// Everywhere else the render path reads the cookie, but this page is where the
+// value is edited, so it shows the authoritative one: the account for signed-in
+// users (which may have been changed on another device), the cookie otherwise.
+// Re-stamping the cookie here means the rest of the site agrees immediately,
+// without waiting for the next /api/auth/me.
+const showMature = user ? user.showMature : readMaturePref(Astro.cookies);
+if (user && readMaturePref(Astro.cookies) !== showMature) {
+    writeMaturePref(Astro.cookies, showMature);
 }
 
 // Same pattern as /saved: send the visitor back here after signing in.
@@ -73,33 +73,7 @@ const rowClass = "flex items-center justify-between gap-4";
                 </p>
             </div>
 
-            <!-- Plain links: the locale lives in the URL prefix, so switching
-                 language is a navigation, not a stored preference. -->
-            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {
-                    locales.map((loc) => (
-                        <li>
-                            <a
-                                href={localizePath("/preferences", loc)}
-                                hreflang={loc}
-                                data-astro-reload
-                                aria-current={loc === locale ? "true" : undefined}
-                                class:list={[
-                                    "flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors",
-                                    loc === locale
-                                        ? "border-primary/50 bg-primary/10 text-text-primary"
-                                        : "border-border bg-surface text-text-secondary hover:text-text-primary hover:border-border-hover",
-                                ]}
-                            >
-                                {localeNames[loc]}
-                                {loc === locale && (
-                                    <i class="fa-solid fa-check text-primary text-xs" />
-                                )}
-                            </a>
-                        </li>
-                    ))
-                }
-            </ul>
+            <LanguageSelect class="w-full sm:max-w-xs" />
         </section>
 
         <!-- Content -------------------------------------------------------->

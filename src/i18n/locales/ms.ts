@@ -526,8 +526,6 @@ export const ms: LocaleDict = {
 		saveError: 'Tidak dapat menyimpan keutamaan anda. Cuba lagi.',
 	},
 	mature: {
-		badge: 'Dewasa',
-		badgeTitle: 'Ditanda sebagai kandungan dewasa',
 		gateTitle: 'Templat ini mungkin mengandungi kandungan dewasa',
 		gateBody:
 			'Ia telah ditanda sebagai kandungan dewasa. Anda boleh menghidupkan kandungan dewasa untuk melihatnya, atau kembali ke laman utama.',

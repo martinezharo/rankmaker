@@ -513,8 +513,6 @@ export const zh: LocaleDict = {
 		saveError: '无法保存你的偏好设置。请重试。',
 	},
 	mature: {
-		badge: '成人',
-		badgeTitle: '已标记为成人内容',
 		gateTitle: '此模板可能包含成人内容',
 		gateBody: '它已被标记为成人内容。你可以开启成人内容来查看，或返回首页。',
 		gateEnable: '显示成人内容',

@@ -35,7 +35,6 @@ export const GET: APIRoute = async (context) => {
 			collage: t.collage,
 			times_ranked: t.times_ranked,
 			votes: t.votes ?? 0,
-			is_mature: t.is_mature,
 			creator: t.creator,
 		}));
 		return json({ templates: slim }, 200, headers);

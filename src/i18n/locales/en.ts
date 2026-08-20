@@ -591,8 +591,6 @@ export const en = {
 		saveError: "Couldn't save your preference. Try again.",
 	},
 	mature: {
-		badge: 'Mature',
-		badgeTitle: 'Flagged as mature content',
 		gateTitle: 'This template may contain adult content',
 		gateBody:
 			'It has been flagged as mature content. You can turn mature content on to view it, or go back to the home page.',

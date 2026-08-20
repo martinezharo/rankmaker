@@ -528,8 +528,6 @@ export const de: LocaleDict = {
 		saveError: 'Deine Einstellung konnte nicht gespeichert werden. Bitte versuche es erneut.',
 	},
 	mature: {
-		badge: 'Nicht jugendfrei',
-		badgeTitle: 'Als nicht jugendfrei markiert',
 		gateTitle: 'Diese Vorlage könnte nicht jugendfreie Inhalte enthalten',
 		gateBody:
 			'Sie wurde als nicht jugendfrei markiert. Du kannst nicht jugendfreie Inhalte aktivieren, um sie zu sehen, oder zur Startseite zurückkehren.',

@@ -21,9 +21,6 @@ interface Props {
         collage?: string[];
         times_ranked: number;
         votes?: number;
-        /** Flagged as mature content — only ever rendered for viewers who
-         *  opted in, so the badge is a label, not a warning. */
-        is_mature?: boolean;
         creator?: Creator;
     };
 }
@@ -52,18 +49,6 @@ const icon = categoryIcon(template.category);
             template.category && (
                 <span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80">
                     <i class={`fa-solid ${icon} text-[12px]`} />
-                </span>
-            )
-        }
-
-        {
-            template.is_mature && (
-                <span
-                    class="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm text-red-300 text-[10px] font-bold uppercase tracking-wider"
-                    title={t("mature.badgeTitle")}
-                >
-                    <i class="fa-solid fa-triangle-exclamation text-[9px]" />
-                    {t("mature.badge")}
                 </span>
             )
         }
