@@ -306,6 +306,16 @@ const ogImageHeight =
         <LoginModal />
         {matureGated && <MatureGate />}
 
+        <!-- Tooltips: one delegated controller for the whole app, so any
+             element carrying `data-rm-tip` gets a styled bubble — including
+             markup rendered client-side as an HTML string. See
+             src/scripts/tooltip.ts. -->
+        <script>
+            import { initTooltips } from "../scripts/tooltip";
+
+            initTooltips();
+        </script>
+
         <!-- Navigation progress bar: grows toward 90% while the next page is
              fetched, then snaps to 100% and fades out once it loads. Gives slow
              connections immediate feedback that a click registered. -->

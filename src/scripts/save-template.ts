@@ -6,7 +6,8 @@
  *
  * A `.save-btn` carries `data-slug`, `data-save-aria`, `data-unsave-aria`, an
  * `<i>` bookmark icon (regular = unsaved, solid = saved), and optionally a
- * `.save-label` span with `data-label-save` / `data-label-saved` text.
+ * `.save-label` span with `data-label-save` / `data-label-saved` text and a
+ * `data-save-tip` / `data-unsave-tip` pair for the hover tooltip.
  */
 import { openLoginPrompt } from './auth-prompt';
 
@@ -32,6 +33,8 @@ function paint(btn: HTMLElement, saved: boolean) {
 	}
 	const aria = saved ? btn.dataset.unsaveAria : btn.dataset.saveAria;
 	if (aria) btn.setAttribute('aria-label', aria);
+	const tip = saved ? btn.dataset.unsaveTip : btn.dataset.saveTip;
+	if (tip) btn.setAttribute('data-rm-tip', tip);
 	const label = btn.querySelector<HTMLElement>('.save-label');
 	if (label) {
 		const text = saved

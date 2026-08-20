@@ -98,6 +98,7 @@ const t = useTranslations(locale);
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <button
                 id="action-history"
+                data-rm-tip={t("tooltip.battleHistory")}
                 class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
             >
                 <i class="fa-solid fa-clock-rotate-left text-xs text-primary/70"
@@ -105,6 +106,7 @@ const t = useTranslations(locale);
             </button>
             <button
                 id="action-rank-again"
+                data-rm-tip={t("tooltip.rankAgain")}
                 class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
             >
                 <i class="fa-solid fa-rotate text-xs text-primary/70"></i>{
@@ -115,6 +117,7 @@ const t = useTranslations(locale);
                 shareable && (
                     <button
                         id="action-share-template"
+                data-rm-tip={t("tooltip.shareTemplate")}
                         class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
                     >
                         <i class="fa-solid fa-share-nodes text-xs text-primary/70" />
@@ -124,6 +127,7 @@ const t = useTranslations(locale);
             }
             <button
                 id="action-download-image"
+                data-rm-tip={t("tooltip.downloadImage")}
                 class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
             >
                 <i class="fa-solid fa-image text-xs text-primary/70"
@@ -133,6 +137,7 @@ const t = useTranslations(locale);
                 shareable && (
                     <button
                         id="action-share-x"
+                data-rm-tip={t("tooltip.shareOnX")}
                         class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
                     >
                         <i class="fa-brands fa-x-twitter text-xs text-primary/70" />
@@ -142,6 +147,7 @@ const t = useTranslations(locale);
             }
             <button
                 id="action-reorder"
+                data-rm-tip={t("tooltip.reorder")}
                 class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-elevated border border-border hover:border-primary/40 text-sm font-medium text-text-secondary hover:text-text-primary transition-all"
             >
                 <i class="fa-solid fa-arrows-up-down text-xs text-primary/70"

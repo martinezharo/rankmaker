@@ -16,6 +16,7 @@ const t = useTranslations(locale);
         class="vote-up w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
         data-value="1"
         aria-label={t("ranking.voteUpAria")}
+        data-rm-tip={t("tooltip.voteUp")}
     >
         <i class="fa-solid fa-arrow-up text-xs"></i>
     </button>
@@ -28,6 +29,7 @@ const t = useTranslations(locale);
         class="vote-down w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"
         data-value="-1"
         aria-label={t("ranking.voteDownAria")}
+        data-rm-tip={t("tooltip.voteDown")}
     >
         <i class="fa-solid fa-arrow-down text-xs"></i>
     </button>

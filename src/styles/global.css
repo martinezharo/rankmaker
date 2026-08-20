@@ -1039,3 +1039,85 @@ html.rm-authed #home-hero {
         filter: blur(16px);
     }
 }
+
+/* ── Tooltip ───────────────────────────────────────────────────────────────
+   The app's replacement for the native `title` attribute — see
+   src/scripts/tooltip.ts, which owns the single bubble appended to <body> and
+   drives it from `data-rm-tip` attributes.
+
+   Visually it belongs to the same family as the select/dropdown popovers:
+   elevated surface, hairline border and a faint purple halo, so a tooltip
+   reads as part of RANKMAKER rather than as OS chrome. */
+
+.rm-tooltip {
+    position: fixed;
+    z-index: 300;
+    max-width: min(18rem, calc(100vw - 2rem));
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.625rem;
+    border: 1px solid var(--color-border-hover);
+    background-color: var(--color-surface-elevated);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: left;
+    box-shadow:
+        0 12px 30px -10px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(132, 0, 255, 0.1),
+        0 0 22px rgba(132, 0, 255, 0.09);
+    /* The bubble describes something else; it must never eat the pointer that
+       is hovering the control, or leaving the control would never fire. */
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.96);
+    transition:
+        opacity 0.12s ease-out,
+        transform 0.12s ease-out;
+}
+
+.rm-tooltip.is-open {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Sits flush against the bubble edge and is rotated into a diamond; the
+   script sets only the offset along that edge so it keeps pointing at the
+   anchor's centre even when the bubble has been clamped to the viewport. */
+.rm-tooltip-arrow {
+    position: absolute;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: var(--color-surface-elevated);
+    border: 1px solid var(--color-border-hover);
+    transform: rotate(45deg);
+}
+
+.rm-tooltip[data-placement="top"] .rm-tooltip-arrow {
+    bottom: -0.28rem;
+    margin-left: -0.25rem;
+    border-top: 0;
+    border-left: 0;
+}
+
+.rm-tooltip[data-placement="bottom"] .rm-tooltip-arrow {
+    top: -0.28rem;
+    margin-left: -0.25rem;
+    border-bottom: 0;
+    border-right: 0;
+}
+
+.rm-tooltip[data-placement="left"] .rm-tooltip-arrow {
+    right: -0.28rem;
+    margin-top: -0.25rem;
+    border-bottom: 0;
+    border-left: 0;
+}
+
+.rm-tooltip[data-placement="right"] .rm-tooltip-arrow {
+    left: -0.28rem;
+    margin-top: -0.25rem;
+    border-top: 0;
+    border-right: 0;
+}

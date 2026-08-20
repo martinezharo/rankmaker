@@ -110,7 +110,7 @@ const L = (p: string) => localizePath(p, locale);
                         <p class="text-xs text-text-muted truncate">${escapeHtml(meta)}</p>
                     </div>
                     <a href="${escapeHtml(L(localTemplatePath(template.id)))}" class="inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold-start to-gold-end text-[#1a1205] text-sm font-bold whitespace-nowrap hover:opacity-90 transition-all"><i class="fa-solid fa-play text-xs"></i><span class="hidden sm:inline">${escapeHtml(t("local.play"))}</span></a>
-                    <button type="button" class="local-template-delete w-10 h-10 shrink-0 rounded-xl border border-border text-text-muted hover:text-red-400 hover:border-red-400/40 transition-colors" data-id="${escapeHtml(template.id)}" aria-label="${escapeHtml(t("local.delete"))}"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                    <button type="button" class="local-template-delete w-10 h-10 shrink-0 rounded-xl border border-border text-text-muted hover:text-red-400 hover:border-red-400/40 transition-colors" data-id="${escapeHtml(template.id)}" aria-label="${escapeHtml(t("local.delete"))}" data-rm-tip="${escapeHtml(t("tooltip.deleteLocalTemplate"))}"><i class="fa-solid fa-trash-can text-xs"></i></button>
                 </div>`;
             })
             .join("");

@@ -3,6 +3,8 @@
  * icon + color combos at signup (a random one is preselected).
  * The key is stored on the `users.avatar` column.
  */
+import { escapeHtml } from './escape';
+
 export type AvatarPreset = {
     icon: string; // FontAwesome solid class (fa-xxx)
     bg: string; // CSS background (color or gradient)
@@ -62,13 +64,19 @@ export function randomAvatarKey(): string {
 export function avatarHtml(
     key: string,
     sizePx: number,
-    verified = false
+    verified = false,
+    /**
+     * Tooltip for the verified badge (`tooltip.verified`). This module is
+     * locale-agnostic — it runs on both the server and the client — so the
+     * caller, which always has a `t` to hand, supplies the translated text.
+     */
+    verifiedLabel = 'Verified account'
 ): string {
     const preset = AVATAR_PRESETS[key] ?? AVATAR_PRESETS['star-purple'];
     const iconSize = Math.round(sizePx * 0.45);
     const badgeSize = Math.max(10, Math.round(sizePx * 0.32));
     const badge = verified
-        ? `<span class="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full bg-surface" style="width:${badgeSize}px;height:${badgeSize}px;" title="Verified"><i class="fa-solid fa-circle-check" style="font-size:${badgeSize - 3}px;color:#FFD700;"></i></span>`
+        ? `<span class="absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full bg-surface" style="width:${badgeSize}px;height:${badgeSize}px;" data-rm-tip="${escapeHtml(verifiedLabel)}"><i class="fa-solid fa-circle-check" style="font-size:${badgeSize - 3}px;color:#FFD700;"></i></span>`
         : '';
     const inner = preset.img
         ? `<img src="${preset.img}" alt="" class="w-full h-full object-contain" style="padding:${Math.max(2, Math.round(sizePx * 0.08))}px;" />`

@@ -414,7 +414,7 @@ Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
             const href = L(`/u/${encodeURIComponent(u.username)}`);
             return `
                 <a href="${esc(href)}" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-hover transition-colors">
-                    ${avatarHtml(u.avatar, 40, u.isVerified)}
+                    ${avatarHtml(u.avatar, 40, u.isVerified, t("tooltip.verified"))}
                     <span class="min-w-0 flex-1">
                         <span class="block text-sm font-semibold text-text-primary truncate">@${esc(u.username)}</span>
                         ${u.bio ? `<span class="block text-xs text-text-muted truncate">${esc(u.bio)}</span>` : ""}

@@ -8,6 +8,20 @@ const t = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
 const year = new Date().getFullYear();
+
+// One row per social account — the five links only ever differed by name,
+// URL and icon, so they're generated from this instead of copy-pasted.
+const SOCIALS = [
+    { name: "Instagram", href: "https://www.instagram.com/rankmaker_/", icon: "fa-instagram" },
+    { name: "TikTok", href: "https://www.tiktok.com/@rankmaker_", icon: "fa-tiktok" },
+    { name: "X", href: "https://x.com/RANKMAKER_", icon: "fa-x-twitter" },
+    {
+        name: "YouTube",
+        href: "https://www.youtube.com/channel/UCEmHgu_LtKODJuEGU0XtpvQ",
+        icon: "fa-youtube",
+    },
+    { name: "Reddit", href: "https://www.reddit.com/user/RANKMAKERnet/", icon: "fa-reddit-alien" },
+];
 ---
 
 <footer
@@ -31,51 +45,20 @@ const year = new Date().getFullYear();
                     {t("footer.tagline")}
                 </p>
                 <div class="flex items-center justify-between">
-                    <a
-                        href="https://www.instagram.com/rankmaker_/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center text-text-muted hover:text-primary transition-all"
-                        aria-label="Instagram"
-                    >
-                        <i class="fa-brands fa-instagram"></i>
-                    </a>
-                    <a
-                        href="https://www.tiktok.com/@rankmaker_"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center text-text-muted hover:text-primary transition-all"
-                        aria-label="TikTok"
-                    >
-                        <i class="fa-brands fa-tiktok"></i>
-                    </a>
-                    <a
-                        href="https://x.com/RANKMAKER_"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center text-text-muted hover:text-primary transition-all"
-                        aria-label="X"
-                    >
-                        <i class="fa-brands fa-x-twitter"></i>
-                    </a>
-                    <a
-                        href="https://www.youtube.com/channel/UCEmHgu_LtKODJuEGU0XtpvQ"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center text-text-muted hover:text-primary transition-all"
-                        aria-label="YouTube"
-                    >
-                        <i class="fa-brands fa-youtube"></i>
-                    </a>
-                    <a
-                        href="https://www.reddit.com/user/RANKMAKERnet/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center text-text-muted hover:text-primary transition-all"
-                        aria-label="Reddit"
-                    >
-                        <i class="fa-brands fa-reddit-alien"></i>
-                    </a>
+                    {
+                        SOCIALS.map((social) => (
+                            <a
+                                href={social.href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="w-9 h-9 rounded-lg bg-white/5 hover:bg-primary/20 flex items-center justify-center text-text-muted hover:text-primary transition-all"
+                                aria-label={social.name}
+                                data-rm-tip={t("tooltip.social", { network: social.name })}
+                            >
+                                <i class={`fa-brands ${social.icon}`} />
+                            </a>
+                        ))
+                    }
                 </div>
                 <div class="pt-2">
                     <a

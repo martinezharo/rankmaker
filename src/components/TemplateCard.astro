@@ -49,7 +49,13 @@ const icon = categoryIcon(template.category);
         <!-- Category Badge (Icon only) -->
         {
             template.category && (
-                <span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80">
+                <span
+                    class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"
+                    data-rm-tip={t("tooltip.category", {
+                        category: t(`categories.${template.category}`),
+                    })}
+                    data-rm-tip-placement="bottom"
+                >
                     <i class={`fa-solid ${icon} text-[12px]`} />
                 </span>
             )
@@ -61,6 +67,10 @@ const icon = categoryIcon(template.category);
             aria-label={t("card.saveAria")}
             data-save-aria={t("card.saveAria")}
             data-unsave-aria={t("card.unsaveAria")}
+            data-save-tip={t("tooltip.save")}
+            data-unsave-tip={t("tooltip.unsave")}
+            data-rm-tip={t("tooltip.save")}
+            data-rm-tip-placement="bottom"
             data-slug={template.slug}
         >
             <i class="fa-regular fa-bookmark text-xs"></i>
@@ -68,6 +78,8 @@ const icon = categoryIcon(template.category);
         <button
             class="share-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-100 [@media(hover:hover)]:opacity-0 group-hover:opacity-100"
             aria-label={t("card.shareAria")}
+            data-rm-tip={t("tooltip.share")}
+            data-rm-tip-placement="bottom"
             data-title={template.title}
             data-slug={template.slug}
         >
@@ -96,7 +108,9 @@ const icon = categoryIcon(template.category);
                 <span
                     class="creator-link inline-flex items-center gap-1.5 cursor-pointer"
                     data-profile-href={L(`/u/${encodeURIComponent(creator.username)}`)}
-                    title={t("card.viewProfile", { username: creator.username })}
+                    data-rm-tip={t("tooltip.viewProfile", {
+                        username: creator.username,
+                    })}
                 >
                     <Avatar
                         avatar={creator.avatar}
@@ -119,7 +133,10 @@ const icon = categoryIcon(template.category);
         }
 
         <div class="flex items-center gap-3 pt-1">
-            <span class="inline-flex items-center gap-1.5">
+            <span
+                class="inline-flex items-center gap-1.5"
+                data-rm-tip={t("tooltip.timesRanked")}
+            >
                 <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
                 <span
                     class="text-xs text-text-muted font-medium"
@@ -128,7 +145,10 @@ const icon = categoryIcon(template.category);
                     {t("card.ranked", { n: template.times_ranked.toLocaleString() })}
                 </span>
             </span>
-            <span class="inline-flex items-center gap-1.5">
+            <span
+                class="inline-flex items-center gap-1.5"
+                data-rm-tip={t("tooltip.votes")}
+            >
                 <i class="fa-solid fa-arrow-up text-[10px] text-primary/70"></i>
                 <span
                     class="text-xs text-text-muted font-medium"

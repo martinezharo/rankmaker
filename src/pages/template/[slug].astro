@@ -275,7 +275,15 @@ try {
                         }
                         {
                             isHidden && (
-                                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border text-text-muted text-xs font-semibold uppercase tracking-wider">
+                                <span
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border text-text-muted text-xs font-semibold uppercase tracking-wider"
+                                    data-rm-tip={
+                                        template.visibility === "private"
+                                            ? t("tooltip.visibilityPrivate")
+                                            : t("tooltip.visibilityUnlisted")
+                                    }
+                                    data-rm-tip-placement="bottom"
+                                >
                                     <i
                                         class={`fa-solid ${template.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
                                     />
@@ -290,6 +298,7 @@ try {
                         id="share-template-btn"
                         class="w-10 h-10 rounded-xl bg-surface-elevated border border-border flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary/50 transition-all duration-200"
                         aria-label={t("card.shareAria")}
+                        data-rm-tip={t("tooltip.share")}
                         data-title={template.title}
                     >
                         <i class="fa-solid fa-share-nodes text-sm"></i>
@@ -446,6 +455,9 @@ try {
             aria-label={t("card.saveAria")}
             data-save-aria={t("card.saveAria")}
             data-unsave-aria={t("card.unsaveAria")}
+            data-save-tip={t("tooltip.save")}
+            data-unsave-tip={t("tooltip.unsave")}
+            data-rm-tip={t("tooltip.save")}
             data-slug={template.slug}
         >
             <i class="fa-regular fa-bookmark text-sm"></i>
