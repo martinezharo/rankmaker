@@ -14,6 +14,7 @@
  * `collageHtml` exists because half the card renderers are client-side
  * template strings — server components and those strings must not drift.
  */
+import { escapeHtml } from './escape';
 
 /** Images a collage is built from. A 2×2 grid: fewer tiles looks broken. */
 export const COLLAGE_TILES = 4;
@@ -70,20 +71,6 @@ export function parseOptionImages(value: string | null | undefined): string[] {
     return value.split('\n').filter((s) => s.length > 0);
 }
 
-function escapeAttr(value: string): string {
-    return value.replace(
-        /[&<>"']/g,
-        (c) =>
-            ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;',
-            })[c]!
-    );
-}
-
 /**
  * Collage markup for a container that is already `relative` and sized (the
  * cover boxes all are). Returns '' when there aren't enough images, so
@@ -100,12 +87,12 @@ export function collageHtml(
         .slice(0, COLLAGE_TILES)
         .map(
             (src) =>
-                `<img src="${escapeAttr(src)}" alt="" loading="${loading}" ` +
+                `<img src="${escapeHtml(src)}" alt="" loading="${loading}" ` +
                 `decoding="async" class="w-full h-full object-cover bg-surface" />`
         )
         .join('');
     return (
         `<div class="rm-collage absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-border" ` +
-        `role="img" aria-label="${escapeAttr(label)}">${tiles}</div>`
+        `role="img" aria-label="${escapeHtml(label)}">${tiles}</div>`
     );
 }
