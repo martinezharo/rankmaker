@@ -273,6 +273,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                                         href={L(`/edit/${t.slug}`)}
                                                         class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-secondary hover:text-primary border border-border hover:border-primary/50 transition-all"
                                                         aria-label={tr("me.editTemplateAria")}
+                                                        data-rm-tip={tr("tooltip.editTemplate")}
                                                     >
                                                         <i class="fa-solid fa-pen text-xs" />
                                                     </a>
@@ -282,6 +283,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                                         data-id={t.id}
                                                         data-title={t.title}
                                                         aria-label={tr("me.deleteTemplateAria")}
+                                                        data-rm-tip={tr("tooltip.deleteTemplate")}
                                                     >
                                                         <i class="fa-solid fa-trash text-xs" />
                                                     </button>

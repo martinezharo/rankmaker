@@ -198,12 +198,12 @@ const t = useTranslations(locale);
 		const down = c.myVote === -1;
 		return `
 			<div class="flex flex-col items-center gap-0.5 shrink-0">
-				<button type="button" data-vote data-dir="1" aria-label="${esc(t("comments.upvote"))}"
+				<button type="button" data-vote data-dir="1" aria-label="${esc(t("comments.upvote"))}" data-rm-tip="${esc(t("tooltip.commentUpvote"))}"
 					class="vote-btn w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-surface-hover ${up ? "text-primary" : "text-text-muted hover:text-text-secondary"}">
 					<i class="fa-solid fa-caret-up text-lg"></i>
 				</button>
 				<span data-score class="text-xs font-bold tabular-nums ${up ? "text-primary" : down ? "text-blue-400" : "text-text-secondary"}">${c.score}</span>
-				<button type="button" data-vote data-dir="-1" aria-label="${esc(t("comments.downvote"))}"
+				<button type="button" data-vote data-dir="-1" aria-label="${esc(t("comments.downvote"))}" data-rm-tip="${esc(t("tooltip.commentDownvote"))}"
 					class="vote-btn w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-surface-hover ${down ? "text-blue-400" : "text-text-muted hover:text-text-secondary"}">
 					<i class="fa-solid fa-caret-down text-lg"></i>
 				</button>
@@ -225,7 +225,7 @@ const t = useTranslations(locale);
 		}
 
 		const a = c.author as Author;
-		const avatar = avatarHtml(a.avatar, 28, a.isVerified);
+		const avatar = avatarHtml(a.avatar, 28, a.isVerified, t("tooltip.verified"));
 		const del = c.mine
 			? `<button type="button" data-delete class="hover:text-red-400 transition-colors">${esc(t("comments.delete"))}</button>`
 			: "";
@@ -237,7 +237,7 @@ const t = useTranslations(locale);
 					${voteHtml(c)}
 					<div class="flex-1 min-w-0">
 						<div class="flex items-center gap-2 flex-wrap">
-							<span class="cursor-pointer" data-profile-href="${esc(L(`/u/${encodeURIComponent(a.username)}`))}" title="${esc(t("card.viewProfile", { username: a.username }))}">${avatar}</span>
+							<span class="cursor-pointer" data-profile-href="${esc(L(`/u/${encodeURIComponent(a.username)}`))}" data-rm-tip="${esc(t("tooltip.viewProfile", { username: a.username }))}">${avatar}</span>
 							<a href="${esc(L(`/u/${encodeURIComponent(a.username)}`))}" class="text-sm font-semibold text-text-primary hover:text-primary transition-colors">@${esc(a.username)}</a>
 							<span class="text-xs text-text-muted">· ${relTime(c.createdAt)}</span>
 						</div>
@@ -366,7 +366,7 @@ const t = useTranslations(locale);
 		const title = modal.querySelector<HTMLElement>("#comment-ranking-title");
 		if (title) title.textContent = t("comments.rankingTitle", { username: a.username });
 		const av = modal.querySelector<HTMLElement>("[data-modal-avatar]");
-		if (av) av.innerHTML = avatarHtml(a.avatar, 32, a.isVerified);
+		if (av) av.innerHTML = avatarHtml(a.avatar, 32, a.isVerified, t("tooltip.verified"));
 		const ol = modal.querySelector<HTMLElement>("[data-modal-list]");
 		if (ol)
 			ol.innerHTML = c.result

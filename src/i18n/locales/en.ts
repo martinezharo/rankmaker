@@ -13,6 +13,55 @@ export const en = {
 		searchPlaceholder: 'Search…',
 		noResults: 'No matches',
 	},
+	/**
+	 * Hover/focus hints rendered by src/scripts/tooltip.ts (`data-rm-tip`).
+	 * A tooltip only ever explains — it is never the sole home of anything a
+	 * touch user needs, since tooltips don't open on coarse pointers.
+	 */
+	tooltip: {
+		// Battle view
+		undo: 'Take back your last pick and replay that matchup',
+		skip: "Park this matchup — you'll only be asked again if it decides a position",
+		finishEarly: 'Stop now and let the remaining spots be settled by the results so far',
+		removeOption: 'Drop this option out of the ranking entirely',
+		restoreOption: 'Put this option back into the ranking',
+		progress: 'An estimate — smart matchups often finish it sooner',
+		// Results view
+		battleHistory: 'Review every matchup you decided, in order',
+		rankAgain: 'Clear this result and rank the template from scratch',
+		downloadImage: 'Save your ranking as an image, ready to post',
+		shareOnX: 'Post this template to X',
+		reorder: 'Drag rows to fix any position the matchups got wrong',
+		// Cards and template pages
+		save: 'Save to your list so you can find it later',
+		unsave: 'Remove this template from your saved list',
+		shareTemplate: 'Copy a link so others can rank the same template',
+		category: '{category} template',
+		timesRanked: 'How many rankings people have completed from this template',
+		votes: 'Upvotes minus downvotes from people who ranked it',
+		viewProfile: "Go to @{username}'s profile",
+		verified: 'Verified account',
+		visibilityPrivate: 'Only you can open this template',
+		visibilityUnlisted: 'Hidden from search — anyone with the link can open it',
+		// Template form
+		coverReplace: 'Swap this cover for a different image',
+		coverRemove: 'Remove the cover — a collage of your option images stands in',
+		optionImage: 'Add an image for this option',
+		optionImageReplace: 'Swap this option image for a different one',
+		optionImageRemove: 'Remove this image, keep the option',
+		optionRemove: 'Delete this option from the template',
+		// My templates
+		editTemplate: 'Edit this template — the share link stays the same',
+		deleteTemplate: 'Delete this template permanently',
+		deleteLocalTemplate: 'Delete this template from this browser',
+		// Comments
+		commentUpvote: 'Upvote this comment',
+		commentDownvote: 'Downvote this comment',
+		// Chrome
+		menu: 'Menu',
+		notifications: 'Notifications',
+		social: 'RANKMAKER on {network}',
+	},
 	common: {
 		save: 'Save',
 		cancel: 'Cancel',

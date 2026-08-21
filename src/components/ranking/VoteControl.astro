@@ -11,11 +11,15 @@ const t = useTranslations(locale);
 <div
     class="template-vote inline-flex items-center gap-1 rounded-full border border-border bg-surface-elevated px-1.5 py-1"
 >
+    <!-- Arrow-only buttons: the tooltip's job here is to surface the name the
+         control already has, so it reuses the aria-label string rather than
+         inventing a second wording to keep in sync. -->
     <button
         type="button"
         class="vote-up w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
         data-value="1"
         aria-label={t("ranking.voteUpAria")}
+        data-rm-tip={t("ranking.voteUpAria")}
     >
         <i class="fa-solid fa-arrow-up text-xs"></i>
     </button>
@@ -28,6 +32,7 @@ const t = useTranslations(locale);
         class="vote-down w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"
         data-value="-1"
         aria-label={t("ranking.voteDownAria")}
+        data-rm-tip={t("ranking.voteDownAria")}
     >
         <i class="fa-solid fa-arrow-down text-xs"></i>
     </button>

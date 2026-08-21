@@ -80,7 +80,7 @@ const templatesForClient = templates.map((t) => ({
     times_ranked: t.times_ranked,
     votes: t.votes ?? 0,
     optionNames: t.optionNames ?? "",
-    creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${L(`/u/${encodeURIComponent(t.creator.username)}`)}" title="${escapeHtml(tr("card.viewProfile", { username: t.creator.username }))}">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified)}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
+    creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${L(`/u/${encodeURIComponent(t.creator.username)}`)}" data-rm-tip="${escapeHtml(tr("tooltip.viewProfile", { username: t.creator.username }))}">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified, tr("tooltip.verified"))}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
 }));
 
 Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
@@ -280,19 +280,19 @@ Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
                 return `<a href="${L(`/template/${esc(t.slug)}`)}" class="group flex flex-col h-full rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]">
                     <div class="relative aspect-4/3 overflow-hidden bg-surface">
                         ${imgHtml}
-                        ${t.category ? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80"><i class="fa-solid ${icon} text-[12px]"></i></span>` : ""}
-                        <button class="save-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100" aria-label="${esc(tt("card.saveAria"))}" data-save-aria="${esc(tt("card.saveAria"))}" data-unsave-aria="${esc(tt("card.unsaveAria"))}" data-slug="${esc(t.slug)}"><i class="fa-regular fa-bookmark text-xs"></i></button>
+                        ${t.category ? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80" data-rm-tip="${esc(tt("tooltip.category", { category: tt(`categories.${t.category}`) }))}" data-rm-tip-placement="bottom"><i class="fa-solid ${icon} text-[12px]"></i></span>` : ""}
+                        <button class="save-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100" aria-label="${esc(tt("card.saveAria"))}" data-save-aria="${esc(tt("card.saveAria"))}" data-unsave-aria="${esc(tt("card.unsaveAria"))}" data-save-tip="${esc(tt("tooltip.save"))}" data-unsave-tip="${esc(tt("tooltip.unsave"))}" data-rm-tip="${esc(tt("tooltip.save"))}" data-rm-tip-placement="bottom" data-slug="${esc(t.slug)}"><i class="fa-regular fa-bookmark text-xs"></i></button>
                     </div>
                     <div class="flex-1 p-4 space-y-2">
                         <h3 class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors">${esc(t.title)}</h3>
                         ${t.creatorHtml || ""}
                         ${descHtml}
                         <div class="flex items-center gap-3 pt-1">
-                            <span class="inline-flex items-center gap-1.5">
+                            <span class="inline-flex items-center gap-1.5" data-rm-tip="${esc(tt("tooltip.timesRanked"))}">
                                 <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
                                 <span class="text-xs text-text-muted font-medium" data-count-slug="${esc(t.slug)}">${esc(tt("card.ranked", { n: t.times_ranked.toLocaleString() }))}</span>
                             </span>
-                            <span class="inline-flex items-center gap-1.5">
+                            <span class="inline-flex items-center gap-1.5" data-rm-tip="${esc(tt("tooltip.votes"))}">
                                 <i class="fa-solid fa-arrow-up text-[10px] text-primary/70"></i>
                                 <span class="text-xs text-text-muted font-medium" data-vote-slug="${esc(t.slug)}">${esc(tt("card.votes", { n: (t.votes ?? 0).toLocaleString() }))}</span>
                             </span>
