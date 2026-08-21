@@ -29,16 +29,13 @@ export const en = {
 		// Results view
 		battleHistory: 'Review every matchup you decided, in order',
 		rankAgain: 'Clear this result and rank the template from scratch',
-		shareTemplate: 'Copy a link so others can rank the same template',
 		downloadImage: 'Save your ranking as an image, ready to post',
 		shareOnX: 'Post this template to X',
 		reorder: 'Drag rows to fix any position the matchups got wrong',
-		voteUp: 'Upvote — tell others this template is worth ranking',
-		voteDown: 'Downvote — this template needs work',
 		// Cards and template pages
 		save: 'Save to your list so you can find it later',
 		unsave: 'Remove this template from your saved list',
-		share: 'Share this template',
+		shareTemplate: 'Copy a link so others can rank the same template',
 		category: '{category} template',
 		timesRanked: 'How many rankings people have completed from this template',
 		votes: 'Upvotes minus downvotes from people who ranked it',
@@ -53,7 +50,6 @@ export const en = {
 		optionImageReplace: 'Swap this option image for a different one',
 		optionImageRemove: 'Remove this image, keep the option',
 		optionRemove: 'Delete this option from the template',
-		addOption: 'Add another option to rank',
 		// My templates
 		editTemplate: 'Edit this template — the share link stays the same',
 		deleteTemplate: 'Delete this template permanently',
