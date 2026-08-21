@@ -1,0 +1,24 @@
+# RANKMAKER
+
+> RANKMAKER creates accurate ordered rankings through quick head-to-head choices instead of tier-list buckets.
+
+People can rank official or community templates, create their own templates, and share the resulting ordered lists. Guest rankings can run locally without an account; social and creator features require sign-in.
+
+## Product guide
+
+- [RANKMAKER overview](https://rankmaker.net/index.md): Concise, LLM-friendly explanation of the ranking method, features, audiences, and limits.
+- [Explore ranking templates](https://rankmaker.net/search): Search and browse public templates for movies, music, games, sports, and other subjects.
+- [Create a template](https://rankmaker.net/create): Build a custom set of options for other people to rank.
+- [About RANKMAKER](https://rankmaker.net/about): The product's origin and purpose.
+
+## Technical references
+
+- [Project README](https://raw.githubusercontent.com/martinezharo/rankmaker/main/README.md): Current product behavior, local guest flow, development, and deployment.
+- [Source code](https://github.com/martinezharo/rankmaker): Canonical source repository.
+- [Sitemap](https://rankmaker.net/sitemap.xml): Current public templates, profiles, categories, and core pages.
+
+## Optional
+
+- [License](https://raw.githubusercontent.com/martinezharo/rankmaker/main/LICENSE): MIT License terms for the source code.
+- [Privacy policy](https://rankmaker.net/privacy-policy): Published privacy information.
+- [Terms of use](https://rankmaker.net/terms-of-use): Published service terms.
