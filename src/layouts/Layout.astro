@@ -105,6 +105,16 @@ const ogImageHeight =
         <title>{title}</title>
         {noindex && <meta name="robots" content="noindex, nofollow" />}
         <link rel="canonical" href={canonicalURL} />
+        <link rel="describedby" href={`${SITE_URL}/llms.txt`} />
+        {
+            basePath === "/" && (
+                <link
+                    rel="alternate"
+                    type="text/markdown"
+                    href={`${SITE_URL}/index.md`}
+                />
+            )
+        }
 
         <!-- hreflang alternates: one per locale + x-default (English).
              Suppressed while CONTENT_LOCALIZED is false — the locale variants
