@@ -5,9 +5,17 @@ import tailwindcss from '@tailwindcss/vite';
 
 import cloudflare from '@astrojs/cloudflare';
 
+import preact from '@astrojs/preact';
+
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
+
+  // Preact backs the card/grid/ranking components. Most render server-side
+  // only (no client: directive → zero JS shipped); the islands that do hydrate
+  // are the ones that need real state — the ranking engine and the listing
+  // grid's mature-content merge.
+  integrations: [preact()],
 
   // Permanent (301) redirects for renamed routes.
   // F1 drivers template was made year-agnostic; its old 2025 slug lives on in
@@ -30,6 +38,7 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindcss()],
+
     server: {
       // Miniflare (local D1/KV) writes journal/WAL files under .wrangler/state
       // on every query. Without this, Vite's watcher reloads the page on each
