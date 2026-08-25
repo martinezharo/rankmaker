@@ -3,8 +3,8 @@
  *
  * All of it renders from `SessionState` — the session decides what to ask, this
  * decides what that looks like. Timing lives here because it is presentation:
- * a pick glows, then slides out, and only then is reported to the session, so
- * the animation and the state change can't race.
+ * a pick glows, then both cards slide out, and only then is it reported to the
+ * session, so the animation and the state change can't race.
  *
  * Card entrance animations restart because the cards are keyed by the duel;
  * a new duel remounts them. The DOM version had to strip six animation classes
@@ -46,8 +46,17 @@ export default function BattleView({
 	onFinishEarly,
 	onRemove,
 }: BattleViewProps) {
-	/** The answer being animated, if any. Blocks double-answers. */
-	const [leaving, setLeaving] = useState<'a' | 'b' | 'skip' | null>(null);
+	/**
+	 * The answer being animated, if any. Blocks double-answers.
+	 *
+	 * `exiting` is the second beat: the winner glows in place first, and only
+	 * then do both cards leave. Without the two beats the loser vanishes on the
+	 * instant of the click and the winner is left sitting alone.
+	 */
+	const [leaving, setLeaving] = useState<{
+		side: DuelSide | 'skip';
+		exiting: boolean;
+	} | null>(null);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
 	const duel = state.duel;
@@ -68,23 +77,26 @@ export default function BattleView({
 
 	function answer(side: DuelSide) {
 		if (leaving || !duel) return;
-		setLeaving(side);
+		setLeaving({ side, exiting: false });
+		after(WINNER_GLOW_MS, () => setLeaving({ side, exiting: true }));
 		after(WINNER_GLOW_MS + PICK_EXIT_MS, () => onPick(side));
 	}
 
 	function defer() {
 		if (leaving || !duel || !state.canSkip) return;
-		setLeaving('skip');
+		setLeaving({ side: 'skip', exiting: false });
+		after(SKIP_HOLD_MS, () => setLeaving({ side: 'skip', exiting: true }));
 		after(SKIP_HOLD_MS + SKIP_EXIT_MS, () => onSkip());
 	}
 
 	/** How each card should animate given the answer in flight. */
 	function motion(side: DuelSide): CardMotion {
 		if (!leaving) return 'in';
-		if (leaving === 'skip') return 'skip';
-		if (leaving === side) return 'winner';
-		// The loser leaves the way the winner isn't going.
-		return leaving === 'a' ? 'out-right' : 'out-left';
+		if (leaving.side === 'skip') return leaving.exiting ? 'skip' : 'hold';
+		const won = leaving.side === side;
+		if (!leaving.exiting) return won ? 'winner' : 'hold';
+		// Both leave; the card knows which way its own side goes.
+		return won ? 'winner-out' : 'out';
 	}
 
 	const percent = Math.min(

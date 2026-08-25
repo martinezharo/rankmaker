@@ -375,3 +375,86 @@ test('runs the same Preact ranking surface for a guest-local template', async ({
 	await expect(page.locator('#results-list .rank-item')).toHaveCount(3);
 	await expect(page.locator('#action-share-template')).toHaveCount(0);
 });
+
+test('a pick glows the winner first, then sends both cards out to their own side', async ({
+	page,
+}) => {
+	// Regression: the winner used to keep its entrance animation, which fills
+	// `both` and so outranked the plain declarations that follow it — the glow's
+	// scale was swallowed and the winner never left at all, leaving the loser to
+	// vanish on its own. Both cards must leave, each towards the side it came in
+	// from, or a win by the left-hand card sends the two overlapping mid-screen.
+	const motion = (id: string) =>
+		page.evaluate((elementId) => {
+			const element = document.getElementById(elementId);
+			if (!element) return null;
+			return {
+				animation: getComputedStyle(element).animationName,
+				glowing: element.className.includes('battle-card-winner'),
+			};
+		}, id);
+
+	await page.goto(`/template/${A.slug}`);
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+	await expect
+		.poll(async () => (await motion('battle-card-a'))?.animation)
+		.toBe('slideInLeft');
+	await page.waitForTimeout(600); // let the entrance finish
+
+	await page.locator('#battle-card-a').click();
+
+	// Beat one: the winner is lit and nothing has started leaving yet.
+	await expect.poll(async () => (await motion('battle-card-a'))?.glowing).toBe(true);
+	expect(await motion('battle-card-b')).toEqual({ animation: 'none', glowing: false });
+
+	// Beat two: both leave, each towards its own side, winner still lit.
+	await expect
+		.poll(async () => (await motion('battle-card-a'))?.animation)
+		.toBe('fadeOutLeft');
+	expect(await motion('battle-card-a')).toEqual({
+		animation: 'fadeOutLeft',
+		glowing: true,
+	});
+	expect(await motion('battle-card-b')).toEqual({
+		animation: 'fadeOutRight',
+		glowing: false,
+	});
+
+	// And the next duel enters clean, with no glow carried over.
+	await expect
+		.poll(async () => (await motion('battle-card-a'))?.animation)
+		.toBe('slideInLeft');
+	expect(await motion('battle-card-a')).toEqual({
+		animation: 'slideInLeft',
+		glowing: false,
+	});
+});
+
+test('a deferral leaves both cards together and costs no round', async ({ page }) => {
+	await page.goto(`/template/${A.slug}`);
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+	const round = await page.locator('#battle-progress').textContent();
+
+	await page.locator('#battle-skip-btn').click();
+
+	// Neither card is a winner, so both drift out the same way, with no glow.
+	await expect
+		.poll(async () =>
+			page.evaluate(() =>
+				[...document.querySelectorAll('.battle-card')].map((card) => [
+					getComputedStyle(card).animationName,
+					card.className.includes('battle-card-winner'),
+				])
+			)
+		)
+		.toEqual([
+			['skipOut', false],
+			['skipOut', false],
+		]);
+
+	await expect(page.locator('#battle-skipped-count')).toBeVisible();
+	// Deferring is not a decision: the round counter must not move.
+	await expect(page.locator('#battle-progress')).toHaveText(round ?? '');
+});

@@ -11,8 +11,16 @@ import type { RankingItem } from '../../lib/ranking-session';
 
 export type DuelSide = 'a' | 'b';
 
-/** How this card should be animating right now. */
-export type CardMotion = 'in' | 'winner' | 'out-left' | 'out-right' | 'skip';
+/**
+ * How this card should be animating right now.
+ *
+ * An answer plays in two beats — the winner glows in place, then both cards
+ * leave — so the phases are named rather than derived, and only `in` carries
+ * an entrance. That matters: the entrance animation fills `both`, and a filled
+ * animation outranks a plain declaration, so leaving it applied would pin
+ * `transform` and silently swallow the winner's scale and both exits.
+ */
+export type CardMotion = 'in' | 'hold' | 'winner' | 'winner-out' | 'out' | 'skip';
 
 export interface DuelCardProps {
 	item: RankingItem;
@@ -26,13 +34,31 @@ export interface DuelCardProps {
 	onRemove: () => void;
 }
 
-const MOTION_CLASS: Record<CardMotion, string> = {
-	in: '',
-	winner: 'battle-card-winner',
-	'out-left': 'animate-out-left',
-	'out-right': 'animate-out-right',
-	skip: 'animate-skip-out',
-};
+/**
+ * The animation classes for a phase.
+ *
+ * A card enters from its own side and leaves back towards it, so both
+ * directions follow the side rather than the outcome — otherwise a win by the
+ * left-hand card sends the two sliding into each other, overlapping mid-screen.
+ * The winner's glow simply rides along while it leaves.
+ */
+function motionClass(motion: CardMotion, side: DuelSide): string {
+	const towards = side === 'a' ? 'left' : 'right';
+	switch (motion) {
+		case 'in':
+			return `animate-slide-${towards}`;
+		case 'winner':
+			return 'battle-card-winner';
+		case 'winner-out':
+			return `battle-card-winner animate-out-${towards}`;
+		case 'out':
+			return `animate-out-${towards}`;
+		case 'skip':
+			return 'animate-skip-out';
+		case 'hold':
+			return '';
+	}
+}
 
 /** The old seeded placeholder host; treat it as "no image". */
 function hasImage(item: RankingItem): boolean {
@@ -53,7 +79,6 @@ export default function DuelCard({
 }: DuelCardProps) {
 	const [failed, setFailed] = useState(false);
 	const showImage = hasImage(item) && !failed;
-	const entrance = side === 'a' ? 'animate-slide-left' : 'animate-slide-right';
 
 	return (
 		<div
@@ -70,7 +95,7 @@ export default function DuelCard({
 					onPick();
 				}
 			}}
-			class={`battle-card group flex flex-col w-full xs:w-auto xs:flex-1 xs:min-w-0 sm:flex-none sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97] ${entrance} ${MOTION_CLASS[motion]}`}
+			class={`battle-card group flex flex-col w-full xs:w-auto xs:flex-1 xs:min-w-0 sm:flex-none sm:w-72 rounded-2xl bg-surface-elevated border-2 border-border hover:border-primary/60 transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.97] ${motionClass(motion, side)}`}
 		>
 			<div class="relative aspect-square shrink-0 overflow-hidden bg-surface">
 				{showImage && (
