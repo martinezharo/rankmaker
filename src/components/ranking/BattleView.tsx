@@ -52,8 +52,16 @@ export default function BattleView({
 	 * `exiting` is the second beat: the winner glows in place first, and only
 	 * then do both cards leave. Without the two beats the loser vanishes on the
 	 * instant of the click and the winner is left sitting alone.
+	 *
+	 * It records the session update it belongs to so it can be discarded during
+	 * the render that brings in the next one. Clearing it from an effect
+	 * instead would be a frame too late: the session reports the pick from the
+	 * same timer that ends the exit, so the incoming card would mount already
+	 * dressed as the outgoing winner and then transition out of the glow — a
+	 * purple flash on a card that never won anything.
 	 */
-	const [leaving, setLeaving] = useState<{
+	const [answered, setAnswered] = useState<{
+		generation: number;
 		side: DuelSide | 'skip';
 		exiting: boolean;
 	} | null>(null);
@@ -62,9 +70,25 @@ export default function BattleView({
 	const duel = state.duel;
 	const duelKey = duel ? `${duel.a.id}-${duel.b.id}-${state.round}` : 'none';
 
-	// A new duel (or an undo) clears any animation left over from the last one.
+	/**
+	 * Which session update is on screen. Counted rather than read off the duel:
+	 * an undo restores the same pair at the same round, so the duel key repeats
+	 * and an answer made before it would come back to life. The session hands
+	 * over a fresh state object on every change, undo included, so identity is
+	 * the one thing that only ever moves forwards.
+	 */
+	const rendered = useRef(state);
+	const generation = useRef(0);
+	if (rendered.current !== state) {
+		rendered.current = state;
+		generation.current += 1;
+	}
+
+	/** The answer in flight, but only while it still describes what is on screen. */
+	const leaving = answered?.generation === generation.current ? answered : null;
+
+	// A new duel (or an undo) abandons any animation left over from the last one.
 	useEffect(() => {
-		setLeaving(null);
 		return () => {
 			timers.current.forEach(clearTimeout);
 			timers.current = [];
@@ -77,15 +101,21 @@ export default function BattleView({
 
 	function answer(side: DuelSide) {
 		if (leaving || !duel) return;
-		setLeaving({ side, exiting: false });
-		after(WINNER_GLOW_MS, () => setLeaving({ side, exiting: true }));
+		const now = generation.current;
+		setAnswered({ generation: now, side, exiting: false });
+		after(WINNER_GLOW_MS, () =>
+			setAnswered({ generation: now, side, exiting: true })
+		);
 		after(WINNER_GLOW_MS + PICK_EXIT_MS, () => onPick(side));
 	}
 
 	function defer() {
 		if (leaving || !duel || !state.canSkip) return;
-		setLeaving({ side: 'skip', exiting: false });
-		after(SKIP_HOLD_MS, () => setLeaving({ side: 'skip', exiting: true }));
+		const now = generation.current;
+		setAnswered({ generation: now, side: 'skip', exiting: false });
+		after(SKIP_HOLD_MS, () =>
+			setAnswered({ generation: now, side: 'skip', exiting: true })
+		);
 		after(SKIP_HOLD_MS + SKIP_EXIT_MS, () => onSkip());
 	}
 

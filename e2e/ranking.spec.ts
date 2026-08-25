@@ -431,6 +431,57 @@ test('a pick glows the winner first, then sends both cards out to their own side
 	});
 });
 
+test('the incoming duel never wears the outgoing winner\'s glow', async ({ page }) => {
+	// Regression: the answer used to be cleared from an effect, which lands a
+	// frame after the render that brings in the next duel — so the new card
+	// mounted dressed as the outgoing winner and then transitioned out of the
+	// purple, flashing on every pick. A single frame is invisible to polling,
+	// so watch every class the cards are ever given instead.
+	await page.goto(`/template/${A.slug}`);
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+
+	await page.evaluate(() => {
+		const seen: { item: string; glow: boolean }[] = [];
+		(window as unknown as { __glowLog: typeof seen }).__glowLog = seen;
+		const record = (node: Element) => {
+			if (node.id !== 'battle-card-a' && node.id !== 'battle-card-b') return;
+			seen.push({
+				item: (node as HTMLElement).dataset.itemId ?? '',
+				glow: node.className.includes('battle-card-winner'),
+			});
+		};
+		new MutationObserver((records) => {
+			for (const record_ of records) {
+				if (record_.type === 'attributes') record(record_.target as Element);
+				for (const added of record_.addedNodes)
+					if (added instanceof Element) record(added);
+			}
+		}).observe(document.getElementById('ranking-battle-root')!, {
+			subtree: true,
+			childList: true,
+			attributes: true,
+			attributeFilter: ['class'],
+		});
+	});
+
+	const winner = await page.locator('#battle-card-a').getAttribute('data-item-id');
+	await page.locator('#battle-card-a').click();
+	await expect
+		.poll(async () => page.locator('#battle-card-a').getAttribute('data-item-id'))
+		.not.toBe(winner);
+	await page.waitForTimeout(400);
+
+	const glowed = await page.evaluate(
+		() =>
+			(window as unknown as { __glowLog: { item: string; glow: boolean }[] })
+				.__glowLog
+	);
+	const glowedItems = [...new Set(glowed.filter((e) => e.glow).map((e) => e.item))];
+	// Exactly one option was ever lit, and it is the one that was picked.
+	expect(glowedItems).toEqual([winner]);
+});
+
 test('a deferral leaves both cards together and costs no round', async ({ page }) => {
 	await page.goto(`/template/${A.slug}`);
 	await page.locator('#start-ranking-btn').click();
