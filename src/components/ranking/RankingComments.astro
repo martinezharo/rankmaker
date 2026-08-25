@@ -4,7 +4,7 @@
 // so it's visible at the foot of all three ranking views. The thread is loaded
 // client-side because template pages are publicly cached and the comments need
 // the current session (auth, own-comment, per-user vote).
-import { defaultLocale, useTranslations } from "../../i18n";
+import { defaultLocale, useTranslations } from "../../i18n/server";
 
 interface Props {
 	slug: string;

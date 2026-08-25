@@ -13,7 +13,7 @@ import { getOfficialTemplates, listBrowseTemplates } from "../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../lib/mature";
 import { decorateListing, groupByCategory } from "../lib/listings";
 import { serializeJsonForScript } from "../lib/safe-json";
-import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);

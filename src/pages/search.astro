@@ -14,7 +14,7 @@ import { LISTING_CACHE_CONTROL } from "../lib/mature";
 import { decorateListing } from "../lib/listings";
 import { getTemplateVotes } from "../lib/template-votes";
 import type { SlugValues } from "../lib/slug";
-import { defaultLocale, useTranslations } from "../i18n";
+import { defaultLocale, useTranslations } from "../i18n/server";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 // Named `tr` (not `t`) because several .map((t) => …) callbacks below bind `t`

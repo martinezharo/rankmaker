@@ -3,7 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { getOfficialTemplates, listUserTemplates } from '../lib/templates';
 import { CATEGORY_SLUGS } from '../lib/categories';
-import { CONTENT_LOCALIZED, defaultLocale, localizePath, locales } from '../i18n';
+import { CONTENT_LOCALIZED, defaultLocale, localizePath, locales } from '../i18n/server';
 
 const SITE_URL = 'https://rankmaker.net';
 

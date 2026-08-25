@@ -3,7 +3,7 @@ export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
 import { getSessionUser } from "../lib/auth";
-import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
 import { rankingResultTimestamp } from "../lib/ranking-results";
 import { serializeJsonForScript } from "../lib/safe-json";
 import type { HistorySummary } from "../scripts/history";
