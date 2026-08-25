@@ -12,7 +12,7 @@ import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
 import { slugValue } from "../lib/slug";
 import { listTemplatesByUserId } from "../lib/templates";
-import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 // `tr` (not `t`): the templates .map((t) => …) below binds `t` to a template.

@@ -9,12 +9,15 @@ import { ClientRouter } from "astro:transitions";
 import outfitFontUrl from "@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url";
 import {
     CONTENT_LOCALIZED,
+    I18N_PAYLOAD_ID,
+    clientDictionaryFor,
     defaultLocale,
     localizePath,
     locales,
     unlocalizePath,
     useTranslations,
-} from "../i18n";
+} from "../i18n/server";
+import { serializeJsonForScript } from "../lib/safe-json";
 
 interface Props {
     title: string;
@@ -315,6 +318,18 @@ const ogImageHeight =
              ahead of the nav-progress listener. -->
         <LoginModal />
         {matureGated && <MatureGate />}
+
+        <!-- The page's own translations, for the scripts and islands below.
+             Only this locale, and only the namespaces the browser can reach —
+             see src/i18n/payload.ts. Inlined rather than bundled because a
+             static import in the shared runtime would ship all seven locales
+             to every visitor, and because hydration needs them synchronously. -->
+        <script
+            is:inline
+            type="application/json"
+            id={I18N_PAYLOAD_ID}
+            set:html={serializeJsonForScript(clientDictionaryFor(locale))}
+        />
 
         <!-- Tooltips: one delegated controller for the whole app, so any
              element carrying `data-rm-tip` gets a styled bubble — including

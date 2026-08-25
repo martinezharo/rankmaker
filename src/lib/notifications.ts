@@ -17,7 +17,7 @@
  */
 import { randomHex } from './auth';
 import { OFFICIAL_USER_ID } from './templates';
-import { useTranslations } from '../i18n';
+import { useTranslations } from '../i18n/server';
 import { renderEmail, sendEmail, siteUrl, type EmailEnv } from './email';
 
 export type NotificationType =
