@@ -2,13 +2,13 @@
 export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
-import Avatar from "../../components/Avatar.astro";
-import TemplateCard from "../../components/TemplateCard.astro";
+import Avatar from "../../components/Avatar";
+import ListingGrid from "../../components/ListingGrid";
 import { getCounts } from "../../lib/counts";
 import { getTemplateVotes } from "../../lib/template-votes";
-import { slugValue } from "../../lib/slug";
 import { listTemplatesByUserId } from "../../lib/templates";
-import { listingCacheControl, readMaturePref } from "../../lib/mature";
+import { LISTING_CACHE_CONTROL } from "../../lib/mature";
+import { decorateListing } from "../../lib/listings";
 import { getFollowCounts } from "../../lib/follows";
 import { defaultLocale, useTranslations } from "../../i18n";
 
@@ -38,26 +38,21 @@ if (!user) {
 
 const isVerified = user.is_verified === 1;
 
-// For the official account this includes every JSON template. A public
-// profile hides mature templates the same way the home page does.
-const showMature = readMaturePref(Astro.cookies);
-let templates = await listTemplatesByUserId(db, user.id, { showMature });
+// For the official account this includes every JSON template. Like every other
+// listing, a public profile renders the canonical, mature-free variant — the
+// page is edge-cached and the cache key has no cookie in it, so an opted-in
+// viewer re-derives the list client-side (see src/lib/mature.ts).
+const rows = await listTemplatesByUserId(db, user.id, { showMature: false });
 
 // Merge live counts (keep JSON numbers as fallback, like the homepage).
+let counts: Record<string, number> | undefined;
+let votes: Record<string, number> = {};
 try {
-    const [counts, votes] = await Promise.all([
-        getCounts(db),
-        getTemplateVotes(db),
-    ]);
-    templates = templates.map((t) => ({
-        ...t,
-        times_ranked: slugValue(counts, t.slug),
-        votes: slugValue(votes, t.slug),
-    }));
+    [counts, votes] = await Promise.all([getCounts(db), getTemplateVotes(db)]);
 } catch {
     // keep fallback numbers
 }
-templates.sort((a, b) => b.times_ranked - a.times_ranked);
+const templates = decorateListing(rows, { counts, votes });
 
 // Follower/following counts are public — render them SSR. The follow button's
 // per-viewer state (follow/unfollow/self) is hydrated client-side because the
@@ -76,7 +71,7 @@ const memberSince = new Date(
         : user.created_at.replace(" ", "T") + "Z",
 ).toLocaleDateString(locale, { month: "long", year: "numeric" });
 
-Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
+Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
 ---
 
 <Layout
@@ -88,7 +83,7 @@ Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
         <div
             class="flex flex-col sm:flex-row sm:items-center gap-5 mb-10 rounded-2xl bg-surface-elevated border border-border p-6 sm:p-8"
         >
-            <Avatar avatar={user.avatar} size="xl" verified={isVerified} />
+            <Avatar avatar={user.avatar} size="xl" verified={isVerified} locale={locale} />
             <div class="flex-1">
                 <div class="flex items-center gap-2.5 flex-wrap">
                     <h1
@@ -195,21 +190,21 @@ Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
             <div class="flex-1 h-px bg-border/50"></div>
         </div>
 
-        {
-            templates.length === 0 ? (
+        <ListingGrid
+            client:idle
+            items={templates}
+            locale={locale}
+            scope={{ username: user.username }}
+            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+        >
+            <Fragment slot="empty">
                 <div class="rounded-2xl border border-dashed border-border p-10 text-center">
                     <p class="text-sm text-text-secondary">
                         {t("profile.noTemplates", { username: user.username })}
                     </p>
                 </div>
-            ) : (
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {templates.map((template) => (
-                        <TemplateCard template={template} />
-                    ))}
-                </div>
-            )
-        }
+            </Fragment>
+        </ListingGrid>
     </section>
 
     <!-- Followers / Following list modal (reused for both lists) -->

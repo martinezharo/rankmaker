@@ -10,66 +10,46 @@ import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
 import { CATEGORIES as categories } from "../lib/categories";
 import { getOfficialTemplates, listBrowseTemplates } from "../lib/templates";
-import {
-	filterMature,
-	listingCacheControl,
-	readMaturePref,
-} from "../lib/mature";
+import { LISTING_CACHE_CONTROL } from "../lib/mature";
+import { decorateListing, groupByCategory } from "../lib/listings";
 import { serializeJsonForScript } from "../lib/safe-json";
-import { slugValue } from "../lib/slug";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 
-// Templates flagged as mature are excluded unless this visitor opted in
-// (default off) — see src/lib/mature.ts.
-const showMature = readMaturePref(Astro.cookies);
-
 // Official (JSON) + user-created (D1) templates, treated identically.
 // Fetch real ranking counts from D1 (SSR). Fall back to the JSON
 // `times_ranked` / official-only list if the binding/query is unavailable
 // so the page never breaks.
-let counts: Record<string, number> = {};
+//
+// Always the canonical, mature-free listing: this page is publicly cached and
+// the edge cache key carries no cookie, so a viewer who opted into mature
+// content re-derives their rows client-side (see src/lib/mature.ts).
+let counts: Record<string, number> | undefined;
 let votes: Record<string, number> = {};
-let haveCounts = false;
-let browse = filterMature(getOfficialTemplates(), showMature);
+let browse = getOfficialTemplates();
 try {
 	const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
 	if (db) {
 		[counts, browse, votes] = await Promise.all([
 			getCounts(db),
-			listBrowseTemplates(db, showMature),
+			listBrowseTemplates(db, false),
 			getTemplateVotes(db),
 		]);
-		haveCounts = true;
 	}
 } catch {
 	// keep JSON ordering / official-only as a safe fallback
 }
 
-// Use real counts (pure) when available; otherwise the JSON number.
-const templates = browse
-	.map((t) => ({
-		...t,
-		times_ranked: haveCounts
-			? slugValue(counts, t.slug)
-			: t.times_ranked,
-		votes: slugValue(votes, t.slug),
-	}))
-	.sort((a, b) => b.times_ranked - a.times_ranked);
+/** Cards per category row. */
+const PER_CATEGORY = 4;
 
-// Group by category — top 4 most ranked per category
-const grouped: Record<string, any[]> = {};
-for (const cat of categories) {
-	grouped[cat.name] = templates
-		.filter((t: any) => t.category === cat.name)
-		.slice(0, 4);
-}
+const templates = decorateListing(browse, { counts, votes });
+const grouped = groupByCategory(templates, categories, PER_CATEGORY);
 
-// Short edge cache so the homepage isn't a D1 hit on every request — but the
-// opted-in variant is personal and must never be stored in a shared cache.
-Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
+// Short edge cache so the homepage isn't a D1 hit on every request.
+Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
 
 // Site-level structured data: identifies RANKMAKER as an entity (Organization)
 // and enables the sitelinks search box (WebSite + SearchAction). Emitted only
@@ -205,6 +185,7 @@ const siteJsonLd = {
 					category={cat.name}
 					icon={cat.icon}
 					templates={grouped[cat.name] || []}
+					limit={PER_CATEGORY}
 				/>
 			))
 		}

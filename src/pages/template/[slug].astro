@@ -171,12 +171,12 @@ let recommendations: Awaited<ReturnType<typeof getRecommendedTemplates>> = [];
 try {
     // Over-fetch: the client hides already-played templates and trims to 8,
     // so a few extra candidates keep the row full for returning users.
-    recommendations = await getRecommendedTemplates(
-        db,
-        template,
-        12,
-        showMature,
-    );
+    //
+    // Always the mature-free set, even for a viewer who opted in: this page is
+    // edge-cached and the cache key carries no cookie, so the row has to be
+    // the same for everyone who shares the cached copy. Recommendations are a
+    // listing like any other, and mature templates stay out of listings.
+    recommendations = await getRecommendedTemplates(db, template, 12, false);
 } catch {
     // non-fatal — the page renders without the row
 }

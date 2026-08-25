@@ -2,45 +2,38 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import TemplateCard from "../components/TemplateCard.astro";
+import SearchResults from "../components/SearchResults";
 import Select from "../components/ui/Select.astro";
-import {
-    CATEGORIES as categories,
-    CATEGORY_ICONS as categoryIconMap,
-} from "../lib/categories";
+import { CATEGORIES as categories } from "../lib/categories";
 import {
     getOfficialTemplates,
     listBrowseTemplates,
     type Template,
 } from "../lib/templates";
-import {
-    filterMature,
-    listingCacheControl,
-    readMaturePref,
-} from "../lib/mature";
+import { LISTING_CACHE_CONTROL } from "../lib/mature";
+import { decorateListing } from "../lib/listings";
 import { getTemplateVotes } from "../lib/template-votes";
-import { slugValue, type SlugValues } from "../lib/slug";
-import { avatarHtml } from "../lib/avatars";
-import { defaultLocale, localizePath, useTranslations } from "../i18n";
+import type { SlugValues } from "../lib/slug";
+import { defaultLocale, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 // Named `tr` (not `t`) because several .map((t) => …) callbacks below bind `t`
 // to a template item — the translation fn must not be shadowed.
 const tr = useTranslations(locale);
-const L = (p: string) => localizePath(p, locale);
 
-// Templates flagged as mature stay out of search unless the visitor opted in.
-const showMature = readMaturePref(Astro.cookies);
-
+// The canonical, mature-free listing — never this viewer's variant. /search is
+// publicly cached and the edge cache key carries no cookie, so a viewer who
+// opted into mature content re-derives the list client-side (src/lib/mature.ts).
+//
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
-let browse: Template[] = filterMature(getOfficialTemplates(), showMature);
+let browse: Template[] = getOfficialTemplates();
 let votes: SlugValues = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
     if (db) {
         [browse, votes] = await Promise.all([
-            listBrowseTemplates(db, showMature),
+            listBrowseTemplates(db, false),
             getTemplateVotes(db),
         ]);
     }
@@ -49,41 +42,9 @@ try {
 }
 
 // Sort by most ranked (live counts re-sort client-side via rm:counts)
-const templates = browse
-    .map((t) => ({ ...t, votes: slugValue(votes, t.slug) }))
-    .sort((a, b) => b.times_ranked - a.times_ranked);
+const templates = decorateListing(browse, { votes });
 
-const escapeHtml = (s: string) =>
-    s.replace(
-        /[&<>"']/g,
-        (c) =>
-            ((
-                {
-                    "&": "&amp;",
-                    "<": "&lt;",
-                    ">": "&gt;",
-                    '"': "&quot;",
-                    "'": "&#39;",
-                } as Record<string, string>
-            )[c]!),
-    );
-
-// Lightweight version for client — option names for search, creator line as
-// prebuilt HTML so the client card markup matches TemplateCard.astro.
-const templatesForClient = templates.map((t) => ({
-    slug: t.slug,
-    title: t.title,
-    description: t.description,
-    category: t.category,
-    cover_image: t.cover_image,
-    collage: t.collage,
-    times_ranked: t.times_ranked,
-    votes: t.votes ?? 0,
-    optionNames: t.optionNames ?? "",
-    creatorHtml: `<span class="creator-link inline-flex items-center gap-1.5 cursor-pointer" data-profile-href="${L(`/u/${encodeURIComponent(t.creator.username)}`)}" data-rm-tip="${escapeHtml(tr("tooltip.viewProfile", { username: t.creator.username }))}">${avatarHtml(t.creator.avatar, 20, t.creator.isVerified, tr("tooltip.verified"))}<span class="text-xs text-text-muted font-medium hover:text-text-primary transition-colors">@${escapeHtml(t.creator.username)}</span></span>`,
-}));
-
-Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
+Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
 ---
 
 <Layout
@@ -164,280 +125,11 @@ Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
             </button>
         </div>
 
-        <!-- Template Grid -->
-        <!--
-            Rendered server-side so the grid has its full height at first paint.
-            Leaving it empty for JS to fill caused a layout shift: the footer
-            jumped down once the cards were injected (CLS reported by Cloudflare).
-            The client script re-renders this on filter/search/sort.
-        -->
-        <div
-            id="template-grid"
-            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-        >
-            {templates.map((t) => <TemplateCard template={t} />)}
-        </div>
-
-        <!-- Empty State -->
-        <div id="empty-state" class="hidden text-center py-20 space-y-4">
-            <div
-                class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"
-            >
-                <i class="fa-solid fa-magnifying-glass text-primary text-2xl"
-                ></i>
-            </div>
-            <h3 class="text-lg font-semibold text-text-primary">
-                {tr("search.emptyTitle")}
-            </h3>
-            <p class="text-sm text-text-muted max-w-md mx-auto">
-                {tr("search.emptyBody")}
-            </p>
-        </div>
+        <!-- Results. Server-rendered so the grid has its full height at first
+             paint — leaving it to JS caused the footer to jump once the cards
+             were injected (CLS reported by Cloudflare). The island hydrates
+             over that exact markup and owns filtering from then on. -->
+        <SearchResults client:load items={templates} locale={locale} />
     </section>
 
-    <!-- Template Data -->
-    <script is:inline define:vars={{ templatesForClient, categoryIconMap }}>
-        window.__SEARCH_TEMPLATES__ = templatesForClient;
-        window.__CATEGORY_ICON_MAP__ = categoryIconMap;
-    </script>
-
-    <!-- Search Engine -->
-    <script>
-        import { clientT, getClientLocale } from "../i18n/client";
-        import { localizePath } from "../i18n";
-        import { initSaveButtons } from "../scripts/save-template";
-        import { setSelectValue } from "../scripts/select";
-        import { collageHtml, resolveImageUrl } from "../lib/covers";
-        import { slugValue, type SlugValues } from "../lib/slug";
-
-        document.addEventListener("astro:page-load", () => {
-            const templates: any[] = (window as any).__SEARCH_TEMPLATES__;
-            const iconMap: Record<string, string> =
-                (window as any).__CATEGORY_ICON_MAP__ || {};
-            if (!templates) return;
-
-            // `tt` (not `t`): renderCard(t) below binds `t` to a template item.
-            const tt = clientT();
-            const locale = getClientLocale();
-            const L = (p: string) => localizePath(p, locale);
-
-            const searchInput = document.getElementById(
-                "search-input",
-            ) as HTMLInputElement | null;
-            const categorySelect = document.getElementById(
-                "category-select",
-            ) as HTMLSelectElement | null;
-            const grid = document.getElementById("template-grid");
-            const emptyState = document.getElementById("empty-state");
-            const resultsCount = document.getElementById("results-count");
-            const clearBtn = document.getElementById("search-clear");
-            const resetBtn = document.getElementById("reset-filters");
-
-            if (
-                !searchInput ||
-                !categorySelect ||
-                !grid ||
-                !emptyState ||
-                !resultsCount
-            )
-                return;
-
-            // Escape user-provided text/attributes (titles, descriptions and
-            // image URLs can come from user-created templates).
-            function esc(s: string): string {
-                return String(s).replace(
-                    /[&<>"']/g,
-                    (c) =>
-                        (
-                            {
-                                "&": "&amp;",
-                                "<": "&lt;",
-                                ">": "&gt;",
-                                '"': "&quot;",
-                                "'": "&#39;",
-                            } as Record<string, string>
-                        )[c]!,
-                );
-            }
-
-            // Render a single template card (mirrors TemplateCard.astro)
-            function renderCard(t: any): string {
-                const icon = t.category
-                    ? iconMap[t.category] || "fa-ellipsis-h"
-                    : "fa-ellipsis-h";
-                const coverSrc = resolveImageUrl(t.cover_image);
-                const imgHtml = coverSrc
-                    ? `<img src="${esc(coverSrc)}" alt="${esc(t.title)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />`
-                    : collageHtml(t.collage || [], t.title) ||
-                      `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                        <span class="text-text-muted text-xs text-center px-3 font-medium leading-tight">${esc(t.title)}</span>
-                       </div>`;
-
-                const descHtml = t.description
-                    ? `<p class="text-xs text-text-muted leading-relaxed line-clamp-2">${esc(t.description)}</p>`
-                    : "";
-
-                return `<a href="${L(`/template/${esc(t.slug)}`)}" class="group flex flex-col h-full rounded-2xl bg-surface-elevated border border-border hover:border-primary/40 transition-all duration-300 overflow-hidden hover:shadow-[0_0_30px_rgba(132,0,255,0.12)]">
-                    <div class="relative aspect-4/3 overflow-hidden bg-surface">
-                        ${imgHtml}
-                        ${t.category ? `<span class="absolute top-3 left-3 flex items-center justify-center w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm text-white transition-colors group-hover:bg-primary/80" data-rm-tip="${esc(tt("tooltip.category", { category: tt(`categories.${t.category}`) }))}" data-rm-tip-placement="bottom"><i class="fa-solid ${icon} text-[12px]"></i></span>` : ""}
-                        <button class="save-btn absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/60 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-primary/80 transition-all opacity-0 group-hover:opacity-100" aria-label="${esc(tt("card.saveAria"))}" data-save-aria="${esc(tt("card.saveAria"))}" data-unsave-aria="${esc(tt("card.unsaveAria"))}" data-save-tip="${esc(tt("tooltip.save"))}" data-unsave-tip="${esc(tt("tooltip.unsave"))}" data-rm-tip="${esc(tt("tooltip.save"))}" data-rm-tip-placement="bottom" data-slug="${esc(t.slug)}"><i class="fa-regular fa-bookmark text-xs"></i></button>
-                    </div>
-                    <div class="flex-1 p-4 space-y-2">
-                        <h3 class="font-semibold text-sm text-text-primary leading-tight line-clamp-1 group-hover:text-white transition-colors">${esc(t.title)}</h3>
-                        ${t.creatorHtml || ""}
-                        ${descHtml}
-                        <div class="flex items-center gap-3 pt-1">
-                            <span class="inline-flex items-center gap-1.5" data-rm-tip="${esc(tt("tooltip.timesRanked"))}">
-                                <i class="fa-solid fa-fire text-[10px] text-primary/70"></i>
-                                <span class="text-xs text-text-muted font-medium" data-count-slug="${esc(t.slug)}">${esc(tt("card.ranked", { n: t.times_ranked.toLocaleString() }))}</span>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5" data-rm-tip="${esc(tt("tooltip.votes"))}">
-                                <i class="fa-solid fa-arrow-up text-[10px] text-primary/70"></i>
-                                <span class="text-xs text-text-muted font-medium" data-vote-slug="${esc(t.slug)}">${esc(tt("card.votes", { n: (t.votes ?? 0).toLocaleString() }))}</span>
-                            </span>
-                        </div>
-                    </div>
-                </a>`;
-            }
-
-            // Filter & render
-            function filterAndRender() {
-                const query = (searchInput!.value || "").trim().toLowerCase();
-                const category = categorySelect!.value;
-
-                const filtered = templates.filter((t) => {
-                    // Category filter
-                    if (category && t.category !== category) return false;
-
-                    // Search filter — match title, description, or option names
-                    if (query) {
-                        const haystack = [
-                            t.title || "",
-                            t.description || "",
-                            t.optionNames || "",
-                        ]
-                            .join(" ")
-                            .toLowerCase();
-                        // All words in query must match
-                        const words = query.split(/\s+/).filter(Boolean);
-                        for (const w of words) {
-                            if (!haystack.includes(w)) return false;
-                        }
-                    }
-
-                    return true;
-                });
-
-                // Sort by real ranking counts (from D1) when available,
-                // falling back to the build-time order otherwise.
-                const counts = (window as any).__rmCounts as
-                    | SlugValues
-                    | undefined;
-                if (counts) {
-                    filtered.sort(
-                        (a, b) =>
-                            slugValue(counts, b.slug) -
-                            slugValue(counts, a.slug),
-                    );
-                }
-
-                // Render
-                grid!.innerHTML = filtered.map(renderCard).join("");
-
-                // Patch "N ranked" with real counts (results are rendered client-side
-                // after the global counts fetch, so apply them to the new cards).
-                (window as any).__applyRankCounts?.(grid!);
-
-                // Bind/mark save buttons on the freshly-rendered cards.
-                initSaveButtons();
-
-                // Update count
-                resultsCount!.textContent =
-                    filtered.length === 1
-                        ? tt("search.showingOne", { n: filtered.length })
-                        : tt("search.showing", { n: filtered.length });
-
-                // Empty state
-                if (filtered.length === 0) {
-                    emptyState!.classList.remove("hidden");
-                    grid!.classList.add("hidden");
-                } else {
-                    emptyState!.classList.add("hidden");
-                    grid!.classList.remove("hidden");
-                }
-
-                // Clear button
-                if (clearBtn) {
-                    if (query) {
-                        clearBtn.classList.remove("hidden");
-                        clearBtn.classList.add("flex");
-                    } else {
-                        clearBtn.classList.add("hidden");
-                        clearBtn.classList.remove("flex");
-                    }
-                }
-
-                // Reset button
-                if (resetBtn) {
-                    if (query || category) resetBtn.classList.remove("hidden");
-                    else resetBtn.classList.add("hidden");
-                }
-            }
-
-            // Debounce helper
-            let debounceTimer: ReturnType<typeof setTimeout>;
-            function debounced(fn: () => void, ms: number) {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(fn, ms);
-            }
-
-            // Event listeners
-            searchInput.addEventListener("input", () => {
-                debounced(filterAndRender, 150);
-            });
-            categorySelect.addEventListener("change", filterAndRender);
-
-            if (clearBtn) {
-                clearBtn.addEventListener("click", () => {
-                    searchInput.value = "";
-                    filterAndRender();
-                    searchInput.focus();
-                });
-            }
-
-            if (resetBtn) {
-                resetBtn.addEventListener("click", () => {
-                    searchInput.value = "";
-                    setSelectValue(categorySelect, "");
-                    filterAndRender();
-                });
-            }
-
-            // Check URL params for initial search/category
-            const params = new URLSearchParams(window.location.search);
-            const q = params.get("q");
-            const cat = params.get("category");
-            if (q) searchInput.value = q;
-            if (cat) setSelectValue(categorySelect, cat);
-
-            // Initial render — only when the URL carries a filter. Without one,
-            // the server-rendered grid already shows the full, correctly-ordered
-            // list, so rebuilding it client-side here is wasted work (and would
-            // needlessly replace the SSR DOM on every load). Listeners below and
-            // the rm:counts handler re-render on demand.
-            if (q || cat) filterAndRender();
-
-            // Re-render once real counts arrive so results sort by them.
-            // `document` survives View Transitions, so register exactly once —
-            // re-binding per astro:page-load would stack listeners holding
-            // stale closures over swapped-out DOM. Dispatch the existing event
-            // to a freshly-bound renderer instead.
-            const w = window as any;
-            if (w.__rmSearchCounts)
-                document.removeEventListener("rm:counts", w.__rmSearchCounts);
-            w.__rmSearchCounts = filterAndRender;
-            document.addEventListener("rm:counts", filterAndRender);
-        });
-    </script>
 </Layout>

@@ -1,33 +1,23 @@
 ---
 // CategorySection.astro — 4-card grid per category
-import TemplateCard from "./TemplateCard.astro";
+import ListingGrid from "./ListingGrid";
 import { categorySlug } from "../lib/categories";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
-import type { Creator } from "../lib/templates";
+import type { ListingItem } from "../lib/listings";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 
-interface Template {
-    id: string;
-    slug: string;
-    title: string;
-    description: string | null;
-    category: string | null;
-    cover_image: string | null;
-    collage?: string[];
-    times_ranked: number;
-    creator?: Creator;
-}
-
 interface Props {
     category: string;
     icon: string;
-    templates: Template[];
+    templates: ListingItem[];
+    /** How many cards this row shows — the client re-derives the same slice. */
+    limit: number;
 }
 
-const { category, icon, templates } = Astro.props;
+const { category, icon, templates, limit } = Astro.props;
 
 if (templates.length === 0) return;
 
@@ -60,17 +50,15 @@ const anchorId = `cat-${category.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
     </div>
 
     <!-- Cards: horizontal scroll on mobile, 4-col grid on desktop -->
-    <div
+    <ListingGrid
+        client:visible
+        items={templates}
+        locale={locale}
+        category={category}
+        limit={limit}
         class="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory md:grid md:grid-cols-4 md:overflow-x-visible md:snap-none"
-    >
-        {
-            templates.map((template) => (
-                <div class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start h-full">
-                    <TemplateCard template={template} />
-                </div>
-            ))
-        }
-    </div>
+        itemClass="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start h-full"
+    />
 </section>
 
 <style>
