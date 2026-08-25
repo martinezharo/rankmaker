@@ -1,0 +1,6 @@
+# Build output under /_astro/ is content-hashed: the filename changes whenever
+# the bytes do, so these can be cached forever. Astro's default of
+# `max-age=0, must-revalidate` costs a 304 round-trip per asset per page load
+# for no benefit.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
