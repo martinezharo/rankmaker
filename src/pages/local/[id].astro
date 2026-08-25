@@ -16,7 +16,6 @@ export const prerender = false;
  */
 
 import Layout from "../../layouts/Layout.astro";
-import BattleView from "../../components/ranking/BattleView.astro";
 import GuestBanner from "../../components/GuestBanner.astro";
 import OptionCard from "../../components/ranking/OptionCard.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
@@ -172,8 +171,8 @@ Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
             </button>
         </div>
 
-        <!-- VIEW 2: BATTLE VIEW -->
-        <BattleView title="" />
+        <!-- VIEW 2: BATTLE VIEW — rendered by Preact after local data loads. -->
+        <div id="ranking-battle-root"></div>
 
         <FinishEarlyModal />
 
@@ -237,7 +236,6 @@ Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
 
         const titleEl = document.getElementById("local-title")!;
         titleEl.textContent = template.title;
-        document.getElementById("battle-title")!.textContent = template.title;
         document.getElementById("results-title")!.textContent = template.title;
 
         if (template.description) {

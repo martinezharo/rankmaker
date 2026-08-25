@@ -100,7 +100,7 @@ describe('a full ranking', () => {
 	});
 
 	it('never asks the same pair twice', async () => {
-		const { last, begin, answerAll } = driver(items(8));
+		const { begin, answerAll } = driver(items(8));
 		await begin();
 		const asked: string[] = [];
 		await answerAll((state) => {

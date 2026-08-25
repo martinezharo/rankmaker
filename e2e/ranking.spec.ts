@@ -315,3 +315,63 @@ test('client-side navigation keeps options in sync with the template (regression
 	expect(optionNames.has(nameA ?? '')).toBe(true);
 	expect(optionNames.has(nameB ?? '')).toBe(true);
 });
+
+test('removes an option mid-battle and can finish the remaining ranking early', async ({
+	page,
+}) => {
+	test.setTimeout(90_000);
+	await page.goto(`/template/${A.slug}`);
+	const optionCount = (await readRankingData(page)).options.length;
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+
+	await page.locator('#battle-remove-a').click();
+	const removeDialog = page.getByRole('dialog', { name: 'Remove this option?' });
+	await expect(removeDialog).toBeVisible();
+	await removeDialog.locator('#remove-confirm-btn').click();
+	await expect(removeDialog).toBeHidden();
+
+	await page.locator('#battle-finish-btn').click();
+	const finishDialog = page.getByRole('dialog', { name: 'Finish Ranking Early?' });
+	await expect(finishDialog).toBeVisible();
+	await finishDialog.locator('#finish-confirm-btn').click();
+
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(page.locator('#results-list .rank-item')).toHaveCount(optionCount - 1);
+});
+
+test('runs the same Preact ranking surface for a guest-local template', async ({
+	page,
+}) => {
+	test.setTimeout(90_000);
+	await page.addInitScript(() => {
+		localStorage.setItem(
+			'rankmaker_local_templates',
+			JSON.stringify([
+				{
+					id: 'playwright-local',
+					title: 'Local Preact Ranking',
+					description: '',
+					category: null,
+					created_at: Date.now(),
+					options: [
+						{ id: 1, name: 'Alpha' },
+						{ id: 2, name: 'Beta' },
+						{ id: 3, name: 'Gamma' },
+					],
+				},
+			])
+		);
+	});
+
+	await page.goto('/local/playwright-local');
+	await expect(page.locator('#local-title')).toHaveText('Local Preact Ranking');
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+	await page.locator('#battle-finish-btn').click();
+	await page.locator('#finish-confirm-btn').click();
+
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(page.locator('#results-list .rank-item')).toHaveCount(3);
+	await expect(page.locator('#action-share-template')).toHaveCount(0);
+});

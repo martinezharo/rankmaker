@@ -113,7 +113,10 @@ export default function DuelCard({
 				</button>
 			</div>
 			<div class="flex-1 flex items-center justify-center p-3 sm:p-4 min-h-[3.5rem]">
-				<p class="text-sm sm:text-base font-bold text-text-primary text-center line-clamp-2">
+				<p
+					id={`battle-name-${side}`}
+					class="text-sm sm:text-base font-bold text-text-primary text-center line-clamp-2"
+				>
 					{item.name}
 				</p>
 			</div>
