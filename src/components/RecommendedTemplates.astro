@@ -1,7 +1,7 @@
 ---
 // RecommendedTemplates.astro — single blended row of similar/related templates
 // shown at the foot of a template page (visible under all three views).
-import TemplateCard from "./TemplateCard.astro";
+import TemplateCard from "./TemplateCard";
 import type { Template } from "../lib/templates";
 import { defaultLocale, useTranslations } from "../i18n";
 
@@ -44,7 +44,7 @@ if (templates.length === 0) return;
 					data-rec-slug={template.slug}
 					class="min-w-[70vw] sm:min-w-[45vw] md:min-w-0 snap-start"
 				>
-					<TemplateCard template={template} />
+					<TemplateCard template={template} locale={locale} />
 				</div>
 			))
 		}

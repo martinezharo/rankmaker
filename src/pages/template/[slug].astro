@@ -2,8 +2,8 @@
 export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
-import TemplateCover from "../../components/TemplateCover.astro";
-import Avatar from "../../components/Avatar.astro";
+import TemplateCover from "../../components/TemplateCover";
+import Avatar from "../../components/Avatar";
 import BattleView from "../../components/ranking/BattleView.astro";
 import OptionCard from "../../components/ranking/OptionCard.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
@@ -317,6 +317,7 @@ try {
                     class="group/creator inline-flex items-center gap-2.5 w-fit"
                 >
                     <Avatar
+                        locale={locale}
                         avatar={creator.avatar}
                         size="md"
                         verified={creator.isVerified}

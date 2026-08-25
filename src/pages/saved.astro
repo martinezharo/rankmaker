@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import TemplateCard from "../components/TemplateCard.astro";
+import TemplateCard from "../components/TemplateCard";
 import { getSessionUser } from "../lib/auth";
 import { listSavedTemplates } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n";
@@ -57,7 +57,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
             ) : (
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {templates.map((template) => (
-                        <TemplateCard template={template} />
+                        <TemplateCard template={template} locale={locale} />
                     ))}
                 </div>
             )

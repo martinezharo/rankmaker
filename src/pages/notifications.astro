@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import Avatar from "../components/Avatar.astro";
+import Avatar from "../components/Avatar";
 import { getSessionUser } from "../lib/auth";
 import {
 	listNotifications,
@@ -194,6 +194,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
 											>
 												<div class="relative shrink-0">
 													<Avatar
+													    locale={locale}
 														avatar={n.actor.avatar}
 														size="md"
 														verified={

@@ -1,5 +1,5 @@
 ---
-import Avatar from "../Avatar.astro";
+import Avatar from "../Avatar";
 import VoteControl from "./VoteControl.astro";
 import type { Creator } from "../../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n";
@@ -46,6 +46,7 @@ const t = useTranslations(locale);
                         class="group/creator inline-flex items-center justify-center gap-2 mt-3"
                     >
                         <Avatar
+                            locale={locale}
                             avatar={creator.avatar}
                             size="sm"
                             verified={creator.isVerified}
