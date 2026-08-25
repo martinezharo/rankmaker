@@ -509,3 +509,53 @@ test('a deferral leaves both cards together and costs no round', async ({ page }
 	// Deferring is not a decision: the round counter must not move.
 	await expect(page.locator('#battle-progress')).toHaveText(round ?? '');
 });
+
+test('finishing early mid-pick still produces one complete ranking', async ({
+	page,
+}) => {
+	// Undo and deferring are refused while a pick is animating, but finishing
+	// early is not — the modal opens over the duel in flight. So the pick's
+	// remaining timer and the finish land back to back, and the ranking has to
+	// survive both: no lost option, no option counted twice, and no late pick
+	// dropping the reader back into a battle they already ended.
+	//
+	// The session guards this several times over (`pick` bails without a
+	// pending answer, `finishEarly` abandons the sort by generation, the view
+	// drops its timers), so this pins the behaviour rather than any one of
+	// them — removing any single guard still leaves the outcome correct.
+	test.setTimeout(90_000);
+	await page.goto(`/template/${A.slug}`);
+	const optionCount = (await readRankingData(page)).options.length;
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+
+	await page.locator('#battle-card-a').click();
+	// Mid-animation: the glow is up and the cards have not left yet.
+	await expect
+		.poll(async () =>
+			page.evaluate(
+				() =>
+					document
+						.getElementById('battle-card-a')
+						?.className.includes('battle-card-winner') ?? false
+			)
+		)
+		.toBe(true);
+
+	await page.locator('#battle-finish-btn').click();
+	await expect(page.getByRole('dialog', { name: 'Finish Ranking Early?' })).toBeVisible();
+	await page.locator('#finish-confirm-btn').click();
+
+	const rows = page.locator('#results-list .rank-item');
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(rows).toHaveCount(optionCount);
+	const ranked = await rows.evaluateAll((nodes) =>
+		nodes.map((node) => (node as HTMLElement).dataset.itemId)
+	);
+	expect(new Set(ranked).size).toBe(optionCount);
+
+	// The pick that was still in flight must not reopen the battle behind it.
+	await page.waitForTimeout(1_000);
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(page.locator('#battle-card-a')).toHaveCount(0);
+});
