@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import Layout from "../../layouts/Layout.astro";
-import TemplateCard from "../../components/TemplateCard.astro";
+import ListingGrid from "../../components/ListingGrid";
 import {
     CATEGORIES,
     categoryFromSlug,
@@ -14,13 +14,9 @@ import {
     listBrowseTemplates,
     type Template,
 } from "../../lib/templates";
-import {
-    filterMature,
-    listingCacheControl,
-    readMaturePref,
-} from "../../lib/mature";
+import { LISTING_CACHE_CONTROL } from "../../lib/mature";
+import { decorateListing, filterByCategory } from "../../lib/listings";
 import { getTemplateVotes } from "../../lib/template-votes";
-import { slugValue } from "../../lib/slug";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -36,18 +32,19 @@ if (!categoryName) {
     return new Response(null, { status: 404 });
 }
 
-// Templates flagged as mature are left out unless the visitor opted in.
-const showMature = readMaturePref(Astro.cookies);
-
+// The canonical, mature-free listing — never this viewer's variant. The page
+// is publicly cached and the cache key has no cookie in it, so an opted-in
+// viewer re-derives their own listing client-side (see src/lib/mature.ts).
+//
 // Official (JSON) + user-created (D1) templates, filtered to this category.
 // Same official-only fallback as /search if D1 is unavailable.
-let browse: Template[] = filterMature(getOfficialTemplates(), showMature);
+let browse: Template[] = getOfficialTemplates();
 let votes: Record<string, number> = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
     if (db) {
         [browse, votes] = await Promise.all([
-            listBrowseTemplates(db, showMature),
+            listBrowseTemplates(db, false),
             getTemplateVotes(db),
         ]);
     }
@@ -55,10 +52,10 @@ try {
     // official-only fallback
 }
 
-const templates = browse
-    .filter((tpl) => tpl.category === categoryName)
-    .map((tpl) => ({ ...tpl, votes: slugValue(votes, tpl.slug) }))
-    .sort((a, b) => b.times_ranked - a.times_ranked);
+const templates = filterByCategory(
+    decorateListing(browse, { votes }),
+    categoryName,
+);
 
 const icon = categoryIcon(categoryName);
 const title = t("category.title", { category: t(`categories.${categoryName}`) });
@@ -70,7 +67,7 @@ const description = t("category.metaDescription", {
 // link equity flowing between indexable category pages).
 const otherCategories = CATEGORIES.filter((c) => c.name !== categoryName);
 
-Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
+Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
 ---
 
 <Layout title={title} description={description}>
@@ -105,18 +102,17 @@ Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
             })}
         </p>
 
-        <!-- Template Grid -->
-        {
-            templates.length > 0 ? (
-                <div
-                    id="template-grid"
-                    class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-                >
-                    {templates.map((tpl) => (
-                        <TemplateCard template={tpl} headingLevel="h2" />
-                    ))}
-                </div>
-            ) : (
+        <!-- Template Grid. Hydrated so a mature-content viewer can have their
+             own listing swapped in — the server HTML is shared by everyone. -->
+        <ListingGrid
+            client:idle
+            items={templates}
+            locale={locale}
+            headingLevel="h2"
+            category={categoryName}
+            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+        >
+            <Fragment slot="empty">
                 <div class="text-center py-20 space-y-4">
                     <div
                         class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto"
@@ -137,8 +133,8 @@ Astro.response.headers.set("Cache-Control", listingCacheControl(showMature));
                         {t("category.browseAll")}
                     </a>
                 </div>
-            )
-        }
+            </Fragment>
+        </ListingGrid>
 
         <!-- Other categories: cross-link every indexable category page -->
         <div class="mt-16 pt-10 border-t border-border/50">

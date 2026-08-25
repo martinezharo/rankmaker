@@ -9,23 +9,12 @@
  */
 
 import { createDropdown } from "./dropdown";
+import { SELECT_SYNC_EVENT, setSelectValue } from "./select-sync";
+
+// Re-exported so consumers keep a single import for the control's API.
+export { setSelectValue };
 
 const BOUND = "rmSelectBound";
-
-/** Event the enhanced UI listens to in order to repaint after a code change. */
-const SYNC_EVENT = "rm:select-sync";
-
-/**
- * Set a select's value from code and repaint the custom trigger.
- *
- * Assigning `.value` fires no event (that's the native contract), so the
- * enhanced UI has nothing to react to — use this instead of a bare assignment.
- * Like the native behaviour, it does NOT fire `change`.
- */
-export function setSelectValue(select: HTMLSelectElement, value: string): void {
-	select.value = value;
-	select.dispatchEvent(new CustomEvent(SYNC_EVENT));
-}
 
 export function initSelects(root: ParentNode = document): void {
 	root.querySelectorAll<HTMLElement>("[data-rm-select]").forEach(enhance);
@@ -175,7 +164,7 @@ function enhance(root: HTMLElement): void {
 	// prefilled draft, a dispatched `change`) — our own updates render first, so
 	// this is a no-op for them.
 	native.addEventListener("change", render);
-	native.addEventListener(SYNC_EVENT, render);
+	native.addEventListener(SELECT_SYNC_EVENT, render);
 
 	render();
 }

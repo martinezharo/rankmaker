@@ -11,6 +11,20 @@
     "binding": "ASSETS",
     "directory": "./dist"
   },
+  // Edge caching for the Worker's OWN responses. Without this, Cloudflare runs
+  // the Worker on every request and the `Cache-Control` headers our pages set
+  // only ever reach the browser — the shared-cache directives (`s-maxage`,
+  // `stale-while-revalidate`) are inert. With it, Cloudflare checks the cache
+  // BEFORE invoking the Worker and honours those directives per RFC 9111.
+  //
+  // Consequence worth remembering: the cache key is path + query and does NOT
+  // include cookies, so any page whose body depends on a cookie must either be
+  // `no-store` or render a canonical (cookie-independent) response. See
+  // src/lib/mature.ts — that is the only cookie we render from.
+  "cache": {
+    "enabled": true
+  },
+
   "observability": {
     "enabled": true
   },

@@ -152,6 +152,7 @@ const L = (p: string) => localizePath(p, locale);
         listLocalTemplates,
     } from "../lib/local-templates";
     import { loginUrl } from "../scripts/auth-prompt";
+    import { publishMaturePreference } from "../scripts/mature-listing";
     import { clientT, getClientLocale } from "../i18n/client";
     import { localizePath } from "../i18n";
 
@@ -228,6 +229,10 @@ const L = (p: string) => localizePath(p, locale);
                 if (seq !== meSeq) return; // superseded by a newer refresh
                 const user = d.user as Me;
                 cacheMe(user);
+                // Listings are served from a shared cache and so are always
+                // the mature-free variant; this is where the browser finds
+                // out it has to re-derive them. See scripts/mature-listing.ts.
+                publishMaturePreference(d.showMature === true);
                 // Keep the signed-in root class (auth-dependent CSS, e.g. the
                 // homepage hero) in sync with the confirmed session state.
                 document.documentElement.classList.toggle("rm-authed", !!user);

@@ -33,12 +33,22 @@ export const GET: APIRoute = async (context) => {
                           unreadNotifications,
                       }
                     : null,
+                // Reported so the client knows whether it has to re-derive the
+                // listings for a mature-content viewer (src/lib/mature.ts).
+                // The cookie is httpOnly, and publicly cached HTML can't carry
+                // the answer, so this — already fetched on every navigation —
+                // is where the browser learns it.
+                showMature: user ? user.showMature : readMaturePref(context.cookies),
             },
             200,
             { 'Cache-Control': 'no-store' }
         );
     } catch (error) {
         console.error('Me API error:', error);
-        return json({ user: null }, 200, { 'Cache-Control': 'no-store' });
+        return json(
+            { user: null, showMature: false },
+            200,
+            { 'Cache-Control': 'no-store' }
+        );
     }
 };

@@ -481,5 +481,22 @@ const ogImageHeight =
                 void syncLocalTemplates();
             });
         </script>
+
+        <!-- Card behaviour that every surface painting a TemplateCard needs.
+             Wired once here rather than per component: cards are rendered by
+             half a dozen pages, and the buttons are plain DOM hooks so this
+             covers server-rendered and client-rendered cards alike. Surfaces
+             that append cards after load re-run the same init. -->
+        <script>
+            import { initSaveButtons } from "../scripts/save-template";
+            import { initShareButtons } from "../scripts/share-template";
+            import { initImageFallbacks } from "../scripts/image-fallback";
+
+            document.addEventListener("astro:page-load", () => {
+                initSaveButtons();
+                initShareButtons();
+                initImageFallbacks();
+            });
+        </script>
     </body>
 </html>

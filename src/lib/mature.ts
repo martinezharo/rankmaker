@@ -6,17 +6,29 @@
  * the creator or an admin — there is no automated moderation). This module owns
  * the *viewer* side of it:
  *
- *   - `rm_mature` cookie → what the render path reads. It works for signed-out
- *     visitors too, and it is the only thing a cached page could ever depend
- *     on, which is why listing pages that honour it must not be publicly cached
- *     (see `listingCacheControl`).
+ *   - `rm_mature` cookie → what the *page's own* render path reads. It works
+ *     for signed-out visitors too.
  *   - `users.show_mature` → the account-level value, so the preference follows
  *     the user across devices. `/api/auth/me` re-stamps the cookie from it on
  *     every navigation, so the DB always wins for signed-in users.
  *
- * Default is OFF: the *cached, shared* variant of every listing is the one
- * WITHOUT mature templates, which is also what search engines and first-time
- * visitors get.
+ * ## Why listings never render the viewer's variant
+ *
+ * Listing pages are served from Cloudflare's edge cache, whose key is the URL
+ * — cookies are not part of it, and the cache is consulted *before* the Worker
+ * runs. A per-viewer render would therefore be stored and handed to whoever
+ * asked next, and marking the opted-in response `no-store` does not help: it
+ * stops that response being stored, but it cannot stop an opted-in viewer
+ * being served the opted-out copy that is already there.
+ *
+ * So every listing renders the canonical, mature-free variant, and a viewer
+ * who opted in re-derives their own in the browser from
+ * `/api/templates/browse` (see src/scripts/mature-listing.ts). Single-template
+ * pages are different: a flagged template renders two different pages for the
+ * same URL, so those are `no-store` and never cached at all.
+ *
+ * Default is OFF, which is also what search engines and first-time visitors
+ * get.
  */
 import type { AstroCookies } from 'astro';
 
@@ -68,15 +80,14 @@ export function filterMature<T extends { is_mature: boolean }>(
 }
 
 /**
- * Cache-Control for a listing page whose contents depend on the preference.
+ * Cache-Control for a listing page.
  *
- * The opted-out response is identical for everyone, so it keeps the normal
- * shared cache. The opted-in response is personal — it must never be stored in
- * a shared cache where an opted-out visitor could be served it.
+ * A constant, not a function of the viewer: listings render the canonical
+ * variant for everyone (see the module docstring), so every visitor may be
+ * served the same cached copy. `max-age` is short because listings reorder as
+ * templates are ranked and voted on.
  */
-export function listingCacheControl(showMature: boolean): string {
-    return showMature ? 'private, no-store' : 'public, max-age=60';
-}
+export const LISTING_CACHE_CONTROL = 'public, max-age=60';
 
 /**
  * Whether a template must be gated behind the blur + confirmation modal for

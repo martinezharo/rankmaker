@@ -6,6 +6,12 @@ import { defaultLocale, localizePath, useTranslations } from "../i18n";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
+
+// Never cache a 404. Without an explicit directive the edge cache is free to
+// apply heuristic freshness, and a stored 404 would outlive the very thing it
+// is most likely to be serving: a slug that was just renamed (see the
+// `redirects` map in astro.config.mjs) or a template that was just published.
+Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
 <Layout title={t("notFound.title")}>

@@ -2,9 +2,9 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import Avatar from "../components/Avatar.astro";
+import Avatar from "../components/Avatar";
 import LocalTemplates from "../components/LocalTemplates.astro";
-import TemplateCover from "../components/TemplateCover.astro";
+import TemplateCover from "../components/TemplateCover";
 import { getSessionUser } from "../lib/auth";
 import { MAX_BIO_LEN } from "./api/me/profile";
 import { categoryIcon } from "../lib/categories";
@@ -118,7 +118,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     <div
                         class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 mb-10"
                     >
-                        <Avatar avatar={user.avatar} size="xl" verified={user.isVerified} />
+                        <Avatar avatar={user.avatar} size="xl" verified={user.isVerified} locale={locale} />
                         <div class="flex-1">
                             <h1
                                 class="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
