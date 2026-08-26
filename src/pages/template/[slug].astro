@@ -4,7 +4,6 @@ export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
 import TemplateCover from "../../components/TemplateCover";
 import Avatar from "../../components/Avatar";
-import BattleView from "../../components/ranking/BattleView.astro";
 import OptionCard from "../../components/ranking/OptionCard.astro";
 import ResultsView from "../../components/ranking/ResultsView.astro";
 import FinishEarlyModal from "../../components/ranking/FinishEarlyModal.astro";
@@ -481,8 +480,8 @@ try {
         </button>
     </div>
 
-    <!-- VIEW 2: BATTLE VIEW -->
-    <BattleView title={template.title} />
+    <!-- VIEW 2: BATTLE VIEW — rendered by Preact from RankingSession state. -->
+    <div id="ranking-battle-root"></div>
 
     <FinishEarlyModal />
 

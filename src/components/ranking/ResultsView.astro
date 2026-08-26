@@ -75,12 +75,7 @@ const t = useTranslations(locale);
         </div>
 
         <!-- Podium -->
-        <div
-            id="results-podium"
-            class="flex items-end justify-center gap-3 sm:gap-5 mb-12 min-h-[280px]"
-        >
-            <!-- Filled dynamically -->
-        </div>
+        <div id="results-podium-root" class="min-h-[280px]"></div>
 
         <!-- Full Ranking -->
         <div class="mb-10">
@@ -90,9 +85,7 @@ const t = useTranslations(locale);
                 </h3>
                 <div class="flex-1 h-px bg-border/50"></div>
             </div>
-            <div id="results-list" class="space-y-2">
-                <!-- Filled dynamically -->
-            </div>
+            <div id="results-list-root"></div>
         </div>
 
         <!-- Action Buttons -->

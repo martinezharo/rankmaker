@@ -315,3 +315,247 @@ test('client-side navigation keeps options in sync with the template (regression
 	expect(optionNames.has(nameA ?? '')).toBe(true);
 	expect(optionNames.has(nameB ?? '')).toBe(true);
 });
+
+test('removes an option mid-battle and can finish the remaining ranking early', async ({
+	page,
+}) => {
+	test.setTimeout(90_000);
+	await page.goto(`/template/${A.slug}`);
+	const optionCount = (await readRankingData(page)).options.length;
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+
+	await page.locator('#battle-remove-a').click();
+	const removeDialog = page.getByRole('dialog', { name: 'Remove this option?' });
+	await expect(removeDialog).toBeVisible();
+	await removeDialog.locator('#remove-confirm-btn').click();
+	await expect(removeDialog).toBeHidden();
+
+	await page.locator('#battle-finish-btn').click();
+	const finishDialog = page.getByRole('dialog', { name: 'Finish Ranking Early?' });
+	await expect(finishDialog).toBeVisible();
+	await finishDialog.locator('#finish-confirm-btn').click();
+
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(page.locator('#results-list .rank-item')).toHaveCount(optionCount - 1);
+});
+
+test('runs the same Preact ranking surface for a guest-local template', async ({
+	page,
+}) => {
+	test.setTimeout(90_000);
+	await page.addInitScript(() => {
+		localStorage.setItem(
+			'rankmaker_local_templates',
+			JSON.stringify([
+				{
+					id: 'playwright-local',
+					title: 'Local Preact Ranking',
+					description: '',
+					category: null,
+					created_at: Date.now(),
+					options: [
+						{ id: 1, name: 'Alpha' },
+						{ id: 2, name: 'Beta' },
+						{ id: 3, name: 'Gamma' },
+					],
+				},
+			])
+		);
+	});
+
+	await page.goto('/local/playwright-local');
+	await expect(page.locator('#local-title')).toHaveText('Local Preact Ranking');
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+	await page.locator('#battle-finish-btn').click();
+	await page.locator('#finish-confirm-btn').click();
+
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(page.locator('#results-list .rank-item')).toHaveCount(3);
+	await expect(page.locator('#action-share-template')).toHaveCount(0);
+});
+
+test('a pick glows the winner first, then sends both cards out to their own side', async ({
+	page,
+}) => {
+	// Regression: the winner used to keep its entrance animation, which fills
+	// `both` and so outranked the plain declarations that follow it — the glow's
+	// scale was swallowed and the winner never left at all, leaving the loser to
+	// vanish on its own. Both cards must leave, each towards the side it came in
+	// from, or a win by the left-hand card sends the two overlapping mid-screen.
+	const motion = (id: string) =>
+		page.evaluate((elementId) => {
+			const element = document.getElementById(elementId);
+			if (!element) return null;
+			return {
+				animation: getComputedStyle(element).animationName,
+				glowing: element.className.includes('battle-card-winner'),
+			};
+		}, id);
+
+	await page.goto(`/template/${A.slug}`);
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+	await expect
+		.poll(async () => (await motion('battle-card-a'))?.animation)
+		.toBe('slideInLeft');
+	await page.waitForTimeout(600); // let the entrance finish
+
+	await page.locator('#battle-card-a').click();
+
+	// Beat one: the winner is lit and nothing has started leaving yet.
+	await expect.poll(async () => (await motion('battle-card-a'))?.glowing).toBe(true);
+	expect(await motion('battle-card-b')).toEqual({ animation: 'none', glowing: false });
+
+	// Beat two: both leave, each towards its own side, winner still lit.
+	await expect
+		.poll(async () => (await motion('battle-card-a'))?.animation)
+		.toBe('fadeOutLeft');
+	expect(await motion('battle-card-a')).toEqual({
+		animation: 'fadeOutLeft',
+		glowing: true,
+	});
+	expect(await motion('battle-card-b')).toEqual({
+		animation: 'fadeOutRight',
+		glowing: false,
+	});
+
+	// And the next duel enters clean, with no glow carried over.
+	await expect
+		.poll(async () => (await motion('battle-card-a'))?.animation)
+		.toBe('slideInLeft');
+	expect(await motion('battle-card-a')).toEqual({
+		animation: 'slideInLeft',
+		glowing: false,
+	});
+});
+
+test('the incoming duel never wears the outgoing winner\'s glow', async ({ page }) => {
+	// Regression: the answer used to be cleared from an effect, which lands a
+	// frame after the render that brings in the next duel — so the new card
+	// mounted dressed as the outgoing winner and then transitioned out of the
+	// purple, flashing on every pick. A single frame is invisible to polling,
+	// so watch every class the cards are ever given instead.
+	await page.goto(`/template/${A.slug}`);
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+
+	await page.evaluate(() => {
+		const seen: { item: string; glow: boolean }[] = [];
+		(window as unknown as { __glowLog: typeof seen }).__glowLog = seen;
+		const record = (node: Element) => {
+			if (node.id !== 'battle-card-a' && node.id !== 'battle-card-b') return;
+			seen.push({
+				item: (node as HTMLElement).dataset.itemId ?? '',
+				glow: node.className.includes('battle-card-winner'),
+			});
+		};
+		new MutationObserver((records) => {
+			for (const record_ of records) {
+				if (record_.type === 'attributes') record(record_.target as Element);
+				for (const added of record_.addedNodes)
+					if (added instanceof Element) record(added);
+			}
+		}).observe(document.getElementById('ranking-battle-root')!, {
+			subtree: true,
+			childList: true,
+			attributes: true,
+			attributeFilter: ['class'],
+		});
+	});
+
+	const winner = await page.locator('#battle-card-a').getAttribute('data-item-id');
+	await page.locator('#battle-card-a').click();
+	await expect
+		.poll(async () => page.locator('#battle-card-a').getAttribute('data-item-id'))
+		.not.toBe(winner);
+	await page.waitForTimeout(400);
+
+	const glowed = await page.evaluate(
+		() =>
+			(window as unknown as { __glowLog: { item: string; glow: boolean }[] })
+				.__glowLog
+	);
+	const glowedItems = [...new Set(glowed.filter((e) => e.glow).map((e) => e.item))];
+	// Exactly one option was ever lit, and it is the one that was picked.
+	expect(glowedItems).toEqual([winner]);
+});
+
+test('a deferral leaves both cards together and costs no round', async ({ page }) => {
+	await page.goto(`/template/${A.slug}`);
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+	const round = await page.locator('#battle-progress').textContent();
+
+	await page.locator('#battle-skip-btn').click();
+
+	// Neither card is a winner, so both drift out the same way, with no glow.
+	await expect
+		.poll(async () =>
+			page.evaluate(() =>
+				[...document.querySelectorAll('.battle-card')].map((card) => [
+					getComputedStyle(card).animationName,
+					card.className.includes('battle-card-winner'),
+				])
+			)
+		)
+		.toEqual([
+			['skipOut', false],
+			['skipOut', false],
+		]);
+
+	await expect(page.locator('#battle-skipped-count')).toBeVisible();
+	// Deferring is not a decision: the round counter must not move.
+	await expect(page.locator('#battle-progress')).toHaveText(round ?? '');
+});
+
+test('finishing early mid-pick still produces one complete ranking', async ({
+	page,
+}) => {
+	// Undo and deferring are refused while a pick is animating, but finishing
+	// early is not — the modal opens over the duel in flight. So the pick's
+	// remaining timer and the finish land back to back, and the ranking has to
+	// survive both: no lost option, no option counted twice, and no late pick
+	// dropping the reader back into a battle they already ended.
+	//
+	// The session guards this several times over (`pick` bails without a
+	// pending answer, `finishEarly` abandons the sort by generation, the view
+	// drops its timers), so this pins the behaviour rather than any one of
+	// them — removing any single guard still leaves the outcome correct.
+	test.setTimeout(90_000);
+	await page.goto(`/template/${A.slug}`);
+	const optionCount = (await readRankingData(page)).options.length;
+	await page.locator('#start-ranking-btn').click();
+	await expect(page.locator('#battle-view')).toBeVisible();
+
+	await page.locator('#battle-card-a').click();
+	// Mid-animation: the glow is up and the cards have not left yet.
+	await expect
+		.poll(async () =>
+			page.evaluate(
+				() =>
+					document
+						.getElementById('battle-card-a')
+						?.className.includes('battle-card-winner') ?? false
+			)
+		)
+		.toBe(true);
+
+	await page.locator('#battle-finish-btn').click();
+	await expect(page.getByRole('dialog', { name: 'Finish Ranking Early?' })).toBeVisible();
+	await page.locator('#finish-confirm-btn').click();
+
+	const rows = page.locator('#results-list .rank-item');
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(rows).toHaveCount(optionCount);
+	const ranked = await rows.evaluateAll((nodes) =>
+		nodes.map((node) => (node as HTMLElement).dataset.itemId)
+	);
+	expect(new Set(ranked).size).toBe(optionCount);
+
+	// The pick that was still in flight must not reopen the battle behind it.
+	await page.waitForTimeout(1_000);
+	await expect(page.locator('#results-view')).toBeVisible();
+	await expect(page.locator('#battle-card-a')).toHaveCount(0);
+});
