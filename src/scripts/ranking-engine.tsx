@@ -17,7 +17,11 @@ import {
 	type SessionState,
 } from '../lib/ranking-session';
 import { parseBattleHistory } from '../lib/battle-history';
-import type { RankingData } from '../lib/ranking-data';
+import {
+	parseStoredRanking,
+	rankingItemsFrom,
+	type RankingData,
+} from '../lib/ranking-data';
 import { downloadRankingImage } from './ranking-share-image';
 import { createReorder, type ReorderController } from './ranking-reorder';
 import { openModal, closeModal } from './modal-a11y';
@@ -42,33 +46,6 @@ let disposeCurrent: (() => void) | null = null;
 
 function element<T extends HTMLElement>(id: string): T | null {
 	return document.getElementById(id) as T | null;
-}
-
-function normalizeItems(data: RankingData): RankingItem[] {
-	return data.options
-		.map((item) => ({
-			id: Number(item.id),
-			name: String(item.name),
-			image: item.image ? String(item.image) : null,
-		}))
-		.filter((item) => Number.isFinite(item.id) && item.name.length > 0);
-}
-
-function restoredItems(value: unknown): RankingItem[] {
-	if (!Array.isArray(value)) return [];
-	return value
-		.map((item) => {
-			if (typeof item !== 'object' || item === null) return null;
-			const record = item as Record<string, unknown>;
-			const id = Number(record.id);
-			if (!Number.isFinite(id) || typeof record.name !== 'string') return null;
-			return {
-				id,
-				name: record.name,
-				image: typeof record.image === 'string' ? record.image : null,
-			};
-		})
-		.filter((item): item is RankingItem => item !== null);
 }
 
 export function rankingInit(): void {
@@ -113,7 +90,7 @@ export function rankingInit(): void {
 		clearSavedResultGuard();
 		return;
 	}
-	const items = normalizeItems(data);
+	const items = rankingItemsFrom(data);
 	if (!data.slug || items.length < 2) {
 		clearSavedResultGuard();
 		return;
@@ -554,7 +531,9 @@ export function rankingInit(): void {
 		const stored = parseBattleHistory(entry.battles);
 		if (!stored) return [];
 		const byId = new Map(items.map((item) => [String(item.id), item]));
-		for (const item of restoredItems(entry.result)) byId.set(String(item.id), item);
+		for (const item of parseStoredRanking(entry.result)) {
+			byId.set(String(item.id), item);
+		}
 		const history: BattleRecord[] = [];
 		for (const [leftId, rightId, winnerSide] of stored.decisions) {
 			const a = byId.get(String(leftId));
@@ -566,7 +545,7 @@ export function rankingInit(): void {
 	}
 
 	function showSavedResult(entry: HistoryEntry): void {
-		const ranked = restoredItems(entry.result);
+		const ranked = parseStoredRanking(entry.result);
 		if (ranked.length < 2) return;
 		lastHistory = restoreHistory(entry);
 		detailContainer.classList.add('hidden');
