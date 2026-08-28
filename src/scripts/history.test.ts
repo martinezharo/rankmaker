@@ -19,27 +19,12 @@ import {
 	setExcludedIds,
 	type HistoryEntry,
 } from './history';
+import { memStorage } from '../test/storage';
 
 afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-// Minimal in-memory Storage stub — the unit env is plain Node (no DOM), and the
-// storage wrappers in history.ts are fail-safe, so we inject globals to exercise
-// the happy paths.
-function memStorage(): Storage {
-	const m = new Map<string, string>();
-	return {
-		getItem: (k) => (m.has(k) ? m.get(k)! : null),
-		setItem: (k, v) => void m.set(k, String(v)),
-		removeItem: (k) => void m.delete(k),
-		clear: () => m.clear(),
-		key: (i) => Array.from(m.keys())[i] ?? null,
-		get length() {
-			return m.size;
-		},
-	} as Storage;
-}
 
 const entry = (slug: string, ts: number): HistoryEntry => ({
 	slug,
