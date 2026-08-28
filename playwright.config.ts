@@ -27,7 +27,13 @@ export default defineConfig({
 	webServer: process.env.PLAYWRIGHT_BASE_URL
 		? undefined
 		: {
-				command: 'pnpm dev',
+				// Astro is invoked directly, with an explicit host and port,
+				// so the server always lands where `baseURL` points. Going
+				// through the `dev` script is not enough: a machine can wrap
+				// its package manager to bind the dev server to another
+				// interface (this repo's own VPS does), and Playwright then
+				// waits on a localhost nothing is listening on.
+				command: 'pnpm exec astro dev --host 127.0.0.1 --port 4321',
 				url: baseURL,
 				reuseExistingServer: !process.env.CI,
 				timeout: 120_000,
