@@ -33,6 +33,9 @@ pnpm-debug.log*
 # local scripts (root-level only — must not match src/scripts/)
 /scripts/
 
+# vitest coverage report
+coverage/
+
 # playwright
 test-results/
 playwright-report/
