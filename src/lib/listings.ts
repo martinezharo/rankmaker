@@ -51,26 +51,44 @@ export function toListingItem(template: Template): ListingItem {
 	};
 }
 
+/** The live D1 aggregates a listing is decorated with. */
+export type LiveNumbers = { counts?: SlugValues; votes?: SlugValues };
+
+/**
+ * Merge the live D1 numbers onto a template.
+ *
+ * D1 is the only source of these numbers: a template carries 0 until this
+ * runs, so a slug missing from the map means "nobody has ranked it", not
+ * "keep what it had". The maps are optional only because a page whose D1 read
+ * failed still renders — then the zeros stand rather than a stale figure.
+ *
+ * Every surface that shows a ranked count or a vote score goes through here,
+ * so they cannot drift apart: the home grid, /search, a category page, a
+ * profile, the saved list, the "Following" row and the recommendations.
+ */
+export function withLiveNumbers<T extends Template>(
+	template: T,
+	{ counts, votes }: LiveNumbers = {}
+): T {
+	return {
+		...template,
+		times_ranked: counts
+			? slugValue(counts, template.slug)
+			: template.times_ranked,
+		votes: votes ? slugValue(votes, template.slug) : (template.votes ?? 0),
+	};
+}
+
 /**
  * Merge the live D1 numbers into the browse list and put the most-ranked
  * first — the ordering every listing shows.
- *
- * `counts` is optional because the pages fall back to the JSON `times_ranked`
- * when the D1 binding is unavailable; passing `undefined` keeps whatever the
- * template already carried.
  */
 export function decorateListing(
 	templates: Template[],
-	{ counts, votes }: { counts?: SlugValues; votes?: SlugValues } = {}
+	live: LiveNumbers = {}
 ): ListingItem[] {
 	return templates
-		.map((template) => ({
-			...toListingItem(template),
-			times_ranked: counts
-				? slugValue(counts, template.slug)
-				: template.times_ranked,
-			votes: votes ? slugValue(votes, template.slug) : (template.votes ?? 0),
-		}))
+		.map((template) => toListingItem(withLiveNumbers(template, live)))
 		.sort((a, b) => b.times_ranked - a.times_ranked);
 }
 

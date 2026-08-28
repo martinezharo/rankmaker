@@ -7,7 +7,7 @@
  */
 import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
-import { slugValue } from './slug';
+import { withLiveNumbers } from './listings';
 import { TEMPLATE_LIST_SELECT, mapTemplateRow, type Template } from './templates';
 import { matureSqlFilter } from './mature';
 
@@ -177,11 +177,9 @@ export async function listFollowingTemplates(
             getCounts(db),
             getTemplateVotes(db),
         ]);
-        templates = templates.map((t) => ({
-            ...t,
-            times_ranked: slugValue(counts, t.slug),
-            votes: slugValue(votes, t.slug),
-        }));
+        templates = templates.map((t) =>
+            withLiveNumbers(t, { counts, votes })
+        );
     } catch {
         // keep zeroed counts on error
     }

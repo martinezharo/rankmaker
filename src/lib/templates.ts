@@ -17,6 +17,7 @@ import { extractImageKey } from './images';
 import { getCounts } from './counts';
 import { getTemplateVotes } from './template-votes';
 import { filterMature, matureSqlFilter } from './mature';
+import { withLiveNumbers } from './listings';
 import { recommendTemplates } from '../scripts/recommend';
 
 export const VISIBILITIES = ['public', 'private', 'unlisted'] as const;
@@ -92,7 +93,7 @@ function mapOfficial(t: any): Template {
         category: t.category ?? null,
         cover_image: t.cover_image ?? null,
         collage: collageFromOptions(options),
-        times_ranked: t.times_ranked ?? 0,
+        times_ranked: 0, // pages merge real counts via getCounts(db)
         created_at: t.created_at,
         updated_at: t.updated_at,
         options,
@@ -440,11 +441,7 @@ export async function listSavedTemplates(
         if (t.visibility !== 'public' && !ownedHidden.has(t.slug.toLowerCase())) {
             continue;
         }
-        out.push({
-            ...t,
-            times_ranked: counts[t.slug] ?? t.times_ranked,
-            votes: votes[t.slug] ?? 0,
-        });
+        out.push(withLiveNumbers(t, { counts, votes }));
     }
     return out;
 }
@@ -467,8 +464,10 @@ export async function getRecommendedTemplates(
     showMature = false
 ): Promise<Template[]> {
     let userTemplates: Template[] = [];
-    let counts: Record<string, number> = {};
-    let votes: Record<string, number> = {};
+    // Left undefined on a D1 failure so the zeros the templates already carry
+    // stand, rather than being restated as "0 ranked" by an empty map.
+    let counts: Record<string, number> | undefined;
+    let votes: Record<string, number> | undefined;
     try {
         [userTemplates, counts, votes] = await Promise.all([
             listUserTemplates(db, showMature),
@@ -482,11 +481,7 @@ export async function getRecommendedTemplates(
     const pool = [
         ...filterMature(getOfficialTemplates(), showMature),
         ...userTemplates,
-    ].map((t) => ({
-        ...t,
-        times_ranked: counts[t.slug] ?? t.times_ranked,
-        votes: votes[t.slug] ?? 0,
-    }));
+    ].map((t) => withLiveNumbers(t, { counts, votes }));
 
     // User templates loaded via TEMPLATE_SELECT carry no optionNames; derive it
     // from the loaded options so the scorer sees the option words.
