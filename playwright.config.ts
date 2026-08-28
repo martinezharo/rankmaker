@@ -22,7 +22,8 @@ export default defineConfig({
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
 	workers: 1,
-	reporter: 'list',
+	// CI also writes the HTML report, which the workflow uploads on failure.
+	reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
 	use: {
 		baseURL,
 		trace: 'on-first-retry',

@@ -20,8 +20,41 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm test
+      # Coverage, not a plain run: vitest.config.ts sets floors on the
+      # server-side code, so a change that quietly stops covering it fails
+      # here instead of shipping.
+      - run: pnpm test:coverage
       - run: pnpm build
+
+  # Browser-level checks of the ranking and account flows — the parts of the
+  # product that only exist once the engine, the DOM and ClientRouter are all
+  # real. Runs against `astro dev`; the suite applies the D1 migrations to a
+  # local miniflare database itself and seeds its own sessions, so it needs no
+  # secrets and touches nothing outside the runner.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
   # Deploy readiness — fails if prod D1 has un-applied migrations or is missing a
   # required secret. Needs a CLOUDFLARE_API_TOKEN repo secret; skips (with a

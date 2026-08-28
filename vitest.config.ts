@@ -28,5 +28,28 @@ export default defineConfig({
 			'tests/**/*.test.ts',
 			'tests/**/*.test.tsx',
 		],
+		coverage: {
+			provider: 'v8',
+			include: ['src/**/*.ts', 'src/**/*.tsx'],
+			exclude: [
+				'src/**/*.test.ts',
+				// Test-only helpers, and files with nothing to execute.
+				'src/test/**',
+				'src/env.d.ts',
+				'src/i18n/locales/**',
+			],
+			reporter: ['text', 'html'],
+			// Floors, not targets: they exist so a change that quietly drops
+			// coverage fails CI instead of shipping. Branch floors sit lower
+			// than line floors on the browser-side code, where a good deal of
+			// the branching is defensive (a missing node, an unavailable API)
+			// on paths that only a real browser reaches.
+			thresholds: {
+				'src/lib/**': { lines: 90, functions: 90, branches: 85 },
+				'src/pages/api/**': { lines: 85, functions: 90, branches: 85 },
+				'src/components/**': { lines: 90, functions: 90, branches: 65 },
+				'src/scripts/**': { lines: 88, functions: 85, branches: 72 },
+			},
+		},
 	},
 });
