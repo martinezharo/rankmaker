@@ -5,7 +5,7 @@
  * Usage (server):
  *   const t = useTranslations(Astro.locals.locale);
  *   t('nav.home')                       → "Home"
- *   t('history.count', { n: 3 })        → "3 rankings" (interpolates {n})
+ *   t('card.ranked', { n: 3 })          → "3 ranked" (interpolates {n})
  *
  * ## Why the dictionaries are not imported here
  *

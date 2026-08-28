@@ -5,6 +5,7 @@ import {
 	groupByCategory,
 	matchesQuery,
 	toListingItem,
+	withLiveNumbers,
 	type ListingItem,
 } from './listings';
 import type { Template } from './templates';
@@ -145,5 +146,58 @@ describe('matchesQuery', () => {
 		expect(matchesQuery(item({ category: 'Movies', title: 'X' }), 'movies')).toBe(
 			false
 		);
+	});
+});
+
+describe('withLiveNumbers', () => {
+	const stale = () =>
+		template({ slug: 'a-template', times_ranked: 999, votes: 42 });
+
+	it('replaces whatever the template carried with the live numbers', () => {
+		expect(
+			withLiveNumbers(stale(), {
+				counts: { 'a-template': 7 },
+				votes: { 'a-template': 3 },
+			})
+		).toMatchObject({ times_ranked: 7, votes: 3 });
+	});
+
+	it('reads an aggregate for a slug that is not lowercase', () => {
+		expect(
+			withLiveNumbers(template({ slug: 'Mixed-Case' }), {
+				counts: { 'mixed-case': 5 },
+			}).times_ranked
+		).toBe(5);
+	});
+
+	it('reports zero for a template nobody has ranked or voted on', () => {
+		expect(
+			withLiveNumbers(stale(), { counts: {}, votes: {} })
+		).toMatchObject({ times_ranked: 0, votes: 0 });
+	});
+
+	it('leaves the numbers alone when D1 was unavailable', () => {
+		expect(withLiveNumbers(stale(), {})).toMatchObject({
+			times_ranked: 999,
+			votes: 42,
+		});
+	});
+
+	it('does not mutate the template it was given', () => {
+		const original = stale();
+		withLiveNumbers(original, { counts: { 'a-template': 7 } });
+		expect(original.times_ranked).toBe(999);
+	});
+
+	it('keeps every other field, so a card still renders', () => {
+		const decorated = withLiveNumbers(
+			template({ title: 'A Template' }),
+			{ counts: { 'a-template': 1 } }
+		);
+		expect(decorated).toMatchObject({
+			slug: 'a-template',
+			title: 'A Template',
+			source: 'user',
+		});
 	});
 });

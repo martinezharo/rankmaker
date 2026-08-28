@@ -59,6 +59,7 @@ available in the app when email delivery is not configured.
 ```bash
 pnpm check
 pnpm test
+pnpm test:coverage
 pnpm test:e2e
 pnpm build
 pnpm preview

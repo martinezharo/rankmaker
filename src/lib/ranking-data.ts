@@ -6,9 +6,15 @@
  * identical whichever one it came from: the DB-backed template page
  * (src/pages/template/[slug].astro, server-side) and the guest-local template
  * page (src/pages/local/[id].astro, in the browser from localStorage).
+ *
+ * The two readers below turn untrusted input — an inlined payload, a result
+ * restored from localStorage or from the account — into the `RankingItem`s the
+ * session works with. Both drop anything malformed rather than throwing: a
+ * corrupted entry must cost the user that option, never the whole page.
  */
 
 import { resolveImageUrl } from './covers';
+import type { RankingItem } from './ranking-session';
 
 export type RankingOption = {
 	id: number | string;
@@ -55,4 +61,43 @@ export function buildRankingData(input: {
 			image: optionImageUrl(option.image, option.name),
 		})),
 	};
+}
+
+/**
+* The options the ranking engine should battle, from a `#ranking-data`
+* payload. Option ids are coerced to numbers because the engine keys
+* comparisons by them; an option without a usable id or name is dropped.
+*/
+export function rankingItemsFrom(data: RankingData): RankingItem[] {
+	return data.options
+		.map((item) => ({
+			id: Number(item.id),
+			name: String(item.name),
+			image: item.image ? String(item.image) : null,
+		}))
+		.filter((item) => Number.isFinite(item.id) && item.name.length > 0);
+}
+
+/**
+* The options in a stored ranking result — localStorage or the account — as
+* engine items. The input is whatever was persisted, possibly by an older
+* version of the app, so every field is checked.
+*/
+export function parseStoredRanking(value: unknown): RankingItem[] {
+	if (!Array.isArray(value)) return [];
+	return value
+		.map((item) => {
+			if (typeof item !== 'object' || item === null) return null;
+			const record = item as Record<string, unknown>;
+			const id = Number(record.id);
+			if (!Number.isFinite(id) || typeof record.name !== 'string') {
+				return null;
+			}
+			return {
+				id,
+				name: record.name,
+				image: typeof record.image === 'string' ? record.image : null,
+			};
+		})
+		.filter((item): item is RankingItem => item !== null);
 }

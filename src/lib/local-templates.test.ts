@@ -1,15 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+    LOCAL_TEMPLATES_CHANGED,
     MAX_LOCAL_TEMPLATES,
+    atLocalTemplateLimit,
+    deleteLocalTemplate,
+    getLocalTemplate,
     isLocalTemplateSlug,
+    listLocalTemplates,
     localTemplateIdFromSlug,
     localTemplateSlug,
     parseLocalTemplates,
     removeLocalTemplate,
     toLocalTemplate,
+    saveLocalTemplate,
     upsertLocalTemplate,
     type LocalTemplate,
 } from './local-templates';
+import { memStorage } from '../test/storage';
 
 const template = (
     id: string,
@@ -133,4 +140,90 @@ describe('local slugs', () => {
         expect(isLocalTemplateSlug('best-pizzas')).toBe(false);
         expect(localTemplateIdFromSlug('best-pizzas')).toBeNull();
     });
+});
+
+describe('the localStorage-backed helpers', () => {
+	beforeEach(() => {
+		vi.stubGlobal('localStorage', memStorage());
+	});
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	const input = (title: string) => ({
+		title,
+		description: 'A guest template',
+		category: 'Movies',
+		options: [{ name: 'One' }, { name: 'Two' }, { name: 'Three' }, { name: 'Four' }],
+	});
+
+	it('round-trips a saved template', () => {
+		const saved = saveLocalTemplate(input('My Guest Ranking'));
+		expect(saved.id).toBeTruthy();
+		expect(getLocalTemplate(saved.id)).toEqual(saved);
+		expect(listLocalTemplates()).toEqual([saved]);
+	});
+
+	it('numbers the options from one, which is what the engine keys battles by', () => {
+		const saved = saveLocalTemplate(input('My Guest Ranking'));
+		expect(saved.options.map((o) => o.id)).toEqual([1, 2, 3, 4]);
+	});
+
+	it('gives every template a distinct id', () => {
+		const ids = new Set(
+			Array.from({ length: 5 }, (_, i) =>
+				saveLocalTemplate(input(`Template ${i}`)).id
+			)
+		);
+		expect(ids.size).toBe(5);
+	});
+
+	it('forgets a template on delete', () => {
+		const saved = saveLocalTemplate(input('Temporary'));
+		deleteLocalTemplate(saved.id);
+		expect(getLocalTemplate(saved.id)).toBeNull();
+		expect(listLocalTemplates()).toEqual([]);
+	});
+
+	it('is null for an unknown or empty id', () => {
+		expect(getLocalTemplate('nope')).toBeNull();
+		expect(getLocalTemplate('')).toBeNull();
+	});
+
+	it('reports the cap once this browser is full', () => {
+		expect(atLocalTemplateLimit()).toBe(false);
+		for (let i = 0; i < MAX_LOCAL_TEMPLATES; i++) {
+			saveLocalTemplate(input(`Template ${i}`));
+		}
+		expect(atLocalTemplateLimit()).toBe(true);
+	});
+
+	it('survives storage being unavailable rather than breaking the UI', () => {
+		vi.stubGlobal('localStorage', {
+			getItem: () => {
+				throw new Error('storage disabled');
+			},
+			setItem: () => {
+				throw new Error('storage disabled');
+			},
+		} as unknown as Storage);
+
+		expect(listLocalTemplates()).toEqual([]);
+		expect(() => saveLocalTemplate(input('Anything'))).not.toThrow();
+		expect(atLocalTemplateLimit()).toBe(false);
+	});
+
+	it('ignores corrupted stored JSON', () => {
+		localStorage.setItem('rankmaker_local_templates', '{not json');
+		expect(listLocalTemplates()).toEqual([]);
+	});
+
+	it('announces a change so open surfaces can re-render', () => {
+		const events: string[] = [];
+		vi.stubGlobal('document', {
+			dispatchEvent: (event: Event) => events.push(event.type),
+		});
+		saveLocalTemplate(input('Announced'));
+		expect(events).toEqual([LOCAL_TEMPLATES_CHANGED]);
+	});
 });

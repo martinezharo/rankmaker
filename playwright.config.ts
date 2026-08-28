@@ -12,11 +12,18 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4321';
 // (or: sudo apt-get install -y libnspr4 libnss3 libnssutil3 libasound2)
 export default defineConfig({
 	testDir: './e2e',
+	testMatch: '**/*.spec.ts',
+	// Apply the local D1 migrations and clear anything a previous run left
+	// behind; the account specs seed sessions straight into that database
+	// (see e2e/fixtures/d1.ts).
+	globalSetup: './e2e/fixtures/global-setup.ts',
+	globalTeardown: './e2e/fixtures/global-teardown.ts',
 	fullyParallel: false,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
 	workers: 1,
-	reporter: 'list',
+	// CI also writes the HTML report, which the workflow uploads on failure.
+	reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
 	use: {
 		baseURL,
 		trace: 'on-first-retry',
@@ -27,7 +34,13 @@ export default defineConfig({
 	webServer: process.env.PLAYWRIGHT_BASE_URL
 		? undefined
 		: {
-				command: 'pnpm dev',
+				// Astro is invoked directly, with an explicit host and port,
+				// so the server always lands where `baseURL` points. Going
+				// through the `dev` script is not enough: a machine can wrap
+				// its package manager to bind the dev server to another
+				// interface (this repo's own VPS does), and Playwright then
+				// waits on a localhost nothing is listening on.
+				command: 'pnpm exec astro dev --host 127.0.0.1 --port 4321',
 				url: baseURL,
 				reuseExistingServer: !process.env.CI,
 				timeout: 120_000,
