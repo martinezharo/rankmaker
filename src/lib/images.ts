@@ -10,6 +10,8 @@
  * template create/edit claims the key.
  */
 
+import { DEFAULT_IMAGES_PUBLIC_BASE } from './required-env';
+
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 /** Cap on the stored WebP; oversized outputs get one lower-quality retry. */
 export const MAX_STORED_BYTES = 512 * 1024;
@@ -23,8 +25,6 @@ export const IMAGE_DIMENSIONS = {
 
 export type UploadKind = keyof typeof IMAGE_DIMENSIONS;
 
-const PROD_PUBLIC_BASE = 'https://img.rankmaker.net';
-
 /**
  * Public base URL uploads are served from (no trailing slash). In dev the
  * bucket is a local miniflare simulation that img.rankmaker.net obviously
@@ -33,7 +33,7 @@ const PROD_PUBLIC_BASE = 'https://img.rankmaker.net';
 export function imagePublicBase(env: { IMAGES_PUBLIC_BASE?: string }): string {
     const configured = env.IMAGES_PUBLIC_BASE?.trim();
     if (configured) return configured.replace(/\/+$/, '');
-    return import.meta.env.DEV ? '/api/images' : PROD_PUBLIC_BASE;
+    return import.meta.env.DEV ? '/api/images' : DEFAULT_IMAGES_PUBLIC_BASE;
 }
 
 const KEY_RE = /^u\/[A-Za-z0-9_-]+\/[A-Za-z0-9-]{16,}\.webp$/;

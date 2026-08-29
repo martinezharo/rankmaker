@@ -19,6 +19,12 @@ describe('the production environment manifest', () => {
 		}
 	});
 
+	it('gives every declared fallback a concrete value', () => {
+		for (const value of PRODUCTION_ENV.filter((v) => v.fallback !== undefined)) {
+			expect(value.fallback?.trim(), value.name).not.toBe('');
+		}
+	});
+
 	it('splits cleanly into required and optional', () => {
 		expect([...requiredEnv(), ...optionalEnv()]).toHaveLength(
 			PRODUCTION_ENV.length

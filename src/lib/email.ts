@@ -6,13 +6,15 @@
  * an email problem must never break the request that triggered the notification.
  */
 
+import { DEFAULT_SITE_URL } from './required-env';
+
+export { DEFAULT_SITE_URL } from './required-env';
+
 export type EmailEnv = {
 	RESEND_API_KEY?: string;
 	RESEND_FROM?: string;
 	SITE_URL?: string;
 };
-
-export const DEFAULT_SITE_URL = 'https://rankmaker.net';
 
 export function siteUrl(env: EmailEnv): string {
 	return (env.SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, '');
