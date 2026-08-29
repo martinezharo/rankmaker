@@ -30,12 +30,13 @@ test('refreshes live counts without moving or mismatching template covers', asyn
 	await page.goto('/search');
 
 	const cards = page.locator('main a[href^="/template/"]');
-	await expect(cards.first()).toHaveAttribute(
-		'href',
-		'/template/best-social-networks-ranking'
+	const initialFirstHref = await cards.first().getAttribute('href');
+	expect(initialFirstHref).not.toBeNull();
+	const starWarsCard = page.locator(
+		`main a[href="/template/${STAR_WARS.slug}"]`
 	);
 	await expect(
-		cards.first().locator('[data-count-slug="best-social-networks-ranking"]')
+		starWarsCard.locator(`[data-count-slug="${STAR_WARS.slug}"]`)
 	).not.toHaveText('0 ranked');
 	await page.evaluate(() => {
 		const root = document.querySelector('[data-search-results]')!;
@@ -70,13 +71,7 @@ test('refreshes live counts without moving or mismatching template covers', asyn
 
 	releaseCounts();
 
-	await expect(cards.first()).toHaveAttribute(
-		'href',
-		'/template/best-social-networks-ranking'
-	);
-	const starWarsCard = page.locator(
-		`main a[href="/template/${STAR_WARS.slug}"]`
-	);
+	await expect(cards.first()).toHaveAttribute('href', initialFirstHref!);
 	await expect(
 		starWarsCard.getByRole('img', { name: STAR_WARS.title })
 	).toHaveAttribute('src', STAR_WARS.cover);
