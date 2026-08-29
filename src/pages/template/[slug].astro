@@ -19,6 +19,7 @@ import { serializeJsonForScript } from "../../lib/safe-json";
 import { getSessionUser } from "../../lib/auth";
 import { isMatureGated, readMaturePref } from "../../lib/mature";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n/server";
+import { getDb } from "../../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -26,7 +27,7 @@ const L = (p: string) => localizePath(p, locale);
 
 // Served on demand: official templates resolve from the bundled JSON (no D1
 // read), user templates from D1. A null body + 404 makes Astro render 404.astro.
-const db = Astro.locals.runtime.env.DB;
+const db = getDb();
 // Official templates resolve from bundled JSON (no D1). A user template needs a
 // D1 read; on a transient failure signal "try again" (503) rather than a 404 —
 // a 404 on the page we most want indexed risks it being dropped from the index.

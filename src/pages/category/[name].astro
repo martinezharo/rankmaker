@@ -18,6 +18,7 @@ import { LISTING_CACHE_CONTROL } from "../../lib/mature";
 import { decorateListing, filterByCategory } from "../../lib/listings";
 import { getTemplateVotes } from "../../lib/template-votes";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n/server";
+import { getDb } from "../../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -41,13 +42,11 @@ if (!categoryName) {
 let browse: Template[] = getOfficialTemplates();
 let votes: Record<string, number> = {};
 try {
-    const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
-    if (db) {
-        [browse, votes] = await Promise.all([
-            listBrowseTemplates(db, false),
-            getTemplateVotes(db),
-        ]);
-    }
+    const db = getDb();
+    [browse, votes] = await Promise.all([
+        listBrowseTemplates(db, false),
+        getTemplateVotes(db),
+    ]);
 } catch {
     // official-only fallback
 }

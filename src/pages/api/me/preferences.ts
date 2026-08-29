@@ -4,6 +4,7 @@ import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
 import { setEmailPref } from '../../../lib/notifications';
 import { writeMaturePref } from '../../../lib/mature';
+import { getDb } from '../../../lib/runtime';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
@@ -27,7 +28,7 @@ export const POST: APIRoute = async (context) => {
 	}
 
 	try {
-		const db = context.locals.runtime.env.DB;
+		const db = getDb();
 		const user = await getSessionUser(context.cookies, db);
 
 		let body: { showMature?: unknown; emailNotifications?: unknown };

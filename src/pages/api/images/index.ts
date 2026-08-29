@@ -15,6 +15,7 @@ import {
     sniffImageType,
     type UploadKind,
 } from '../../../lib/images';
+import { getEnv, getExecutionContext } from '../../../lib/runtime';
 
 /**
  * Upload a template image (auth required). Raw image bytes in the body,
@@ -32,7 +33,8 @@ export const POST: APIRoute = async (context) => {
     }
 
     try {
-        const { env, ctx } = context.locals.runtime;
+        const env = getEnv();
+        const ctx = getExecutionContext(context);
         const user = await getSessionUser(context.cookies, env.DB);
         if (!user) return json({ error: 'You must be logged in.' }, 401);
 
@@ -157,11 +159,15 @@ export const POST: APIRoute = async (context) => {
         }
 
         // Piggyback abandoned-upload cleanup for this user on the response.
-        ctx.waitUntil(
-            cleanupOrphanImages(env.DB, env.IMAGES_BUCKET, user.id).catch(
-                (error) => console.error('Orphan image cleanup error:', error)
-            )
-        );
+        // No execution context outside a live request (prerender, tests) — the
+        // cleanup is best-effort, so skip it rather than block the upload.
+        const cleanup = cleanupOrphanImages(
+            env.DB,
+            env.IMAGES_BUCKET,
+            user.id
+        ).catch((error) => console.error('Orphan image cleanup error:', error));
+        if (ctx) ctx.waitUntil(cleanup);
+        else await cleanup;
 
         return json({ ok: true, url: imageKeyToUrl(key, imagePublicBase(env)) });
     } catch (error) {

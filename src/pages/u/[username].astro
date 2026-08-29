@@ -11,11 +11,12 @@ import { LISTING_CACHE_CONTROL } from "../../lib/mature";
 import { decorateListing } from "../../lib/listings";
 import { getFollowCounts } from "../../lib/follows";
 import { defaultLocale, useTranslations } from "../../i18n/server";
+import { getDb } from "../../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 
-const db = Astro.locals.runtime.env.DB;
+const db = getDb();
 
 const user = await db
     .prepare(

@@ -14,6 +14,7 @@ import { LISTING_CACHE_CONTROL } from "../lib/mature";
 import { decorateListing, groupByCategory } from "../lib/listings";
 import { serializeJsonForScript } from "../lib/safe-json";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
+import { getDb } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -30,14 +31,12 @@ let counts: Record<string, number> | undefined;
 let votes: Record<string, number> = {};
 let browse = getOfficialTemplates();
 try {
-	const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
-	if (db) {
-		[counts, browse, votes] = await Promise.all([
-			getCounts(db),
-			listBrowseTemplates(db, false),
-			getTemplateVotes(db),
-		]);
-	}
+	const db = getDb();
+	[counts, browse, votes] = await Promise.all([
+		getCounts(db),
+		listBrowseTemplates(db, false),
+		getTemplateVotes(db),
+	]);
 } catch {
 	// keep JSON ordering / official-only as a safe fallback
 }

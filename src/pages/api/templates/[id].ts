@@ -20,6 +20,7 @@ import {
     imagePublicBase,
     verifyImageOwnership,
 } from '../../../lib/images';
+import { getEnv, getDb } from '../../../lib/runtime';
 
 type Owned = { id: string; slug: string; visibility: string };
 
@@ -52,7 +53,7 @@ async function authorize(context: APIContext): Promise<AuthResult> {
     if (!checkOrigin(context.request)) {
         return { ok: false, response: json({ error: 'Forbidden' }, 403) };
     }
-    const db = context.locals.runtime.env.DB;
+    const db = getDb();
     const user = await getSessionUser(context.cookies, db);
     if (!user) {
         return {
@@ -103,7 +104,7 @@ export const PUT: APIRoute = async (context) => {
             existing.results.map((r) => r.url).filter((u): u is string => !!u)
         );
 
-        const { env } = context.locals.runtime;
+        const env = getEnv();
         const imageBase = imagePublicBase(env);
         const result = validateTemplateInput(body, {
             base: imageBase,
@@ -231,7 +232,7 @@ export const DELETE: APIRoute = async (context) => {
         // FK sets images.template_id to NULL, which would orphan them).
         await deleteTemplateImages(
             db,
-            context.locals.runtime.env.IMAGES_BUCKET,
+            getEnv().IMAGES_BUCKET,
             owned.id
         );
 

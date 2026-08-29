@@ -15,6 +15,7 @@ import {
     verifyImageOwnership,
 } from '../../../lib/images';
 import { notifyNewTemplate } from '../../../lib/notifications';
+import { getEnv } from '../../../lib/runtime';
 
 /** Create a template (auth required). Body: { title, description, category, cover_image, visibility, options }. */
 export const POST: APIRoute = async (context) => {
@@ -23,7 +24,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     try {
-        const { env } = context.locals.runtime;
+        const env = getEnv();
         const db = env.DB;
         const user = await getSessionUser(context.cookies, db);
         if (!user) return json({ error: 'You must be logged in.' }, 401);

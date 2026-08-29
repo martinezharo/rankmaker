@@ -2,10 +2,11 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { getCounts } from '../../lib/counts';
+import { getEnv } from '../../lib/runtime';
 
-export const GET: APIRoute = async (context) => {
+export const GET: APIRoute = async () => {
     try {
-        const { env } = context.locals.runtime;
+        const env = getEnv();
 
         const counts = await getCounts(env.DB);
 

@@ -4,6 +4,7 @@ import type { APIRoute } from 'astro';
 import { getSessionUser, json } from '../../../lib/auth';
 import { listFollowingTemplates } from '../../../lib/follows';
 import { readMaturePref } from '../../../lib/mature';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * GET → `{ templates: [...] }`, the latest public templates from the accounts
@@ -15,7 +16,7 @@ import { readMaturePref } from '../../../lib/mature';
 export const GET: APIRoute = async (context) => {
 	const headers = { 'Cache-Control': 'private, no-store' };
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ templates: [] }, 200, headers);
 

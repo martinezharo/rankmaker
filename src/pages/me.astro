@@ -13,13 +13,14 @@ import { getTemplateVotes } from "../lib/template-votes";
 import { withLiveNumbers } from "../lib/listings";
 import { listTemplatesByUserId } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
+import { getDb } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 // `tr` (not `t`): the templates .map((t) => …) below binds `t` to a template.
 const tr = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
-const db = Astro.locals.runtime.env.DB;
+const db = getDb();
 // Guests are not bounced to GitHub: they may well have templates of their own,
 // saved in this browser (src/lib/local-templates.ts). They get the same page
 // minus the profile/account chrome, with <LocalTemplates> listing them — the

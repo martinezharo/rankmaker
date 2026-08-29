@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { isUsernameTaken, json, usernameProblem } from '../../../lib/auth';
+import { getEnv } from '../../../lib/runtime';
 
 /** Live username availability check for the signup form. */
 export const GET: APIRoute = async (context) => {
@@ -16,7 +17,7 @@ export const GET: APIRoute = async (context) => {
 
     try {
         const taken = await isUsernameTaken(
-            context.locals.runtime.env.DB,
+            getEnv().DB,
             username
         );
         return json(

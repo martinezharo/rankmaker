@@ -3,6 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
 import { softDeleteComment } from '../../../lib/comments';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * DELETE /api/comments/:id — soft-delete the caller's own comment. Login +
@@ -16,7 +17,7 @@ export const DELETE: APIRoute = async (context) => {
 
 	const id = context.params.id ?? '';
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ error: 'Not logged in' }, 401);
 

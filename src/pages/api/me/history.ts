@@ -16,6 +16,7 @@ import {
 	canonicalizeBattleHistory,
 	parseBattleHistory,
 } from '../../../lib/battle-history';
+import { getEnv } from '../../../lib/runtime';
 
 type StoredResult = {
 	slug: string;
@@ -65,7 +66,7 @@ export const GET: APIRoute = async (context) => {
 	const headers = { 'Cache-Control': 'private, no-store' };
 	const slug = new URL(context.request.url).searchParams.get('slug');
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 
 		if (slug) {
@@ -110,7 +111,7 @@ export const POST: APIRoute = async (context) => {
 	}
 
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ ok: true, skipped: true }, 200);
 

@@ -11,6 +11,7 @@ import {
     signPayload,
     verifyPayload,
 } from '../../../lib/auth';
+import { getEnv } from '../../../lib/runtime';
 
 type StatePayload = { state: string; next: string; exp: number };
 
@@ -20,7 +21,7 @@ type StatePayload = { state: string; next: string; exp: number };
  * user row is created until they pick a username.
  */
 export const GET: APIRoute = async (context) => {
-    const { env } = context.locals.runtime;
+    const env = getEnv();
     const url = new URL(context.request.url);
     const fail = () => context.redirect('/?auth_error=1', 302);
 

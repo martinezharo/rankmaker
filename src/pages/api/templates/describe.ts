@@ -3,6 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
 import { CATEGORY_NAMES } from '../../../lib/categories';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * Suggest an improved template description via Workers AI (auth required).
@@ -174,7 +175,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     try {
-        const { env } = context.locals.runtime;
+        const env = getEnv();
         const user = await getSessionUser(context.cookies, env.DB);
         if (!user) return json({ error: 'You must be logged in.' }, 401);
 

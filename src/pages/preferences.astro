@@ -8,6 +8,7 @@ import { getSessionUser } from "../lib/auth";
 import { getEmailPref } from "../lib/notifications";
 import { readMaturePref, writeMaturePref } from "../lib/mature";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
+import { getDb } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -15,7 +16,7 @@ const t = useTranslations(locale);
 // Everything here is per-visitor state, so the page is never cached.
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
-const db = Astro.locals.runtime.env.DB;
+const db = getDb();
 
 let user: Awaited<ReturnType<typeof getSessionUser>> = null;
 let emailPref = true;

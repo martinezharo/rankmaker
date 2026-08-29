@@ -17,6 +17,17 @@ import { defineConfig } from 'vitest/config';
 // migrations to an in-memory SQLite database, so they stay fast and need no
 // live D1/KV/R2 binding.
 export default defineConfig({
+	resolve: {
+		alias: {
+			// `cloudflare:workers` only resolves inside workerd. Point it at the
+			// test double so `src/lib/runtime.ts` — and therefore every route
+			// handler — imports its bindings the same way it does in the Worker.
+			'cloudflare:workers': new URL(
+				'./src/test/runtime.ts',
+				import.meta.url
+			).pathname,
+		},
+	},
 	test: {
 		// Node by default. The browser-side modules (Preact islands and the
 		// scripts in `src/scripts`) opt into a DOM with a

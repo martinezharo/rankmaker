@@ -7,6 +7,7 @@ import {
     deleteSession,
     json,
 } from '../../../lib/auth';
+import { getEnv } from '../../../lib/runtime';
 
 export const POST: APIRoute = async (context) => {
     if (!checkOrigin(context.request)) {
@@ -16,7 +17,7 @@ export const POST: APIRoute = async (context) => {
     try {
         const sessionId = context.cookies.get(SESSION_COOKIE)?.value;
         if (sessionId) {
-            await deleteSession(context.locals.runtime.env.DB, sessionId);
+            await deleteSession(getEnv().DB, sessionId);
         }
         context.cookies.delete(SESSION_COOKIE, { path: '/' });
         return json({ ok: true });

@@ -1,5 +1,4 @@
 {
-  "main": "dist/_worker.js/index.js",
   "name": "rankmaker",
   "account_id": "a0fa518f5393767beb33f26606989c9d",
   "compatibility_date": "2026-02-17",
@@ -7,9 +6,18 @@
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
+  // No `main` here on purpose. Since @astrojs/cloudflare v14 the build runs
+  // through @cloudflare/vite-plugin, which emits the deployable Worker itself
+  // and writes a resolved config next to it at `dist/server/wrangler.json`
+  // (main: entry.mjs, assets: ../client). Pointing `main` at a build artifact
+  // that does not exist yet makes the plugin fail at config-resolution time.
+  //
+  // Deploy with:  wrangler deploy -c dist/server/wrangler.json   (pnpm deploy)
   "assets": {
     "binding": "ASSETS",
-    "directory": "./dist"
+    // Astro's client output. The plugin rewrites this to `../client` relative
+    // to dist/server when it emits the deploy config.
+    "directory": "./dist/client"
   },
   // Edge caching for the Worker's OWN responses. Without this, Cloudflare runs
   // the Worker on every request and the `Cache-Control` headers our pages set

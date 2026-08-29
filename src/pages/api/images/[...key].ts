@@ -1,6 +1,7 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * Serves uploaded images straight from the R2 binding. In production the
@@ -15,7 +16,7 @@ export const GET: APIRoute = async (context) => {
     const key = context.params.key ?? '';
     if (!KEY_RE.test(key)) return new Response('Not found', { status: 404 });
 
-    const object = await context.locals.runtime.env.IMAGES_BUCKET.get(key);
+    const object = await getEnv().IMAGES_BUCKET.get(key);
     if (!object) return new Response('Not found', { status: 404 });
 
     return new Response(object.body, {

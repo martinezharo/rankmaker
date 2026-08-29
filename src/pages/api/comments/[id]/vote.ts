@@ -10,6 +10,7 @@ import {
 	canAccessTemplate,
 	getTemplateBySlug,
 } from '../../../../lib/templates';
+import { getEnv } from '../../../../lib/runtime';
 
 /**
  * POST /api/comments/:id/vote — cast/clear this user's vote. Login +
@@ -23,7 +24,7 @@ export const POST: APIRoute = async (context) => {
 
 	const id = context.params.id ?? '';
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ error: 'Not logged in' }, 401);
 

@@ -7,6 +7,7 @@ import { getTemplateVotes } from '../../../lib/template-votes';
 import { decorateListing } from '../../../lib/listings';
 import { readMaturePref } from '../../../lib/mature';
 import { listBrowseTemplates, listTemplatesByUserId } from '../../../lib/templates';
+import { getDb } from '../../../lib/runtime';
 
 /**
  * The browse listing *as this viewer should see it*.
@@ -32,7 +33,7 @@ export const GET: APIRoute = async (context) => {
 			return json({ items: null }, 200, headers);
 		}
 
-		const db = context.locals.runtime.env.DB;
+		const db = getDb();
 		const username = context.url.searchParams.get('user');
 
 		if (username) {
