@@ -16,7 +16,15 @@ const L = (p: string) => localizePath(p, locale);
 // Only lightweight card metadata is SSR'd. Complete ordered results are loaded
 // from localStorage or /api/me/history?slug=... when a card is expanded.
 const db = getDb();
-const user = await getSessionUser(Astro.cookies, db);
+// The session lookup hits D1. This page is built to work signed-out — the
+// cards come from localStorage — so a binding or query failure degrades to the
+// guest view instead of 500-ing.
+let user: Awaited<ReturnType<typeof getSessionUser>> = null;
+try {
+	user = await getSessionUser(Astro.cookies, db);
+} catch (error) {
+	console.error("history: session lookup failed:", error);
+}
 
 let serverSummaries: HistorySummary[] = [];
 if (user) {

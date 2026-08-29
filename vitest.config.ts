@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 // Two homes, for one reason.
@@ -22,10 +23,9 @@ export default defineConfig({
 			// `cloudflare:workers` only resolves inside workerd. Point it at the
 			// test double so `src/lib/runtime.ts` — and therefore every route
 			// handler — imports its bindings the same way it does in the Worker.
-			'cloudflare:workers': new URL(
-				'./src/test/runtime.ts',
-				import.meta.url
-			).pathname,
+			'cloudflare:workers': fileURLToPath(
+				new URL('./src/test/runtime.ts', import.meta.url)
+			),
 		},
 	},
 	test: {
@@ -33,6 +33,8 @@ export default defineConfig({
 		// scripts in `src/scripts`) opt into a DOM with a
 		// `// @vitest-environment happy-dom` docblock and `src/test/dom.ts`.
 		environment: 'node',
+		// Clears the installed bindings between tests — see src/test/setup.ts.
+		setupFiles: ['./src/test/setup.ts'],
 		include: [
 			'src/**/*.test.ts',
 			'src/**/*.test.tsx',
