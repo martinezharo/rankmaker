@@ -6,6 +6,7 @@ import {
     EXPECTED_TABLES,
     requiredEnv,
 } from '../../lib/required-env';
+import { getEnv } from '../../lib/runtime';
 
 /**
  * Deploy-readiness probe. Verifies at runtime — against the ACTUAL production
@@ -23,7 +24,7 @@ import {
  * repo, but we still avoid advertising which optional integrations are unset.
  */
 export const GET: APIRoute = async (context) => {
-    const { env } = context.locals.runtime;
+    const env = getEnv();
 
     // --- DB: do the expected tables exist? ---
     let dbOk = false;
@@ -42,7 +43,7 @@ export const GET: APIRoute = async (context) => {
 
     // --- Env: are required / optional values present? ---
     const isSet = (name: string) => {
-        const value = (env as Record<string, unknown>)[name];
+        const value = (env as unknown as Record<string, unknown>)[name];
         return typeof value === 'string' && value.length > 0;
     };
     const missingRequired = requiredEnv()

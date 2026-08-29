@@ -13,6 +13,7 @@
 import type { APIContext } from 'astro';
 import { fakeCookies, type FakeCookies } from './cookies';
 import type { TestD1 } from './d1';
+import { setTestEnv } from './runtime';
 
 export const TEST_ORIGIN = 'https://rankmaker.test';
 
@@ -102,18 +103,23 @@ export function apiContext(options: {
 	const deferred: Promise<unknown>[] = [];
 	const responseHeaders = new Headers();
 
+	// Bindings are read through `cloudflare:workers` (aliased to
+	// `src/test/runtime.ts`), exactly as in the Worker — not handed to the
+	// handler on `locals`. Installing them here keeps `apiContext()` the single
+	// place a test declares what the platform provides.
+	setTestEnv({ DB: db, ...env });
+
 	return {
 		request,
 		params,
 		cookies: fakeCookies(cookies),
 		url: new URL(url),
 		locals: {
-			runtime: {
-				env: { DB: db, ...env },
-				ctx: {
-					waitUntil: (p: Promise<unknown>) => deferred.push(p),
-					passThroughOnException: () => {},
-				},
+			// The execution context the Cloudflare adapter puts on locals;
+			// `getExecutionContext()` reads it from here.
+			cfContext: {
+				waitUntil: (p: Promise<unknown>) => deferred.push(p),
+				passThroughOnException: () => {},
 			},
 		},
 		redirect: (location: string, status = 302) =>

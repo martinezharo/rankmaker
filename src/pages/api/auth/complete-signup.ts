@@ -13,6 +13,7 @@ import {
     verifyPayload,
 } from '../../../lib/auth';
 import { isValidAvatarKey } from '../../../lib/avatars';
+import { getEnv } from '../../../lib/runtime';
 
 type SignupPayload = {
     ghId: number;
@@ -26,7 +27,7 @@ type SignupPayload = {
  * Final signup step: creates the user row (username is permanent) + session.
  */
 export const POST: APIRoute = async (context) => {
-    const { env } = context.locals.runtime;
+    const env = getEnv();
     if (!checkOrigin(context.request)) {
         return json({ error: 'Forbidden' }, 403);
     }

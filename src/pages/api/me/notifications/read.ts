@@ -3,6 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../../lib/auth';
 import { markAllRead } from '../../../../lib/notifications';
+import { getDb } from '../../../../lib/runtime';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
@@ -16,7 +17,7 @@ export const POST: APIRoute = async (context) => {
 		return json({ error: 'Forbidden' }, 403);
 	}
 	try {
-		const db = context.locals.runtime.env.DB;
+		const db = getDb();
 		const user = await getSessionUser(context.cookies, db);
 		if (!user) return json({ error: 'Not logged in' }, 401);
 

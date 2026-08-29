@@ -5,6 +5,7 @@ import Layout from "../layouts/Layout.astro";
 import TemplateForm from "../components/TemplateForm.astro";
 import { getSessionUser } from "../lib/auth";
 import { defaultLocale, useTranslations } from "../i18n/server";
+import { getEnv } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -13,7 +14,7 @@ const t = useTranslations(locale);
 // TemplateForm's `anonymous` mode) — instead of being bounced to login. The
 // login modal (triggered from the form) is what eventually gets them signed
 // in, at which point a real submit is required (see /api/templates POST).
-const user = await getSessionUser(Astro.cookies, Astro.locals.runtime.env.DB);
+const user = await getSessionUser(Astro.cookies, getEnv().DB);
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---

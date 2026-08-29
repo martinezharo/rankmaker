@@ -8,6 +8,7 @@ import {
 	getTemplateVoteScore,
 	getUserTemplateVote,
 } from '../../../lib/template-votes';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * GET `?slug=…` → `{ score, myVote, loggedIn }`. The ranking page is publicly
@@ -18,7 +19,7 @@ export const GET: APIRoute = async (context) => {
 	const headers = { 'Cache-Control': 'private, no-store' };
 	const slug = new URL(context.request.url).searchParams.get('slug') ?? '';
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		if (!slug) return json({ score: 0, myVote: 0, loggedIn: false }, 200, headers);
 
 		const user = await getSessionUser(context.cookies, env.DB);
@@ -53,7 +54,7 @@ export const POST: APIRoute = async (context) => {
 	}
 
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ error: 'Not logged in' }, 401);
 

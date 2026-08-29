@@ -4,6 +4,7 @@ import type { APIRoute } from 'astro';
 import { getOfficialTemplates, listUserTemplates } from '../lib/templates';
 import { CATEGORY_SLUGS } from '../lib/categories';
 import { CONTENT_LOCALIZED, defaultLocale, localizePath, locales } from '../i18n/server';
+import { getDb } from '../lib/runtime';
 
 const SITE_URL = 'https://rankmaker.net';
 
@@ -71,7 +72,7 @@ function urlEntries(entry: SitemapEntry): string {
         .join('');
 }
 
-export const GET: APIRoute = async (context) => {
+export const GET: APIRoute = async () => {
     const staticPages: SitemapEntry[] = [
         '/',
         '/about',
@@ -91,7 +92,7 @@ export const GET: APIRoute = async (context) => {
     let userTemplates: Awaited<ReturnType<typeof listUserTemplates>> = [];
     let profiles: SitemapEntry[] = [{ path: '/u/RANKMAKER' }];
     try {
-        const db = context.locals.runtime.env.DB;
+        const db = getDb();
         userTemplates = await listUserTemplates(db);
         const { results } = await db
             .prepare('SELECT username FROM users')

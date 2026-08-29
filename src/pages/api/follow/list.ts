@@ -3,6 +3,7 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { json } from '../../../lib/auth';
 import { listFollowers, listFollowing } from '../../../lib/follows';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * GET `?username=…&type=followers|following` → `{ users: UserSummary[] }`.
@@ -18,7 +19,7 @@ export const GET: APIRoute = async (context) => {
 			? 'following'
 			: 'followers';
 
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const row = username
 			? await env.DB.prepare(
 					'SELECT id FROM users WHERE username = ? COLLATE NOCASE'

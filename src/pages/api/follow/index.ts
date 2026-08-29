@@ -8,6 +8,7 @@ import {
 	setFollow,
 } from '../../../lib/follows';
 import { withinRateLimit } from '../../../lib/rate-limit';
+import { getEnv } from '../../../lib/runtime';
 
 // Abuse guard against scripted follow/unfollow spam — generous enough that a
 // person clicking around real profiles never notices it.
@@ -37,7 +38,7 @@ export const GET: APIRoute = async (context) => {
 	const username =
 		new URL(context.request.url).searchParams.get('username') ?? '';
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const targetId = username ? await userIdByUsername(env.DB, username) : null;
 		if (!targetId) {
 			return json(
@@ -102,7 +103,7 @@ export const POST: APIRoute = async (context) => {
 	}
 
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const viewer = await getSessionUser(context.cookies, env.DB);
 		if (!viewer) return json({ error: 'Not logged in' }, 401);
 

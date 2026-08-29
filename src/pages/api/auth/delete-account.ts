@@ -9,6 +9,7 @@ import {
 } from '../../../lib/auth';
 import { detachUserComments } from '../../../lib/comments';
 import { deleteUserImages } from '../../../lib/images';
+import { getEnv, getDb } from '../../../lib/runtime';
 
 /**
  * Permanently deletes the account. The DELETE on `users` cascades to
@@ -27,7 +28,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     try {
-        const db = context.locals.runtime.env.DB;
+        const db = getDb();
         const user = await getSessionUser(context.cookies, db);
         if (!user) return json({ error: 'Not logged in' }, 401);
 
@@ -49,7 +50,7 @@ export const POST: APIRoute = async (context) => {
         // Remove both sides while the ownership rows still identify the keys.
         await deleteUserImages(
             db,
-            context.locals.runtime.env.IMAGES_BUCKET,
+            getEnv().IMAGES_BUCKET,
             user.id
         );
         await db.prepare('DELETE FROM users WHERE id = ?').bind(user.id).run();

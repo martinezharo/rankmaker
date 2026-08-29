@@ -7,13 +7,14 @@ import {
     shortCookieOptions,
     signPayload,
 } from '../../../lib/auth';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * Kicks off the GitHub OAuth flow. The random `state` (and the post-login
  * `next` path) travel in a signed, short-lived cookie checked by /callback.
  */
 export const GET: APIRoute = async (context) => {
-    const { env } = context.locals.runtime;
+    const env = getEnv();
     const url = new URL(context.request.url);
 
     // Only allow same-site relative paths to avoid open redirects. Reject

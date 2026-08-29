@@ -7,6 +7,7 @@ import {
 	getTemplateBySlug,
 	listSavedSlugs,
 } from '../../../lib/templates';
+import { getEnv } from '../../../lib/runtime';
 
 /**
  * GET → `{ slugs: string[] }`, the slugs this user has saved. Drives client-side
@@ -16,7 +17,7 @@ import {
 export const GET: APIRoute = async (context) => {
 	const headers = { 'Cache-Control': 'private, no-store' };
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ slugs: [] }, 200, headers);
 		return json({ slugs: await listSavedSlugs(env.DB, user.id) }, 200, headers);
@@ -36,7 +37,7 @@ export const POST: APIRoute = async (context) => {
 	}
 
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ error: 'Not logged in' }, 401);
 

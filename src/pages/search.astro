@@ -16,6 +16,7 @@ import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
 import type { SlugValues } from "../lib/slug";
 import { defaultLocale, useTranslations } from "../i18n/server";
+import { getDb } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 // Named `tr` (not `t`) because several .map((t) => …) callbacks below bind `t`
@@ -32,14 +33,12 @@ let browse: Template[] = getOfficialTemplates();
 let counts: SlugValues | undefined;
 let votes: SlugValues = {};
 try {
-    const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
-    if (db) {
-        [browse, counts, votes] = await Promise.all([
-            listBrowseTemplates(db, false),
-            getCounts(db),
-            getTemplateVotes(db),
-        ]);
-    }
+    const db = getDb();
+    [browse, counts, votes] = await Promise.all([
+        listBrowseTemplates(db, false),
+        getCounts(db),
+        getTemplateVotes(db),
+    ]);
 } catch {
     // official-only fallback
 }

@@ -100,38 +100,63 @@ type Ai = {
     ): Promise<{ response?: string }>;
 };
 
-type Runtime = {
-    env: {
-        'rm-times-ranked': KVNamespace;
-        DB: D1Database;
-        AI: Ai;
-        IMAGES: ImagesBinding;
-        IMAGES_BUCKET: R2Bucket;
-        /** OpenAI key for the (free) image moderation endpoint. When unset
-         *  (local dev), uploads skip moderation with a console warning. */
-        OPENAI_API_KEY?: string;
-        /** Public base URL for uploaded images. Defaults to
-         *  https://img.rankmaker.net in prod and /api/images in dev. */
-        IMAGES_PUBLIC_BASE?: string;
-        GITHUB_CLIENT_ID: string;
-        GITHUB_CLIENT_SECRET: string;
-        SESSION_SECRET: string;
-        /** Resend API key — when unset, notification emails are skipped. */
-        RESEND_API_KEY?: string;
-        /** Verified Resend sender, e.g. "RANKMAKER <notifications@rankmaker.net>". */
-        RESEND_FROM?: string;
-        /** Absolute base URL for links in emails (defaults to https://rankmaker.net). */
-        SITE_URL?: string;
-    };
-    cf: Record<string, unknown>;
-    /** Cloudflare execution context — `waitUntil` keeps fire-and-forget work
-     *  (notification emails) alive after the response is returned. */
-    ctx: { waitUntil(promise: Promise<unknown>): void };
-};
+/**
+ * The Worker's bindings and secrets.
+ *
+ * Reached through `getEnv()` in `src/lib/runtime.ts`, never directly — Astro 6
+ * removed `getEnv()`, and the bindings now come from the
+ * `cloudflare:workers` module. `Env` is the global the platform types that
+ * module against, so it is declared (not exported) on purpose.
+ */
+interface Env {
+    'rm-times-ranked': KVNamespace;
+    DB: D1Database;
+    AI: Ai;
+    IMAGES: ImagesBinding;
+    IMAGES_BUCKET: R2Bucket;
+    /** OpenAI key for the (free) image moderation endpoint. When unset
+     *  (local dev), uploads skip moderation with a console warning. */
+    OPENAI_API_KEY?: string;
+    /** Public base URL for uploaded images. Defaults to
+     *  https://img.rankmaker.net in prod and /api/images in dev. */
+    IMAGES_PUBLIC_BASE?: string;
+    GITHUB_CLIENT_ID: string;
+    GITHUB_CLIENT_SECRET: string;
+    SESSION_SECRET: string;
+    /** Resend API key — when unset, notification emails are skipped. */
+    RESEND_API_KEY?: string;
+    /** Verified Resend sender, e.g. "RANKMAKER <notifications@rankmaker.net>". */
+    RESEND_FROM?: string;
+    /** Absolute base URL for links in emails (defaults to https://rankmaker.net). */
+    SITE_URL?: string;
+}
+
+/** Cloudflare execution context — `waitUntil` keeps fire-and-forget work
+ *  (notification emails) alive after the response is returned. The Cloudflare
+ *  adapter puts it on `locals.cfContext`; read it via `getExecutionContext()`. */
+interface ExecutionContext {
+    waitUntil(promise: Promise<unknown>): void;
+    passThroughOnException?(): void;
+}
+
+/** Cloudflare request metadata. Only `country` is read (see api/track.ts),
+ *  and it is absent outside a real edge request. */
+interface CfProperties {
+    country?: string;
+    [key: string]: unknown;
+}
+
+interface Request {
+    readonly cf?: CfProperties;
+}
+
+/** The `env` object exported by the workerd built-in module. */
+declare module 'cloudflare:workers' {
+    export const env: Env;
+}
 
 declare namespace App {
     interface Locals {
-        runtime: Runtime;
         /** Active UI locale, resolved from the URL prefix in middleware. */
         locale: import('./i18n/config').Locale;
     }

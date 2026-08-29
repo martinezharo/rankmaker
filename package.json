@@ -6,11 +6,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "deploy:worker": "pnpm exec wrangler deploy -c dist/server/wrangler.json",
     "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:smoke": "node .github/scripts/smoke-build.mjs",
     "astro": "astro",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "check:deploy": "npx --yes tsx .github/scripts/check-deploy-readiness.ts",
@@ -23,15 +25,15 @@
     "db:counts:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.13",
-    "@astrojs/preact": "^4.1.3",
+    "@astrojs/cloudflare": "^14.2.5",
+    "@astrojs/preact": "^6.0.4",
     "@fontsource-variable/outfit": "^5.2.8",
     "@fortawesome/fontawesome-free": "^7.3.0",
-    "@tailwindcss/vite": "^4.1.18",
-    "astro": "^5.17.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.2.9",
     "preact": "^10.29.8",
     "sortablejs": "^1.15.7",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
@@ -43,8 +45,8 @@
     "@vitest/coverage-v8": "^4.1.11",
     "happy-dom": "^20.11.8",
     "typescript": "^6.0.3",
-    "vite": "^6.4.1",
-    "vitest": "^4.1.8",
-    "wrangler": "^4.107.0"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.127.1"
   }
 }

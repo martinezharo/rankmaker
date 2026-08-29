@@ -2,6 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, json } from '../../../lib/auth';
+import { getEnv } from '../../../lib/runtime';
 
 // A profile bio is short free text. Stored as-is and rendered as text content
 // (Astro escapes it), so there's no markup/XSS concern — we only bound length.
@@ -17,7 +18,7 @@ export const POST: APIRoute = async (context) => {
 	}
 
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ error: 'Unauthorized' }, 401);
 

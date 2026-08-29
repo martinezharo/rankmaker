@@ -25,6 +25,12 @@ jobs:
       # here instead of shipping.
       - run: pnpm test:coverage
       - run: pnpm build
+      # Everything above this line tests `astro dev`; none of it executes the
+      # bundle that actually gets deployed. This boots that bundle in workerd
+      # and checks the bytes it serves — a build can compile clean and still
+      # return "[object Object]" on every page (see wrangler.jsonc's note on
+      # `nodejs_compat`).
+      - run: pnpm test:smoke
 
   # Browser-level checks of the ranking and account flows — the parts of the
   # product that only exist once the engine, the DOM and ClientRouter are all

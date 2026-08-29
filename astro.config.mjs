@@ -49,9 +49,14 @@ export default defineConfig({
     }
   },
 
+  // The app rolls its own session (signed cookie + D1, see src/lib/auth.ts).
+  // Astro's session API is unused, and leaving it on makes the Cloudflare
+  // adapter inject a `SESSION` KV binding it would auto-provision on deploy.
+  session: false,
+
   adapter: cloudflare({
-    platformProxy: {
-      remoteBindings: false
-    }
+    // Adapter v14 dropped the `platformProxy` wrapper: it now takes a subset of
+    // @cloudflare/vite-plugin's options directly.
+    remoteBindings: false
   })
 });

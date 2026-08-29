@@ -4,6 +4,7 @@ import type { APIRoute } from 'astro';
 import { checkOrigin, getSessionUser, randomHex } from '../../lib/auth';
 import { slugFromUrl } from '../../lib/slug';
 import { getCanonicalTemplateSlug } from '../../lib/templates';
+import { getEnv } from '../../lib/runtime';
 
 // Counts feed the public "X ranked" numbers AND the home/search ordering, so
 // this write path is abuse-sensitive: require a same-origin Origin (as every
@@ -21,7 +22,9 @@ export const POST: APIRoute = async (context) => {
     }
 
     try {
-        const { env, cf } = context.locals.runtime;
+        const env = getEnv();
+        // `cf` moved off locals in Astro 6; it rides on the request now.
+        const cf = context.request.cf;
 
         // Parse request body
         let body: { url?: string; date?: string };

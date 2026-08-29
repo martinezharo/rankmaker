@@ -85,7 +85,7 @@ test.describe('creating a template', () => {
 				created!.id
 			).map((row) => row.name)
 		).toEqual(names);
-		await expect(page.locator('h1')).toContainText('E2E Best Heist Movies');
+		await expect(page.locator('main h1')).toContainText('E2E Best Heist Movies');
 	});
 
 	test('refuses a template that does not meet the rules', async ({
@@ -271,7 +271,7 @@ test.describe('following', () => {
 	}) => {
 		const user = await signIn('self');
 		await page.goto(`/u/${user.username}`);
-		await expect(page.locator('h1')).toContainText(user.username, {
+		await expect(page.locator('main h1')).toContainText(user.username, {
 			timeout: 15_000,
 		});
 		await expect(page.locator('[data-follow-btn]')).toBeHidden();

@@ -9,13 +9,14 @@ import {
     randomAvatarKey,
 } from "../lib/avatars";
 import { defaultLocale, useTranslations } from "../i18n/server";
+import { getEnv } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 
 type SignupPayload = { ghId: number; ghLogin: string; next: string; exp: number };
 
-const { env } = Astro.locals.runtime;
+const env = getEnv();
 const signup = await verifyPayload<SignupPayload>(
     env.SESSION_SECRET,
     Astro.cookies.get(SIGNUP_COOKIE)?.value,

@@ -4,6 +4,7 @@ import type { APIRoute } from 'astro';
 import { getSessionUser, json } from '../../../lib/auth';
 import { countUnread } from '../../../lib/notifications';
 import { readMaturePref, writeMaturePref } from '../../../lib/mature';
+import { getDb } from '../../../lib/runtime';
 
 /**
  * Returns the logged-in user (or null) plus their unread notification count.
@@ -12,7 +13,7 @@ import { readMaturePref, writeMaturePref } from '../../../lib/mature';
  */
 export const GET: APIRoute = async (context) => {
     try {
-        const db = context.locals.runtime.env.DB;
+        const db = getDb();
         const user = await getSessionUser(context.cookies, db);
         const unreadNotifications = user ? await countUnread(db, user.id) : 0;
 

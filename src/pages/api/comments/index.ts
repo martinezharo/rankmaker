@@ -17,6 +17,7 @@ import {
 } from '../../../lib/comments';
 import { dispatchNotification } from '../../../lib/notifications';
 import { withinRateLimit } from '../../../lib/rate-limit';
+import { getEnv, getExecutionContext } from '../../../lib/runtime';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
@@ -35,7 +36,7 @@ const COMMENT_RATE_WINDOW_SECONDS = 300;
 export const GET: APIRoute = async (context) => {
 	const slug = new URL(context.request.url).searchParams.get('slug') ?? '';
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const template = await getTemplateBySlug(env.DB, slug);
 		if (!template) return json({ error: 'Not found' }, 404, NO_STORE);
 
@@ -85,7 +86,7 @@ export const POST: APIRoute = async (context) => {
 	}
 
 	try {
-		const { env } = context.locals.runtime;
+		const env = getEnv();
 		const user = await getSessionUser(context.cookies, env.DB);
 		if (!user) return json({ error: 'Not logged in' }, 401);
 
@@ -148,11 +149,10 @@ export const POST: APIRoute = async (context) => {
 				? await getCommentAuthorId(env.DB, parentId)
 				: await getTemplateOwnerId(env.DB, canonicalSlug);
 			if (recipientId) {
+				const cfContext = getExecutionContext(context);
 				await dispatchNotification(
 					env,
-					context.locals.runtime.ctx?.waitUntil?.bind(
-						context.locals.runtime.ctx
-					),
+					cfContext?.waitUntil?.bind(cfContext),
 					{
 						recipientId,
 						actorId: user.id,
