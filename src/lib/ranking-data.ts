@@ -15,6 +15,7 @@
 
 import { resolveImageUrl } from './covers';
 import type { RankingItem } from './ranking-session';
+import { truncateGraphemes } from './text';
 
 export type RankingOption = {
 	id: number | string;
@@ -30,10 +31,17 @@ export type RankingData = {
 	options: RankingOption[];
 };
 
+/** How much of an option's name the generated placeholder can show. */
+const PLACEHOLDER_NAME_LENGTH = 8;
+
 /**
  * An option's image, falling back to a generated placeholder carrying the
  * start of its name — options are optional-image everywhere (and guests can't
  * upload any), but the battle view always needs something to show.
+ *
+ * The name is cut by grapheme cluster: cutting by code unit can halve an emoji
+ * into a lone surrogate, which makes `encodeURIComponent()` throw and takes the
+ * whole page down with it.
  */
 export function optionImageUrl(
 	image: string | null | undefined,
@@ -41,7 +49,9 @@ export function optionImageUrl(
 ): string {
 	return (
 		resolveImageUrl(image) ||
-		`https://placehold.co/200x200/111118/8400FF?text=${encodeURIComponent(name.slice(0, 8))}`
+		`https://placehold.co/200x200/111118/8400FF?text=${encodeURIComponent(
+			truncateGraphemes(name, PLACEHOLDER_NAME_LENGTH)
+		)}`
 	);
 }
 
