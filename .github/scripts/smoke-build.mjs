@@ -119,7 +119,10 @@ async function main() {
 			}
 
 			const problems = [];
-			if (status >= 500) problems.push(`status ${status}`);
+			// Every route here is expected to answer 200. Accepting anything
+			// else would let the 404 page pass as a hit: it renders through the
+			// same Layout, so it clears both the doctype and size checks.
+			if (status < 200 || status >= 300) problems.push(`status ${status}`);
 			if (body.includes('[object Object]')) {
 				problems.push('body is "[object Object]"');
 			}
