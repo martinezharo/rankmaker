@@ -12,6 +12,7 @@ import {
 } from "../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../lib/mature";
 import { decorateListing } from "../lib/listings";
+import { getCounts } from "../lib/counts";
 import { getTemplateVotes } from "../lib/template-votes";
 import type { SlugValues } from "../lib/slug";
 import { defaultLocale, useTranslations } from "../i18n/server";
@@ -28,12 +29,14 @@ const tr = useTranslations(locale);
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
 let browse: Template[] = getOfficialTemplates();
+let counts: SlugValues | undefined;
 let votes: SlugValues = {};
 try {
     const db = (Astro.locals as any)?.runtime?.env?.DB as D1Database | undefined;
     if (db) {
-        [browse, votes] = await Promise.all([
+        [browse, counts, votes] = await Promise.all([
             listBrowseTemplates(db, false),
+            getCounts(db),
             getTemplateVotes(db),
         ]);
     }
@@ -41,8 +44,9 @@ try {
     // official-only fallback
 }
 
-// Sort by most ranked (live counts re-sort client-side via rm:counts)
-const templates = decorateListing(browse, { votes });
+// Render the correct count and order immediately. The page is cached for only
+// 60 seconds; the client refreshes the displayed numbers without moving cards.
+const templates = decorateListing(browse, { counts, votes });
 
 Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
 ---

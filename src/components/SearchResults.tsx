@@ -47,12 +47,20 @@ export default function SearchResults({
 	const [listing, setListing] = useState(items);
 	const [query, setQuery] = useState('');
 	const [category, setCategory] = useState('');
-	/** Bumped when the live ranking counts land, to re-sort on them. */
-	const [countsVersion, setCountsVersion] = useState(0);
+	const [rankingCounts, setRankingCounts] = useState<SlugValues>();
+	/** True once a filter or viewer preference changes the server-rendered list. */
+	const [clientOwnsGrid, setClientOwnsGrid] = useState(false);
 
 	// A viewer who opted into mature content gets their own listing — the
 	// server HTML is the shared, mature-free one (see src/lib/mature.ts).
-	useEffect(() => subscribeListing({}, setListing), []);
+	useEffect(
+		() =>
+			subscribeListing({}, (next) => {
+				setClientOwnsGrid(true);
+				setListing(next);
+			}),
+		[]
+	);
 
 	useEffect(() => {
 		const input = document.getElementById('search-input') as HTMLInputElement | null;
@@ -63,14 +71,21 @@ export default function SearchResults({
 		let timer: ReturnType<typeof setTimeout>;
 		const onInput = () => {
 			clearTimeout(timer);
-			timer = setTimeout(() => setQuery(input?.value ?? ''), INPUT_DEBOUNCE_MS);
+			timer = setTimeout(() => {
+				setClientOwnsGrid(true);
+				setQuery(input?.value ?? '');
+			}, INPUT_DEBOUNCE_MS);
 		};
-		const onCategory = () => setCategory(select?.value ?? '');
+		const onCategory = () => {
+			setClientOwnsGrid(true);
+			setCategory(select?.value ?? '');
+		};
 		const onClear = () => {
 			if (input) {
 				input.value = '';
 				input.focus();
 			}
+			setClientOwnsGrid(true);
 			setQuery('');
 		};
 		const onReset = () => {
@@ -78,16 +93,23 @@ export default function SearchResults({
 			// The enhanced dropdown needs the sync event, and deliberately does
 			// not fire `change` — so update our own state directly.
 			if (select) setSelectValue(select, '');
+			setClientOwnsGrid(true);
 			setQuery('');
 			setCategory('');
 		};
-		const onCounts = () => setCountsVersion((n) => n + 1);
+		const onCounts = () => {
+			const next = liveCounts();
+			if (next) setRankingCounts(next);
+		};
 
 		input?.addEventListener('input', onInput);
 		select?.addEventListener('change', onCategory);
 		clearBtn?.addEventListener('click', onClear);
 		resetBtn?.addEventListener('click', onReset);
 		document.addEventListener('rm:counts', onCounts);
+		// Layout may finish its cached fetch before this island hydrates, in which
+		// case the event has already fired. Consume the value it left behind.
+		if (liveCounts()) onCounts();
 
 		// Deep links: /search?q=…&category=…
 		const params = new URLSearchParams(window.location.search);
@@ -95,10 +117,12 @@ export default function SearchResults({
 		const cat = params.get('category');
 		if (q && input) {
 			input.value = q;
+			setClientOwnsGrid(true);
 			setQuery(q);
 		}
 		if (cat && select) {
 			setSelectValue(select, cat);
+			setClientOwnsGrid(true);
 			setCategory(cat);
 		}
 
@@ -115,18 +139,15 @@ export default function SearchResults({
 	const results = useMemo(() => {
 		const scoped = category ? filterByCategory(listing, category) : listing;
 		const matched = scoped.filter((item) => matchesQuery(item, query));
-		// The global counts fetch lands after first paint; re-sort on the real
-		// numbers once they are in, and keep the server order until then.
-		// This runs during the server render too, hence the `window` guard.
-		const counts = liveCounts();
-		return counts
-			? [...matched].sort(
-					(a, b) => slugValue(counts, b.slug) - slugValue(counts, a.slug)
-				)
+		// Keep the SSR order stable so covers never jump after first paint. The
+		// page cache is short-lived; only the displayed count needs a live refresh.
+		return rankingCounts
+			? matched.map((item) => ({
+					...item,
+					times_ranked: slugValue(rankingCounts, item.slug),
+				}))
 			: matched;
-		// countsVersion is the signal that `__rmCounts` changed under us.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [listing, query, category, countsVersion]);
+	}, [listing, query, category, rankingCounts]);
 
 	// The count and the filter-bar affordances live in the Astro markup.
 	useEffect(() => {
@@ -145,7 +166,7 @@ export default function SearchResults({
 			?.classList.toggle('hidden', !query && !category);
 	}, [results.length, query, category, t]);
 
-	return (
+	const grid = (
 		<TemplateGrid
 			items={results}
 			locale={locale}
@@ -163,5 +184,16 @@ export default function SearchResults({
 				</div>
 			}
 		/>
+	);
+
+	// Preact cannot recover list keys from server DOM. Change the boundary only
+	// when a filter or preference changes the list, making that transition an
+	// atomic client render without replacing the initial grid after page load.
+	return clientOwnsGrid ? (
+		<section data-search-results aria-labelledby="results-count">
+			{grid}
+		</section>
+	) : (
+		<div data-search-results>{grid}</div>
 	);
 }

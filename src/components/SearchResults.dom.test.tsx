@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { hydrate } from 'preact';
 import SearchResults from './SearchResults';
 import { SELECT_SYNC_EVENT } from '../scripts/select-sync';
 import type { ListingItem } from '../lib/listings';
@@ -51,6 +52,9 @@ const shownSlugs = () =>
 	[...document.querySelectorAll('a[href^="/template/"]')].map((a) =>
 		a.getAttribute('href')!.replace('/template/', '')
 	);
+
+const rankedText = (slug: string) =>
+	document.querySelector(`[data-count-slug="${slug}"]`)?.textContent;
 
 /** Typing is debounced; wait past the debounce window. */
 const afterDebounce = () => new Promise((resolve) => setTimeout(resolve, 200));
@@ -198,7 +202,7 @@ describe('SearchResults', () => {
 		expect(shownSlugs()).toEqual(['alien']);
 	});
 
-	it('re-sorts on the live ranking counts once they land', async () => {
+	it('refreshes live ranking counts without moving the server-rendered cards', async () => {
 		const bar = filterBar();
 		render(<SearchResults items={results} />, { container: bar.grid });
 		await flush();
@@ -207,7 +211,54 @@ describe('SearchResults', () => {
 		document.dispatchEvent(new CustomEvent('rm:counts'));
 		await flush();
 
-		expect(shownSlugs()).toEqual(['alien', 'halo', 'the-godfather']);
+		expect(shownSlugs()).toEqual(['the-godfather', 'halo', 'alien']);
+		expect(rankedText('alien')).toBe('50 ranked');
+		expect(rankedText('halo')).toBe('10 ranked');
+		expect(rankedText('the-godfather')).toBe('1 ranked');
+	});
+
+	it('uses live counts that arrived before the island subscribed', async () => {
+		(window as any).__rmCounts = { alien: 50, halo: 10, 'the-godfather': 1 };
+		const bar = filterBar();
+		render(<SearchResults items={results} />, { container: bar.grid });
+		await flush();
+
+		expect(shownSlugs()).toEqual(['the-godfather', 'halo', 'alien']);
+		expect(rankedText('alien')).toBe('50 ranked');
+	});
+
+	it('keeps each cover attached to its template when live counts refresh', async () => {
+		const coveredResults = results.map((result) => ({
+			...result,
+			cover_image: `https://img.test/${result.slug}.webp`,
+		}));
+		const bar = filterBar();
+		const serverRender = render(<SearchResults items={coveredResults} />, {
+			container: bar.grid,
+		});
+		await flush();
+		const serverMarkup = bar.grid.innerHTML;
+		serverRender.unmount();
+		bar.grid.innerHTML = serverMarkup;
+		hydrate(<SearchResults items={coveredResults} />, bar.grid);
+		await flush();
+		(window as any).__rmCounts = { alien: 50, halo: 10, 'the-godfather': 1 };
+		document.dispatchEvent(new CustomEvent('rm:counts'));
+		await flush();
+		expect(shownSlugs()).toEqual(['the-godfather', 'halo', 'alien']);
+
+		for (const result of coveredResults) {
+			const { slug, title } = result;
+			const card = document.querySelector<HTMLAnchorElement>(
+				`a[href="/template/${slug}"]`
+			);
+			expect(card).not.toBeNull();
+			expect(card!.querySelector('img')).toHaveAttribute(
+				'src',
+				`https://img.test/${slug}.webp`
+			);
+			expect(card!.querySelector('img')).toHaveAttribute('alt', title);
+		}
 	});
 
 	it('keeps the server order until the counts arrive', async () => {
