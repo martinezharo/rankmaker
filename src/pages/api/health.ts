@@ -50,6 +50,7 @@ export const GET: APIRoute = async (context) => {
         .map((v) => v.name)
         .filter((name) => !isSet(name));
     const missingOptional = PRODUCTION_ENV.filter((v) => !v.required)
+        .filter((v) => v.fallback === undefined)
         .map((v) => v.name)
         .filter((name) => !isSet(name));
 

@@ -17,7 +17,16 @@ import {
 import { notifyNewTemplate } from '../../../lib/notifications';
 import { getEnv } from '../../../lib/runtime';
 
-/** Create a template (auth required). Body: { title, description, category, cover_image, visibility, options }. */
+const SOURCE_LOCAL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
+
+/** Derive a stable, user-scoped primary key for a browser-local template. */
+async function importedTemplateId(userId: string, sourceLocalId: string) {
+    const input = new TextEncoder().encode(`${userId}\0${sourceLocalId}`);
+    const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', input));
+    return `local-${Array.from(digest, (b) => b.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Create a template (auth required). Body: { title, description, category, cover_image, visibility, options, source_local_id? }. */
 export const POST: APIRoute = async (context) => {
     if (!checkOrigin(context.request)) {
         return json({ error: 'Forbidden' }, 403);
@@ -36,6 +45,19 @@ export const POST: APIRoute = async (context) => {
             return json({ error: 'Invalid JSON' }, 400);
         }
 
+        let sourceLocalId: string | null = null;
+        if (
+            typeof body === 'object' &&
+            body !== null &&
+            'source_local_id' in body
+        ) {
+            const value = (body as { source_local_id?: unknown }).source_local_id;
+            if (typeof value !== 'string' || !SOURCE_LOCAL_ID_RE.test(value)) {
+                return json({ error: 'Invalid local template id.' }, 400);
+            }
+            sourceLocalId = value;
+        }
+
         const imageBase = imagePublicBase(env);
         const result = validateTemplateInput(body, { base: imageBase });
         if (!result.ok) return json({ error: result.error }, 400);
@@ -45,8 +67,32 @@ export const POST: APIRoute = async (context) => {
         // this is what stops hand-crafted payloads from pointing at other
         // people's (or unmoderated) objects.
         const imageKeys = collectImageKeys(data, imageBase);
+        // This key is reserved for the guest-template importer. Guest
+        // templates are always private and text-only, so accepting it on a
+        // normal creation would expose an unnecessary idempotency namespace.
+        if (
+            sourceLocalId &&
+            (data.visibility !== 'private' || imageKeys.length > 0)
+        ) {
+            return json({ error: 'Invalid local template import.' }, 400);
+        }
         if (!(await verifyImageOwnership(db, imageKeys, user.id))) {
             return json({ error: 'Invalid image.' }, 400);
+        }
+
+        // A deterministic primary key makes imports idempotent without a
+        // separate mapping table. If the response was lost after D1 committed,
+        // the next page load returns the original template instead of creating
+        // a suffixed copy.
+        const id = sourceLocalId
+            ? await importedTemplateId(user.id, sourceLocalId)
+            : crypto.randomUUID();
+        if (sourceLocalId) {
+            const existing = await db
+                .prepare('SELECT id, slug FROM templates WHERE id = ? AND creator_id = ?')
+                .bind(id, user.id)
+                .first<{ id: string; slug: string }>();
+            if (existing) return json({ ok: true, ...existing, reused: true });
         }
 
         const limitError = json(
@@ -64,13 +110,21 @@ export const POST: APIRoute = async (context) => {
             return limitError;
         }
 
-        const id = crypto.randomUUID();
         // Unlisted templates get a random, unguessable slug — the URL is the
         // only access control they have.
         const slug =
             data.visibility === 'unlisted'
                 ? await generateUnlistedSlug(db, data.title)
                 : await generateUniqueSlug(db, data.title);
+
+        const optionRows = data.options
+            .map(() => 'SELECT ? AS name, ? AS image, ? AS position')
+            .join(' UNION ALL ');
+        const optionValues = data.options.flatMap((option, position) => [
+            option.name,
+            option.image,
+            position,
+        ]);
 
         // The COUNT above and this INSERT are separate statements, so two
         // concurrent creations could both pass the fast path. The batch runs as
@@ -82,7 +136,8 @@ export const POST: APIRoute = async (context) => {
                 .prepare(
                     `INSERT INTO templates (id, creator_id, slug, title, description, category, cover_image, visibility, is_mature)
                      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
-                     WHERE (SELECT COUNT(*) FROM templates WHERE creator_id = ?) < ?`
+                     WHERE (SELECT COUNT(*) FROM templates WHERE creator_id = ?) < ?
+                     ${sourceLocalId ? 'ON CONFLICT(id) DO NOTHING' : ''}`
                 )
                 .bind(
                     id,
@@ -97,16 +152,26 @@ export const POST: APIRoute = async (context) => {
                     user.id,
                     MAX_TEMPLATES_PER_USER
                 ),
-            ...data.options.map((o, i) =>
-                db
-                    .prepare(
-                        `INSERT INTO template_options (template_id, name, image, position)
-                         SELECT ?, ?, ?, ?
-                         WHERE EXISTS (SELECT 1 FROM templates WHERE id = ?)`
-                    )
-                    .bind(id, o.name, o.image, i, id)
-            ),
+            db
+                .prepare(
+                    `INSERT INTO template_options (template_id, name, image, position)
+                     SELECT ?, options.name, options.image, options.position
+                     FROM (${optionRows}) AS options
+                     WHERE EXISTS (SELECT 1 FROM templates WHERE id = ?)
+                       AND NOT EXISTS (SELECT 1 FROM template_options WHERE template_id = ?)`
+                )
+                .bind(id, ...optionValues, id, id),
         ]);
+        // A concurrent retry can reach the batch before the first request has
+        // returned. Its deterministic id loses the insert race, then resolves
+        // the row the winner committed.
+        if ((results[0]?.meta?.changes ?? 1) === 0 && sourceLocalId) {
+            const existing = await db
+                .prepare('SELECT id, slug FROM templates WHERE id = ? AND creator_id = ?')
+                .bind(id, user.id)
+                .first<{ id: string; slug: string }>();
+            if (existing) return json({ ok: true, ...existing, reused: true });
+        }
         // Missing meta (older adapters) must not read as failure — the fast
         // path already covered the common case, so default to success.
         if ((results[0]?.meta?.changes ?? 1) === 0) {
@@ -134,6 +199,12 @@ export const POST: APIRoute = async (context) => {
 
         return json({ ok: true, id, slug });
     } catch (error) {
+        if (
+            error instanceof Error &&
+            /UNIQUE constraint failed:\s*templates\.slug/i.test(error.message)
+        ) {
+            return json({ error: 'Template address conflict. Please retry.' }, 409);
+        }
         console.error('Create template error:', error);
         return json({ error: 'Internal server error' }, 500);
     }

@@ -10,13 +10,16 @@ const REQUIRED = {
 	GITHUB_CLIENT_ID: 'id',
 	GITHUB_CLIENT_SECRET: 'secret',
 };
-const OPTIONAL = {
+const OPTIONAL_INTEGRATIONS = {
 	OPENAI_API_KEY: 'k',
 	RESEND_API_KEY: 'k',
 	RESEND_FROM: 'f',
+};
+const DEFAULT_BACKED = {
 	SITE_URL: 'https://rankmaker.net',
 	IMAGES_PUBLIC_BASE: 'https://img.rankmaker.net',
 };
+const OPTIONAL = { ...OPTIONAL_INTEGRATIONS, ...DEFAULT_BACKED };
 
 beforeEach(() => {
 	db = createTestDb();
@@ -45,8 +48,14 @@ describe('GET /api/health', () => {
 		});
 	});
 
-	it('is degraded — but still 200 — when only optional values are missing', async () => {
-		const response = await probe(REQUIRED);
+	it('is ok when only values with runtime fallbacks are omitted', async () => {
+		const response = await probe({ ...REQUIRED, ...OPTIONAL_INTEGRATIONS });
+		expect(response.status).toBe(200);
+		expect(((await response.json()) as any).status).toBe('ok');
+	});
+
+	it('is degraded — but still 200 — when an optional integration is missing', async () => {
+		const response = await probe({ ...REQUIRED, ...DEFAULT_BACKED });
 		expect(response.status).toBe(200);
 		expect(((await response.json()) as any).status).toBe('degraded');
 	});
@@ -91,7 +100,9 @@ describe('GET /api/health', () => {
 		).json()) as any;
 		expect(payload.db).toEqual({ ok: true, missingTables: [], error: null });
 		expect(payload.env.missingRequired).toEqual([]);
-		expect(payload.env.missingOptional.length).toBeGreaterThan(0);
+		expect(payload.env.missingOptional.sort()).toEqual(
+			Object.keys(OPTIONAL_INTEGRATIONS).sort()
+		);
 	});
 
 	it('ignores a wrong or truncated key', async () => {

@@ -115,6 +115,7 @@ describe('syncLocalTemplates', () => {
 			([url]) => url === '/api/templates'
 		) as [string, RequestInit];
 		expect(JSON.parse(init.body as string)).toMatchObject({
+			source_local_id: 't1',
 			title: 'Mine',
 			visibility: 'private',
 			cover_image: '',

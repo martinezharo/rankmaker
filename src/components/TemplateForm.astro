@@ -1061,6 +1061,7 @@ const inputClass =
         };
 
         const originalLabel = submit.textContent;
+        let guestSubmitting = false;
 
         function setBusy(busy: boolean) {
             submit.disabled = busy;
@@ -1246,6 +1247,10 @@ const inputClass =
             // immediately and is uploaded to the account on their next
             // sign-in; see src/lib/local-templates.ts.
             if (data.anonymous) {
+                // Navigation is not instantaneous. Without a one-shot guard,
+                // rapid clicks/Enter presses can save the same draft several
+                // times before the browser leaves this page.
+                if (guestSubmitting) return;
                 if (atLocalTemplateLimit()) {
                     errorEl.textContent = t("form.errLocalLimit", {
                         n: MAX_LOCAL_TEMPLATES,
@@ -1253,6 +1258,8 @@ const inputClass =
                     openLoginPrompt(data.loginNext);
                     return;
                 }
+                guestSubmitting = true;
+                setBusy(true);
                 const local = saveLocalTemplate({
                     title: title.value.trim(),
                     description: desc.value.trim(),

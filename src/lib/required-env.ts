@@ -21,8 +21,13 @@ export interface RequiredEnvVar {
     name: string;
     secret: boolean;
     required: boolean;
+    /** Runtime value used when the binding is absent; such values are healthy. */
+    fallback?: string;
     description: string;
 }
+
+export const DEFAULT_SITE_URL = 'https://rankmaker.net';
+export const DEFAULT_IMAGES_PUBLIC_BASE = 'https://img.rankmaker.net';
 
 export const PRODUCTION_ENV: RequiredEnvVar[] = [
     {
@@ -65,12 +70,14 @@ export const PRODUCTION_ENV: RequiredEnvVar[] = [
         name: 'SITE_URL',
         secret: false,
         required: false,
+        fallback: DEFAULT_SITE_URL,
         description: 'Absolute base URL for links in emails (defaults to https://rankmaker.net)',
     },
     {
         name: 'IMAGES_PUBLIC_BASE',
         secret: false,
         required: false,
+        fallback: DEFAULT_IMAGES_PUBLIC_BASE,
         description: 'Public base URL for uploaded images (defaults to img.rankmaker.net in prod)',
     },
 ];
