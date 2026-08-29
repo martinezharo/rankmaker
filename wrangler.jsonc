@@ -2,8 +2,15 @@
   "name": "rankmaker",
   "account_id": "a0fa518f5393767beb33f26606989c9d",
   "compatibility_date": "2026-02-17",
+  // `nodejs_compat` is deliberately absent. Under it, workerd's `process` shim
+  // reports `Object.prototype.toString.call(process) === "[object process]"`,
+  // which is exactly how Astro's renderer detects Node. It then renders pages
+  // through `renderToAsyncIterable()` instead of `renderToReadableStream()`,
+  // and workerd does not accept an async iterable as a `BodyInit` — so every
+  // rendered page is served as the string "[object Object]" with a 200. The
+  // app imports no `node:` module, and the Cloudflare Vite plugin drops the
+  // Node polyfills from the bundle when the flag is off, so nothing needs it.
   "compatibility_flags": [
-    "nodejs_compat",
     "global_fetch_strictly_public"
   ],
   // No `main` here on purpose. Since @astrojs/cloudflare v14 the build runs
@@ -12,7 +19,7 @@
   // (main: entry.mjs, assets: ../client). Pointing `main` at a build artifact
   // that does not exist yet makes the plugin fail at config-resolution time.
   //
-  // Deploy with:  wrangler deploy -c dist/server/wrangler.json   (pnpm deploy)
+  // Deploy with:  pnpm run deploy:worker
   "assets": {
     "binding": "ASSETS",
     // Astro's client output. The plugin rewrites this to `../client` relative
