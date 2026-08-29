@@ -152,6 +152,12 @@ describe('computeCanvasHeight', () => {
 
 describe('truncate', () => {
 	const measure = (t: string) => t.length * 10;
+	// Flags are the awkward case: two surrogate pairs, four code units, one
+	// character on screen.
+	const ES = '\u{1F1EA}\u{1F1F8}';
+	const AR = '\u{1F1E6}\u{1F1F7}';
+	const FR = '\u{1F1EB}\u{1F1F7}';
+	const DE = '\u{1F1E9}\u{1F1EA}';
 
 	it('returns text unchanged when it fits', () => {
 		expect(truncate('Alien', 100, measure)).toBe('Alien');
@@ -164,6 +170,20 @@ describe('truncate', () => {
 
 	it('never trims below a three-character floor', () => {
 		expect(truncate('Alien', 1, measure)).toBe('Ali…');
+	});
+
+	it('trims whole emoji, never half of one', () => {
+		// Trimming by code unit would cut the second flag in two and leave a
+		// lone surrogate, which the canvas draws as a replacement glyph.
+		const cut = truncate(`Best ${ES}${AR}`, 90, measure);
+		expect(cut).toBe(`Best ${ES}\u2026`);
+		expect(() => encodeURIComponent(cut)).not.toThrow();
+	});
+
+	it('counts the floor in characters, not in code units', () => {
+		expect(truncate(`${ES}${AR}${FR}${DE}`, 1, measure)).toBe(
+			`${ES}${AR}${FR}\u2026`
+		);
 	});
 });
 

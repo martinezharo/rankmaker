@@ -1,10 +1,26 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { truncateGraphemes } from './text';
+import { graphemesOf, truncateGraphemes } from './text';
 
 const FLAG_ES = '🇪🇸';
 
 afterEach(() => {
 	vi.unstubAllGlobals();
+});
+
+describe('graphemesOf', () => {
+	it('splits a plain string per character', () => {
+		expect(graphemesOf('Alien')).toEqual(['A', 'l', 'i', 'e', 'n']);
+	});
+
+	it('keeps a multi-code-point emoji in a single entry', () => {
+		expect(graphemesOf(`a${FLAG_ES}b`)).toEqual(['a', FLAG_ES, 'b']);
+	});
+
+	it('falls back to code points without Intl.Segmenter', () => {
+		vi.stubGlobal('Intl', { ...Intl, Segmenter: undefined });
+		// Each half of the flag is its own code point, and each is well formed.
+		expect(graphemesOf(`a${FLAG_ES}`)).toHaveLength(3);
+	});
 });
 
 describe('truncateGraphemes', () => {

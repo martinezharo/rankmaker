@@ -7,6 +7,8 @@
  * pure layout helpers (`computeCanvasHeight`, `truncate`) are unit-tested.
  */
 
+import { graphemesOf } from '../lib/text';
+
 export type RankedItem = {
 	id: number | string;
 	name: string;
@@ -34,21 +36,31 @@ export function computeCanvasHeight(count: number): number {
 	return HEADER_H + PODIUM_H + REST_H + FOOTER_H + PAD;
 }
 
+/** Never trim a label below this many characters, however narrow the column. */
+const TRUNCATE_FLOOR = 3;
+
 /**
- * Trim `text` one character at a time (down to a 3-char floor) until it fits
- * `maxW`, appending an ellipsis when anything was removed. `measure` returns the
- * rendered width of a string (in the page: `ctx.measureText(t).width`).
+ * Trim `text` one character at a time (down to a 3-character floor) until it
+ * fits `maxW`, appending an ellipsis when anything was removed. `measure`
+ * returns the rendered width of a string (in the page: `ctx.measureText(t).width`).
+ *
+ * A "character" here is a grapheme cluster, not a UTF-16 code unit: trimming by
+ * code unit can strip half of an emoji and leave a lone surrogate, which the
+ * canvas draws as a replacement glyph in an image people share.
  */
 export function truncate(
 	text: string,
 	maxW: number,
 	measure: (t: string) => number
 ): string {
-	let t = text;
-	while (measure(t) > maxW && t.length > 3) {
-		t = t.slice(0, -1);
+	const graphemes = graphemesOf(text);
+	let kept = graphemes.length;
+	let fitted = text;
+	while (kept > TRUNCATE_FLOOR && measure(fitted) > maxW) {
+		kept--;
+		fitted = graphemes.slice(0, kept).join('');
 	}
-	return t.length < text.length ? t + '…' : t;
+	return kept < graphemes.length ? fitted + '…' : text;
 }
 
 /**

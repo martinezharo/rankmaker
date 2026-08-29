@@ -30,12 +30,26 @@ function graphemeSegmenter(): Intl.Segmenter | null {
 }
 
 /**
- * The first `max` characters of `value`, counting what a reader would call a
- * character: an emoji stays whole rather than being split into surrogates.
+ * `value` split into what a reader would call characters — an emoji is one
+ * entry, flags and ZWJ sequences included.
  *
- * Without `Intl.Segmenter` this falls back to counting code points, which
- * still never splits a surrogate pair — a multi-code-point emoji may lose its
- * tail, but the result is always a well-formed string.
+ * Without `Intl.Segmenter` this falls back to code points, which still never
+ * split a surrogate pair: a multi-code-point emoji may come apart, but every
+ * entry is a well-formed string. Callers that only need a prefix should use
+ * `truncateGraphemes`, which stops early instead of segmenting the whole
+ * string.
+ */
+export function graphemesOf(value: string): string[] {
+	const segmenter = graphemeSegmenter();
+	if (!segmenter) return Array.from(value);
+	const graphemes: string[] = [];
+	for (const { segment } of segmenter.segment(value)) graphemes.push(segment);
+	return graphemes;
+}
+
+/**
+ * The first `max` characters of `value`, counting the same way `graphemesOf`
+ * does: an emoji stays whole rather than being split into surrogates.
  */
 export function truncateGraphemes(value: string, max: number): string {
 	if (max <= 0) return '';
