@@ -35,6 +35,37 @@ test.describe('the header', () => {
 });
 
 test.describe('creating a template', () => {
+	test('stores one guest template when the form submits twice before navigation', async ({
+		page,
+	}) => {
+		await page.context().addInitScript(() => {
+			localStorage.setItem('rankmaker_cookie_consent', 'false');
+		});
+		await page.goto('/create');
+
+		await page.locator('#tf-title').fill('E2E Guest Double Submit');
+		const names = ['One', 'Two', 'Three', 'Four'];
+		const options = page.locator('#tf-options .option-name');
+		for (let i = 0; i < names.length; i++) {
+			if ((await options.count()) <= i) {
+				await page.locator('#tf-add-option').click();
+			}
+			await options.nth(i).fill(names[i]);
+		}
+
+		await page.locator('#template-form').evaluate((form) => {
+			form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+			form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+		});
+		await page.waitForURL(/\/local\//);
+
+		const stored = await page.evaluate(() =>
+			JSON.parse(localStorage.getItem('rankmaker_local_templates') ?? '[]')
+		);
+		expect(stored).toHaveLength(1);
+		expect(stored[0].title).toBe('E2E Guest Double Submit');
+	});
+
 	test('publishes it, with its options in the order they were typed', async ({
 		page,
 		signIn,
@@ -282,6 +313,7 @@ test.describe('a private template', () => {
 	test('is reachable by its creator and refused to everyone else', async ({
 		page,
 		browser,
+		baseURL,
 		signIn,
 		seedTemplateFor,
 	}) => {
@@ -295,7 +327,7 @@ test.describe('a private template', () => {
 
 		const guest = await browser.newPage();
 		const theirs = await guest.goto(
-			`http://localhost:4321/template/${template.slug}`
+			new URL(`/template/${template.slug}`, baseURL).toString()
 		);
 		expect(theirs?.status()).toBeGreaterThanOrEqual(400);
 		await guest.close();

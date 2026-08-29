@@ -48,6 +48,7 @@ async function isSignedIn(): Promise<boolean> {
 /** The create-form payload for a local template (always private, no images). */
 function importPayload(template: LocalTemplate) {
 	return {
+		source_local_id: template.id,
 		title: template.title,
 		description: template.description,
 		category: template.category ?? '',

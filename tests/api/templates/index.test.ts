@@ -90,6 +90,78 @@ describe('POST /api/templates', () => {
 		]);
 	});
 
+	it('reuses a guest import when the browser retries the same local id', async () => {
+		const cookies = await signIn(db, alice.id);
+		const payload = body({
+			source_local_id: 'local-draft-123',
+			description: '',
+			category: 'Movies',
+			cover_image: '',
+			visibility: 'private',
+		});
+
+		const first = (await (await post(payload, { cookies })).json()) as any;
+		const second = (await (await post(payload, { cookies })).json()) as any;
+
+		expect(second).toMatchObject({
+			ok: true,
+			id: first.id,
+			slug: first.slug,
+			reused: true,
+		});
+		expect(first.id).toMatch(/^local-[a-f0-9]{64}$/);
+		expect(
+			(await db.prepare('SELECT COUNT(*) AS n FROM templates').first<{ n: number }>())
+				?.n
+		).toBe(1);
+		expect(
+			(
+				await db
+					.prepare('SELECT COUNT(*) AS n FROM template_options')
+					.first<{ n: number }>()
+			)?.n
+		).toBe(4);
+	});
+
+	it('creates one template and one option set for concurrent guest import retries', async () => {
+		const cookies = await signIn(db, alice.id);
+		const payload = body({
+			source_local_id: 'concurrent-local-draft',
+			description: '',
+			category: 'Movies',
+			cover_image: '',
+			visibility: 'private',
+		});
+
+		const responses = await Promise.all([
+			post(payload, { cookies }),
+			post(payload, { cookies }),
+		]);
+		expect(responses.every((response) => response.ok)).toBe(true);
+		expect(
+			(await db.prepare('SELECT COUNT(*) AS n FROM templates').first<{ n: number }>())
+				?.n
+		).toBe(1);
+		expect(
+			(
+				await db
+					.prepare('SELECT COUNT(*) AS n FROM template_options')
+					.first<{ n: number }>()
+			)?.n
+		).toBe(4);
+	});
+
+	it('reserves local import ids for private text-only templates', async () => {
+		const cookies = await ownCover();
+		for (const payload of [
+			body({ source_local_id: 'bad id' }),
+			body({ source_local_id: 'local-draft-123' }),
+		]) {
+			expect((await post(payload, { cookies })).status).toBe(400);
+		}
+		expect(await db.prepare('SELECT id FROM templates').first()).toBeNull();
+	});
+
 	it('rejects a cross-site request', async () => {
 		const response = await post(body(), {
 			cookies: await ownCover(),
