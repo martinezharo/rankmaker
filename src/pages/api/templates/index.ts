@@ -19,6 +19,7 @@ import { getEnv } from '../../../lib/runtime';
 
 const SOURCE_LOCAL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
 
+/** Derive a stable, user-scoped primary key for a browser-local template. */
 async function importedTemplateId(userId: string, sourceLocalId: string) {
     const input = new TextEncoder().encode(`${userId}\0${sourceLocalId}`);
     const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', input));
@@ -136,7 +137,7 @@ export const POST: APIRoute = async (context) => {
                     `INSERT INTO templates (id, creator_id, slug, title, description, category, cover_image, visibility, is_mature)
                      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
                      WHERE (SELECT COUNT(*) FROM templates WHERE creator_id = ?) < ?
-                     ON CONFLICT DO NOTHING`
+                     ${sourceLocalId ? 'ON CONFLICT(id) DO NOTHING' : ''}`
                 )
                 .bind(
                     id,
@@ -198,6 +199,12 @@ export const POST: APIRoute = async (context) => {
 
         return json({ ok: true, id, slug });
     } catch (error) {
+        if (
+            error instanceof Error &&
+            /UNIQUE constraint failed:\s*templates\.slug/i.test(error.message)
+        ) {
+            return json({ error: 'Template address conflict. Please retry.' }, 409);
+        }
         console.error('Create template error:', error);
         return json({ error: 'Internal server error' }, 500);
     }
