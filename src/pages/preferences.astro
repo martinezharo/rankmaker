@@ -16,11 +16,10 @@ const t = useTranslations(locale);
 // Everything here is per-visitor state, so the page is never cached.
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
-const db = getDb();
-
 let user: Awaited<ReturnType<typeof getSessionUser>> = null;
 let emailPref = true;
 try {
+    const db = getDb();
     user = await getSessionUser(Astro.cookies, db);
     if (user) emailPref = await getEmailPref(db, user.id);
 } catch (error) {
