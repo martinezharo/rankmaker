@@ -16,6 +16,7 @@ export type EmailEnv = {
 	SITE_URL?: string;
 };
 
+/** Resolve the canonical application URL used in outbound email links. */
 export function siteUrl(env: EmailEnv): string {
 	return (env.SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, '');
 }
