@@ -36,6 +36,14 @@ describe('optionImageUrl', () => {
 			'text=A%20very%20'
 		);
 	});
+
+	it('trims a name with an emoji without splitting it — that used to 500', () => {
+		// The cut lands inside the flag's first surrogate pair, and
+		// `encodeURIComponent()` throws `URIError` on a lone surrogate.
+		const url = optionImageUrl(null, 'Vamos t\u{1F1EA}\u{1F1F8}');
+		expect(url).toContain('text=Vamos%20t%F0%9F%87%AA%F0%9F%87%B8');
+		expect(() => new URL(url)).not.toThrow();
+	});
 });
 
 describe('buildRankingData', () => {
