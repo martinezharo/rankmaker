@@ -120,6 +120,45 @@ export function groupByCategory(
 }
 
 /**
+ * Total rankings played across every template of each category, keyed by
+ * category name. Categories nobody has ranked are simply absent.
+ */
+export function categoryRankedTotals(
+	items: ListingItem[]
+): Record<string, number> {
+	const totals: Record<string, number> = {};
+	for (const item of items) {
+		if (!item.category) continue;
+		totals[item.category] = (totals[item.category] ?? 0) + item.times_ranked;
+	}
+	return totals;
+}
+
+/**
+ * The categories, busiest first — the home page shows the ones people
+ * actually rank at the top instead of a fixed editorial order.
+ *
+ * The totals are summed over the *whole* listing, not the handful of cards a
+ * row ends up showing, so `groupByCategory`'s cap does not skew the order.
+ * Ties keep the declared order of `CATEGORIES`, which makes the ordering
+ * deterministic on a cold database where every total is zero.
+ */
+export function sortCategoriesByRanked<T extends { name: string }>(
+	items: ListingItem[],
+	categories: readonly T[]
+): T[] {
+	const totals = categoryRankedTotals(items);
+	return categories
+		.map((category, index) => ({ category, index }))
+		.sort(
+			(a, b) =>
+				(totals[b.category.name] ?? 0) - (totals[a.category.name] ?? 0) ||
+				a.index - b.index
+		)
+		.map((entry) => entry.category);
+}
+
+/**
  * Does this template match a free-text query?
  *
  * Every word must appear somewhere in the title, the description or the option
