@@ -27,7 +27,10 @@ let hardFail = false; // required drift → block the deploy
 let couldNotCheck = false; // auth/network → surface but don't claim "ready"
 
 function wrangler(args: string[]): { ok: boolean; out: string } {
-    const res = spawnSync('npx', ['--yes', 'wrangler@latest', ...args], {
+    // The pinned devDependency, never `wrangler@latest`: an unpinned install
+    // resolves a different CLI than the one the deploy runs on, and drags a
+    // second toolchain into the project's store.
+    const res = spawnSync('pnpm', ['exec', 'wrangler', ...args], {
         encoding: 'utf8',
         env: process.env,
     });

@@ -14,13 +14,13 @@
     "astro": "astro",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "check:deploy": "npx --yes tsx .github/scripts/check-deploy-readiness.ts",
-    "wrangler": "npx --yes wrangler@latest",
-    "db:create": "npx --yes wrangler@latest d1 create rankmaker",
-    "db:migrate:new": "npx --yes wrangler@latest d1 migrations create rankmaker",
-    "db:migrate:list": "npx --yes wrangler@latest d1 migrations list rankmaker --local",
-    "db:migrate:local": "npx --yes wrangler@latest d1 migrations apply rankmaker --local",
-    "db:migrate:remote": "npx --yes wrangler@latest d1 migrations apply rankmaker --remote",
-    "db:counts:remote": "npx --yes wrangler@latest d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
+    "wrangler": "wrangler",
+    "db:create": "wrangler d1 create rankmaker",
+    "db:migrate:new": "wrangler d1 migrations create rankmaker",
+    "db:migrate:list": "wrangler d1 migrations list rankmaker --local",
+    "db:migrate:local": "wrangler d1 migrations apply rankmaker --local",
+    "db:migrate:remote": "wrangler d1 migrations apply rankmaker --remote",
+    "db:counts:remote": "wrangler d1 execute rankmaker --remote --command \"SELECT slug, COUNT(*) AS n FROM rankings GROUP BY slug ORDER BY n DESC LIMIT 15\""
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.13",
