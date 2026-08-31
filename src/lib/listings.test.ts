@@ -4,6 +4,7 @@ import {
 	filterByCategory,
 	groupByCategory,
 	matchesQuery,
+	sortCategoriesByRanked,
 	toListingItem,
 	withLiveNumbers,
 	type ListingItem,
@@ -95,6 +96,71 @@ describe('groupByCategory', () => {
 		const grouped = groupByCategory([], categories, 4);
 		expect(Object.keys(grouped)).toEqual(['Movies', 'Music', 'Games']);
 		expect(grouped['Games']).toEqual([]);
+	});
+});
+
+describe('sortCategoriesByRanked', () => {
+	const categories = [{ name: 'Movies' }, { name: 'Music' }, { name: 'Games' }];
+
+	it('puts the most-ranked category first', () => {
+		const ordered = sortCategoriesByRanked(
+			[
+				item({ slug: 'm1', category: 'Movies', times_ranked: 5 }),
+				item({ slug: 'g1', category: 'Games', times_ranked: 30 }),
+				item({ slug: 'mu1', category: 'Music', times_ranked: 12 }),
+			],
+			categories
+		);
+		expect(ordered.map((c) => c.name)).toEqual(['Games', 'Music', 'Movies']);
+	});
+
+	it('sums a category instead of taking its best template', () => {
+		const ordered = sortCategoriesByRanked(
+			[
+				item({ slug: 'g1', category: 'Games', times_ranked: 40 }),
+				item({ slug: 'm1', category: 'Movies', times_ranked: 20 }),
+				item({ slug: 'm2', category: 'Movies', times_ranked: 20 }),
+				item({ slug: 'm3', category: 'Movies', times_ranked: 20 }),
+			],
+			categories
+		);
+		expect(ordered.map((c) => c.name)).toEqual(['Movies', 'Games', 'Music']);
+	});
+
+	it('keeps the declared order for ties and for a cold database', () => {
+		expect(sortCategoriesByRanked([], categories).map((c) => c.name)).toEqual([
+			'Movies',
+			'Music',
+			'Games',
+		]);
+		const tied = sortCategoriesByRanked(
+			[
+				item({ slug: 'g1', category: 'Games', times_ranked: 7 }),
+				item({ slug: 'mu1', category: 'Music', times_ranked: 7 }),
+			],
+			categories
+		);
+		expect(tied.map((c) => c.name)).toEqual(['Music', 'Games', 'Movies']);
+	});
+
+	it('ignores uncategorised templates', () => {
+		const ordered = sortCategoriesByRanked(
+			[
+				item({ slug: 'loose', category: null, times_ranked: 999 }),
+				item({ slug: 'mu1', category: 'Music', times_ranked: 1 }),
+			],
+			categories
+		);
+		expect(ordered.map((c) => c.name)).toEqual(['Music', 'Movies', 'Games']);
+	});
+
+	it('leaves the input untouched', () => {
+		const input = [{ name: 'Movies' }, { name: 'Music' }];
+		sortCategoriesByRanked(
+			[item({ slug: 'mu1', category: 'Music', times_ranked: 3 })],
+			input
+		);
+		expect(input.map((c) => c.name)).toEqual(['Movies', 'Music']);
 	});
 });
 

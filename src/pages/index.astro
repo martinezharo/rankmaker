@@ -11,7 +11,11 @@ import { getTemplateVotes } from "../lib/template-votes";
 import { CATEGORIES as categories } from "../lib/categories";
 import { getOfficialTemplates, listBrowseTemplates } from "../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../lib/mature";
-import { decorateListing, groupByCategory } from "../lib/listings";
+import {
+	decorateListing,
+	groupByCategory,
+	sortCategoriesByRanked,
+} from "../lib/listings";
 import { serializeJsonForScript } from "../lib/safe-json";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
 
@@ -47,6 +51,10 @@ const PER_CATEGORY = 4;
 
 const templates = decorateListing(browse, { counts, votes });
 const grouped = groupByCategory(templates, categories, PER_CATEGORY);
+
+// Rows are ordered by how much each category is actually ranked, so the
+// liveliest ones lead the page. Ties fall back to the declared order.
+const orderedCategories = sortCategoriesByRanked(templates, categories);
 
 // Short edge cache so the homepage isn't a D1 hit on every request.
 Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
@@ -180,7 +188,7 @@ const siteJsonLd = {
 	<div id="categories" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
 		<FollowingSection />
 		{
-			categories.map((cat) => (
+			orderedCategories.map((cat) => (
 				<CategorySection
 					category={cat.name}
 					icon={cat.icon}
