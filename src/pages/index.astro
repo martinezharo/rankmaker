@@ -19,6 +19,7 @@ import {
 import { serializeJsonForScript } from "../lib/safe-json";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
 import { getDb } from "../lib/runtime";
+import { BRAND_COVER, SITE_URL } from "../lib/site";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -61,7 +62,12 @@ Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
 // Site-level structured data: identifies RANKMAKER as an entity (Organization)
 // and enables the sitelinks search box (WebSite + SearchAction). Emitted only
 // on the home page — the canonical root of the site.
-const SITE_URL = "https://rankmaker.net";
+//
+// The WebPage/ImageObject pair names the branded cover as this page's primary
+// image, so the thumbnail Google shows next to the result has a declared,
+// on-brand candidate instead of only the demo cover art (see SEOContent.astro,
+// which renders the same file — the declaration is worthless if the image is
+// not on the page).
 const siteJsonLd = {
 	"@context": "https://schema.org",
 	"@graph": [
@@ -86,6 +92,25 @@ const siteJsonLd = {
 				},
 				"query-input": "required name=search_term_string",
 			},
+		},
+		{
+			"@type": "WebPage",
+			"@id": `${SITE_URL}/#webpage`,
+			url: SITE_URL,
+			name: t("home.title"),
+			description: t("home.metaDescription"),
+			isPartOf: { "@id": `${SITE_URL}/#website` },
+			about: { "@id": `${SITE_URL}/#organization` },
+			primaryImageOfPage: { "@id": `${SITE_URL}/#primaryimage` },
+		},
+		{
+			"@type": "ImageObject",
+			"@id": `${SITE_URL}/#primaryimage`,
+			url: BRAND_COVER.url,
+			contentUrl: BRAND_COVER.url,
+			width: BRAND_COVER.width,
+			height: BRAND_COVER.height,
+			caption: t("seoContent.brandCoverAlt"),
 		},
 	],
 };

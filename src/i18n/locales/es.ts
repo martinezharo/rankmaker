@@ -147,6 +147,7 @@ export const es: LocaleDict = {
 		step3Title: 'Comparte tus resultados',
 		step3Body:
 			'Comparte tu ranking final con tus amigos y descubre sus opiniones. Compara vuestros rankings y encuentra nuevas perspectivas.',
+		brandCoverAlt: 'Un duelo 1v1 entre dos opciones y el top 3 que produce',
 		whatIsTitle: '¿Qué es RANKMAKER?',
 		whatIsP1:
 			'RANKMAKER es la herramienta de ranking definitiva que te ayuda a organizar y priorizar cualquier cosa que te importe. Ya sea que estés clasificando películas, música, videojuegos, libros o cualquier otra categoría, nuestro sistema único de comparación cara a cara garantiza resultados precisos que reflejan verdaderamente tus preferencias.',

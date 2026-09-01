@@ -93,7 +93,9 @@ describe('the server-only namespaces really are server-only', () => {
 			'pages/terms-of-use.astro',
 		],
 		about: ['pages/about.astro'],
-		seoContent: ['components/SEOContent.astro'],
+		// index.astro reuses the cover's alt text as the ImageObject caption in
+		// its structured data — frontmatter only, so still server-side.
+		seoContent: ['components/SEOContent.astro', 'pages/index.astro'],
 		email: ['lib/notifications.ts'],
 	};
 
