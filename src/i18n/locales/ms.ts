@@ -146,6 +146,7 @@ export const ms: LocaleDict = {
 		step3Title: 'Kongsi Keputusan Anda',
 		step3Body:
 			'Kongsi keputusan ranking akhir anda dengan rakan-rakan dan lihat maklum balas mereka. Bandingkan ranking anda dan temui perspektif baru.',
+		brandCoverAlt: 'Pertarungan 1v1 antara dua pilihan dan senarai 3 teratas yang terhasil',
 		whatIsTitle: 'Apa itu RANKMAKER?',
 		whatIsP1:
 			'RANKMAKER ialah alat ranking muktamad yang membantu anda mengatur dan mengutamakan apa sahaja yang penting bagi anda. Sama ada anda meranking filem, muzik, permainan, buku, atau kategori lain, sistem perbandingan head-to-head unik kami memastikan keputusan tepat yang benar-benar mencerminkan pilihan anda.',

@@ -18,6 +18,7 @@ import {
     useTranslations,
 } from "../i18n/server";
 import { serializeJsonForScript } from "../lib/safe-json";
+import { SITE_URL } from "../lib/site";
 
 interface Props {
     title: string;
@@ -62,7 +63,6 @@ if (noindex) {
     Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
 }
 
-const SITE_URL = "https://rankmaker.net";
 // After the i18n middleware rewrite, Astro.url.pathname is the canonical
 // (unprefixed) path. Build per-locale URLs from it for canonical + hreflang.
 const basePath = unlocalizePath(Astro.url.pathname);
@@ -106,7 +106,19 @@ const ogImageHeight =
         <link rel="icon" type="image/webp" href="/favicon.webp" />
         <meta name="generator" content={Astro.generator} />
         <title>{title}</title>
-        {noindex && <meta name="robots" content="noindex, nofollow" />}
+        {
+            /* Indexable pages opt into large image previews: without the
+               directive Google caps the result thumbnail at a small square,
+               which wastes the branded cover the home page ships. */
+            noindex ? (
+                <meta name="robots" content="noindex, nofollow" />
+            ) : (
+                <meta
+                    name="robots"
+                    content="index, follow, max-image-preview:large, max-snippet:-1"
+                />
+            )
+        }
         <link rel="canonical" href={canonicalURL} />
         <link rel="describedby" href={`${SITE_URL}/llms.txt`} />
         {

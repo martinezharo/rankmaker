@@ -16,6 +16,7 @@ import { categoryIcon } from "../../lib/categories";
 import { resolveImageUrl } from "../../lib/covers";
 import { buildRankingData } from "../../lib/ranking-data";
 import { serializeJsonForScript } from "../../lib/safe-json";
+import { SITE_URL } from "../../lib/site";
 import { getSessionUser } from "../../lib/auth";
 import { isMatureGated, readMaturePref } from "../../lib/mature";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n/server";
@@ -156,7 +157,7 @@ const jsonLd = {
     "@type": "ItemList",
     name: template.title,
     ...(template.description && { description: template.description }),
-    url: new URL(Astro.url.pathname, "https://rankmaker.net").toString(),
+    url: new URL(Astro.url.pathname, SITE_URL).toString(),
     numberOfItems: options?.length ?? 0,
     itemListElement: (options ?? []).map((o, i) => ({
         "@type": "ListItem",

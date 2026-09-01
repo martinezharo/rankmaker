@@ -5,8 +5,7 @@ import { getOfficialTemplates, listUserTemplates } from '../lib/templates';
 import { CATEGORY_SLUGS } from '../lib/categories';
 import { CONTENT_LOCALIZED, defaultLocale, localizePath, locales } from '../i18n/server';
 import { getDb } from '../lib/runtime';
-
-const SITE_URL = 'https://rankmaker.net';
+import { SITE_URL } from '../lib/site';
 
 interface SitemapEntry {
     /** Site-relative path (e.g. "/search"); localized variants are derived. */

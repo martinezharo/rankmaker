@@ -162,6 +162,7 @@ export const en = {
 		step3Title: 'Share Your Results',
 		step3Body:
 			'Share your final ranking results with your friends and see their feedback. Compare your rankings and discover new perspectives.',
+		brandCoverAlt: 'A 1v1 duel between two options and the top 3 ranking it produces',
 		whatIsTitle: 'What is RANKMAKER?',
 		whatIsP1:
 			"RANKMAKER is the ultimate ranking tool that helps you organize and prioritize anything that matters to you. Whether you're ranking movies, music, games, books, or any other category, our unique head-to-head comparison system ensures accurate results that truly reflect your preferences.",
