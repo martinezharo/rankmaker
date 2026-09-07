@@ -181,6 +181,15 @@ export function queryAll<T = Record<string, unknown>>(
 export function cleanupSeededData(): void {
 	withDb((db) => {
 		db.exec(`PRAGMA foreign_keys = ON`);
+		// Guest metric ids come from the browser, so seeded rows are only
+		// reachable through the template a seeded account imported them into.
+		db.exec(
+			`DELETE FROM guest_template_metrics
+			 WHERE local_id LIKE '${E2E_PREFIX}%'
+			    OR imported_template_id IN (
+			        SELECT id FROM templates WHERE creator_id LIKE '${E2E_PREFIX}%'
+			    )`
+		);
 		db.exec(`DELETE FROM users WHERE id LIKE '${E2E_PREFIX}%'`);
 		db.exec(`DELETE FROM templates WHERE id LIKE '${E2E_PREFIX}%'`);
 		db.exec(`DELETE FROM rankings WHERE slug LIKE '${E2E_PREFIX}%'`);

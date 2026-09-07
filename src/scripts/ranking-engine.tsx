@@ -38,6 +38,7 @@ import {
 	type HistoryEntry,
 } from './history';
 import { clientT } from '../i18n/client';
+import { localTemplateIdFromSlug, markLocalTemplatePlayed } from '../lib/local-templates';
 
 const clearSavedResultGuard = () =>
 	document.documentElement.classList.remove('rm-saved-result');
@@ -316,6 +317,8 @@ export function rankingInit(): void {
 	session.adoptExcluded(getExcludedIds(data.slug).map(String));
 
 	listen(startControl, 'click', () => {
+		const localId = localTemplateIdFromSlug(data.slug);
+		if (localId) markLocalTemplatePlayed(localId);
 		void fetch('/api/track', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },

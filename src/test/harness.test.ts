@@ -26,7 +26,7 @@ describe('the D1 test harness', () => {
 		db.close();
 	});
 
-	it('starts empty apart from the two structural placeholder accounts', () => {
+	it('starts empty apart from structural accounts and measurement metadata', () => {
 		const db = createTestDb();
 		const tables = db.raw
 			.prepare(
@@ -44,7 +44,7 @@ describe('the D1 test harness', () => {
 						.get() as any
 				).n > 0
 		);
-		expect(populated).toEqual(['users']);
+		expect(populated).toEqual(['users', 'measurement_metadata']);
 		expect(
 			db.raw
 				.prepare('SELECT id FROM users ORDER BY id')

@@ -503,6 +503,9 @@ const ogImageHeight =
              no request) for the vast majority of visitors, who have none. -->
         <script>
             import { syncLocalTemplates } from "../scripts/local-templates-sync";
+            import { initGuestTemplateMetrics } from "../scripts/guest-template-metrics";
+
+            initGuestTemplateMetrics();
 
             document.addEventListener("astro:page-load", () => {
                 void syncLocalTemplates();
