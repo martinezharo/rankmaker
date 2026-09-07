@@ -80,12 +80,20 @@ test.describe('creating a template', () => {
 		await page.locator('#start-ranking-btn').click();
 		await expect.poll(() => !!metric()?.first_played_at).toBe(true);
 
-		await signIn('guest-metrics');
+		const user = await signIn('guest-metrics');
 		await page.reload();
 
 		// The import makes this page follow its template into the account.
-		// Reading storage before that redirect settles races the navigation.
-		await page.waitForURL(/\/template\//);
+		// Waiting for that template's own slug proves it followed the right
+		// one, and reading storage any earlier would race the navigation.
+		const imported = () =>
+			queryOne<{ slug: string }>(
+				"SELECT slug FROM templates WHERE creator_id = ? AND id LIKE 'local-%'",
+				user.id
+			);
+		await expect.poll(() => imported()?.slug).toBeTruthy();
+		const slug = imported()!.slug;
+		await page.waitForURL((url) => url.pathname.endsWith(`/template/${slug}`));
 		await expect.poll(() => !!metric()?.converted_at).toBe(true);
 
 		// One import, one row: the retry paths must not create a second one.
