@@ -96,6 +96,8 @@ export const EXPECTED_TABLES: string[] = [
     'images',
     'rankings',
     'notifications',
+    'guest_template_metrics',
+    'measurement_metadata',
 ];
 
 export const requiredEnv = () => PRODUCTION_ENV.filter((v) => v.required);

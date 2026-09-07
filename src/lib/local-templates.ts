@@ -40,6 +40,9 @@ export type LocalTemplate = {
 	options: LocalTemplateOption[];
 	/** Epoch ms — newest first ordering, and the tie-break on import. */
 	created_at: number;
+	/** Missing on pre-measurement templates: report those as recovered, not new. */
+	measurement_version?: 1;
+	played?: boolean;
 };
 
 /** What the create form hands over; ids and timestamps are assigned here. */
@@ -113,6 +116,8 @@ export function parseLocalTemplates(value: unknown): LocalTemplate[] {
 				typeof t.created_at === 'number' && Number.isFinite(t.created_at)
 					? t.created_at
 					: 0,
+			...(t.measurement_version === 1 ? { measurement_version: 1 as const } : {}),
+			...(t.played === true ? { played: true } : {}),
 		});
 	}
 	return templates.sort((a, b) => b.created_at - a.created_at);
@@ -153,6 +158,7 @@ export function toLocalTemplate(input: LocalTemplateInput): LocalTemplate {
 		category: input.category || null,
 		options,
 		created_at: Date.now(),
+		measurement_version: 1,
 	};
 }
 
@@ -216,6 +222,14 @@ export function saveLocalTemplate(input: LocalTemplateInput): LocalTemplate {
 /** Forget one local template (also used once it has been imported). */
 export function deleteLocalTemplate(id: string): void {
 	write(removeLocalTemplate(read(), id));
+}
+
+/** Persist the milestone so offline measurements can retry on the next visit. */
+export function markLocalTemplatePlayed(id: string): void {
+	const template = getLocalTemplate(id);
+	if (template && !template.played) {
+		write(upsertLocalTemplate(read(), { ...template, played: true }));
+	}
 }
 
 /** True when this browser is at the local-template cap. */

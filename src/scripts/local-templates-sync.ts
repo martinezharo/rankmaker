@@ -25,6 +25,7 @@ import {
 	saveHistoryEntry,
 	syncResultToAccount,
 } from './history';
+import { localTemplateMetric } from './guest-template-metrics';
 
 /** Slug a local template ended up with, once imported. */
 export type ImportedTemplate = { id: string; slug: string };
@@ -49,6 +50,7 @@ async function isSignedIn(): Promise<boolean> {
 function importPayload(template: LocalTemplate) {
 	return {
 		source_local_id: template.id,
+		source_local_metric: localTemplateMetric(template),
 		title: template.title,
 		description: template.description,
 		category: template.category ?? '',

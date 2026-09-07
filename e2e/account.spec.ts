@@ -35,8 +35,9 @@ test.describe('the header', () => {
 });
 
 test.describe('creating a template', () => {
-	test('stores one guest template when the form submits twice before navigation', async ({
+	test('measures guest creation, play and import once across retries', async ({
 		page,
+		signIn,
 	}) => {
 		await page.context().addInitScript(() => {
 			localStorage.setItem('rankmaker_cookie_consent', 'false');
@@ -64,6 +65,54 @@ test.describe('creating a template', () => {
 		);
 		expect(stored).toHaveLength(1);
 		expect(stored[0].title).toBe('E2E Guest Double Submit');
+		type Metric = {
+			origin: string;
+			first_played_at: string | null;
+			converted_at: string | null;
+		};
+		const metric = () =>
+			queryOne<Metric>(
+				'SELECT * FROM guest_template_metrics WHERE local_id = ?',
+				stored[0].id
+			);
+		await expect.poll(() => metric()?.origin).toBe('new');
+
+		await page.locator('#start-ranking-btn').click();
+		await expect.poll(() => !!metric()?.first_played_at).toBe(true);
+
+		const user = await signIn('guest-metrics');
+		await page.reload();
+
+		// The import makes this page follow its template into the account.
+		// Waiting for that template's own slug proves it followed the right
+		// one, and reading storage any earlier would race the navigation.
+		const imported = () =>
+			queryOne<{ slug: string }>(
+				"SELECT slug FROM templates WHERE creator_id = ? AND id LIKE 'local-%'",
+				user.id
+			);
+		await expect.poll(() => imported()?.slug).toBeTruthy();
+		const slug = imported()!.slug;
+		await page.waitForURL((url) => url.pathname.endsWith(`/template/${slug}`));
+		await expect.poll(() => !!metric()?.converted_at).toBe(true);
+
+		// One import, one row: the retry paths must not create a second one.
+		await expect
+			.poll(
+				() =>
+					queryOne<{ n: number }>(
+						'SELECT COUNT(*) AS n FROM guest_template_metrics WHERE local_id = ?',
+						stored[0].id
+					)?.n
+			)
+			.toBe(1);
+		expect(
+			await page.evaluate(
+				() =>
+					JSON.parse(localStorage.getItem('rankmaker_local_templates') ?? '[]')
+						.length
+			)
+		).toBe(0);
 	});
 
 	test('publishes it, with its options in the order they were typed', async ({

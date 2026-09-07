@@ -16,8 +16,12 @@ import {
 } from '../../../lib/images';
 import { notifyNewTemplate } from '../../../lib/notifications';
 import { getEnv } from '../../../lib/runtime';
-
-const SOURCE_LOCAL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
+import {
+    LOCAL_TEMPLATE_ID_RE,
+    parseGuestTemplateMetric,
+    recordGuestTemplateMetric,
+    type GuestTemplateMetric,
+} from '../../../lib/guest-template-metrics';
 
 /** Derive a stable, user-scoped primary key for a browser-local template. */
 async function importedTemplateId(userId: string, sourceLocalId: string) {
@@ -52,10 +56,21 @@ export const POST: APIRoute = async (context) => {
             'source_local_id' in body
         ) {
             const value = (body as { source_local_id?: unknown }).source_local_id;
-            if (typeof value !== 'string' || !SOURCE_LOCAL_ID_RE.test(value)) {
+            if (typeof value !== 'string' || !LOCAL_TEMPLATE_ID_RE.test(value)) {
                 return json({ error: 'Invalid local template id.' }, 400);
             }
             sourceLocalId = value;
+        }
+
+        let sourceMetric: GuestTemplateMetric | null = null;
+        if (sourceLocalId) {
+            const raw = (body as Record<string, unknown>).source_local_metric;
+            sourceMetric = raw === undefined
+                ? { id: sourceLocalId, origin: 'recovered', played: false }
+                : parseGuestTemplateMetric(raw);
+            if (!sourceMetric || sourceMetric.id !== sourceLocalId) {
+                return json({ error: 'Invalid local template measurement.' }, 400);
+            }
         }
 
         const imageBase = imagePublicBase(env);
@@ -92,7 +107,10 @@ export const POST: APIRoute = async (context) => {
                 .prepare('SELECT id, slug FROM templates WHERE id = ? AND creator_id = ?')
                 .bind(id, user.id)
                 .first<{ id: string; slug: string }>();
-            if (existing) return json({ ok: true, ...existing, reused: true });
+            if (existing) {
+                await recordGuestTemplateMetric(db, sourceMetric!, existing.id);
+                return json({ ok: true, ...existing, reused: true });
+            }
         }
 
         const limitError = json(
@@ -170,13 +188,20 @@ export const POST: APIRoute = async (context) => {
                 .prepare('SELECT id, slug FROM templates WHERE id = ? AND creator_id = ?')
                 .bind(id, user.id)
                 .first<{ id: string; slug: string }>();
-            if (existing) return json({ ok: true, ...existing, reused: true });
+            if (existing) {
+                await recordGuestTemplateMetric(db, sourceMetric!, existing.id);
+                return json({ ok: true, ...existing, reused: true });
+            }
         }
         // Missing meta (older adapters) must not read as failure — the fast
         // path already covered the common case, so default to success.
         if ((results[0]?.meta?.changes ?? 1) === 0) {
             return limitError;
         }
+
+        // A failed acknowledgement leaves the browser copy available for retry.
+        // The deterministic import id repairs the milestone on that retry.
+        if (sourceMetric) await recordGuestTemplateMetric(db, sourceMetric, id);
 
         // Claim the uploads (after the INSERT: images.template_id has a FK
         // on templates.id). Claimed keys survive orphan cleanup and are

@@ -111,7 +111,7 @@ export async function getSessionUser(
 
 // ── HMAC-signed payloads (OAuth state + signup handoff cookies) ──────────────
 
-async function hmacKey(secret: string): Promise<CryptoKey> {
+export async function hmacKey(secret: string): Promise<CryptoKey> {
     return crypto.subtle.importKey(
         'raw',
         new TextEncoder().encode(secret),

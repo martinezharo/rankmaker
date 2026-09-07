@@ -11,10 +11,10 @@ import {
     imageKeyToUrl,
     imagePublicBase,
     moderateImage,
-    readUploadBody,
     sniffImageType,
     type UploadKind,
 } from '../../../lib/images';
+import { readBoundedBody } from '../../../lib/request-body';
 import { getEnv, getExecutionContext } from '../../../lib/runtime';
 
 /**
@@ -54,7 +54,7 @@ export const POST: APIRoute = async (context) => {
             return json({ error: 'too_large' }, 413);
         }
 
-        const original = await readUploadBody(context.request, MAX_UPLOAD_BYTES);
+        const original = await readBoundedBody(context.request, MAX_UPLOAD_BYTES);
         if (original === null) return json({ error: 'too_large' }, 413);
         if (original.byteLength === 0) return json({ error: 'unsupported_type' }, 400);
         if (original.byteLength > MAX_UPLOAD_BYTES) {

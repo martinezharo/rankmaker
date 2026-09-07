@@ -110,6 +110,15 @@ describe('POST /api/templates', () => {
 			reused: true,
 		});
 		expect(first.id).toMatch(/^local-[a-f0-9]{64}$/);
+		const metric = await db
+			.prepare('SELECT * FROM guest_template_metrics')
+			.first<Record<string, unknown>>();
+		expect(metric).toMatchObject({
+			local_id: 'local-draft-123',
+			origin: 'recovered',
+			imported_template_id: first.id,
+		});
+		expect(metric?.converted_at).toBeTruthy();
 		expect(
 			(await db.prepare('SELECT COUNT(*) AS n FROM templates').first<{ n: number }>())
 				?.n
@@ -121,6 +130,35 @@ describe('POST /api/templates', () => {
 					.first<{ n: number }>()
 			)?.n
 		).toBe(4);
+	});
+
+	it('records a new guest conversion even if its browser observation has not arrived', async () => {
+		const cookies = await signIn(db, alice.id);
+		const payload = body({
+			source_local_id: 'new-local',
+			source_local_metric: { id: 'new-local', origin: 'new', played: true },
+			cover_image: '',
+			visibility: 'private',
+		});
+		const response = await post(payload, { cookies });
+		expect(response.status).toBe(200);
+
+		const metric = await db
+			.prepare('SELECT * FROM guest_template_metrics')
+			.first<Record<string, unknown>>();
+		expect(metric).toMatchObject({ local_id: 'new-local', origin: 'new' });
+		expect(metric?.converted_at).toBeTruthy();
+		expect(metric?.first_played_at).toBeTruthy();
+
+		// A measurement for a different template never rides along an import.
+		const invalid = await post(
+			{
+				...payload,
+				source_local_metric: { id: 'another', origin: 'new', played: false },
+			},
+			{ cookies }
+		);
+		expect(invalid.status).toBe(400);
 	});
 
 	it('creates one template and one option set for concurrent guest import retries', async () => {
