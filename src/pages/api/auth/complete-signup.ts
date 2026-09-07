@@ -92,9 +92,15 @@ export const POST: APIRoute = async (context) => {
 
     if (marketingConsent) {
         // A second statement rather than more columns on the INSERT, so the
-        // consent columns stay owned by one module. Failing here would leave
-        // an account without the opt-in, which is the safe direction.
-        await setMarketingConsent(db, userId, true, 'signup');
+        // consent columns stay owned by one module. The account already
+        // exists at this point, so a failure here must not abort the signup:
+        // the user keeps their account with consent left at its default 0,
+        // which is the safe direction, and can opt in from /preferences.
+        try {
+            await setMarketingConsent(db, userId, true, 'signup');
+        } catch (error) {
+            console.error('Signup marketing consent error:', error);
+        }
     }
 
     const sessionId = await createSession(db, userId);

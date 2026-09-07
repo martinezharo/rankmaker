@@ -148,6 +148,16 @@ describe('POST /api/me/preferences', () => {
 		expect((await post('not json')).response.status).toBe(400);
 	});
 
+	it('rejects JSON that is not an object', async () => {
+		// Valid JSON, but indexing it for the preference keys would throw.
+		for (const body of [null, [], 42]) {
+			expect(
+				(await post(body)).response.status,
+				JSON.stringify(body)
+			).toBe(400);
+		}
+	});
+
 	it('never caches the response', async () => {
 		const { response } = await post({ showMature: true });
 		expect(response.headers.get('Cache-Control')).toBe('private, no-store');

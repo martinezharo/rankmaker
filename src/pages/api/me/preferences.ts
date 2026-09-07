@@ -39,12 +39,22 @@ export const POST: APIRoute = async (context) => {
 		const db = getDb();
 		const user = await getSessionUser(context.cookies, db);
 
-		let body: Body;
+		let parsed: unknown;
 		try {
-			body = await context.request.json();
+			parsed = await context.request.json();
 		} catch {
 			return json({ error: 'Invalid JSON' }, 400);
 		}
+		// `null` and arrays are valid JSON but not preference bodies, and
+		// indexing them below would throw into the 500 handler.
+		if (
+			typeof parsed !== 'object' ||
+			parsed === null ||
+			Array.isArray(parsed)
+		) {
+			return json({ error: 'Invalid JSON' }, 400);
+		}
+		const body = parsed as Body;
 
 		const present = KEYS.filter((key) => body[key] !== undefined);
 		if (present.length === 0) {
