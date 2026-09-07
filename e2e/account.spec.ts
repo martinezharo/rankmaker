@@ -82,6 +82,10 @@ test.describe('creating a template', () => {
 
 		await signIn('guest-metrics');
 		await page.reload();
+
+		// The import makes this page follow its template into the account.
+		// Reading storage before that redirect settles races the navigation.
+		await page.waitForURL(/\/template\//);
 		await expect.poll(() => !!metric()?.converted_at).toBe(true);
 
 		// One import, one row: the retry paths must not create a second one.
@@ -94,16 +98,13 @@ test.describe('creating a template', () => {
 					)?.n
 			)
 			.toBe(1);
-		await expect
-			.poll(() =>
-				page.evaluate(
-					() =>
-						JSON.parse(
-							localStorage.getItem('rankmaker_local_templates') ?? '[]'
-						).length
-				)
+		expect(
+			await page.evaluate(
+				() =>
+					JSON.parse(localStorage.getItem('rankmaker_local_templates') ?? '[]')
+						.length
 			)
-			.toBe(0);
+		).toBe(0);
 	});
 
 	test('publishes it, with its options in the order they were typed', async ({
