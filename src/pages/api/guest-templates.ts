@@ -5,7 +5,7 @@ import {
 	parseGuestTemplateMetric,
 	recordGuestTemplateMetric,
 } from '../../lib/guest-template-metrics';
-import { withinRateLimit } from '../../lib/rate-limit';
+import { anonymousClientKey, withinRateLimit } from '../../lib/rate-limit';
 import { getEnv } from '../../lib/runtime';
 import { readBoundedBody } from '../../lib/request-body';
 
@@ -18,10 +18,11 @@ export const POST: APIRoute = async ({ request }) => {
 		const metric = parseGuestTemplateMetric(JSON.parse(text));
 		if (!metric) return json({ error: 'Invalid payload' }, 400);
 		const env = getEnv();
+		const client = await anonymousClientKey(env.SESSION_SECRET, request);
 		if (
 			!(await withinRateLimit(
 				env['rm-times-ranked'],
-				`guest-metrics:${request.headers.get('cf-connecting-ip') ?? 'local'}`,
+				`guest-metrics:${client}`,
 				60,
 				60
 			))

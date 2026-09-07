@@ -13,7 +13,9 @@ storage. Keepalive protects the creation observation across navigation. Measurem
 failures do not block local creation or play.
 
 `POST /api/guest-templates` requires a same-origin request, validates a bounded
-payload and uses the existing short-lived KV abuse limiter. D1 records first
+payload and uses the existing short-lived KV abuse limiter. That limiter buckets
+a visitor by an HMAC of their address keyed with `SESSION_SECRET`, never the
+address itself, so the KV namespace holds no identifier either. D1 records first
 observations and first milestones idempotently by local ID. Client events cannot
 set an import or conversion. Like other unauthenticated usage counters, this is
 observational telemetry, not proof of unique people or a fraud-resistant metric.

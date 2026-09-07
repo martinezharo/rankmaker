@@ -14,8 +14,17 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 const metric = { id: 'guest-123', origin: 'new', played: false };
+const CLIENT_IP = '203.0.113.7';
 const post = (body: unknown = metric, origin?: string | null) =>
-	POST(apiContext({ db, body, origin, env: { 'rm-times-ranked': kv.kv } }));
+	POST(
+		apiContext({
+			db,
+			body,
+			origin,
+			headers: { 'cf-connecting-ip': CLIENT_IP },
+			env: { 'rm-times-ranked': kv.kv, SESSION_SECRET: 'test-secret' },
+		})
+	);
 describe('guest template measurement', () => {
 	it('counts retries and multiple starts once, retaining the first observation', async () => {
 		expect((await post()).status).toBe(200);
@@ -80,6 +89,27 @@ describe('guest template measurement', () => {
 		expect((await post('{')).status).toBe(400);
 		expect((await post('a'.repeat(513))).status).toBe(413);
 	});
+	it('buckets a visitor without keeping their address', async () => {
+		expect((await post()).status).toBe(200);
+		const keys = [...kv.store.keys()];
+		expect(keys).toHaveLength(1);
+		expect(keys[0]).not.toContain(CLIENT_IP);
+		expect(keys[0]).toMatch(/^rl:guest-metrics:[0-9a-f]{32}:\d+$/);
+	});
+
+	it('still buckets a visitor when no secret is configured', async () => {
+		const response = await POST(
+			apiContext({
+				db,
+				body: metric,
+				headers: { 'cf-connecting-ip': CLIENT_IP },
+				env: { 'rm-times-ranked': kv.kv },
+			})
+		);
+		expect(response.status).toBe(200);
+		expect([...kv.store.keys()][0]).not.toContain(CLIENT_IP);
+	});
+
 	it('rate limits repeated submissions', async () => {
 		for (let i = 0; i < 60; i++) expect((await post()).status).toBe(200);
 		expect((await post()).status).toBe(429);
