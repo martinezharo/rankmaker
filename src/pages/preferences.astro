@@ -2,9 +2,10 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import Toggle from "../components/ui/Toggle.astro";
+import PreferenceRow from "../components/PreferenceRow.astro";
 import LanguageSelect from "../components/LanguageSelect.astro";
 import { getSessionUser } from "../lib/auth";
+import { getMarketingConsent } from "../lib/marketing-consent";
 import { getEmailPref } from "../lib/notifications";
 import { readMaturePref, writeMaturePref } from "../lib/mature";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
@@ -18,10 +19,16 @@ Astro.response.headers.set("Cache-Control", "private, no-store");
 
 let user: Awaited<ReturnType<typeof getSessionUser>> = null;
 let emailPref = true;
+let marketingPref = false;
 try {
     const db = getDb();
     user = await getSessionUser(Astro.cookies, db);
-    if (user) emailPref = await getEmailPref(db, user.id);
+    if (user) {
+        [emailPref, marketingPref] = await Promise.all([
+            getEmailPref(db, user.id),
+            getMarketingConsent(db, user.id),
+        ]);
+    }
 } catch (error) {
     // Preferences that need a session degrade to the signed-out view rather
     // than 500-ing the page — the language and mature switches still work.
@@ -44,7 +51,10 @@ const loginHref = `/api/auth/login?next=${encodeURIComponent(
 )}`;
 
 const cardClass = "rounded-2xl bg-surface-elevated border border-border p-5 sm:p-6";
-const rowClass = "flex items-center justify-between gap-4";
+const headingClass =
+    "text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2";
+// Rows after the first are separated by a hairline rather than by a whole card.
+const stackedRowClass = "pt-5 mt-5 border-t border-border first:pt-0 first:mt-0 first:border-t-0";
 ---
 
 <Layout
@@ -64,7 +74,7 @@ const rowClass = "flex items-center justify-between gap-4";
         <!-- Language ------------------------------------------------------->
         <section class={cardClass}>
             <div class="mb-4">
-                <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
+                <h2 class={headingClass}>
                     <i class="fa-solid fa-globe text-primary text-xs"></i>
                     {t("preferences.languageHeading")}
                 </h2>
@@ -78,73 +88,59 @@ const rowClass = "flex items-center justify-between gap-4";
 
         <!-- Content -------------------------------------------------------->
         <section class={cardClass}>
-            <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
+            <h2 class:list={[headingClass, "mb-4"]}>
                 <i class="fa-solid fa-eye text-primary text-xs"></i>
                 {t("preferences.contentHeading")}
             </h2>
 
-            <div class={rowClass}>
-                <div class="min-w-0">
-                    <p class="text-sm font-semibold text-text-primary">
-                        {t("preferences.matureLabel")}
-                    </p>
-                    <p class="text-xs text-text-muted mt-0.5">
-                        {t("preferences.matureDesc")}
-                    </p>
-                    <p class="text-xs text-text-muted/80 mt-1">
-                        {
-                            user
-                                ? t("preferences.savedOnAccount")
-                                : t("preferences.savedInBrowser")
-                        }
-                    </p>
-                    <p
-                        id="mature-pref-error"
-                        role="status"
-                        class="text-xs text-red-400 mt-1 empty:hidden"
-                    >
-                    </p>
-                </div>
-                <Toggle
-                    id="mature-pref-toggle"
-                    checked={showMature}
-                    label={t("preferences.matureToggle")}
-                    prefKey="showMature"
-                    errorId="mature-pref-error"
-                />
-            </div>
+            <PreferenceRow
+                id="mature-pref-toggle"
+                label={t("preferences.matureLabel")}
+                description={t("preferences.matureDesc")}
+                toggleLabel={t("preferences.matureToggle")}
+                checked={showMature}
+                prefKey="showMature"
+                note={user
+                    ? t("preferences.savedOnAccount")
+                    : t("preferences.savedInBrowser")}
+            />
         </section>
 
-        <!-- Notifications -------------------------------------------------->
+        <!-- Email ---------------------------------------------------------->
         <section class={cardClass}>
-            <h2 class="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2 mb-4">
-                <i class="fa-solid fa-bell text-primary text-xs"></i>
-                {t("preferences.notificationsHeading")}
+            <h2 class:list={[headingClass, "mb-4"]}>
+                <i class="fa-solid fa-envelope text-primary text-xs"></i>
+                {t("preferences.emailHeading")}
             </h2>
 
             {
                 user ? (
-                    <div class={rowClass}>
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-text-primary">
-                                {t("preferences.emailPrefHeading")}
-                            </p>
-                            <p class="text-xs text-text-muted mt-0.5">
-                                {t("preferences.emailPrefDesc")}
-                            </p>
-                            <p
-                                id="email-pref-error"
-                                role="status"
-                                class="text-xs text-red-400 mt-1 empty:hidden"
-                            />
-                        </div>
-                        <Toggle
+                    <div>
+                        <PreferenceRow
+                            class={stackedRowClass}
                             id="email-pref-toggle"
+                            label={t("preferences.emailPrefHeading")}
+                            description={t("preferences.emailPrefDesc")}
+                            toggleLabel={t("preferences.emailPrefToggle")}
                             checked={emailPref}
-                            label={t("preferences.emailPrefToggle")}
                             prefKey="emailNotifications"
-                            errorId="email-pref-error"
                         />
+                        <PreferenceRow
+                            class={stackedRowClass}
+                            id="marketing-pref-toggle"
+                            label={t("preferences.marketingHeading")}
+                            description={t("preferences.marketingDesc")}
+                            toggleLabel={t("preferences.marketingToggle")}
+                            checked={marketingPref}
+                            prefKey="marketingEmails"
+                        >
+                            <a
+                                href={localizePath("/privacy-policy", locale)}
+                                class="text-primary hover:underline font-medium"
+                            >
+                                {t("preferences.marketingPolicy")}
+                            </a>
+                        </PreferenceRow>
                     </div>
                 ) : (
                     <p class="text-sm text-text-muted">

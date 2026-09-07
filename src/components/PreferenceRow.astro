@@ -1,0 +1,67 @@
+---
+// PreferenceRow.astro — one switchable preference on /preferences: text on the
+// left, a Toggle on the right, and the row's own save-error live region.
+//
+// Every row on that page had the same eight lines of markup, so the spacing
+// drifted between them; this is the one place that decides how a preference
+// row looks.
+import Toggle from "./ui/Toggle.astro";
+
+interface Props {
+    /** Id of the switch; the error region is derived from it. */
+    id: string;
+    label: string;
+    description: string;
+    /** Accessible name for the switch itself ("Toggle mature content"). */
+    toggleLabel: string;
+    checked: boolean;
+    /** Key posted to /api/me/preferences. See ui/Toggle.astro. */
+    prefKey: string;
+    /** Small print under the description (e.g. where the value is stored). */
+    note?: string;
+    class?: string;
+}
+
+const {
+    id,
+    label,
+    description,
+    toggleLabel,
+    checked,
+    prefKey,
+    note,
+    class: className,
+} = Astro.props;
+
+const errorId = `${id}-error`;
+---
+
+<div class:list={["flex items-start justify-between gap-4", className]}>
+    <div class="min-w-0">
+        <p class="text-sm font-semibold text-text-primary">{label}</p>
+        <p class="text-xs text-text-muted mt-0.5 leading-relaxed">
+            {description}
+        </p>
+        {
+            Astro.slots.has("default") && (
+                <div class="text-xs mt-1.5">
+                    <slot />
+                </div>
+            )
+        }
+        {note && <p class="text-xs text-text-muted/80 mt-1.5">{note}</p>}
+        <p
+            id={errorId}
+            role="status"
+            class="text-xs text-red-400 mt-1 empty:hidden"
+        >
+        </p>
+    </div>
+    <Toggle
+        id={id}
+        checked={checked}
+        label={toggleLabel}
+        prefKey={prefKey}
+        errorId={errorId}
+    />
+</div>

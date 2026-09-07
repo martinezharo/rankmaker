@@ -280,6 +280,10 @@ export const ms: LocaleDict = {
 		avatarOptionLabel: 'Avatar {key}',
 		shuffle: 'Kocok',
 		submit: 'Buat akaun saya',
+		marketingLabel: 'Beritahu saya tentang berita RANKMAKER',
+		marketingDesc:
+			'Ciri baharu dan ranking terbaik, sesekali. Pilihan, tiada spam, dan boleh dimatikan bila-bila masa dalam keutamaan anda.',
+		marketingPolicy: 'Cara kami mengendalikan data anda',
 		available: 'Nama pengguna tersedia!',
 		notAvailable: 'Nama pengguna tidak tersedia.',
 		checkFailed: 'Tidak dapat menyemak nama pengguna.',
@@ -491,7 +495,7 @@ export const ms: LocaleDict = {
 			heading: 'Dasar Privasi',
 			body: `<p>Selamat datang ke RANKMAKER! Dasar Privasi ini menerangkan cara kami mengumpul, menggunakan, dan mendedahkan maklumat tentang anda apabila anda menggunakan laman web dan perkhidmatan kami (secara kolektif, "Perkhidmatan"). Dengan menggunakan Perkhidmatan, anda bersetuju dengan syarat Dasar Privasi ini.</p>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. Maklumat yang Kami Kumpul</h2><p class="mb-3">Kami mungkin mengumpul maklumat berikut:</p><ul class="list-disc pl-5 space-y-2"><li><strong class="text-text-primary">Maklumat Peribadi:</strong> Alamat e-mel, nama pengguna, dan butiran lain yang anda berikan semasa mencipta akaun.</li><li><strong class="text-text-primary">Maklumat Penggunaan:</strong> Halaman yang anda lawati, masa yang dihabiskan di halaman, interaksi dengan Perkhidmatan.</li><li><strong class="text-text-primary">Maklumat Peranti:</strong> Alamat IP, jenis pelayar, pengecam peranti, dan sistem operasi.</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Cara Kami Menggunakan Maklumat Anda</h2><p class="mb-3">Kami menggunakan maklumat anda untuk:</p><ul class="list-disc pl-5 space-y-2"><li>Menyediakan, mengekalkan, dan meningkatkan Perkhidmatan.</li><li>Berkomunikasi dengan anda.</li><li>Memastikan keselamatan dan mencegah penipuan.</li><li>Menganalisis penggunaan dan meningkatkan pengalaman pengguna.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Cara Kami Menggunakan Maklumat Anda</h2><p class="mb-3">Kami menggunakan maklumat anda untuk:</p><ul class="list-disc pl-5 space-y-2"><li>Menyediakan, mengekalkan, dan meningkatkan Perkhidmatan.</li><li>Berkomunikasi dengan anda.</li><li>Memastikan keselamatan dan mencegah penipuan.</li><li>Menganalisis penggunaan dan meningkatkan pengalaman pengguna.</li></ul><p class="mt-3"><strong class="text-text-primary">E-mel pemasaran.</strong> Kami hanya menghantar berita tentang RANKMAKER — ciri baharu, ranking pilihan — jika anda telah memberi persetujuan secara jelas, sama ada melalui kotak semak semasa mencipta akaun atau melalui suis "Berita dan kemas kini" di halaman keutamaan anda. Ia dimatikan secara lalai, berasingan daripada e-mel pemberitahuan yang dicetuskan oleh aktiviti anda sendiri, dan anda boleh menarik balik persetujuan pada bila-bila masa melalui suis yang sama, tanpa menjejaskan bahagian lain Perkhidmatan.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Kuki dan Teknologi Penjejakan</h2><p>Kami mungkin menggunakan kuki dan teknologi serupa untuk meningkatkan fungsi dan prestasi. Anda boleh mengurus pilihan kuki anda melalui tetapan pelayar anda.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. Perkongsian Maklumat</h2><p class="mb-3">Kami tidak menjual data peribadi anda. Kami mungkin berkongsi maklumat dengan:</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>Pembekal perkhidmatan (cth., pengehosan, analitik, pengiklanan).</li><li>Pihak berkuasa jika dikehendaki oleh undang-undang.</li></ul><p>Secara khusus, kami mungkin berkongsi data anda dengan:</p><ul class="list-disc pl-5 space-y-2 mt-2"><li><strong>Hostinger:</strong> Pembekal pengehosan laman web kami.</li><li><strong>Google (Analytics, Ads):</strong> Kami menggunakan Google Analytics untuk memantau dan menganalisis trafik web dan Google Ads untuk tujuan pengiklanan.</li></ul></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. Pengekalan Data</h2><p>Kami menyimpan data anda selama yang perlu untuk menyediakan Perkhidmatan dan mematuhi kewajipan undang-undang.</p></section>
@@ -556,11 +560,16 @@ export const ms: LocaleDict = {
 		matureDesc:
 			'Templat yang ditanda sebagai kandungan dewasa disembunyikan daripada laman utama, carian, kategori dan profil. Hidupkan untuk melihatnya di mana-mana.',
 		matureToggle: 'Togol kandungan dewasa',
-		notificationsHeading: 'Pemberitahuan',
-		emailPrefHeading: 'Pemberitahuan e-mel',
+		emailHeading: 'E-mel',
+		emailPrefHeading: 'Pemberitahuan aktiviti',
 		emailPrefDesc: 'Hantar e-mel kepada saya mengenai ulasan pada templat saya dan balasan kepada ulasan saya.',
 		emailPrefToggle: 'Togol pemberitahuan e-mel',
-		emailPrefLoginHint: 'Log masuk untuk memilih sama ada kami menghantar e-mel tentang aktiviti.',
+		emailPrefLoginHint: 'Log masuk untuk memilih e-mel yang kami hantar kepada anda.',
+		marketingHeading: 'Berita dan kemas kini',
+		marketingDesc:
+			'E-melkan saya sesekali tentang ciri baharu dan ranking terbaik di RANKMAKER. Tiada spam, dan anda boleh mematikannya bila-bila masa.',
+		marketingToggle: 'Togol e-mel berita',
+		marketingPolicy: 'Cara kami mengendalikan data anda',
 		saveError: 'Tidak dapat menyimpan keutamaan anda. Cuba lagi.',
 	},
 	mature: {

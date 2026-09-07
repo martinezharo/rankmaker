@@ -1,0 +1,71 @@
+---
+// Checkbox.astro — the app's opt-in box (a real <input type="checkbox">).
+//
+// Sibling of ui/Toggle.astro: a switch is for a preference that applies the
+// moment it is flipped, a checkbox is for one that is submitted with a form.
+// The native input carries the state (so the label, the keyboard and form
+// serialization all work); the square next to it is what the user actually
+// sees.
+//
+// The optional default slot renders UNDER the label, outside the <label>
+// element, which is where links belong — an anchor inside a label swallows
+// clicks meant for the box.
+interface Props {
+    id: string;
+    /** Visible text next to the box, and the input's label. */
+    label: string;
+    checked?: boolean;
+    disabled?: boolean;
+    class?: string;
+}
+
+const {
+    id,
+    label,
+    checked = false,
+    disabled = false,
+    class: className,
+} = Astro.props;
+---
+
+<div class:list={["space-y-1.5", className]}>
+    <label
+        class:list={[
+            "flex items-start gap-3 group",
+            disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+        ]}
+    >
+        <input
+            id={id}
+            type="checkbox"
+            checked={checked}
+            disabled={disabled}
+            class="peer sr-only"
+        />
+        <span
+            class="checkbox-box mt-0.5 shrink-0 w-5 h-5 rounded-md border border-border bg-surface flex items-center justify-center transition-all group-hover:border-primary/60 peer-checked:bg-primary peer-checked:border-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40"
+        >
+            <i class="fa-solid fa-check text-[10px] text-white opacity-0 transition-opacity"
+            ></i>
+        </span>
+        <span class="text-sm font-medium text-text-primary leading-5">
+            {label}
+        </span>
+    </label>
+
+    {
+        Astro.slots.has("default") && (
+            <div class="pl-8 text-xs text-text-muted leading-relaxed">
+                <slot />
+            </div>
+        )
+    }
+</div>
+
+<style>
+    /* The tick lives inside the box, so it is not a sibling of the input and
+       Tailwind's peer-checked: cannot reach it. */
+    input:checked + .checkbox-box > i {
+        opacity: 1;
+    }
+</style>

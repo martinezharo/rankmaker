@@ -19,6 +19,7 @@ import {
 	signPayload,
 } from '../../../src/lib/auth';
 import { SELECTABLE_AVATAR_KEYS } from '../../../src/lib/avatars';
+import { getMarketingConsent } from '../../../src/lib/marketing-consent';
 import { createTestDb, type TestD1 } from '../../../src/test/d1';
 import { apiContext, TEST_ORIGIN, type TestContext } from '../../../src/test/api';
 import { insertUser } from '../../../src/test/factories';
@@ -382,6 +383,14 @@ describe('POST /api/auth/complete-signup', () => {
 			...overrides,
 		});
 
+	const userId = async (username: string) =>
+		(
+			await db
+				.prepare('SELECT id FROM users WHERE username = ?')
+				.bind(username)
+				.first<{ id: string }>()
+		)!.id;
+
 	const complete = async (
 		body: unknown,
 		options: { cookie?: string | null; origin?: string | null } = {}
@@ -423,6 +432,34 @@ describe('POST /api/auth/complete-signup', () => {
 			username: 'octocat',
 		});
 		expect(context.cookies.deleted).toContain(SIGNUP_COOKIE);
+	});
+
+	it('records the marketing opt-in when the box is ticked', async () => {
+		await complete({
+			username: 'octocat',
+			avatar: SELECTABLE_AVATAR_KEYS[0],
+			marketingConsent: true,
+		});
+		const id = await userId('octocat');
+		expect(await getMarketingConsent(db, id)).toBe(true);
+	});
+
+	it('never infers consent from a missing or truthy-ish value', async () => {
+		for (const [i, value] of [undefined, 'true', 1, null].entries()) {
+			await complete(
+				{
+					username: `octocat${i}`,
+					avatar: SELECTABLE_AVATAR_KEYS[0],
+					marketingConsent: value,
+				},
+				// A fresh GitHub id per pass: github_id is UNIQUE.
+				{ cookie: await signupCookie({ ghId: 5000 + i }) }
+			);
+			expect(
+				await getMarketingConsent(db, await userId(`octocat${i}`)),
+				`marketingConsent: ${String(value)}`
+			).toBe(false);
+		}
 	});
 
 	it('sends them back where they started', async () => {

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { POST } from '../../../src/pages/api/me/preferences';
+import { getMarketingConsent } from '../../../src/lib/marketing-consent';
 import { getEmailPref } from '../../../src/lib/notifications';
 import { MATURE_COOKIE, readMaturePref } from '../../../src/lib/mature';
 import { createTestDb, type TestD1 } from '../../../src/test/d1';
@@ -79,13 +80,37 @@ describe('POST /api/me/preferences', () => {
 		expect(await getEmailPref(db, alice.id)).toBe(false);
 	});
 
-	it('applies both preferences in one call', async () => {
+	it('requires a session for the marketing consent', async () => {
+		const { response } = await post({ marketingEmails: true });
+		expect(response.status).toBe(401);
+		expect(await getMarketingConsent(db, alice.id)).toBe(false);
+	});
+
+	it('records and withdraws the marketing consent', async () => {
+		const cookies = await signIn(db, alice.id);
+
+		await post({ marketingEmails: true }, { cookies });
+		expect(await getMarketingConsent(db, alice.id)).toBe(true);
+
+		await post({ marketingEmails: false }, { cookies });
+		expect(await getMarketingConsent(db, alice.id)).toBe(false);
+	});
+
+	it('keeps activity email and marketing consent independent', async () => {
+		const cookies = await signIn(db, alice.id);
+		await post({ emailNotifications: false, marketingEmails: true }, { cookies });
+		expect(await getEmailPref(db, alice.id)).toBe(false);
+		expect(await getMarketingConsent(db, alice.id)).toBe(true);
+	});
+
+	it('applies every preference in one call', async () => {
 		const { context } = await post(
-			{ showMature: true, emailNotifications: false },
+			{ showMature: true, emailNotifications: false, marketingEmails: true },
 			{ cookies: await signIn(db, alice.id) }
 		);
 		expect(readMaturePref(context.cookies)).toBe(true);
 		expect(await getEmailPref(db, alice.id)).toBe(false);
+		expect(await getMarketingConsent(db, alice.id)).toBe(true);
 	});
 
 	it('rejects a cross-site request', async () => {
@@ -110,13 +135,27 @@ describe('POST /api/me/preferences', () => {
 			expect(
 				(await post({ emailNotifications: value }, { cookies })).response.status
 			).toBe(400);
+			expect(
+				(await post({ marketingEmails: value }, { cookies })).response.status
+			).toBe(400);
 		}
 		expect(await showMature(alice.id)).toBe(0);
 		expect(await getEmailPref(db, alice.id)).toBe(true);
+		expect(await getMarketingConsent(db, alice.id)).toBe(false);
 	});
 
 	it('rejects invalid JSON', async () => {
 		expect((await post('not json')).response.status).toBe(400);
+	});
+
+	it('rejects JSON that is not an object', async () => {
+		// Valid JSON, but indexing it for the preference keys would throw.
+		for (const body of [null, [], 42]) {
+			expect(
+				(await post(body)).response.status,
+				JSON.stringify(body)
+			).toBe(400);
+		}
 	});
 
 	it('never caches the response', async () => {

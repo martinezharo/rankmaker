@@ -323,6 +323,10 @@ export const en = {
 		avatarOptionLabel: 'Avatar {key}',
 		shuffle: 'Shuffle',
 		submit: 'Create my account',
+		marketingLabel: 'Keep me posted about RANKMAKER',
+		marketingDesc:
+			'New features and the best rankings, now and then. Optional, no spam, and you can turn it off any time in your preferences.',
+		marketingPolicy: 'How we handle your data',
 		available: 'Username is available!',
 		notAvailable: 'Username is not available.',
 		checkFailed: 'Could not check username.',
@@ -568,7 +572,7 @@ export const en = {
 			heading: 'Privacy Policy',
 			body: `<p>Welcome to RANKMAKER! This Privacy Policy explains how we collect, use, and disclose information about you when you use our website and services (collectively, the "Service"). By using the Service, you agree to the terms of this Privacy Policy.</p>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. Information We Collect</h2><p class="mb-3">We may collect the following information:</p><ul class="list-disc pl-5 space-y-2"><li><strong class="text-text-primary">Personal Information:</strong> Your email address, username, and any other details you provide when creating an account.</li><li><strong class="text-text-primary">Usage Information:</strong> Pages you visit, time spent on pages, interactions with the Service.</li><li><strong class="text-text-primary">Device Information:</strong> IP address, browser type, device identifiers, and operating system.</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. How We Use Your Information</h2><p class="mb-3">We use your information to:</p><ul class="list-disc pl-5 space-y-2"><li>Provide, maintain, and improve the Service.</li><li>Communicate with you.</li><li>Ensure security and prevent fraud.</li><li>Analyze usage and improve user experience.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. How We Use Your Information</h2><p class="mb-3">We use your information to:</p><ul class="list-disc pl-5 space-y-2"><li>Provide, maintain, and improve the Service.</li><li>Communicate with you.</li><li>Ensure security and prevent fraud.</li><li>Analyze usage and improve user experience.</li></ul><p class="mt-3"><strong class="text-text-primary">Marketing emails.</strong> We only email you news about RANKMAKER — new features, notable rankings — if you have explicitly opted in, either with the checkbox shown when you create your account or with the "News and updates" switch on your preferences page. It is off by default, it is separate from the notification emails your own activity triggers, and you can withdraw your consent at any time from that same switch, without affecting anything else in the Service.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Cookies and Tracking Technologies</h2><p>We may use cookies and similar technologies to improve functionality and performance. You can manage your cookie preferences through your browser settings.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. Sharing of Information</h2><p class="mb-3">We do not sell your personal data. We may share information with:</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>Service providers (e.g., hosting, analytics, advertising).</li><li>Authorities if required by law.</li></ul><p>Specifically, we may share your data with:</p><ul class="list-disc pl-5 space-y-2 mt-2"><li><strong>Hostinger:</strong> Our website hosting provider.</li><li><strong>Google (Analytics, Ads):</strong> We use Google Analytics to monitor and analyze web traffic and Google Ads for advertising purposes.</li></ul></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. Data Retention</h2><p>We retain your data as long as necessary to provide the Service and comply with legal obligations.</p></section>
@@ -633,11 +637,16 @@ export const en = {
 		matureDesc:
 			'Templates flagged as adult content are hidden from the home page, search, categories and profiles. Turn this on to see them everywhere.',
 		matureToggle: 'Toggle mature content',
-		notificationsHeading: 'Notifications',
-		emailPrefHeading: 'Email notifications',
+		emailHeading: 'Email',
+		emailPrefHeading: 'Activity notifications',
 		emailPrefDesc: 'Email me about comments on my templates and replies to my comments.',
 		emailPrefToggle: 'Toggle notification emails',
-		emailPrefLoginHint: 'Log in to choose whether we email you about activity.',
+		emailPrefLoginHint: 'Log in to choose which emails we send you.',
+		marketingHeading: 'News and updates',
+		marketingDesc:
+			'Email me now and then about new features and the best rankings on RANKMAKER. No spam, and you can turn this off whenever you like.',
+		marketingToggle: 'Toggle news emails',
+		marketingPolicy: 'How we handle your data',
 		saveError: "Couldn't save your preference. Try again.",
 	},
 	mature: {
