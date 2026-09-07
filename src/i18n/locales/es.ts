@@ -304,6 +304,10 @@ export const es: LocaleDict = {
 		avatarOptionLabel: 'Avatar {key}',
 		shuffle: 'Mezclar',
 		submit: 'Crear mi cuenta',
+		marketingLabel: 'Quiero enterarme de las novedades de RANKMAKER',
+		marketingDesc:
+			'Nuevas funciones y los mejores rankings, de vez en cuando. Es opcional, sin spam, y puedes desactivarlo cuando quieras en tus preferencias.',
+		marketingPolicy: 'Cómo tratamos tus datos',
 		available: '¡El nombre de usuario está disponible!',
 		notAvailable: 'El nombre de usuario no está disponible.',
 		checkFailed: 'No se pudo comprobar el nombre de usuario.',
@@ -535,7 +539,7 @@ export const es: LocaleDict = {
 			heading: 'Política de privacidad',
 			body: `<p>¡Bienvenido a RANKMAKER! Esta Política de Privacidad explica cómo recopilamos, usamos y divulgamos información sobre ti cuando utilizas nuestro sitio web y servicios (conjuntamente, el «Servicio»). Al usar el Servicio, aceptas los términos de esta Política de Privacidad.</p>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. Información que recopilamos</h2><p class="mb-3">Podemos recopilar la siguiente información:</p><ul class="list-disc pl-5 space-y-2"><li><strong class="text-text-primary">Información personal:</strong> Tu dirección de correo electrónico, nombre de usuario y cualquier otro dato que proporciones al crear una cuenta.</li><li><strong class="text-text-primary">Información de uso:</strong> Páginas que visitas, tiempo que pasas en las páginas e interacciones con el Servicio.</li><li><strong class="text-text-primary">Información del dispositivo:</strong> Dirección IP, tipo de navegador, identificadores del dispositivo y sistema operativo.</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Cómo utilizamos tu información</h2><p class="mb-3">Utilizamos tu información para:</p><ul class="list-disc pl-5 space-y-2"><li>Prestar, mantener y mejorar el Servicio.</li><li>Comunicarnos contigo.</li><li>Garantizar la seguridad y prevenir el fraude.</li><li>Analizar el uso y mejorar la experiencia del usuario.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Cómo utilizamos tu información</h2><p class="mb-3">Utilizamos tu información para:</p><ul class="list-disc pl-5 space-y-2"><li>Prestar, mantener y mejorar el Servicio.</li><li>Comunicarnos contigo.</li><li>Garantizar la seguridad y prevenir el fraude.</li><li>Analizar el uso y mejorar la experiencia del usuario.</li></ul><p class="mt-3"><strong class="text-text-primary">Correos comerciales.</strong> Solo te enviamos novedades sobre RANKMAKER —nuevas funciones, rankings destacados— si nos has dado tu consentimiento expreso, ya sea con la casilla que aparece al crear la cuenta o con el interruptor «Novedades» de tu página de preferencias. Está desactivado por defecto, es independiente de los correos de notificación que genera tu propia actividad y puedes retirar tu consentimiento en cualquier momento desde ese mismo interruptor, sin que afecte al resto del Servicio.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Cookies y tecnologías de seguimiento</h2><p>Podemos utilizar cookies y tecnologías similares para mejorar la funcionalidad y el rendimiento. Puedes gestionar tus preferencias de cookies a través de la configuración de tu navegador.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. Divulgación de información</h2><p class="mb-3">No vendemos tus datos personales. Podemos compartir información con:</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>Proveedores de servicios (por ejemplo, alojamiento, análisis, publicidad).</li><li>Las autoridades cuando la ley lo exija.</li></ul><p>En concreto, podemos compartir tus datos con:</p><ul class="list-disc pl-5 space-y-2 mt-2"><li><strong>Hostinger:</strong> Nuestro proveedor de alojamiento web.</li><li><strong>Google (Analytics, Ads):</strong> Utilizamos Google Analytics para supervisar y analizar el tráfico web, y Google Ads para publicidad.</li></ul></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. Retención de datos</h2><p>Conservamos tus datos durante el tiempo necesario para prestar el Servicio y cumplir con las obligaciones legales.</p></section>
@@ -600,11 +604,16 @@ export const es: LocaleDict = {
 		matureDesc:
 			'Las plantillas marcadas como contenido adulto no aparecen en la portada, la búsqueda, las categorías ni los perfiles. Actívalo para verlas en todas partes.',
 		matureToggle: 'Activar/desactivar contenido adulto',
-		notificationsHeading: 'Notificaciones',
-		emailPrefHeading: 'Notificaciones por correo',
+		emailHeading: 'Correo',
+		emailPrefHeading: 'Notificaciones de actividad',
 		emailPrefDesc: 'Envíame correos sobre comentarios en mis plantillas y respuestas a mis comentarios.',
 		emailPrefToggle: 'Activar/desactivar notificaciones por correo',
-		emailPrefLoginHint: 'Inicia sesión para elegir si quieres recibir correos sobre la actividad.',
+		emailPrefLoginHint: 'Inicia sesión para elegir qué correos quieres recibir.',
+		marketingHeading: 'Novedades',
+		marketingDesc:
+			'Envíame de vez en cuando un correo sobre nuevas funciones y los mejores rankings de RANKMAKER. Sin spam, y puedes desactivarlo cuando quieras.',
+		marketingToggle: 'Activar correos de novedades',
+		marketingPolicy: 'Cómo tratamos tus datos',
 		saveError: 'No se pudo guardar tu preferencia. Inténtalo de nuevo.',
 	},
 	mature: {

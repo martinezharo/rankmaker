@@ -8,7 +8,8 @@ import {
     SELECTABLE_AVATAR_KEYS,
     randomAvatarKey,
 } from "../lib/avatars";
-import { defaultLocale, useTranslations } from "../i18n/server";
+import Checkbox from "../components/ui/Checkbox.astro";
+import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
 import { getEnv } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
@@ -133,6 +134,24 @@ Astro.response.headers.set("Cache-Control", "no-store");
                 </div>
             </div>
 
+            <!-- Marketing opt-in -->
+            <div class="rounded-xl bg-surface border border-border p-4">
+                <Checkbox
+                    id="marketing-consent"
+                    label={t("signup.marketingLabel")}
+                >
+                    {t("signup.marketingDesc")}{" "}
+                    <a
+                        href={localizePath("/privacy-policy", locale)}
+                        target="_blank"
+                        rel="noopener"
+                        class="text-primary hover:underline font-medium"
+                    >
+                        {t("signup.marketingPolicy")}
+                    </a>
+                </Checkbox>
+            </div>
+
             <!-- Submit -->
             <div>
                 <p
@@ -172,6 +191,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
         ) as HTMLButtonElement;
         const grid = document.getElementById("avatar-grid")!;
         const shuffle = document.getElementById("avatar-shuffle")!;
+        const marketing = document.getElementById(
+            "marketing-consent",
+        ) as HTMLInputElement;
 
         const options = Array.from(
             grid.querySelectorAll<HTMLButtonElement>(".avatar-option"),
@@ -268,6 +290,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                     body: JSON.stringify({
                         username: input.value.trim(),
                         avatar: selectedAvatar,
+                        marketingConsent: marketing.checked,
                     }),
                 });
                 const data = await res.json();

@@ -13,6 +13,7 @@ import {
     verifyPayload,
 } from '../../../lib/auth';
 import { isValidAvatarKey } from '../../../lib/avatars';
+import { setMarketingConsent } from '../../../lib/marketing-consent';
 import { getEnv } from '../../../lib/runtime';
 
 type SignupPayload = {
@@ -25,6 +26,10 @@ type SignupPayload = {
 
 /**
  * Final signup step: creates the user row (username is permanent) + session.
+ *
+ * `marketingConsent` is the opt-in checkbox on /signup. It is separate from the
+ * notification email the account gets by default: see
+ * src/lib/marketing-consent.ts for why the two purposes cannot share a flag.
  */
 export const POST: APIRoute = async (context) => {
     const env = getEnv();
@@ -40,7 +45,11 @@ export const POST: APIRoute = async (context) => {
         return json({ error: 'Signup session expired. Log in again.' }, 401);
     }
 
-    let body: { username?: unknown; avatar?: unknown };
+    let body: {
+        username?: unknown;
+        avatar?: unknown;
+        marketingConsent?: unknown;
+    };
     try {
         body = await context.request.json();
     } catch {
@@ -53,6 +62,8 @@ export const POST: APIRoute = async (context) => {
     if (!isValidAvatarKey(body.avatar)) {
         return json({ error: 'Invalid avatar.' }, 400);
     }
+    // Anything but an explicit `true` is "no consent" — never infer one.
+    const marketingConsent = body.marketingConsent === true;
 
     const db = env.DB;
     if (await isUsernameTaken(db, username as string)) {
@@ -77,6 +88,13 @@ export const POST: APIRoute = async (context) => {
         // UNIQUE constraint race: username or github_id grabbed concurrently.
         console.error('Signup insert error:', error);
         return json({ error: 'Username is already taken.' }, 409);
+    }
+
+    if (marketingConsent) {
+        // A second statement rather than more columns on the INSERT, so the
+        // consent columns stay owned by one module. Failing here would leave
+        // an account without the opt-in, which is the safe direction.
+        await setMarketingConsent(db, userId, true, 'signup');
     }
 
     const sessionId = await createSession(db, userId);

@@ -275,6 +275,10 @@ export const zh: LocaleDict = {
 		avatarOptionLabel: '头像 {key}',
 		shuffle: '随机',
 		submit: '创建我的账号',
+		marketingLabel: '让我了解 RANKMAKER 的最新动态',
+		marketingDesc:
+			'偶尔发送新功能和精彩排行榜。可选，绝无垃圾邮件，随时可在偏好设置中关闭。',
+		marketingPolicy: '我们如何处理你的数据',
 		available: '用户名可用！',
 		notAvailable: '用户名不可用。',
 		checkFailed: '无法检查用户名。',
@@ -479,7 +483,7 @@ export const zh: LocaleDict = {
 			heading: '隐私政策',
 			body: `<p>欢迎使用 RANKMAKER！本隐私政策解释了当您使用我们的网站和服务（统称"服务"）时，我们如何收集、使用和披露有关您的信息。使用服务即表示您同意本隐私政策的条款。</p>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. 我们收集的信息</h2><p class="mb-3">我们可能收集以下信息：</p><ul class="list-disc pl-5 space-y-2"><li><strong class="text-text-primary">个人信息：</strong>您的电子邮件地址、用户名及您在创建账号时提供的其他详细信息。</li><li><strong class="text-text-primary">使用信息：</strong>您访问的页面、在页面上花费的时间、与服务的互动。</li><li><strong class="text-text-primary">设备信息：</strong>IP 地址、浏览器类型、设备标识符及操作系统。</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. 我们如何使用您的信息</h2><p class="mb-3">我们使用您的信息来：</p><ul class="list-disc pl-5 space-y-2"><li>提供、维护和改进服务。</li><li>与您沟通。</li><li>确保安全并防止欺诈。</li><li>分析使用情况并改善用户体验。</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. 我们如何使用您的信息</h2><p class="mb-3">我们使用您的信息来：</p><ul class="list-disc pl-5 space-y-2"><li>提供、维护和改进服务。</li><li>与您沟通。</li><li>确保安全并防止欺诈。</li><li>分析使用情况并改善用户体验。</li></ul><p class="mt-3"><strong class="text-text-primary">营销邮件。</strong>只有在您明确同意后，我们才会向您发送 RANKMAKER 的动态（新功能、精彩排行榜）——同意方式为创建账号时勾选相应选项，或在偏好设置页面开启“最新动态”开关。该开关默认关闭，与您自身活动触发的通知邮件相互独立，您可以随时通过同一开关撤回同意，这不会影响服务的其他部分。</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Cookie 和跟踪技术</h2><p>我们可能使用 Cookie 和类似技术来改善功能和性能。您可以通过浏览器设置管理您的 Cookie 偏好。</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. 信息共享</h2><p class="mb-3">我们不出售您的个人数据。我们可能与以下方共享信息：</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>服务提供商（如托管、分析、广告）。</li><li>法律要求时的相关机构。</li></ul><p>具体而言，我们可能与以下方共享您的数据：</p><ul class="list-disc pl-5 space-y-2 mt-2"><li><strong>Hostinger：</strong>我们的网站托管提供商。</li><li><strong>Google（Analytics、Ads）：</strong>我们使用 Google Analytics 监控和分析网络流量，使用 Google Ads 进行广告投放。</li></ul></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. 数据保留</h2><p>我们在提供服务和履行法律义务所必需的时间内保留您的数据。</p></section>
@@ -543,11 +547,16 @@ export const zh: LocaleDict = {
 		matureDesc:
 			'标记为成人内容的模板不会出现在首页、搜索、分类和个人主页中。开启后即可在各处看到它们。',
 		matureToggle: '切换成人内容',
-		notificationsHeading: '通知',
-		emailPrefHeading: '电子邮件通知',
+		emailHeading: '邮件',
+		emailPrefHeading: '活动通知',
 		emailPrefDesc: '通过电子邮件通知我关于我模板上的评论和对我评论的回复。',
 		emailPrefToggle: '切换通知邮件',
-		emailPrefLoginHint: '登录后可选择是否接收活动相关的邮件。',
+		emailPrefLoginHint: '登录后可选择希望收到哪些邮件。',
+		marketingHeading: '最新动态',
+		marketingDesc:
+			'偶尔向我发送关于新功能和 RANKMAKER 精彩排行榜的邮件。绝无垃圾邮件，随时可以关闭。',
+		marketingToggle: '切换动态邮件',
+		marketingPolicy: '我们如何处理你的数据',
 		saveError: '无法保存你的偏好设置。请重试。',
 	},
 	mature: {

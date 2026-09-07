@@ -282,6 +282,10 @@ export const fr: LocaleDict = {
 		avatarOptionLabel: 'Avatar {key}',
 		shuffle: 'Mélanger',
 		submit: 'Créer mon compte',
+		marketingLabel: 'Tenez-moi au courant des nouveautés de RANKMAKER',
+		marketingDesc:
+			'Les nouveautés et les meilleurs classements, de temps en temps. Facultatif, sans spam, et désactivable à tout moment dans vos préférences.',
+		marketingPolicy: 'Comment nous traitons vos données',
 		available: "Le nom d'utilisateur est disponible !",
 		notAvailable: "Le nom d'utilisateur n'est pas disponible.",
 		checkFailed: "Impossible de vérifier le nom d'utilisateur.",
@@ -493,7 +497,7 @@ export const fr: LocaleDict = {
 			heading: 'Politique de confidentialité',
 			body: `<p>Bienvenue sur RANKMAKER ! Cette Politique de confidentialité explique comment nous collectons, utilisons et divulguons des informations vous concernant lorsque vous utilisez notre site web et nos services (collectivement, le « Service »). En utilisant le Service, vous acceptez les termes de cette Politique de confidentialité.</p>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. Informations que nous collectons</h2><p class="mb-3">Nous pouvons collecter les informations suivantes :</p><ul class="list-disc pl-5 space-y-2"><li><strong class="text-text-primary">Informations personnelles :</strong> Votre adresse e-mail, nom d'utilisateur et tout autre détail que vous fournissez lors de la création d'un compte.</li><li><strong class="text-text-primary">Informations d'utilisation :</strong> Pages visitées, temps passé sur les pages, interactions avec le Service.</li><li><strong class="text-text-primary">Informations sur l'appareil :</strong> Adresse IP, type de navigateur, identifiants d'appareil et système d'exploitation.</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Comment nous utilisons vos informations</h2><p class="mb-3">Nous utilisons vos informations pour :</p><ul class="list-disc pl-5 space-y-2"><li>Fournir, maintenir et améliorer le Service.</li><li>Communiquer avec vous.</li><li>Assurer la sécurité et prévenir la fraude.</li><li>Analyser l'utilisation et améliorer l'expérience utilisateur.</li></ul></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. Comment nous utilisons vos informations</h2><p class="mb-3">Nous utilisons vos informations pour :</p><ul class="list-disc pl-5 space-y-2"><li>Fournir, maintenir et améliorer le Service.</li><li>Communiquer avec vous.</li><li>Assurer la sécurité et prévenir la fraude.</li><li>Analyser l'utilisation et améliorer l'expérience utilisateur.</li></ul><p class="mt-3"><strong class="text-text-primary">E-mails marketing.</strong> Nous ne vous envoyons des actualités sur RANKMAKER — nouveautés, classements marquants — que si vous y avez expressément consenti, via la case affichée à la création de votre compte ou via l'interrupteur « Actualités » de votre page de préférences. Il est désactivé par défaut, il est distinct des e-mails de notification déclenchés par votre propre activité, et vous pouvez retirer votre consentement à tout moment depuis ce même interrupteur, sans conséquence sur le reste du Service.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Cookies et technologies de suivi</h2><p>Nous pouvons utiliser des cookies et des technologies similaires pour améliorer les fonctionnalités et les performances. Vous pouvez gérer vos préférences en matière de cookies via les paramètres de votre navigateur.</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. Partage des informations</h2><p class="mb-3">Nous ne vendons pas vos données personnelles. Nous pouvons partager des informations avec :</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>Des prestataires de services (hébergement, analyse, publicité, etc.).</li><li>Les autorités si la loi l'exige.</li></ul><p>Plus précisément, nous pouvons partager vos données avec :</p><ul class="list-disc pl-5 space-y-2 mt-2"><li><strong>Hostinger :</strong> Notre fournisseur d'hébergement web.</li><li><strong>Google (Analytics, Ads) :</strong> Nous utilisons Google Analytics pour surveiller et analyser le trafic web, et Google Ads à des fins publicitaires.</li></ul></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. Conservation des données</h2><p>Nous conservons vos données aussi longtemps que nécessaire pour fournir le Service et respecter nos obligations légales.</p></section>
@@ -558,11 +562,16 @@ export const fr: LocaleDict = {
 		matureDesc:
 			"Les modèles signalés comme contenu pour adultes sont masqués de l'accueil, de la recherche, des catégories et des profils. Activez cette option pour les voir partout.",
 		matureToggle: 'Activer/désactiver le contenu pour adultes',
-		notificationsHeading: 'Notifications',
-		emailPrefHeading: 'Notifications par e-mail',
+		emailHeading: 'E-mail',
+		emailPrefHeading: 'Notifications d\'activité',
 		emailPrefDesc: 'Envoyez-moi des e-mails concernant les commentaires sur mes modèles et les réponses à mes commentaires.',
 		emailPrefToggle: 'Activer/désactiver les notifications par e-mail',
-		emailPrefLoginHint: "Connectez-vous pour choisir si nous vous envoyons des e-mails sur l'activité.",
+		emailPrefLoginHint: 'Connectez-vous pour choisir les e-mails que nous vous envoyons.',
+		marketingHeading: 'Actualités',
+		marketingDesc:
+			'Envoyez-moi de temps en temps un e-mail sur les nouveautés et les meilleurs classements de RANKMAKER. Pas de spam, et vous pouvez le désactiver quand vous voulez.',
+		marketingToggle: 'Activer les e-mails d\'actualités',
+		marketingPolicy: 'Comment nous traitons vos données',
 		saveError: 'Impossible d’enregistrer votre préférence. Réessayez.',
 	},
 	mature: {
