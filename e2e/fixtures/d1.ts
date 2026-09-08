@@ -3,8 +3,8 @@
  *
  * The account flows — signing in, creating a template, commenting, following —
  * cannot be reached from a browser alone: a session only exists after a real
- * GitHub OAuth round-trip, which the Worker performs server-side and which no
- * browser-level route interception can stand in for.
+ * OAuth round-trip with a sign-in provider, which the Worker performs
+ * server-side and which no browser-level route interception can stand in for.
  *
  * So the tests write the session the OAuth callback would have written, into
  * the same miniflare-backed SQLite file the dev server reads. Nothing is

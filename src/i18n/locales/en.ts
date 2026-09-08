@@ -269,7 +269,7 @@ export const en = {
 		bannerTitle: 'Saved on this device',
 		bannerBody:
 			'This template lives in this browser only. Sign in and it moves to your account — with the rankings you played on it.',
-		bannerCta: 'Sign in with GitHub',
+		bannerCta: 'Sign in',
 		missingTitle: "This template isn't on this device",
 		missingBody:
 			'Guest templates are stored in the browser that created them, so it may have been created elsewhere, already moved to an account, or cleared with your browsing data.',
@@ -335,19 +335,19 @@ export const en = {
 	},
 	authModal: {
 		title: 'Sign in to RANKMAKER',
-		subtitle: 'Continue with GitHub — free, no password, takes five seconds.',
+		subtitle: 'Free, no password, takes five seconds.',
 		benefitPublic: 'Publish public rankings anyone can play',
 		benefitImages: 'Add cover and option images',
 		benefitSocial: 'Save, comment and vote on rankings',
-		continueWithGithub: 'Continue with GitHub',
+		continueWith: 'Continue with {provider}',
 		maybeLater: 'Maybe later',
 	},
 	form: {
 		details: 'Details',
 		guestBannerTitle: 'Creating as a guest',
 		guestBannerBody:
-			'Your template is saved in this browser and you can play it right away — private and without images. Sign in with GitHub to move it to your account, go public and add photos.',
-		guestBannerCta: 'Sign in with GitHub',
+			'Your template is saved in this browser and you can play it right away — private and without images. Sign in to move it to your account, go public and add photos.',
+		guestBannerCta: 'Sign in',
 		titleLabel: 'Title',
 		titlePlaceholder: 'Best Pizza Toppings Ranking',
 		descriptionLabel: 'Description',
@@ -372,7 +372,7 @@ export const en = {
 		uploadCta: 'Click or drop an image to upload',
 		uploadHint: 'JPG, PNG, WebP, AVIF or GIF · up to 10 MB',
 		lockedCoverCta: 'Sign in to add a cover image',
-		lockedCoverHint: 'Free with a GitHub account',
+		lockedCoverHint: 'Free with an account',
 		uploading: 'Uploading…',
 		replaceImage: 'Replace image',
 		removeImage: 'Remove image',

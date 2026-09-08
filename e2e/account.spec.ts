@@ -2,7 +2,7 @@
  * The signed-in flows: creating a template, saving, following and commenting.
  *
  * Everything runs against the real app and the real local D1. Only the session
- * is seeded — standing in for the GitHub OAuth round-trip, which the Worker
+ * is seeded — standing in for the provider OAuth round-trip, which the Worker
  * performs server-side and which a browser cannot stand in for (see
  * e2e/fixtures/d1.ts). Every authorization check the app makes runs for real.
  */

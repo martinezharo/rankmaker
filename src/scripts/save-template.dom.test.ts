@@ -21,7 +21,7 @@ function page() {
 			<i class="fa-regular fa-bookmark"></i>
 		</button>
 		<div id="login-modal" class="hidden">
-			<a id="login-modal-continue" href="#">Continue</a>
+			<a data-login-provider="google" href="#">Continue</a>
 		</div>
 	`);
 }

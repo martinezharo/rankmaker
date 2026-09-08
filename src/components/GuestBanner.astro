@@ -4,9 +4,9 @@
  * form, a guest template page, the guest view of /me). One component so the
  * treatment — gradient card, icon tile, gold CTA — stays identical everywhere.
  *
- * Pass `href` for a direct GitHub redirect (the create form does: the OAuth
- * hop has to be a full navigation). Without it the CTA is a button that opens
- * the shared <LoginModal> mounted in Layout.
+ * Pass `href` for a direct link to /api/auth/login (the create form does:
+ * the OAuth hop has to be a full navigation). Without it the CTA is a button
+ * that opens the shared <LoginModal> mounted in Layout.
  */
 interface Props {
     /** Font Awesome classes for the icon tile, e.g. "fa-solid fa-user-lock". */
@@ -44,7 +44,7 @@ const { icon, title, body, cta, href, class: className } = Astro.props;
                 data-astro-reload
                 class="auth-login-link shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
             >
-                <i class="fa-brands fa-github" />
+                <i class="fa-solid fa-right-to-bracket" />
                 {cta}
             </a>
         ) : (
@@ -52,7 +52,7 @@ const { icon, title, body, cta, href, class: className } = Astro.props;
                 type="button"
                 class="guest-banner-login shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-all"
             >
-                <i class="fa-brands fa-github" />
+                <i class="fa-solid fa-right-to-bracket" />
                 {cta}
             </button>
         )

@@ -3,6 +3,7 @@
  * OAuth state / signup handoff, and shared validation rules.
  */
 import type { AstroCookies } from 'astro';
+import { isProviderId, type ProviderId } from './oauth-providers';
 
 export const SESSION_COOKIE = 'rm_session';
 export const SIGNUP_COOKIE = 'rm_signup';
@@ -202,6 +203,43 @@ export async function verifyPayload<T extends { exp?: number }>(
     }
 }
 
+// ── Signup handoff ──────────────────────────────────────────────────────────
+
+/**
+ * What /callback puts in the signed SIGNUP_COOKIE when a provider account has
+ * no user yet, and what /signup and /complete-signup read back out. No user
+ * row exists while this is in flight — the account is created only once a
+ * username has been picked.
+ */
+export type SignupPayload = {
+    provider: ProviderId;
+    /** Stable account id at the provider — see src/lib/oauth-providers.ts. */
+    accountId: string;
+    /** Username seed for the prefill on /signup. */
+    login: string;
+    email?: string | null;
+    /** Whether the provider vouched for that address — see migration 0020. */
+    emailVerified?: boolean;
+    next: string;
+    exp: number;
+};
+
+/**
+ * A handoff is only usable if it names a provider we still support and carries
+ * an account id. This also retires cookies minted before the signup handoff
+ * spoke providers: their owner simply signs in again.
+ */
+export function isSignupPayload(value: unknown): value is SignupPayload {
+    const payload = value as SignupPayload | null;
+    return (
+        !!payload &&
+        isProviderId(payload.provider) &&
+        typeof payload.accountId === 'string' &&
+        payload.accountId.length > 0 &&
+        typeof payload.login === 'string'
+    );
+}
+
 // ── CSRF / input rules ───────────────────────────────────────────────────────
 
 /**
@@ -217,6 +255,21 @@ export function checkOrigin(request: Request): boolean {
     } catch {
         return false;
     }
+}
+
+/**
+ * Sanitise a post-login return path. Only same-site relative paths survive, so
+ * `?next=` can never be turned into an open redirect through the OAuth hop.
+ *
+ * Backslashes are rejected too: browsers normalise "\" to "/" in a `Location`
+ * header, so "/\evil.com" would resolve to the protocol-relative "//evil.com".
+ */
+export function safeNextPath(value: string | null | undefined): string {
+    const next = value || '/';
+    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) {
+        return '/';
+    }
+    return next;
 }
 
 export const USERNAME_RE = /^[a-zA-Z0-9][a-zA-Z0-9_-]{1,28}[a-zA-Z0-9]$/;

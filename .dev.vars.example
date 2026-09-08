@@ -5,6 +5,8 @@
 # Astro load `.dev.vars` automatically when running `pnpm dev` / `pnpm preview`.
 #
 # In PRODUCTION these are NOT read from a file — set each one as a Worker secret:
+#   npx wrangler secret put GOOGLE_CLIENT_ID
+#   npx wrangler secret put GOOGLE_CLIENT_SECRET
 #   npx wrangler secret put GITHUB_CLIENT_ID
 #   npx wrangler secret put GITHUB_CLIENT_SECRET
 #   npx wrangler secret put SESSION_SECRET
@@ -16,7 +18,23 @@
 # wrangler.jsonc, not here.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ── GitHub OAuth (sign in) ───────────────────────────────────────────────────
+# ── Sign in ──────────────────────────────────────────────────────────────────
+# Every provider shares one redirect URI:
+#   local: http://localhost:4321/api/auth/callback
+#   prod:  https://rankmaker.net/api/auth/callback
+# A provider whose two values are unset is simply not offered in the login
+# modal, so a checkout with only one of them still signs people in.
+
+# ── Google OAuth (primary provider) ──────────────────────────────────────────
+# https://console.cloud.google.com/apis/credentials → Create credentials →
+# OAuth client ID → Web application. Add BOTH redirect URIs above under
+# "Authorized redirect URIs", and the site origins under "Authorized JavaScript
+# origins". The consent screen needs the `openid` and `email` scopes only —
+# they are non-sensitive, so no Google verification review is required.
+GOOGLE_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+
+# ── GitHub OAuth (secondary provider) ────────────────────────────────────────
 # Create an OAuth App at https://github.com/settings/developers
 # Authorization callback URL (local): http://localhost:4321/api/auth/callback
 # The app requests the `user:email` scope so we can email notifications.

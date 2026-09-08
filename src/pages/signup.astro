@@ -2,7 +2,13 @@
 export const prerender = false;
 
 import Layout from "../layouts/Layout.astro";
-import { SIGNUP_COOKIE, USERNAME_RE, verifyPayload } from "../lib/auth";
+import {
+    SIGNUP_COOKIE,
+    USERNAME_RE,
+    isSignupPayload,
+    verifyPayload,
+    type SignupPayload,
+} from "../lib/auth";
 import {
     AVATAR_PRESETS,
     SELECTABLE_AVATAR_KEYS,
@@ -15,17 +21,15 @@ import { getEnv } from "../lib/runtime";
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
 
-type SignupPayload = { ghId: number; ghLogin: string; next: string; exp: number };
-
 const env = getEnv();
 const signup = await verifyPayload<SignupPayload>(
     env.SESSION_SECRET,
     Astro.cookies.get(SIGNUP_COOKIE)?.value,
 );
-if (!signup) return Astro.redirect("/", 302);
+if (!isSignupPayload(signup)) return Astro.redirect("/", 302);
 
-// Prefill with the GitHub login, sanitized to our username rules.
-let prefill = signup.ghLogin
+// Prefill with whatever the provider calls them, sanitized to our rules.
+let prefill = signup.login
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 30)
     .replace(/^[_-]+|[_-]+$/g, "");

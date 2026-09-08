@@ -93,7 +93,7 @@ pnpm dev
 
 The dev server will be available at `http://localhost:4321`. Local Cloudflare bindings (D1, KV, Workers AI) are emulated automatically via miniflare.
 
-If your change touches user accounts, user-created templates, or the times-ranked counters, you'll also need the local D1 migrations and a dev GitHub OAuth App — follow the [Database & Auth setup](README.md#database--auth-setup-user-accounts--user-templates) section in the README.
+If your change touches user accounts, user-created templates, or the times-ranked counters, you'll also need the local D1 migrations and a dev OAuth client for at least one sign-in provider (Google or GitHub) — follow the [Database & Auth setup](README.md#database--auth-setup-user-accounts--user-templates) section in the README.
 
 ### Available Commands
 
@@ -171,11 +171,11 @@ no session, someone else's data, and the happy path.
 
 ### Writing an end-to-end test that needs an account
 
-A session only exists after a GitHub OAuth round-trip, which the Worker
-performs server-side — no browser-level interception can stand in for it. So
-`e2e/fixtures/` seeds the session that the OAuth callback *would* have written,
-straight into the miniflare-backed D1 the dev server reads. Nothing else is
-faked: every authorization check then runs for real.
+A session only exists after an OAuth round-trip with a sign-in provider, which
+the Worker performs server-side — no browser-level interception can stand in
+for it. So `e2e/fixtures/` seeds the session that the OAuth callback *would*
+have written, straight into the miniflare-backed D1 the dev server reads.
+Nothing else is faked: every authorization check then runs for real.
 
 ```ts
 import { expect, test } from './fixtures/test';

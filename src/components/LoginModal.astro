@@ -1,13 +1,22 @@
 ---
-// LoginModal.astro — global "sign in with GitHub" dialog, mounted once by
-// Layout.astro. Every login-gated action in the app (header nav, save, vote,
-// comment, follow, guest template creation) opens this instead of hard
-// navigating to GitHub — see src/scripts/auth-prompt.ts. The "Continue with
-// GitHub" link is the only element that actually leaves the page.
+// LoginModal.astro — the global sign-in dialog, mounted once by Layout.astro.
+// Every login-gated action in the app (header nav, save, vote, comment,
+// follow, guest template creation) opens this instead of hard navigating to a
+// provider — see src/scripts/auth-prompt.ts. The provider links are the only
+// elements that actually leave the page.
+//
+// The buttons are rendered from the provider registry rather than hardcoded,
+// so this file needs no edit when a provider is added, and a provider whose
+// credentials this deploy lacks is not offered at all.
 import { defaultLocale, useTranslations } from "../i18n/server";
+import { configuredProviders } from "../lib/oauth-providers";
+import { getEnv } from "../lib/runtime";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
+
+// First is the primary: gold CTA, and where focus lands when the modal opens.
+const [primary, ...alternatives] = configuredProviders(getEnv());
 
 const BENEFITS = [
     { icon: "fa-globe", text: t("authModal.benefitPublic") },
@@ -82,15 +91,32 @@ const BENEFITS = [
                 }
             </ul>
 
-            <a
-                id="login-modal-continue"
-                href="/api/auth/login"
-                data-astro-reload
-                class="flex items-center justify-center gap-2.5 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
-            >
-                <i class="fa-brands fa-github text-base"></i>
-                {t("authModal.continueWithGithub")}
-            </a>
+            <div class="space-y-2.5">
+                <a
+                    href={`/api/auth/login?provider=${primary.id}`}
+                    data-login-provider={primary.id}
+                    data-astro-reload
+                    class="flex items-center justify-center gap-2.5 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
+                >
+                    <i class={`${primary.icon} text-base`}></i>
+                    {t("authModal.continueWith", { provider: primary.label })}
+                </a>
+                {
+                    alternatives.map((provider) => (
+                        <a
+                            href={`/api/auth/login?provider=${provider.id}`}
+                            data-login-provider={provider.id}
+                            data-astro-reload
+                            class="flex items-center justify-center gap-2.5 w-full px-5 py-3 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-primary bg-surface border border-border hover:border-border-hover transition-all"
+                        >
+                            <i class={`${provider.icon} text-base`} />
+                            {t("authModal.continueWith", {
+                                provider: provider.label,
+                            })}
+                        </a>
+                    ))
+                }
+            </div>
 
             <button
                 type="button"

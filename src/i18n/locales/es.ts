@@ -251,7 +251,7 @@ export const es: LocaleDict = {
 		bannerTitle: 'Guardada en este dispositivo',
 		bannerBody:
 			'Esta plantilla solo existe en este navegador. Si inicias sesión pasará a tu cuenta, junto con los rankings que hayas jugado con ella.',
-		bannerCta: 'Iniciar sesión con GitHub',
+		bannerCta: 'Iniciar sesión',
 		missingTitle: 'Esta plantilla no está en este dispositivo',
 		missingBody:
 			'Las plantillas de invitado se guardan en el navegador que las creó, así que puede que la crearas en otro sitio, que ya esté en una cuenta o que se borrara junto con los datos de navegación.',
@@ -316,19 +316,19 @@ export const es: LocaleDict = {
 	},
 	authModal: {
 		title: 'Inicia sesión en RANKMAKER',
-		subtitle: 'Continúa con GitHub — gratis, sin contraseña, en cinco segundos.',
+		subtitle: 'Gratis, sin contraseña, en cinco segundos.',
 		benefitPublic: 'Publica rankings públicos que cualquiera puede jugar',
 		benefitImages: 'Añade imágenes de portada y de opciones',
 		benefitSocial: 'Guarda, comenta y vota rankings',
-		continueWithGithub: 'Continuar con GitHub',
+		continueWith: 'Continuar con {provider}',
 		maybeLater: 'Quizá más tarde',
 	},
 	form: {
 		details: 'Detalles',
 		guestBannerTitle: 'Creando como invitado',
 		guestBannerBody:
-			'Tu plantilla se guarda en este navegador y puedes jugarla al momento: privada y sin imágenes. Inicia sesión con GitHub para pasarla a tu cuenta, hacerla pública y añadir fotos.',
-		guestBannerCta: 'Iniciar sesión con GitHub',
+			'Tu plantilla se guarda en este navegador y puedes jugarla al momento: privada y sin imágenes. Inicia sesión para pasarla a tu cuenta, hacerla pública y añadir fotos.',
+		guestBannerCta: 'Iniciar sesión',
 		titleLabel: 'Título',
 		titlePlaceholder: 'Ranking de los mejores ingredientes para pizza',
 		descriptionLabel: 'Descripción',
@@ -353,7 +353,7 @@ export const es: LocaleDict = {
 		uploadCta: 'Haz clic o arrastra una imagen para subirla',
 		uploadHint: 'JPG, PNG, WebP, AVIF o GIF · hasta 10 MB',
 		lockedCoverCta: 'Inicia sesión para añadir una portada',
-		lockedCoverHint: 'Gratis con una cuenta de GitHub',
+		lockedCoverHint: 'Gratis con una cuenta',
 		uploading: 'Subiendo…',
 		replaceImage: 'Cambiar imagen',
 		removeImage: 'Quitar imagen',
