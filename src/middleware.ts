@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { defaultLocale, isLocale } from './i18n/config';
+import { isBlockedCrawler } from './lib/crawlers';
 
 /**
  * Security headers for all on-demand (SSR) responses — which is every page
@@ -54,6 +55,18 @@ function applySecurityHeaders(response: Response): Response {
  * middleware chain — splitting them would leave prefixed pages without a CSP.
  */
 export const onRequest = defineMiddleware(async (context, next) => {
+	if (isBlockedCrawler(context.request.headers.get('user-agent'))) {
+		return applySecurityHeaders(
+			new Response('Crawler blocked', {
+				status: 403,
+				headers: {
+					'Cache-Control': 'private, no-store',
+					'Content-Type': 'text/plain; charset=utf-8',
+				},
+			})
+		);
+	}
+
 	const { pathname } = context.url;
 	const seg = pathname.split('/')[1];
 
