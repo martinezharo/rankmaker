@@ -22,7 +22,7 @@ function page(slug: string | null = 'best-movies') {
 		</div>
 		<span data-vote-score></span>
 		<div id="login-modal" class="hidden">
-			<a id="login-modal-continue" href="#">Continue</a>
+			<a data-login-provider="google" href="#">Continue</a>
 		</div>
 	`);
 }

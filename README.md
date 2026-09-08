@@ -40,19 +40,23 @@ pnpm dev
 ```
 
 Open <http://localhost:4321>. Official templates and guest-local workflows can
-be explored without an account. To exercise GitHub sign-in and account-backed
+be explored without an account. To exercise sign-in and account-backed
 templates, copy [.dev.vars.example](.dev.vars.example) to `.dev.vars`, set
-`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and `SESSION_SECRET`, then apply
-the local D1 migrations:
+`SESSION_SECRET` and the credentials of at least one sign-in provider
+(`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` /
+`GITHUB_CLIENT_SECRET`), then apply the local D1 migrations:
 
 ```bash
 cp .dev.vars.example .dev.vars
 pnpm run db:migrate:local
 ```
 
-Use `http://localhost:4321/api/auth/callback` as the development GitHub OAuth
-callback URL. Resend is optional in local development; notifications remain
-available in the app when email delivery is not configured.
+Every provider shares one callback URL — use
+`http://localhost:4321/api/auth/callback` in both the Google Cloud console and
+the development GitHub OAuth App. A provider whose credentials are missing is
+simply not offered in the login dialog, so one of the two is enough. Resend is
+optional in local development; notifications remain available in the app when
+email delivery is not configured.
 
 ## Checks and scripts
 

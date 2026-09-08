@@ -1,11 +1,17 @@
 /**
- * The GitHub OAuth handshake: /login → GitHub → /callback → (/signup →
+ * The OAuth handshake: /login → provider → /callback → (/signup →
  * /complete-signup) or a session.
  *
- * GitHub's side is stubbed at `fetch`, which is the whole point: the failure
- * modes worth guarding are ours — an open redirect in `next`, a forged or
- * replayed `state`, a token exchange that fails, and the rule that no user row
- * exists until a username is picked.
+ * Google is the primary provider and GitHub the secondary one, and both go
+ * through the same two routes — so these tests run the shared rules once and
+ * the provider-specific bits (authorize URL, token exchange, profile shape)
+ * per provider.
+ *
+ * The providers' side is stubbed at `fetch`, which is the whole point: the
+ * failure modes worth guarding are ours — an open redirect in `next`, a forged
+ * or replayed `state`, a token exchange that fails, the rule that no user row
+ * exists until a username is picked, and the rule that a second provider only
+ * joins an existing account on a *verified* address.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET as LOGIN } from '../../../src/pages/api/auth/login';
@@ -19,6 +25,7 @@ import {
 	signPayload,
 } from '../../../src/lib/auth';
 import { SELECTABLE_AVATAR_KEYS } from '../../../src/lib/avatars';
+import { findUserIdByIdentity } from '../../../src/lib/identities';
 import { getMarketingConsent } from '../../../src/lib/marketing-consent';
 import { createTestDb, type TestD1 } from '../../../src/test/d1';
 import { apiContext, TEST_ORIGIN, type TestContext } from '../../../src/test/api';
@@ -27,6 +34,8 @@ import { insertUser } from '../../../src/test/factories';
 const SECRET = 'test-session-secret';
 const ENV = {
 	SESSION_SECRET: SECRET,
+	GOOGLE_CLIENT_ID: 'google-client-id',
+	GOOGLE_CLIENT_SECRET: 'google-client-secret',
 	GITHUB_CLIENT_ID: 'client-id',
 	GITHUB_CLIENT_SECRET: 'client-secret',
 };
@@ -47,6 +56,7 @@ function ctx(options: {
 	body?: unknown;
 	cookies?: Record<string, string>;
 	origin?: string | null;
+	env?: Record<string, unknown>;
 }): TestContext {
 	return apiContext({
 		db,
@@ -55,16 +65,32 @@ function ctx(options: {
 		body: options.body,
 		cookies: options.cookies ?? {},
 		origin: options.origin,
-		env: ENV,
+		env: options.env ?? ENV,
 	});
 }
 
-/** GitHub's responses, keyed by URL, with a record of what we asked for. */
-function stubGitHub(overrides: Record<string, unknown> = {}) {
+/** The payload of a signed cookie, without verifying it. */
+function payloadOf(cookieValue: string): Record<string, unknown> {
+	return JSON.parse(
+		Buffer.from(
+			cookieValue.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'),
+			'base64'
+		).toString()
+	);
+}
+
+/** The providers' responses, keyed by URL, with a record of what we asked. */
+function stubProviders(overrides: Record<string, unknown> = {}) {
 	const responses: Record<string, unknown> = {
-		'https://github.com/login/oauth/access_token': {
-			access_token: 'gh-token',
+		// Google
+		'https://oauth2.googleapis.com/token': { access_token: 'google-token' },
+		'https://openidconnect.googleapis.com/v1/userinfo': {
+			sub: '1122334455',
+			email: 'primary@example.test',
+			email_verified: true,
 		},
+		// GitHub
+		'https://github.com/login/oauth/access_token': { access_token: 'gh-token' },
 		'https://api.github.com/user': { id: 4242, login: 'octocat' },
 		'https://api.github.com/user/emails': [
 			{ email: 'unverified@example.test', primary: false, verified: false },
@@ -85,24 +111,85 @@ function stubGitHub(overrides: Record<string, unknown> = {}) {
 }
 
 /** A valid signed state cookie, as /login would have set it. */
-const stateCookie = (state: string, next = '/') =>
-	signPayload(SECRET, { state, next, exp: Date.now() + 600_000 });
+const stateCookie = (
+	state: string,
+	next = '/',
+	/** null omits the field, as cookies minted before providers existed did. */
+	provider: string | null = 'google'
+) =>
+	signPayload(SECRET, {
+		state,
+		next,
+		...(provider ? { provider } : {}),
+		exp: Date.now() + 600_000,
+	});
 
 describe('GET /api/auth/login', () => {
-	it('redirects to GitHub with our client id and callback', async () => {
+	it('sends people to Google, the primary provider, by default', async () => {
 		const response = await LOGIN(ctx({ path: '/api/auth/login' }) as never);
 		expect(response.status).toBe(302);
 
 		const location = new URL(response.headers.get('Location')!);
 		expect(location.origin + location.pathname).toBe(
-			'https://github.com/login/oauth/authorize'
+			'https://accounts.google.com/o/oauth2/v2/auth'
 		);
-		expect(location.searchParams.get('client_id')).toBe('client-id');
+		expect(location.searchParams.get('client_id')).toBe('google-client-id');
 		expect(location.searchParams.get('redirect_uri')).toBe(
 			`${TEST_ORIGIN}/api/auth/callback`
 		);
-		expect(location.searchParams.get('scope')).toBe('user:email');
+		expect(location.searchParams.get('response_type')).toBe('code');
+		expect(location.searchParams.get('scope')).toBe('openid email');
+		expect(location.searchParams.get('prompt')).toBe('select_account');
 		expect(location.searchParams.get('state')).toMatch(/^[0-9a-f]{32}$/);
+	});
+
+	it('sends them to GitHub when asked for it', async () => {
+		const response = await LOGIN(
+			ctx({ path: '/api/auth/login?provider=github' }) as never
+		);
+		const location = new URL(response.headers.get('Location')!);
+		expect(location.origin + location.pathname).toBe(
+			'https://github.com/login/oauth/authorize'
+		);
+		expect(location.searchParams.get('client_id')).toBe('client-id');
+		expect(location.searchParams.get('scope')).toBe('user:email');
+		expect(location.searchParams.get('redirect_uri')).toBe(
+			`${TEST_ORIGIN}/api/auth/callback`
+		);
+	});
+
+	it('remembers the provider, so one callback can serve them all', async () => {
+		for (const [query, provider] of [
+			['', 'google'],
+			['?provider=github', 'github'],
+			// Unknown or unconfigured → the primary one, never a 500.
+			['?provider=myspace', 'google'],
+		]) {
+			const context = ctx({ path: `/api/auth/login${query}` });
+			await LOGIN(context as never);
+			const cookie = context.cookies.written.get(OAUTH_STATE_COOKIE)!;
+			expect(payloadOf(cookie.value).provider, query).toBe(provider);
+		}
+	});
+
+	it('falls back to a configured provider when the requested one is not', async () => {
+		const response = await LOGIN(
+			ctx({
+				path: '/api/auth/login?provider=google',
+				env: { ...ENV, GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '' },
+			}) as never
+		);
+		expect(response.headers.get('Location')).toContain('github.com');
+	});
+
+	it('fails cleanly when no provider has credentials', async () => {
+		const response = await LOGIN(
+			ctx({
+				path: '/api/auth/login',
+				env: { SESSION_SECRET: SECRET },
+			}) as never
+		);
+		expect(response.headers.get('Location')).toBe('/?auth_error=1');
 	});
 
 	it('remembers a same-site return path', async () => {
@@ -110,7 +197,7 @@ describe('GET /api/auth/login', () => {
 		await LOGIN(context as never);
 		const cookie = context.cookies.written.get(OAUTH_STATE_COOKIE)!;
 		expect(cookie.options).toMatchObject({ httpOnly: true, maxAge: 600 });
-		expect(cookie.value).toContain('.');
+		expect(payloadOf(cookie.value).next).toBe('/template/x');
 	});
 
 	it('refuses to be turned into an open redirect', async () => {
@@ -128,13 +215,7 @@ describe('GET /api/auth/login', () => {
 			// The rejected path never reaches the signed cookie, so /callback
 			// can only ever redirect back to "/".
 			const value = context.cookies.written.get(OAUTH_STATE_COOKIE)!.value;
-			const payload = JSON.parse(
-				Buffer.from(
-					value.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'),
-					'base64'
-				).toString()
-			);
-			expect(payload.next, next).toBe('/');
+			expect(payloadOf(value).next, next).toBe('/');
 		}
 	});
 
@@ -157,14 +238,16 @@ describe('GET /api/auth/callback', () => {
 			state?: string | null;
 			cookieState?: string;
 			next?: string;
+			provider?: string | null;
 			cookies?: Record<string, string>;
 		} = {}
 	) => {
 		const {
-			code = 'gh-code',
+			code = 'the-code',
 			state = 'the-state',
 			cookieState = 'the-state',
 			next = '/',
+			provider = 'google',
 		} = options;
 		const params = new URLSearchParams();
 		if (code !== null) params.set('code', code);
@@ -172,7 +255,7 @@ describe('GET /api/auth/callback', () => {
 		const context = ctx({
 			path: `/api/auth/callback?${params}`,
 			cookies: {
-				[OAUTH_STATE_COOKIE]: await stateCookie(cookieState, next),
+				[OAUTH_STATE_COOKIE]: await stateCookie(cookieState, next, provider),
 				...options.cookies,
 			},
 		});
@@ -184,25 +267,54 @@ describe('GET /api/auth/callback', () => {
 		expect(response.headers.get('Location')).toBe('/?auth_error=1');
 	};
 
-	it('hands a brand-new user off to /signup without creating a row', async () => {
-		stubGitHub();
+	/** Accounts the migrations seed (RANKMAKER, the deleted-user placeholder). */
+	const realUsers = async () =>
+		(
+			await db
+				.prepare(
+					"SELECT COUNT(*) AS n FROM users WHERE id NOT IN ('rankmaker-official', 'deleted-user')"
+				)
+				.first<{ n: number }>()
+		)!.n;
+
+	it('hands a brand-new Google user off to /signup without creating a row', async () => {
+		stubProviders();
 		const { response, context } = await callback();
 
 		expect(response.headers.get('Location')).toBe('/signup');
-		expect(context.cookies.written.get(SIGNUP_COOKIE)?.options).toMatchObject(
-			{ httpOnly: true, maxAge: 900 }
-		);
-		expect(
-			await db.prepare('SELECT id FROM users WHERE github_id = 4242').first()
-		).toBeNull();
+		const handoff = context.cookies.written.get(SIGNUP_COOKIE)!;
+		expect(handoff.options).toMatchObject({ httpOnly: true, maxAge: 900 });
+		expect(payloadOf(handoff.value)).toMatchObject({
+			provider: 'google',
+			accountId: '1122334455',
+			// Google has no usernames, so the address' local part is the seed.
+			login: 'primary',
+			email: 'primary@example.test',
+		});
+		expect(await realUsers()).toBe(0);
+		expect(await db.prepare('SELECT user_id FROM user_identities').first()).toBeNull();
 	});
 
-	it('signs an existing user straight in, and back to where they were', async () => {
+	it('hands a brand-new GitHub user off with their GitHub login', async () => {
+		stubProviders();
+		const { response, context } = await callback({ provider: 'github' });
+
+		expect(response.headers.get('Location')).toBe('/signup');
+		expect(
+			payloadOf(context.cookies.written.get(SIGNUP_COOKIE)!.value)
+		).toMatchObject({
+			provider: 'github',
+			accountId: '4242',
+			login: 'octocat',
+		});
+	});
+
+	it('signs a known identity straight in, and back to where they were', async () => {
 		const alice = await insertUser(db, {
 			username: 'alice',
-			githubId: 4242,
+			identity: { provider: 'google', accountId: '1122334455' },
 		});
-		stubGitHub();
+		stubProviders();
 
 		const { response, context } = await callback({ next: '/template/x' });
 
@@ -218,9 +330,31 @@ describe('GET /api/auth/callback', () => {
 		});
 	});
 
+	it('treats a state cookie with no provider as GitHub, so logins in flight survive a deploy', async () => {
+		const alice = await insertUser(db, {
+			username: 'alice',
+			identity: { provider: 'github', accountId: '4242' },
+		});
+		stubProviders();
+
+		const { context } = await callback({ provider: null });
+
+		expect(await getSessionUser(context.cookies, db)).toMatchObject({
+			id: alice.id,
+		});
+	});
+
+	it('rejects a state cookie naming a provider we do not have', async () => {
+		stubProviders();
+		failed((await callback({ provider: 'myspace' })).response);
+	});
+
 	it('refreshes the stored email on every login', async () => {
-		const alice = await insertUser(db, { username: 'alice', githubId: 4242 });
-		stubGitHub();
+		const alice = await insertUser(db, {
+			username: 'alice',
+			identity: { provider: 'google', accountId: '1122334455' },
+		});
+		stubProviders();
 		await callback();
 
 		const row = await db
@@ -230,18 +364,18 @@ describe('GET /api/auth/callback', () => {
 		expect(row?.email).toBe('primary@example.test');
 	});
 
-	it('does not clobber a stored email when GitHub gives none', async () => {
-		const alice = await insertUser(db, { username: 'alice', githubId: 4242 });
-		await db
-			.prepare('UPDATE users SET email = ? WHERE id = ?')
-			.bind('known@example.test', alice.id)
-			.run();
-		stubGitHub({
+	it('does not clobber a stored email when the provider gives none', async () => {
+		const alice = await insertUser(db, {
+			username: 'alice',
+			email: 'known@example.test',
+			identity: { provider: 'github', accountId: '4242' },
+		});
+		stubProviders({
 			'https://api.github.com/user': { id: 4242, login: 'octocat' },
 			'https://api.github.com/user/emails': [],
 		});
 
-		await callback();
+		await callback({ provider: 'github' });
 
 		const row = await db
 			.prepare('SELECT email FROM users WHERE id = ?')
@@ -250,9 +384,12 @@ describe('GET /api/auth/callback', () => {
 		expect(row?.email).toBe('known@example.test');
 	});
 
-	it('falls back to the profile email when no verified address is listed', async () => {
-		await insertUser(db, { username: 'alice', githubId: 4242 });
-		stubGitHub({
+	it('falls back to the GitHub profile email when no verified address is listed', async () => {
+		const alice = await insertUser(db, {
+			username: 'alice',
+			identity: { provider: 'github', accountId: '4242' },
+		});
+		stubProviders({
 			'https://api.github.com/user': {
 				id: 4242,
 				login: 'octocat',
@@ -263,16 +400,81 @@ describe('GET /api/auth/callback', () => {
 			],
 		});
 
-		await callback();
+		await callback({ provider: 'github' });
 
 		const row = await db
-			.prepare('SELECT email FROM users WHERE github_id = 4242')
+			.prepare('SELECT email FROM users WHERE id = ?')
+			.bind(alice.id)
 			.first<{ email: string }>();
 		expect(row?.email).toBe('profile@example.test');
 	});
 
+	describe('linking a second provider', () => {
+		it('signs a GitHub user in through Google on their verified address', async () => {
+			// The upgrade path that matters: everyone who has an account today
+			// signed up with GitHub, and the new primary button is Google.
+			const alice = await insertUser(db, {
+				username: 'alice',
+				email: 'primary@example.test',
+				identity: { provider: 'github', accountId: '4242' },
+			});
+			stubProviders();
+
+			const { response, context } = await callback();
+
+			expect(response.headers.get('Location')).toBe('/');
+			expect(await getSessionUser(context.cookies, db)).toMatchObject({
+				id: alice.id,
+			});
+			// Linked on the spot, so the next login is a direct hit.
+			expect(
+				await findUserIdByIdentity(db, 'google', '1122334455')
+			).toBe(alice.id);
+			// One account, now reachable through both providers.
+			expect(await realUsers()).toBe(1);
+		});
+
+		it('refuses to link an address the provider has not verified', async () => {
+			await insertUser(db, {
+				username: 'alice',
+				email: 'primary@example.test',
+				identity: { provider: 'github', accountId: '4242' },
+			});
+			stubProviders({
+				'https://openidconnect.googleapis.com/v1/userinfo': {
+					sub: '1122334455',
+					email: 'primary@example.test',
+					email_verified: false,
+				},
+			});
+
+			const { response, context } = await callback();
+
+			// Anything else would hand alice's account to whoever can type her
+			// address into a provider that does not check it.
+			expect(response.headers.get('Location')).toBe('/signup');
+			expect(context.cookies.written.get(SESSION_COOKIE)).toBeUndefined();
+			expect(await findUserIdByIdentity(db, 'google', '1122334455')).toBeNull();
+		});
+
+		it('refuses to guess when two accounts share the address', async () => {
+			for (const username of ['alice', 'bob']) {
+				await insertUser(db, {
+					username,
+					email: 'primary@example.test',
+				});
+			}
+			stubProviders();
+
+			const { response } = await callback();
+
+			expect(response.headers.get('Location')).toBe('/signup');
+			expect(await findUserIdByIdentity(db, 'google', '1122334455')).toBeNull();
+		});
+	});
+
 	it('rejects a state that does not match the signed cookie', async () => {
-		stubGitHub();
+		stubProviders();
 		const { response } = await callback({
 			state: 'forged',
 			cookieState: 'the-state',
@@ -281,21 +483,22 @@ describe('GET /api/auth/callback', () => {
 	});
 
 	it('rejects a callback with no state cookie at all', async () => {
-		stubGitHub();
+		stubProviders();
 		const context = ctx({
-			path: '/api/auth/callback?code=gh-code&state=the-state',
+			path: '/api/auth/callback?code=the-code&state=the-state',
 		});
 		failed(await CALLBACK(context as never));
 	});
 
 	it('rejects an expired state cookie', async () => {
-		stubGitHub();
+		stubProviders();
 		const context = ctx({
-			path: '/api/auth/callback?code=gh-code&state=the-state',
+			path: '/api/auth/callback?code=the-code&state=the-state',
 			cookies: {
 				[OAUTH_STATE_COOKIE]: await signPayload(SECRET, {
 					state: 'the-state',
 					next: '/',
+					provider: 'google',
 					exp: Date.now() - 1,
 				}),
 			},
@@ -304,13 +507,14 @@ describe('GET /api/auth/callback', () => {
 	});
 
 	it('rejects a state cookie signed with another secret', async () => {
-		stubGitHub();
+		stubProviders();
 		const context = ctx({
-			path: '/api/auth/callback?code=gh-code&state=the-state',
+			path: '/api/auth/callback?code=the-code&state=the-state',
 			cookies: {
 				[OAUTH_STATE_COOKIE]: await signPayload('someone-elses-secret', {
 					state: 'the-state',
 					next: '/',
+					provider: 'google',
 					exp: Date.now() + 600_000,
 				}),
 			},
@@ -319,38 +523,56 @@ describe('GET /api/auth/callback', () => {
 	});
 
 	it('rejects a callback with no code', async () => {
-		stubGitHub();
+		stubProviders();
 		failed((await callback({ code: null })).response);
 	});
 
+	it('will not redirect off-site even if the signed cookie says so', async () => {
+		// Belt and braces: /login already refuses to sign one of these.
+		await insertUser(db, {
+			username: 'alice',
+			identity: { provider: 'google', accountId: '1122334455' },
+		});
+		stubProviders();
+		const { response } = await callback({ next: '//evil.test' });
+		expect(response.headers.get('Location')).toBe('/');
+	});
+
 	it('clears the state cookie so it cannot be replayed', async () => {
-		stubGitHub();
+		stubProviders();
 		const { context } = await callback();
 		expect(context.cookies.deleted).toContain(OAUTH_STATE_COOKIE);
 	});
 
 	it('fails cleanly when the token exchange is refused', async () => {
-		stubGitHub({
-			'https://github.com/login/oauth/access_token': {
-				error: 'bad_verification_code',
-			},
+		stubProviders({
+			'https://oauth2.googleapis.com/token': { error: 'invalid_grant' },
 		});
 		failed((await callback()).response);
 	});
 
-	it('fails cleanly when GitHub will not identify the user', async () => {
-		stubGitHub({
-			'https://api.github.com/user': new Response('nope', { status: 401 }),
+	it('fails cleanly when the provider will not identify the user', async () => {
+		stubProviders({
+			'https://openidconnect.googleapis.com/v1/userinfo': new Response(
+				'nope',
+				{ status: 401 }
+			),
 		});
 		failed((await callback()).response);
 	});
 
 	it('fails cleanly on an unexpected user payload', async () => {
-		stubGitHub({ 'https://api.github.com/user': { login: 'octocat' } });
+		stubProviders({
+			'https://openidconnect.googleapis.com/v1/userinfo': {
+				email: 'primary@example.test',
+			},
+		});
 		failed((await callback()).response);
+		stubProviders({ 'https://api.github.com/user': { login: 'octocat' } });
+		failed((await callback({ provider: 'github' })).response);
 	});
 
-	it('fails cleanly when GitHub is unreachable', async () => {
+	it('fails cleanly when the provider is unreachable', async () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(async () => {
@@ -360,9 +582,28 @@ describe('GET /api/auth/callback', () => {
 		failed((await callback()).response);
 	});
 
-	it('identifies itself to GitHub, which rejects requests without a User-Agent', async () => {
-		const { calls } = stubGitHub();
+	it('posts the Google token exchange as a form, which is all it accepts', async () => {
+		const { calls } = stubProviders();
 		await callback();
+		const exchange = calls.find(
+			(c) => c.url === 'https://oauth2.googleapis.com/token'
+		)!;
+		expect(
+			(exchange.init?.headers as Record<string, string>)['Content-Type']
+		).toBe('application/x-www-form-urlencoded');
+		const body = new URLSearchParams(exchange.init?.body as string);
+		expect(Object.fromEntries(body)).toMatchObject({
+			code: 'the-code',
+			client_id: 'google-client-id',
+			client_secret: 'google-client-secret',
+			grant_type: 'authorization_code',
+			redirect_uri: `${TEST_ORIGIN}/api/auth/callback`,
+		});
+	});
+
+	it('identifies itself to GitHub, which rejects requests without a User-Agent', async () => {
+		const { calls } = stubProviders();
+		await callback({ provider: 'github' });
 		for (const call of calls) {
 			expect(
 				(call.init?.headers as Record<string, string>)['User-Agent'],
@@ -375,9 +616,10 @@ describe('GET /api/auth/callback', () => {
 describe('POST /api/auth/complete-signup', () => {
 	const signupCookie = (overrides: Record<string, unknown> = {}) =>
 		signPayload(SECRET, {
-			ghId: 4242,
-			ghLogin: 'octocat',
-			ghEmail: 'primary@example.test',
+			provider: 'google',
+			accountId: '1122334455',
+			login: 'primary',
+			email: 'primary@example.test',
 			next: '/',
 			exp: Date.now() + 900_000,
 			...overrides,
@@ -407,7 +649,7 @@ describe('POST /api/auth/complete-signup', () => {
 		return { response: await COMPLETE_SIGNUP(context as never), context };
 	};
 
-	it('creates the account, signs them in and clears the handoff', async () => {
+	it('creates the account and its identity, signs them in, clears the handoff', async () => {
 		const { response, context } = await complete({
 			username: 'octocat',
 			avatar: SELECTABLE_AVATAR_KEYS[0],
@@ -417,21 +659,35 @@ describe('POST /api/auth/complete-signup', () => {
 		expect(await response.json()).toEqual({ ok: true, next: '/' });
 
 		const row = await db
-			.prepare(
-				'SELECT username, avatar, github_id, email FROM users WHERE username = ?'
-			)
+			.prepare('SELECT id, username, avatar, email FROM users WHERE username = ?')
 			.bind('octocat')
 			.first<any>();
-		expect(row).toEqual({
+		expect(row).toMatchObject({
 			username: 'octocat',
 			avatar: SELECTABLE_AVATAR_KEYS[0],
-			github_id: 4242,
 			email: 'primary@example.test',
 		});
+		expect(await findUserIdByIdentity(db, 'google', '1122334455')).toBe(row.id);
 		expect(await getSessionUser(context.cookies, db)).toMatchObject({
 			username: 'octocat',
 		});
 		expect(context.cookies.deleted).toContain(SIGNUP_COOKIE);
+	});
+
+	it('creates a GitHub identity for a GitHub handoff', async () => {
+		await complete(
+			{ username: 'octocat', avatar: SELECTABLE_AVATAR_KEYS[0] },
+			{
+				cookie: await signupCookie({
+					provider: 'github',
+					accountId: '4242',
+					login: 'octocat',
+				}),
+			}
+		);
+		expect(await findUserIdByIdentity(db, 'github', '4242')).toBe(
+			await userId('octocat')
+		);
 	});
 
 	it('records the marketing opt-in when the box is ticked', async () => {
@@ -452,8 +708,8 @@ describe('POST /api/auth/complete-signup', () => {
 					avatar: SELECTABLE_AVATAR_KEYS[0],
 					marketingConsent: value,
 				},
-				// A fresh GitHub id per pass: github_id is UNIQUE.
-				{ cookie: await signupCookie({ ghId: 5000 + i }) }
+				// A fresh provider account per pass: identities are unique.
+				{ cookie: await signupCookie({ accountId: `500${i}` }) }
 			);
 			expect(
 				await getMarketingConsent(db, await userId(`octocat${i}`)),
@@ -476,12 +732,22 @@ describe('POST /api/auth/complete-signup', () => {
 			{ origin: null }
 		);
 		expect(response.status).toBe(403);
-		expect(await db.prepare('SELECT id FROM users WHERE github_id = 4242').first())
-			.toBeNull();
+		expect(
+			await db.prepare('SELECT user_id FROM user_identities').first()
+		).toBeNull();
 	});
 
 	it('refuses without a valid handoff cookie', async () => {
-		for (const cookie of [null, 'garbage', await signupCookie({ exp: 1 })]) {
+		for (const cookie of [
+			null,
+			'garbage',
+			await signupCookie({ exp: 1 }),
+			// Handoffs from before the signup flow spoke providers, and any
+			// forgery that drops a field.
+			await signupCookie({ provider: undefined }),
+			await signupCookie({ provider: 'myspace' }),
+			await signupCookie({ accountId: undefined }),
+		]) {
 			const { response } = await complete(
 				{ username: 'octocat', avatar: SELECTABLE_AVATAR_KEYS[0] },
 				{ cookie }
@@ -492,8 +758,9 @@ describe('POST /api/auth/complete-signup', () => {
 
 	it('refuses a handoff cookie forged with another secret', async () => {
 		const forged = await signPayload('someone-elses-secret', {
-			ghId: 9999,
-			ghLogin: 'attacker',
+			provider: 'google',
+			accountId: '9999',
+			login: 'attacker',
 			next: '/',
 			exp: Date.now() + 900_000,
 		});
@@ -530,13 +797,21 @@ describe('POST /api/auth/complete-signup', () => {
 		expect(response.status).toBe(409);
 	});
 
-	it('409s rather than 500s when the same GitHub account signs up twice', async () => {
-		await insertUser(db, { username: 'first', githubId: 4242 });
+	it('409s rather than 500s when the same provider account signs up twice', async () => {
+		await insertUser(db, {
+			username: 'first',
+			identity: { provider: 'google', accountId: '1122334455' },
+		});
 		const { response } = await complete({
 			username: 'second',
 			avatar: SELECTABLE_AVATAR_KEYS[0],
 		});
 		expect(response.status).toBe(409);
+		// The whole signup is one transaction, so the rejected attempt leaves
+		// no half-created account behind.
+		expect(
+			await db.prepare('SELECT id FROM users WHERE username = ?').bind('second').first()
+		).toBeNull();
 	});
 
 	it('rejects invalid JSON', async () => {

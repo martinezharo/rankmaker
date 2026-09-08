@@ -916,7 +916,7 @@ const inputClass =
 
         // ── Guest draft handoff ─────────────────────────────────────
         // Guests can't actually submit (see the submit handler below) —
-        // signing in sends them through GitHub and back to /create as a
+        // signing in sends them through the provider and back to /create as a
         // normal user. Stash the draft as they type so it survives that
         // round trip, and pick it back up here once they're signed in.
         // Nothing to restore for images: guests can't add any.

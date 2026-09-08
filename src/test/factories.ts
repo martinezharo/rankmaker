@@ -5,6 +5,7 @@
  * everything else gets a valid default here, so adding a NOT NULL column means
  * one edit rather than one per test.
  */
+import type { ProviderId } from '../lib/oauth-providers';
 import type { TestD1 } from './d1';
 
 let counter = 0;
@@ -21,26 +22,41 @@ export async function insertUser(
 		isVerified: boolean;
 		showMature: boolean;
 		bio: string | null;
-		githubId: number | null;
+		email: string | null;
+		/** The provider account that signs in as this user (see 0019). */
+		identity: { provider: ProviderId; accountId: string };
 	}> = {}
 ): Promise<SeededUser> {
 	const id = overrides.id ?? nextId('user');
 	const username = overrides.username ?? id;
 	await db
 		.prepare(
-			`INSERT INTO users (id, github_id, username, avatar, is_verified, bio, show_mature)
+			`INSERT INTO users (id, username, avatar, is_verified, bio, show_mature, email)
 			 VALUES (?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			id,
-			overrides.githubId ?? null,
 			username,
 			overrides.avatar ?? 'star-purple',
 			overrides.isVerified ? 1 : 0,
 			overrides.bio ?? null,
-			overrides.showMature ? 1 : 0
+			overrides.showMature ? 1 : 0,
+			overrides.email ?? null
 		)
 		.run();
+	if (overrides.identity) {
+		await db
+			.prepare(
+				`INSERT INTO user_identities (provider, provider_account_id, user_id)
+				 VALUES (?, ?, ?)`
+			)
+			.bind(
+				overrides.identity.provider,
+				overrides.identity.accountId,
+				id
+			)
+			.run();
+	}
 	return { id, username };
 }
 

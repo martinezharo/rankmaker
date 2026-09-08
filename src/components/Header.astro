@@ -52,16 +52,16 @@ const L = (p: string) => localizePath(p, locale);
                 </a>
 
                 <!-- Auth slot (desktop) — swapped by client JS when logged in.
-                     data-astro-reload: the OAuth redirect to GitHub must be a
-                     full browser navigation (the ClientRouter fetch would be
-                     blocked by CORS). -->
+                     data-astro-reload: the OAuth redirect to the provider must
+                     be a full browser navigation (the ClientRouter fetch would
+                     be blocked by CORS). -->
                 <div class="auth-slot ml-1 relative" data-auth-slot="desktop">
                     <a
                         href="/api/auth/login"
                         data-astro-reload
                         class="auth-login-link inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all"
                     >
-                        <i class="fa-brands fa-github"></i>
+                        <i class="fa-solid fa-right-to-bracket"></i>
                         {t("nav.login")}
                     </a>
                 </div>
@@ -75,7 +75,7 @@ const L = (p: string) => localizePath(p, locale);
                         data-astro-reload
                         class="auth-login-link inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary border border-border transition-all"
                     >
-                        <i class="fa-brands fa-github"></i>
+                        <i class="fa-solid fa-right-to-bracket"></i>
                         {t("nav.login")}
                     </a>
                 </div>
@@ -330,7 +330,7 @@ const L = (p: string) => localizePath(p, locale);
         const L = (p: string) => localizePath(p, getClientLocale());
         slot.innerHTML = `
             <button type="button" class="auth-guest-btn relative inline-flex items-center gap-2 ${compact ? "px-3 py-1.5" : "px-4 py-2"} rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary border border-border hover:border-border-hover transition-all" aria-haspopup="true" aria-expanded="false">
-                <i class="fa-brands fa-github"></i>
+                <i class="fa-solid fa-right-to-bracket"></i>
                 ${compact ? "" : `<span>${escapeHtml(t("nav.login"))}</span>`}
                 <i class="fa-solid fa-chevron-down text-[10px] text-text-muted"></i>
                 <span class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] leading-none font-bold flex items-center justify-center ring-2 ring-surface">${count}</span>
@@ -339,7 +339,7 @@ const L = (p: string) => localizePath(p, locale);
                 <a href="${L("/me")}" class="flex items-center gap-1 px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-layer-group w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.myTemplates"))}<span class="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-primary/15 text-primary text-[10px] leading-none font-bold inline-flex items-center justify-center">${count}</span></a>
                 <a href="${L("/preferences")}" class="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-sliders w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.preferences"))}</a>
                 <div class="my-1.5 h-px bg-border/60"></div>
-                <a href="${loginUrl()}" data-astro-reload class="auth-login-link block px-4 py-2 text-sm font-semibold text-text-primary hover:bg-white/5 transition-colors"><i class="fa-brands fa-github w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.login"))}</a>
+                <a href="${loginUrl()}" data-astro-reload class="auth-login-link block px-4 py-2 text-sm font-semibold text-text-primary hover:bg-white/5 transition-colors"><i class="fa-solid fa-right-to-bracket w-5 mr-1 text-xs"></i>${escapeHtml(t("nav.login"))}</a>
             </div>`;
 
         bindDropdown(slot, ".auth-guest-btn");

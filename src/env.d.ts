@@ -120,8 +120,14 @@ interface Env {
     /** Public base URL for uploaded images. Defaults to
      *  https://img.rankmaker.net in prod and /api/images in dev. */
     IMAGES_PUBLIC_BASE?: string;
-    GITHUB_CLIENT_ID: string;
-    GITHUB_CLIENT_SECRET: string;
+    /** Google OAuth client (the primary sign-in provider). When either half
+     *  is unset the Google button is not offered — see
+     *  src/lib/oauth-providers.ts. */
+    GOOGLE_CLIENT_ID?: string;
+    GOOGLE_CLIENT_SECRET?: string;
+    /** GitHub OAuth app (the secondary sign-in provider), same rule. */
+    GITHUB_CLIENT_ID?: string;
+    GITHUB_CLIENT_SECRET?: string;
     SESSION_SECRET: string;
     /** Resend API key — when unset, notification emails are skipped. */
     RESEND_API_KEY?: string;

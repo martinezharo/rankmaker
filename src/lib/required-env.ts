@@ -37,16 +37,30 @@ export const PRODUCTION_ENV: RequiredEnvVar[] = [
         description: 'HMAC key for D1 sessions and the signed OAuth/signup handoff cookies',
     },
     {
+        name: 'GOOGLE_CLIENT_ID',
+        secret: true,
+        required: false,
+        description:
+            'Google OAuth client id — the PRIMARY sign-in button. Unset means the button is not offered and only GitHub is left; set it (see .dev.vars.example)',
+    },
+    {
+        name: 'GOOGLE_CLIENT_SECRET',
+        secret: true,
+        required: false,
+        description: 'Google OAuth client secret; without it the Google button is not offered',
+    },
+    {
         name: 'GITHUB_CLIENT_ID',
         secret: true,
         required: true,
-        description: 'GitHub OAuth app client id (login is broken without it)',
+        description:
+            'GitHub OAuth app client id. Required because sign-in must always have at least one working provider',
     },
     {
         name: 'GITHUB_CLIENT_SECRET',
         secret: true,
         required: true,
-        description: 'GitHub OAuth app client secret (login is broken without it)',
+        description: 'GitHub OAuth app client secret (the GitHub button is broken without it)',
     },
     {
         name: 'OPENAI_API_KEY',
@@ -85,6 +99,7 @@ export const PRODUCTION_ENV: RequiredEnvVar[] = [
 /** Tables the app expects to exist in D1 — keep in sync with `migrations/`. */
 export const EXPECTED_TABLES: string[] = [
     'users',
+    'user_identities',
     'sessions',
     'templates',
     'template_options',

@@ -3,16 +3,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loginUrl, openLoginPrompt } from './auth-prompt';
 import { mount } from '../test/dom';
 
+/** The modal as LoginModal.astro renders it: one link per provider. */
 function withModal() {
 	mount(`
 		<button id="opener">Sign in</button>
 		<div id="login-modal" class="hidden">
-			<a id="login-modal-continue" href="#">Continue with GitHub</a>
+			<a data-login-provider="google" href="#">Continue with Google</a>
+			<a data-login-provider="github" href="#">Continue with GitHub</a>
 		</div>
 	`);
+	const links = Array.from(
+		document.querySelectorAll<HTMLAnchorElement>('a[data-login-provider]')
+	);
 	return {
 		modal: document.getElementById('login-modal')!,
-		link: document.getElementById('login-modal-continue') as HTMLAnchorElement,
+		links,
+		google: links[0],
+		github: links[1],
 	};
 }
 
@@ -39,26 +46,52 @@ describe('loginUrl', () => {
 			'/api/auth/login?next=%2Fme%3Ftab%3Dsaved'
 		);
 	});
+
+	it('names a provider only when one was asked for', () => {
+		// Without it the server picks the primary provider, which is the whole
+		// point: the no-JS links in the markup stay provider-agnostic.
+		expect(loginUrl('/create')).toBe('/api/auth/login?next=%2Fcreate');
+		expect(loginUrl('/create', 'google')).toBe(
+			'/api/auth/login?next=%2Fcreate&provider=google'
+		);
+	});
 });
 
 describe('openLoginPrompt', () => {
 	it('opens the shared modal, pointed at the current page', () => {
-		const { modal, link } = withModal();
+		const { modal, google, github } = withModal();
 		openLoginPrompt();
 
 		expect(modal.classList.contains('hidden')).toBe(false);
-		expect(link.getAttribute('href')).toBe(loginUrl());
-		expect(document.activeElement).toBe(link);
+		expect(google.getAttribute('href')).toBe(loginUrl(undefined, 'google'));
+		expect(github.getAttribute('href')).toBe(loginUrl(undefined, 'github'));
+		// Focus lands on the primary provider, the first button in the dialog.
+		expect(document.activeElement).toBe(google);
 	});
 
-	it('points the modal at an explicit destination', () => {
-		const { link } = withModal();
+	it('points every provider at an explicit destination', () => {
+		const { google, github } = withModal();
 		openLoginPrompt('/create');
-		expect(link.getAttribute('href')).toBe('/api/auth/login?next=%2Fcreate');
+		expect(google.getAttribute('href')).toBe(
+			'/api/auth/login?next=%2Fcreate&provider=google'
+		);
+		expect(github.getAttribute('href')).toBe(
+			'/api/auth/login?next=%2Fcreate&provider=github'
+		);
 	});
 
 	it('redirects directly when the modal is not on the page', () => {
 		mount('<div>No modal here</div>');
+		const location = { href: '' };
+		vi.stubGlobal('location', location);
+
+		openLoginPrompt('/create');
+
+		expect(location.href).toBe('/api/auth/login?next=%2Fcreate');
+	});
+
+	it('redirects directly when the modal offers no provider', () => {
+		mount('<div id="login-modal" class="hidden"></div>');
 		const location = { href: '' };
 		vi.stubGlobal('location', location);
 

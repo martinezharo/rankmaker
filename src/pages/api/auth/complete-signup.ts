@@ -6,23 +6,18 @@ import {
     SIGNUP_COOKIE,
     checkOrigin,
     createSession,
+    isSignupPayload,
     isUsernameTaken,
     json,
     sessionCookieOptions,
     usernameProblem,
     verifyPayload,
+    type SignupPayload,
 } from '../../../lib/auth';
 import { isValidAvatarKey } from '../../../lib/avatars';
+import { insertIdentityStatement } from '../../../lib/identities';
 import { setMarketingConsent } from '../../../lib/marketing-consent';
 import { getEnv } from '../../../lib/runtime';
-
-type SignupPayload = {
-    ghId: number;
-    ghLogin: string;
-    ghEmail?: string | null;
-    next: string;
-    exp: number;
-};
 
 /**
  * Final signup step: creates the user row (username is permanent) + session.
@@ -41,7 +36,7 @@ export const POST: APIRoute = async (context) => {
         env.SESSION_SECRET,
         context.cookies.get(SIGNUP_COOKIE)?.value
     );
-    if (!signup) {
+    if (!isSignupPayload(signup)) {
         return json({ error: 'Signup session expired. Log in again.' }, 401);
     }
 
@@ -72,20 +67,24 @@ export const POST: APIRoute = async (context) => {
 
     const userId = crypto.randomUUID();
     try {
-        await db
-            .prepare(
-                'INSERT INTO users (id, github_id, username, avatar, email) VALUES (?, ?, ?, ?, ?)'
-            )
-            .bind(
-                userId,
-                signup.ghId,
-                username,
-                body.avatar,
-                signup.ghEmail ?? null
-            )
-            .run();
+        // One transaction: an account nobody can sign in to, or an identity
+        // pointing at no account, would both be unrecoverable for the user.
+        await db.batch([
+            db
+                .prepare(
+                    'INSERT INTO users (id, username, avatar, email) VALUES (?, ?, ?, ?)'
+                )
+                .bind(userId, username, body.avatar, signup.email ?? null),
+            insertIdentityStatement(
+                db,
+                signup.provider,
+                signup.accountId,
+                userId
+            ),
+        ]);
     } catch (error) {
-        // UNIQUE constraint race: username or github_id grabbed concurrently.
+        // UNIQUE constraint race: the username or the provider account was
+        // grabbed between the check above and here.
         console.error('Signup insert error:', error);
         return json({ error: 'Username is already taken.' }, 409);
     }

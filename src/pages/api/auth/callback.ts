@@ -6,19 +6,38 @@ import {
     SESSION_COOKIE,
     SIGNUP_COOKIE,
     createSession,
+    safeNextPath,
     sessionCookieOptions,
     shortCookieOptions,
     signPayload,
     verifyPayload,
 } from '../../../lib/auth';
+import {
+    findUserIdByIdentity,
+    findUserIdByVerifiedEmail,
+    linkIdentity,
+} from '../../../lib/identities';
+import {
+    getProvider,
+    isProviderId,
+    type OAuthProfile,
+    type ProviderId,
+} from '../../../lib/oauth-providers';
 import { getEnv } from '../../../lib/runtime';
 
-type StatePayload = { state: string; next: string; exp: number };
+type StatePayload = {
+    state: string;
+    next: string;
+    /** Absent on cookies issued before providers existed — those were GitHub. */
+    provider?: string;
+    exp: number;
+};
 
 /**
- * GitHub OAuth callback. Existing users (matched by github_id) get a session
- * right away; new users are handed off to /signup via a signed cookie — no
- * user row is created until they pick a username.
+ * The OAuth callback, shared by every provider (which one is in the signed
+ * state cookie). A known identity gets a session right away; a new one is
+ * handed off to /signup through a signed cookie — no user row exists until a
+ * username is picked.
  */
 export const GET: APIRoute = async (context) => {
     const env = getEnv();
@@ -43,103 +62,59 @@ export const GET: APIRoute = async (context) => {
         return fail();
     }
 
+    const providerId = statePayload.provider ?? 'github';
+    if (!isProviderId(providerId)) {
+        console.error('OAuth callback: unknown provider', { providerId });
+        return fail();
+    }
+    const provider = getProvider(providerId);
+    const { clientId, clientSecret } = provider.credentials(env);
+    if (!clientId || !clientSecret) {
+        console.error('OAuth callback: provider not configured', { providerId });
+        return fail();
+    }
+
+    const next = safeNextPath(statePayload.next);
+
     try {
-        // Exchange the code for an access token. GitHub requires a
-        // User-Agent header (Workers' fetch sends none by default).
-        const tokenRes = await fetch(
-            'https://github.com/login/oauth/access_token',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'User-Agent': 'rankmaker',
-                },
-                body: JSON.stringify({
-                    client_id: env.GITHUB_CLIENT_ID,
-                    client_secret: env.GITHUB_CLIENT_SECRET,
-                    code,
-                    redirect_uri: `${url.origin}/api/auth/callback`,
-                }),
-            }
-        );
-        const tokenData = (await tokenRes.json()) as {
-            access_token?: string;
-            error?: string;
-            error_description?: string;
-        };
-        if (!tokenData.access_token) {
-            console.error('OAuth callback: token exchange failed', {
-                status: tokenRes.status,
-                error: tokenData.error,
-                description: tokenData.error_description,
-            });
-            return fail();
-        }
-
-        // Fetch the GitHub user (User-Agent is mandatory for api.github.com).
-        const userRes = await fetch('https://api.github.com/user', {
-            headers: {
-                Authorization: `Bearer ${tokenData.access_token}`,
-                Accept: 'application/vnd.github+json',
-                'User-Agent': 'rankmaker',
-            },
+        const profile = await provider.fetchProfile({
+            code,
+            redirectUri: `${url.origin}/api/auth/callback`,
+            clientId,
+            clientSecret,
         });
-        if (!userRes.ok) {
-            console.error('OAuth callback: user fetch failed', {
-                status: userRes.status,
-            });
-            return fail();
-        }
-        const ghUser = (await userRes.json()) as {
-            id?: number;
-            login?: string;
-            email?: string | null;
-        };
-        if (typeof ghUser.id !== 'number' || !ghUser.login) {
-            console.error('OAuth callback: unexpected user payload');
-            return fail();
-        }
-
-        // Resolve the best email for notifications: prefer the primary, verified
-        // address from /user/emails (only exposed with the user:email scope);
-        // fall back to the public profile email. Missing email is non-fatal.
-        const email = await fetchPrimaryEmail(
-            tokenData.access_token,
-            ghUser.email ?? null
-        );
+        if (!profile) return fail();
 
         const db = env.DB;
-        const existing = await db
-            .prepare('SELECT id FROM users WHERE github_id = ?')
-            .bind(ghUser.id)
-            .first<{ id: string }>();
+        const userId = await resolveUser(db, provider.id, profile);
 
-        if (existing) {
-            // Keep the stored email fresh on every login (it may have been added
-            // or changed since signup). Don't clobber a stored email with null.
-            if (email) {
+        if (userId) {
+            // Keep the stored email fresh on every login (it may have been
+            // added or changed since signup). Never clobber a stored address
+            // with null.
+            if (profile.email) {
                 await db
                     .prepare('UPDATE users SET email = ? WHERE id = ?')
-                    .bind(email, existing.id)
+                    .bind(profile.email, userId)
                     .run();
             }
-            const sessionId = await createSession(db, existing.id);
+            const sessionId = await createSession(db, userId);
             context.cookies.set(
                 SESSION_COOKIE,
                 sessionId,
                 sessionCookieOptions()
             );
             context.cookies.delete(SIGNUP_COOKIE, { path: '/' });
-            return context.redirect(statePayload.next || '/', 302);
+            return context.redirect(next, 302);
         }
 
-        // First-time login → finish signup at /signup (pick username + avatar).
+        // First time here → finish signup at /signup (pick username + avatar).
         const signupCookie = await signPayload(env.SESSION_SECRET, {
-            ghId: ghUser.id,
-            ghLogin: ghUser.login,
-            ghEmail: email,
-            next: statePayload.next || '/',
+            provider: provider.id,
+            accountId: profile.accountId,
+            login: profile.login,
+            email: profile.email,
+            next,
             exp: Date.now() + 15 * 60 * 1000,
         });
         context.cookies.set(
@@ -155,35 +130,30 @@ export const GET: APIRoute = async (context) => {
 };
 
 /**
- * The user's primary, verified email via the GitHub `/user/emails` endpoint
- * (requires the user:email scope). Falls back to the public profile email, then
- * null. Never throws — a missing email just means no notification emails.
+ * The account this profile signs in as, or null when it belongs to nobody yet.
+ *
+ * A provider we have never seen for this person still resolves to their
+ * account when it hands us a *verified* address that one account already uses
+ * — otherwise everyone who signed up with GitHub would silently get a second,
+ * empty account the first time they clicked the new Google button. The
+ * identity is linked on the spot, so the next login is a direct hit.
  */
-async function fetchPrimaryEmail(
-    accessToken: string,
-    profileEmail: string | null
+async function resolveUser(
+    db: D1Database,
+    provider: ProviderId,
+    profile: OAuthProfile
 ): Promise<string | null> {
-    try {
-        const res = await fetch('https://api.github.com/user/emails', {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: 'application/vnd.github+json',
-                'User-Agent': 'rankmaker',
-            },
-        });
-        if (res.ok) {
-            const emails = (await res.json()) as {
-                email?: string;
-                primary?: boolean;
-                verified?: boolean;
-            }[];
-            const primary = emails.find((e) => e.primary && e.verified);
-            const anyVerified = emails.find((e) => e.verified);
-            const chosen = primary?.email ?? anyVerified?.email ?? null;
-            if (chosen) return chosen;
-        }
-    } catch (error) {
-        console.error('OAuth callback: email fetch failed', error);
-    }
-    return profileEmail;
+    const known = await findUserIdByIdentity(db, provider, profile.accountId);
+    if (known) return known;
+
+    if (!profile.email || !profile.emailVerified) return null;
+    const owner = await findUserIdByVerifiedEmail(db, profile.email);
+    if (!owner) return null;
+
+    await linkIdentity(db, provider, profile.accountId, owner);
+    console.log('OAuth callback: linked provider to existing account', {
+        provider,
+        userId: owner,
+    });
+    return owner;
 }

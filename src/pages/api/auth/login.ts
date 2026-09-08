@@ -4,31 +4,37 @@ import type { APIRoute } from 'astro';
 import {
     OAUTH_STATE_COOKIE,
     randomHex,
+    safeNextPath,
     shortCookieOptions,
     signPayload,
 } from '../../../lib/auth';
+import { resolveProvider } from '../../../lib/oauth-providers';
 import { getEnv } from '../../../lib/runtime';
 
 /**
- * Kicks off the GitHub OAuth flow. The random `state` (and the post-login
- * `next` path) travel in a signed, short-lived cookie checked by /callback.
+ * Kicks off the OAuth flow with `?provider=` (Google unless asked otherwise —
+ * see src/lib/oauth-providers.ts for the order). The random `state`, the
+ * chosen provider and the post-login `next` path travel in a signed,
+ * short-lived cookie that /callback checks.
  */
 export const GET: APIRoute = async (context) => {
     const env = getEnv();
     const url = new URL(context.request.url);
 
-    // Only allow same-site relative paths to avoid open redirects. Reject
-    // backslashes too: browsers normalize "\" to "/" in the Location header,
-    // so "/\evil.com" would resolve to the protocol-relative "//evil.com".
-    let next = url.searchParams.get('next') || '/';
-    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) {
-        next = '/';
+    const next = safeNextPath(url.searchParams.get('next'));
+
+    const provider = resolveProvider(env, url.searchParams.get('provider'));
+    if (!provider) {
+        console.error('OAuth login: no provider has credentials configured');
+        return context.redirect('/?auth_error=1', 302);
     }
+    const { clientId } = provider.credentials(env);
 
     const state = randomHex(16);
     const cookieValue = await signPayload(env.SESSION_SECRET, {
         state,
         next,
+        provider: provider.id,
         exp: Date.now() + 10 * 60 * 1000,
     });
     context.cookies.set(
@@ -37,17 +43,14 @@ export const GET: APIRoute = async (context) => {
         shortCookieOptions(600)
     );
 
-    const authorize = new URL('https://github.com/login/oauth/authorize');
-    authorize.searchParams.set('client_id', env.GITHUB_CLIENT_ID);
-    authorize.searchParams.set(
-        'redirect_uri',
-        `${url.origin}/api/auth/callback`
+    // Every provider shares one callback URL — the provider is in the signed
+    // state cookie — so adding one is a console entry, not a new route.
+    return context.redirect(
+        provider.authorizeUrl({
+            clientId: clientId!,
+            redirectUri: `${url.origin}/api/auth/callback`,
+            state,
+        }),
+        302
     );
-    authorize.searchParams.set('state', state);
-    // Request read access to the user's email addresses so we can send
-    // notification emails (Resend). Email is stored on first signup / refreshed
-    // on subsequent logins; users can still opt out of emails in-app.
-    authorize.searchParams.set('scope', 'user:email');
-
-    return context.redirect(authorize.toString(), 302);
 };

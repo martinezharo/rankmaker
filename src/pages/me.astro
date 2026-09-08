@@ -21,7 +21,7 @@ const tr = useTranslations(locale);
 const L = (p: string) => localizePath(p, locale);
 
 const db = getDb();
-// Guests are not bounced to GitHub: they may well have templates of their own,
+// Guests are not bounced to a sign-in: they may well have templates of their own,
 // saved in this browser (src/lib/local-templates.ts). They get the same page
 // minus the profile/account chrome, with <LocalTemplates> listing them — the
 // only route back to a guest template short of typing its URL.
@@ -85,7 +85,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                 data-astro-reload
                                 class="auth-login-link font-semibold text-primary hover:text-primary-light transition-colors whitespace-nowrap"
                             >
-                                <i class="fa-brands fa-github text-xs" />{" "}
+                                <i class="fa-solid fa-right-to-bracket text-xs" />{" "}
                                 {tr("local.bannerCta")}
                             </a>
                         </p>
