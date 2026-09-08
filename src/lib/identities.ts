@@ -28,10 +28,14 @@ export async function findUserIdByIdentity(
  * The account that owns a verified email address, for linking a second
  * provider to an existing user.
  *
- * Only ever call this with an address the provider says it has verified: it
- * grants access to whatever account holds that address, so an unverified one
- * would be an account takeover through any provider that lets you type your
- * own email.
+ * Both ends of the match have to be verified, or this is an account takeover:
+ *
+ *  - Only ever call this with an address the provider says it has verified,
+ *    or anyone who can type someone else's address into a provider that does
+ *    not check it gets their account.
+ *  - Only rows whose own address was verified are matched (see migration
+ *    0020), or an account holding an address nobody vouched for would collect
+ *    whoever later proves it at another provider.
  *
  * Returns null unless exactly one account matches — `users.email` is not
  * unique (two people can put the same address on two accounts), and guessing
@@ -43,7 +47,7 @@ export async function findUserIdByVerifiedEmail(
 ): Promise<string | null> {
     const { results } = await db
         .prepare(
-            'SELECT id FROM users WHERE email = ? COLLATE NOCASE LIMIT 2'
+            'SELECT id FROM users WHERE email = ? COLLATE NOCASE AND email_verified = 1 LIMIT 2'
         )
         .bind(email)
         .all<{ id: string }>();

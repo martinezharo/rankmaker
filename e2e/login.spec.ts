@@ -6,8 +6,10 @@
  * A checkout with none configured — CI, a fresh clone — falls back to the full
  * list, which is what makes this suite deterministic without secrets.
  *
- * The OAuth hop itself stops at our own /api/auth/login: the assertion is that
- * it hands the browser to the right provider, not that the provider answers.
+ * The OAuth hop itself is not exercised here: which provider /api/auth/login
+ * redirects to depends on the credentials the environment holds, and a run
+ * without any (CI) correctly refuses instead. That routing is covered against
+ * a stubbed env in tests/api/auth/oauth.test.ts.
  */
 import { expect, test } from '@playwright/test';
 
@@ -46,18 +48,4 @@ test('sends the visitor back to the page they signed in from', async ({ page }) 
 		'href',
 		'/api/auth/login?next=%2Fsearch%3Fq%3Dpizza&provider=google'
 	);
-});
-
-test('hands the browser to the provider it was asked for', async ({ request }) => {
-	const authorizeUrls = {
-		google: 'https://accounts.google.com/o/oauth2/v2/auth',
-		github: 'https://github.com/login/oauth/authorize',
-	};
-	for (const [provider, authorize] of Object.entries(authorizeUrls)) {
-		const response = await request.get(`/api/auth/login?provider=${provider}`, {
-			maxRedirects: 0,
-		});
-		expect(response.status()).toBe(302);
-		expect(response.headers()['location']).toContain(authorize);
-	}
 });

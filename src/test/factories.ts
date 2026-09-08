@@ -23,6 +23,8 @@ export async function insertUser(
 		showMature: boolean;
 		bio: string | null;
 		email: string | null;
+		/** Whether a provider vouched for that address (see migration 0020). */
+		emailVerified: boolean;
 		/** The provider account that signs in as this user (see 0019). */
 		identity: { provider: ProviderId; accountId: string };
 	}> = {}
@@ -31,8 +33,8 @@ export async function insertUser(
 	const username = overrides.username ?? id;
 	await db
 		.prepare(
-			`INSERT INTO users (id, username, avatar, is_verified, bio, show_mature, email)
-			 VALUES (?, ?, ?, ?, ?, ?, ?)`
+			`INSERT INTO users (id, username, avatar, is_verified, bio, show_mature, email, email_verified)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			id,
@@ -41,7 +43,8 @@ export async function insertUser(
 			overrides.isVerified ? 1 : 0,
 			overrides.bio ?? null,
 			overrides.showMature ? 1 : 0,
-			overrides.email ?? null
+			overrides.email ?? null,
+			overrides.emailVerified ? 1 : 0
 		)
 		.run();
 	if (overrides.identity) {

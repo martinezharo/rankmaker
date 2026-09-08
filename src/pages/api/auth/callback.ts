@@ -91,11 +91,15 @@ export const GET: APIRoute = async (context) => {
         if (userId) {
             // Keep the stored email fresh on every login (it may have been
             // added or changed since signup). Never clobber a stored address
-            // with null.
+            // with null. The flag travels with the address rather than being
+            // sticky: an address that arrives unverified is not one another
+            // provider may later be matched against (see migration 0020).
             if (profile.email) {
                 await db
-                    .prepare('UPDATE users SET email = ? WHERE id = ?')
-                    .bind(profile.email, userId)
+                    .prepare(
+                        'UPDATE users SET email = ?, email_verified = ? WHERE id = ?'
+                    )
+                    .bind(profile.email, profile.emailVerified ? 1 : 0, userId)
                     .run();
             }
             const sessionId = await createSession(db, userId);
@@ -114,6 +118,7 @@ export const GET: APIRoute = async (context) => {
             accountId: profile.accountId,
             login: profile.login,
             email: profile.email,
+            emailVerified: profile.emailVerified,
             next,
             exp: Date.now() + 15 * 60 * 1000,
         });

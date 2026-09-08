@@ -72,9 +72,15 @@ export const POST: APIRoute = async (context) => {
         await db.batch([
             db
                 .prepare(
-                    'INSERT INTO users (id, username, avatar, email) VALUES (?, ?, ?, ?)'
+                    'INSERT INTO users (id, username, avatar, email, email_verified) VALUES (?, ?, ?, ?, ?)'
                 )
-                .bind(userId, username, body.avatar, signup.email ?? null),
+                .bind(
+                    userId,
+                    username,
+                    body.avatar,
+                    signup.email ?? null,
+                    signup.emailVerified ? 1 : 0
+                ),
             insertIdentityStatement(
                 db,
                 signup.provider,

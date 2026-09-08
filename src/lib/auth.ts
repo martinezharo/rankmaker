@@ -218,6 +218,8 @@ export type SignupPayload = {
     /** Username seed for the prefill on /signup. */
     login: string;
     email?: string | null;
+    /** Whether the provider vouched for that address — see migration 0020. */
+    emailVerified?: boolean;
     next: string;
     exp: number;
 };

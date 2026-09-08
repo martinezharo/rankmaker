@@ -358,10 +358,12 @@ describe('GET /api/auth/callback', () => {
 		await callback();
 
 		const row = await db
-			.prepare('SELECT email FROM users WHERE id = ?')
+			.prepare('SELECT email, email_verified FROM users WHERE id = ?')
 			.bind(alice.id)
-			.first<{ email: string }>();
+			.first<{ email: string; email_verified: number }>();
 		expect(row?.email).toBe('primary@example.test');
+		// Verified, so a second provider may be matched against it later.
+		expect(row?.email_verified).toBe(1);
 	});
 
 	it('does not clobber a stored email when the provider gives none', async () => {
@@ -403,10 +405,12 @@ describe('GET /api/auth/callback', () => {
 		await callback({ provider: 'github' });
 
 		const row = await db
-			.prepare('SELECT email FROM users WHERE id = ?')
+			.prepare('SELECT email, email_verified FROM users WHERE id = ?')
 			.bind(alice.id)
-			.first<{ email: string }>();
+			.first<{ email: string; email_verified: number }>();
 		expect(row?.email).toBe('profile@example.test');
+		// Good enough to email, not good enough to link another provider to.
+		expect(row?.email_verified).toBe(0);
 	});
 
 	describe('linking a second provider', () => {
@@ -416,6 +420,7 @@ describe('GET /api/auth/callback', () => {
 			const alice = await insertUser(db, {
 				username: 'alice',
 				email: 'primary@example.test',
+				emailVerified: true,
 				identity: { provider: 'github', accountId: '4242' },
 			});
 			stubProviders();
@@ -438,6 +443,7 @@ describe('GET /api/auth/callback', () => {
 			await insertUser(db, {
 				username: 'alice',
 				email: 'primary@example.test',
+				emailVerified: true,
 				identity: { provider: 'github', accountId: '4242' },
 			});
 			stubProviders({
@@ -462,8 +468,29 @@ describe('GET /api/auth/callback', () => {
 				await insertUser(db, {
 					username,
 					email: 'primary@example.test',
+					emailVerified: true,
 				});
 			}
+
+			stubProviders();
+
+			const { response } = await callback();
+
+			expect(response.headers.get('Location')).toBe('/signup');
+			expect(await findUserIdByIdentity(db, 'google', '1122334455')).toBeNull();
+		});
+
+		it('refuses to link to an address the account never verified', async () => {
+			// The other half of the rule: an address a provider vouches for
+			// still has to meet an account that vouched for it too, or
+			// storing an unverified address would be enough to collect
+			// whoever proves that same address elsewhere later.
+			await insertUser(db, {
+				username: 'alice',
+				email: 'primary@example.test',
+				emailVerified: false,
+				identity: { provider: 'github', accountId: '4242' },
+			});
 			stubProviders();
 
 			const { response } = await callback();
@@ -620,6 +647,7 @@ describe('POST /api/auth/complete-signup', () => {
 			accountId: '1122334455',
 			login: 'primary',
 			email: 'primary@example.test',
+			emailVerified: true,
 			next: '/',
 			exp: Date.now() + 900_000,
 			...overrides,
@@ -659,13 +687,18 @@ describe('POST /api/auth/complete-signup', () => {
 		expect(await response.json()).toEqual({ ok: true, next: '/' });
 
 		const row = await db
-			.prepare('SELECT id, username, avatar, email FROM users WHERE username = ?')
+			.prepare(
+				'SELECT id, username, avatar, email, email_verified FROM users WHERE username = ?'
+			)
 			.bind('octocat')
 			.first<any>();
 		expect(row).toMatchObject({
 			username: 'octocat',
 			avatar: SELECTABLE_AVATAR_KEYS[0],
 			email: 'primary@example.test',
+			// Carried from the provider, not assumed: an account created from
+			// an unverified address must not collect another provider later.
+			email_verified: 1,
 		});
 		expect(await findUserIdByIdentity(db, 'google', '1122334455')).toBe(row.id);
 		expect(await getSessionUser(context.cookies, db)).toMatchObject({
@@ -688,6 +721,19 @@ describe('POST /api/auth/complete-signup', () => {
 		expect(await findUserIdByIdentity(db, 'github', '4242')).toBe(
 			await userId('octocat')
 		);
+	});
+
+	it('stores an unverified address as unverified', async () => {
+		await complete(
+			{ username: 'octocat', avatar: SELECTABLE_AVATAR_KEYS[0] },
+			{ cookie: await signupCookie({ emailVerified: false }) }
+		);
+		const row = await db
+			.prepare('SELECT email, email_verified FROM users WHERE username = ?')
+			.bind('octocat')
+			.first<{ email: string; email_verified: number }>();
+		expect(row?.email).toBe('primary@example.test');
+		expect(row?.email_verified).toBe(0);
 	});
 
 	it('records the marketing opt-in when the box is ticked', async () => {
