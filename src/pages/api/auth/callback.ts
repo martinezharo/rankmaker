@@ -14,6 +14,7 @@ import {
 } from '../../../lib/auth';
 import {
     findUserIdByIdentity,
+    findUserIdByLegacyGithubId,
     findUserIdByVerifiedEmail,
     linkIdentity,
 } from '../../../lib/identities';
@@ -137,11 +138,17 @@ export const GET: APIRoute = async (context) => {
 /**
  * The account this profile signs in as, or null when it belongs to nobody yet.
  *
- * A provider we have never seen for this person still resolves to their
- * account when it hands us a *verified* address that one account already uses
- * — otherwise everyone who signed up with GitHub would silently get a second,
- * empty account the first time they clicked the new Google button. The
- * identity is linked on the spot, so the next login is a direct hit.
+ * Three ways in, tried in that order, and the last two link the identity on
+ * the spot so the next login is a direct hit:
+ *
+ *  1. The identity we already have.
+ *  2. The pre-0019 `users.github_id`, so an account created after the
+ *     migration's backfill but before this code shipped is adopted rather
+ *     than locked out (see src/lib/identities.ts).
+ *  3. A *verified* address that exactly one account holds and had verified
+ *     itself — otherwise everyone who signed up with GitHub would silently
+ *     get a second, empty account the first time they clicked the new Google
+ *     button.
  */
 async function resolveUser(
     db: D1Database,
@@ -151,14 +158,31 @@ async function resolveUser(
     const known = await findUserIdByIdentity(db, provider, profile.accountId);
     if (known) return known;
 
+    if (provider === 'github') {
+        const legacy = await findUserIdByLegacyGithubId(db, profile.accountId);
+        if (legacy) return link(db, provider, profile.accountId, legacy, 'legacy github_id');
+    }
+
     if (!profile.email || !profile.emailVerified) return null;
     const owner = await findUserIdByVerifiedEmail(db, profile.email);
     if (!owner) return null;
 
-    await linkIdentity(db, provider, profile.accountId, owner);
+    return link(db, provider, profile.accountId, owner, 'verified email');
+}
+
+/** Attach the identity to the account we matched, and say so in the logs. */
+async function link(
+    db: D1Database,
+    provider: ProviderId,
+    accountId: string,
+    userId: string,
+    matchedBy: string
+): Promise<string> {
+    await linkIdentity(db, provider, accountId, userId);
     console.log('OAuth callback: linked provider to existing account', {
         provider,
-        userId: owner,
+        userId,
+        matchedBy,
     });
-    return owner;
+    return userId;
 }

@@ -439,6 +439,45 @@ describe('GET /api/auth/callback', () => {
 			expect(await realUsers()).toBe(1);
 		});
 
+		it('adopts an account the 0019 backfill could not have seen', async () => {
+			// Signed up through the old code after the migration ran: a
+			// github_id, no identity row. Their next login must land in their
+			// own account rather than starting an empty second one.
+			const alice = await insertUser(db, {
+				username: 'alice',
+				githubId: 4242,
+			});
+			stubProviders();
+
+			const { response, context } = await callback({ provider: 'github' });
+
+			expect(response.headers.get('Location')).toBe('/');
+			expect(await getSessionUser(context.cookies, db)).toMatchObject({
+				id: alice.id,
+			});
+			expect(await findUserIdByIdentity(db, 'github', '4242')).toBe(alice.id);
+			expect(await realUsers()).toBe(1);
+		});
+
+		it('does not read the GitHub column for another provider', async () => {
+			// Google's `sub` is an opaque string that can be all digits; it is
+			// not a GitHub id and must never be matched against one.
+			await insertUser(db, { username: 'alice', githubId: 1122334455 });
+			stubProviders({
+				'https://openidconnect.googleapis.com/v1/userinfo': {
+					sub: '1122334455',
+					email: 'someone@example.test',
+					email_verified: true,
+				},
+			});
+
+			const { response, context } = await callback();
+
+			expect(response.headers.get('Location')).toBe('/signup');
+			expect(context.cookies.written.get(SESSION_COOKIE)).toBeUndefined();
+			expect(await findUserIdByIdentity(db, 'google', '1122334455')).toBeNull();
+		});
+
 		it('refuses to link an address the provider has not verified', async () => {
 			await insertUser(db, {
 				username: 'alice',

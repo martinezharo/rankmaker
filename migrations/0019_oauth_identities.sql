@@ -23,9 +23,14 @@ SELECT 'github', CAST(github_id AS TEXT), id
 FROM users
 WHERE github_id IS NOT NULL;
 
--- `users.github_id` stays behind as a legacy column, unread and unwritten from
--- here on (new GitHub signups leave it NULL). SQLite cannot drop a UNIQUE
--- column without rebuilding the table, and rebuilding `users` would mean
--- dropping a table half the schema has ON DELETE CASCADE references to — not
--- worth it for a dead column. Drop it in a dedicated migration if it ever gets
--- in the way.
+-- `users.github_id` stays behind as a legacy column. Nothing writes it from
+-- here on (new GitHub signups leave it NULL), and one place still reads it:
+-- the callback adopts an account that has a github_id but no identity, which
+-- is what anyone who signs up between this migration and the deploy of the
+-- code above will look like (see findUserIdByLegacyGithubId).
+--
+-- SQLite cannot drop a UNIQUE column without rebuilding the table, and
+-- rebuilding `users` would mean dropping a table half the schema has ON DELETE
+-- CASCADE references to — not worth it for a column that is only read on a
+-- path that will stop matching anything. Drop it in a dedicated migration if
+-- it ever gets in the way.

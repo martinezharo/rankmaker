@@ -4,8 +4,10 @@
  * which is what lets the same person arrive through Google today and GitHub
  * tomorrow and land in the same account.
  *
- * See migration 0019. `users.github_id` is the legacy column this replaced and
- * is no longer read or written anywhere.
+ * See migration 0019. `users.github_id` is the legacy column this replaced: it
+ * is never written any more, and read from exactly one place —
+ * `findUserIdByLegacyGithubId` below, which exists to adopt the accounts the
+ * backfill could not have seen.
  */
 import type { ProviderId } from './oauth-providers';
 
@@ -22,6 +24,39 @@ export async function findUserIdByIdentity(
         .bind(provider, accountId)
         .first<{ user_id: string }>();
     return row?.user_id ?? null;
+}
+
+/**
+ * The account a GitHub id signs in as according to the pre-0019 schema.
+ *
+ * The backfill in 0019 could only adopt the accounts that existed the moment
+ * it ran. Anybody who signs up through the old code afterwards — the window
+ * between applying the migration and deploying the code that writes
+ * identities, and any straggler request still being served by the old bundle
+ * mid-rollout — gets a `github_id` and no identity row, and would find
+ * themselves locked out of their own account on their next login.
+ *
+ * So a GitHub profile with no identity falls back to this column and is
+ * adopted on the spot. It is not an email match and carries none of that
+ * risk: `github_id` was the login key, so an account holding one already
+ * belongs to whoever controls that GitHub account.
+ *
+ * Removable once `SELECT COUNT(*) FROM users WHERE github_id IS NOT NULL AND
+ * id NOT IN (SELECT user_id FROM user_identities)` is 0 and has stayed 0 —
+ * the old code is then gone and nothing can create such a row again.
+ */
+export async function findUserIdByLegacyGithubId(
+    db: D1Database,
+    accountId: string
+): Promise<string | null> {
+    // GitHub ids are numeric; the column is INTEGER. Anything else cannot be
+    // in there, and asking would only be a wasted query.
+    if (!/^\d+$/.test(accountId)) return null;
+    const row = await db
+        .prepare('SELECT id FROM users WHERE github_id = ?')
+        .bind(Number(accountId))
+        .first<{ id: string }>();
+    return row?.id ?? null;
 }
 
 /**

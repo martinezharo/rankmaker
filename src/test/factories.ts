@@ -27,14 +27,20 @@ export async function insertUser(
 		emailVerified: boolean;
 		/** The provider account that signs in as this user (see 0019). */
 		identity: { provider: ProviderId; accountId: string };
+		/**
+		 * The pre-0019 login key. Only for exercising the legacy path — an
+		 * account with this and no `identity` is one the 0019 backfill never
+		 * saw (see findUserIdByLegacyGithubId).
+		 */
+		githubId: number;
 	}> = {}
 ): Promise<SeededUser> {
 	const id = overrides.id ?? nextId('user');
 	const username = overrides.username ?? id;
 	await db
 		.prepare(
-			`INSERT INTO users (id, username, avatar, is_verified, bio, show_mature, email, email_verified)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+			`INSERT INTO users (id, username, avatar, is_verified, bio, show_mature, email, email_verified, github_id)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			id,
@@ -44,7 +50,8 @@ export async function insertUser(
 			overrides.bio ?? null,
 			overrides.showMature ? 1 : 0,
 			overrides.email ?? null,
-			overrides.emailVerified ? 1 : 0
+			overrides.emailVerified ? 1 : 0,
+			overrides.githubId ?? null
 		)
 		.run();
 	if (overrides.identity) {
