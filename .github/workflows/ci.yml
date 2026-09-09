@@ -150,11 +150,17 @@ jobs:
           set -e
 
           if [ "$status" -ne 0 ]; then
-            # By far the likeliest failure, and the one whose message from the
-            # API ("Authentication error") does not say what to actually do.
+            # A token that cannot upload Workers is a setup step nobody has
+            # done yet, not a bad commit — so it warns and passes, exactly as
+            # deploy-readiness does for its own missing token. Holding every
+            # pull request red over an account setting would punish the wrong
+            # thing. The API's own wording ("Authentication error") does not
+            # say what to do about it, hence the spelled-out message.
             if grep -qE 'Authentication error|code: 10000' upload.log; then
-              echo "::error::CLOUDFLARE_API_TOKEN cannot upload Workers. It needs the \"Edit Cloudflare Workers\" permission template — a token scoped only for read checks (D1 migrations, secret listing) is not enough. Edit it at https://dash.cloudflare.com/profile/api-tokens and update the repo secret."
+              echo "::warning::No preview URL: CLOUDFLARE_API_TOKEN cannot upload Workers. Give it the \"Edit Cloudflare Workers\" permission template at https://dash.cloudflare.com/profile/api-tokens (a token scoped only for the read checks — D1 migrations, secret listing — is not enough), then re-run this job."
+              exit 0
             fi
+            # Anything else is a real failure and should be seen as one.
             exit "$status"
           fi
 
