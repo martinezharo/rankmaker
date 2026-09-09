@@ -13,12 +13,6 @@
  */
 import { expect, test } from '@playwright/test';
 
-test.beforeEach(async ({ page }) => {
-	await page.addInitScript(() => {
-		localStorage.setItem('rankmaker_cookie_consent', 'false');
-	});
-});
-
 test('offers every provider, with the primary one focused', async ({ page }) => {
 	await page.goto('/');
 	await page.locator('[data-auth-slot="desktop"] .auth-login-link').click();

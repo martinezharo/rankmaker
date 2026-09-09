@@ -4,14 +4,6 @@ import { test, expect, type Page } from '@playwright/test';
 const A = { slug: 'best-social-networks-ranking', titleNeedle: 'Social Networks' };
 const B = { slug: 'most-popular-stephen-king-books', titleNeedle: 'Stephen King' };
 
-test.beforeEach(async ({ page }) => {
-	// The cookie banner is outside the ranking surface. Give every test a
-	// deterministic consent state so a delayed banner cannot intercept clicks.
-	await page.addInitScript(() => {
-		localStorage.setItem('rankmaker_cookie_consent', 'false');
-	});
-});
-
 type FirstBattle = {
 	leftId: number;
 	rightId: number;

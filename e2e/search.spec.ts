@@ -6,12 +6,6 @@ const STAR_WARS = {
 	cover: 'https://img.rankmaker.net/covers/Star_Wars_Logo.svg.webp',
 };
 
-test.beforeEach(async ({ page }) => {
-	await page.addInitScript(() => {
-		localStorage.setItem('rankmaker_cookie_consent', 'false');
-	});
-});
-
 test('refreshes live counts without moving or mismatching template covers', async ({
 	page,
 }) => {

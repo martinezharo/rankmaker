@@ -17,12 +17,6 @@ async function readPayload(page: Page): Promise<Record<string, unknown>> {
 	return JSON.parse(raw ?? '{}') as Record<string, unknown>;
 }
 
-test.beforeEach(async ({ page }) => {
-	await page.addInitScript(() => {
-		localStorage.setItem('rankmaker_cookie_consent', 'false');
-	});
-});
-
 test('ships one trimmed translation dictionary for every locale', async ({ page }) => {
 	test.setTimeout(90_000);
 	const pageErrors: Error[] = [];

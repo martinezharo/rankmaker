@@ -22,9 +22,6 @@ test.describe('the header', () => {
 	});
 
 	test('offers a sign-in to a guest', async ({ page }) => {
-		await page.context().addInitScript(() => {
-			localStorage.setItem('rankmaker_cookie_consent', 'false');
-		});
 		await page.goto('/');
 		await expect(page.locator('[data-auth-slot="desktop"]')).not.toHaveAttribute(
 			'data-user',
@@ -39,9 +36,6 @@ test.describe('creating a template', () => {
 		page,
 		signIn,
 	}) => {
-		await page.context().addInitScript(() => {
-			localStorage.setItem('rankmaker_cookie_consent', 'false');
-		});
 		await page.goto('/create');
 
 		await page.locator('#tf-title').fill('E2E Guest Double Submit');
