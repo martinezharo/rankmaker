@@ -31,6 +31,8 @@
 /* ── Base ───────────────────────────────────────── */
 
 html {
+    /* No horizontal overflow, ever - see the note on body below. */
+    overflow-x: clip;
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -66,6 +68,26 @@ body {
     background-color: var(--color-surface);
     color: var(--color-text-primary);
     min-height: 100dvh;
+    /* The app animates with horizontal transforms: duel cards slide in from
+       ±80px and leave towards ±60px, result rows enter from -30px. A transform
+       that leaves the viewport still counts as overflow, and on mobile the
+       browser answers overflow by widening the layout viewport to fit it -
+       measured at 390 -> 445 CSS px on an iPhone 13, for the length of every
+       single duel animation. Everything sized to the layout viewport is then
+       re-laid out and scaled back down twice per pick, the fixed header
+       included, which is what read as the header "reloading" between battles.
+
+       Both rules are needed. The root element's overflow propagates to the
+       viewport, so `body` alone would compute to `visible` and clip nothing;
+       and the viewport's own clip is applied after the layout viewport has
+       already been sized, so `html` alone does not stop the widening either.
+       Setting `html` takes the propagation, which leaves `body`'s own value
+       to clip the content box - the one that actually bounds the animations.
+
+       `clip` rather than `hidden`: `hidden` would make these scroll
+       containers, breaking `position: sticky` (the battle progress bar) and
+       the smooth scrolling above. `clip` only clips. */
+    overflow-x: clip;
 }
 
 ::selection {
