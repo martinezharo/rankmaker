@@ -86,3 +86,94 @@ jobs:
             exit 0
           fi
           pnpm run check:deploy
+
+  # A shareable preview URL on every pull request.
+  #
+  # Cloudflare's own Git integration can post these, but only when its
+  # dashboard settings happen to line up, and none of that state lives in the
+  # repo — so previews turned up on some pull requests and not others. Doing
+  # the upload here is what makes them arrive every time, and it survives
+  # rebuilding the account or moving hosts, because the whole mechanism is this
+  # job plus `preview_urls` in wrangler.jsonc.
+  #
+  # `versions upload` uploads; it does not deploy. Production carries on
+  # serving the version it already had, and this one takes no traffic until
+  # someone deploys it. It does carry the same bindings block as production
+  # though — the real D1, R2 and KV — so the comment says so out loud.
+  preview:
+    # A build that cannot pass `verify` should not get a shareable URL.
+    needs: verify
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Upload a preview version and comment the URL
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.number }}
+          # Passed through the environment, never interpolated into the script
+          # below: a pull request title is attacker-controlled text.
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Pull requests from forks get no secrets, so there is nothing to
+          # upload with and no write token to comment with. Say so and pass.
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::warning::No CLOUDFLARE_API_TOKEN (fork pull request, or the secret is unset) — skipping the preview upload."
+            exit 0
+          fi
+
+          pnpm exec wrangler versions upload \
+            --config dist/server/wrangler.json \
+            --preview-alias "pr-${PR_NUMBER}" \
+            --message "PR #${PR_NUMBER}: ${PR_TITLE}" \
+            --tag "pr-${PR_NUMBER}-${GITHUB_SHA:0:7}" | tee upload.log
+
+          # Prefer the alias URL: it is the same for the life of the pull
+          # request, so the comment stays correct across pushes.
+          url=$(sed -n 's/.*Version Preview Alias URL: *//p' upload.log | tail -1)
+          if [ -z "$url" ]; then
+            url=$(sed -n 's/.*Version Preview URL: *//p' upload.log | tail -1)
+          fi
+          if [ -z "$url" ]; then
+            echo "::error::The version uploaded but wrangler printed no preview URL. Check that preview_urls is enabled and that the account has a workers.dev subdomain."
+            exit 1
+          fi
+
+          marker='<!-- ci-preview-url -->'
+          {
+            printf '%s\n' "$marker"
+            printf '### Preview\n\n'
+            printf '%s\n\n' "$url"
+            printf 'Built from `%s`. Uploaded, not deployed — production is untouched until this merges.\n\n' "${GITHUB_SHA:0:7}"
+            printf '> [!WARNING]\n'
+            printf '> The preview carries the same bindings as production: the real D1 database, R2 bucket and KV namespace. Anything created while testing it is written to live data.\n'
+          } > comment.md
+
+          # One comment per pull request, rewritten in place on each push.
+          # `first` inside the filter would give one answer per page, so the
+          # match is taken across the whole paginated stream instead.
+          id=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq ".[] | select(.body | contains(\"$marker\")) | .id" | head -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${id}" -F body=@comment.md >/dev/null
+            echo "Updated comment ${id}: ${url}"
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -F body=@comment.md >/dev/null
+            echo "Commented: ${url}"
+          fi
