@@ -1,0 +1,40 @@
+#!/bin/sh
+# Strip AI co-author trailers from commit messages.
+#
+# The rule is "never add an AI assistant as a co-author", and it is a rule
+# about the repository's history — which means it has to hold no matter what
+# the tool writing the commit was told. Wording in a CLAUDE.md/AGENTS.md file
+# is guidance an agent can be instructed out of; this hook is not, so the
+# guarantee lives here.
+#
+# Enabled via `git config core.hooksPath .githooks` — the `prepare` npm script
+# does this automatically on `pnpm install`.
+#
+# Only assistant trailers go: a `Co-Authored-By` naming a person is a real
+# attribution and is left untouched.
+#
+# Skip once with:  SKIP_COAUTHOR_STRIP=1 git commit …
+set -e
+
+[ -n "$SKIP_COAUTHOR_STRIP" ] && exit 0
+
+msg_file="$1"
+[ -f "$msg_file" ] || exit 0
+
+# Case-insensitive on both the trailer and the assistant it names, so
+# "Co-authored-by: claude opus 5 <noreply@anthropic.com>" matches too.
+pattern='^[Cc]o-[Aa]uthored-[Bb]y:.*\([Cc]laude\|[Aa]nthropic\|[Cc]opilot\|[Cc]ursor\|[Cc]hatGPT\|[Oo]pen[Aa][Ii]\)'
+
+grep -q "$pattern" "$msg_file" || exit 0
+
+tmp="$msg_file.coauthor-strip"
+# Drop the trailers, then squeeze the trailing blank lines they leave behind so
+# the message does not end in whitespace.
+grep -v "$pattern" "$msg_file" | awk '
+	/^[[:space:]]*$/ { blanks = blanks "\n"; next }
+	{ printf "%s%s\n", blanks, $0; blanks = "" }
+' > "$tmp"
+mv "$tmp" "$msg_file"
+
+echo "→ commit-msg: removed AI co-author trailer (see .githooks/commit-msg)"
+exit 0
