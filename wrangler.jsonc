@@ -40,6 +40,19 @@
     "enabled": true
   },
 
+  // Version preview URLs (<version>-rankmaker.<subdomain>.workers.dev), which
+  // CI hands out per pull request - see the `preview` job in ci.yml.
+  //
+  // Declared rather than left to the default. The default is "whatever
+  // `workers_dev` is", and that in turn was never declared either, so whether
+  // a PR got a preview URL depended on account state nobody can see from the
+  // repo. Pinning it here is what makes previews behave the same every time.
+  //
+  // This does not put production on a workers.dev hostname: it only enables
+  // the per-version URLs, and an uploaded version serves no production
+  // traffic until it is deployed.
+  "preview_urls": true,
+
   "observability": {
     "enabled": true
   },
