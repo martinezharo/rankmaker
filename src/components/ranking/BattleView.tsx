@@ -12,8 +12,26 @@
  */
 import { useEffect, useRef, useState } from 'preact/hooks';
 import DuelCard, { type CardMotion, type DuelSide } from './DuelCard';
-import type { RankingItem, SessionState } from '../../lib/ranking-session';
+import type { BattleRecord, RankingItem, SessionState } from '../../lib/ranking-session';
 import type { TFunction } from '../../i18n';
+
+/**
+ * The undo button's label, naming what it would take back.
+ *
+ * A misclick is cheap to fix in the moment and expensive later: by the results
+ * screen undo is gone (there is no pending duel to return to), and rewinding
+ * to a mistake several rounds back costs every duel made since. What the plain
+ * "Undo" never did was give the user a reason to look — so the control now
+ * says whose win it would cancel, which is exactly the fact that reveals the
+ * mistake while it is still one tap from being fixed.
+ *
+ * The pick behind the label is `state.history.at(-1)`: the duel on screen has
+ * not been answered yet, so the last record is the decision just made.
+ */
+function undoLabel(t: TFunction, battle: BattleRecord | null): string {
+	if (!battle) return t('ranking.undo');
+	return t('ranking.undoNamed', { name: battle.winner.name });
+}
 
 /** Winner glow before the cards start leaving. */
 const WINNER_GLOW_MS = 300;
@@ -129,6 +147,11 @@ export default function BattleView({
 		return won ? 'winner-out' : 'out';
 	}
 
+	/** The decision behind the duel that just left, or null at round one. */
+	const lastBattle = state.history.at(-1) ?? null;
+	// An answer already in flight is not undoable: it has not been recorded yet.
+	const canUndo = state.canUndo && leaving === null;
+
 	const percent = Math.min(
 		100,
 		Math.round((state.round / Math.max(state.total, 1)) * 100)
@@ -180,14 +203,16 @@ export default function BattleView({
 						<button
 							id="battle-undo-btn"
 							type="button"
-							disabled={!state.canUndo || leaving !== null}
+							disabled={!canUndo}
 							onClick={onUndo}
 							data-rm-tip={t('tooltip.undo')}
 							data-rm-tip-placement="bottom"
 							class="inline-flex items-center justify-center min-h-11 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
 						>
 							<i class="fa-solid fa-rotate-left mr-1" />
-							{t('ranking.undo')}
+							{/* Truncated rather than wrapped: a long option name must not
+							    grow the sticky bar and push the duel down the page. */}
+							<span class="max-w-32 truncate">{undoLabel(t, lastBattle)}</span>
 						</button>
 						{state.canSkip && (
 							<button

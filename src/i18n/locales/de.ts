@@ -396,6 +396,7 @@ export const de: LocaleDict = {
 		voteDownAria: 'Diese Vorlage runterstimmen',
 		roundProgress: 'Runde {current} von ~{total}',
 		undo: 'Rückgängig',
+		undoNamed: 'Rückgängig: {name}',
 		skipForLater: 'Für später überspringen',
 		finishEarly: 'Früh beenden',
 		rankingLabel: 'Ranking',

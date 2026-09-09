@@ -396,6 +396,7 @@ export const fr: LocaleDict = {
 		voteDownAria: 'Voter contre ce modèle',
 		roundProgress: 'Manche {current} sur ~{total}',
 		undo: 'Annuler',
+		undoNamed: 'Annuler : {name}',
 		skipForLater: 'Passer pour plus tard',
 		finishEarly: 'Terminer tôt',
 		rankingLabel: 'Classement',

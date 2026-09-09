@@ -394,6 +394,7 @@ export const ms: LocaleDict = {
 		voteDownAria: 'Undi turun templat ini',
 		roundProgress: 'Pusingan {current} daripada ~{total}',
 		undo: 'Buat asal',
+		undoNamed: 'Buat asal: {name}',
 		skipForLater: 'Langkau untuk kemudian',
 		finishEarly: 'Selesai Awal',
 		rankingLabel: 'Ranking',

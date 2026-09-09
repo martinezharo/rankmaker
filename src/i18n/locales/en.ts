@@ -463,6 +463,8 @@ export const en = {
 		// Battle view
 		roundProgress: 'Round {current} of ~{total}',
 		undo: 'Undo',
+		// Names the pick the button would take back — see BattleView.tsx.
+		undoNamed: 'Undo: {name}',
 		skipForLater: 'Skip for later',
 		finishEarly: 'Finish Early',
 		rankingLabel: 'Ranking',
