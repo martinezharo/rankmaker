@@ -2,7 +2,6 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import CookieConsent from "../components/CookieConsent.astro";
 import LoginModal from "../components/LoginModal.astro";
 import MatureGate from "../components/MatureGate.astro";
 import { ClientRouter } from "astro:transitions";
@@ -268,13 +267,11 @@ const ogImageHeight =
             }
         </style>
 
-        <!-- Google Analytics is loaded only after cookie consent — see
-             CookieConsent.astro (gtag is injected on Accept / stored consent). -->
-
         <!-- Cloudflare Web Analytics — installed manually (not auto-injected):
              Cloudflare skips edge auto-injection when the response carries a CSP
              (see src/middleware.ts), so the beacon is added here and the beacon
-             host is allow-listed in the CSP. It's cookieless, so it needs no
+             host is allow-listed in the CSP. Cloudflare documents the service
+             as collecting no personal data, so it needs no analytics-cookie
              consent gate and loads for every visitor. -->
         <script is:inline>
             (() => {
@@ -322,7 +319,6 @@ const ogImageHeight =
             <slot />
         </main>
         <Footer />
-        <CookieConsent />
         <!-- Mounted once, globally: every login-gated action opens this
              instead of hard-navigating to a provider — see
              src/scripts/auth-prompt.ts. Placed before the scripts below so

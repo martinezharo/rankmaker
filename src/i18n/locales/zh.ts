@@ -5,6 +5,8 @@
  */
 import type { LocaleDict } from "../types";
 
+import { legalContent } from '../legal-content';
+
 export const zh: LocaleDict = {
 	tooltip: {
 		undo: '撤销上一次选择，重新对决这一组',
@@ -119,13 +121,6 @@ export const zh: LocaleDict = {
 		termsOfUse: '使用条款',
 		cookiePolicy: 'Cookie 政策',
 		legalNotice: '法律声明',
-	},
-	cookie: {
-		title: '我们使用 Cookie',
-		body: '我们使用 Cookie 来改善您的体验并分析流量。点击“接受”即表示您同意我们使用 Cookie。',
-		accept: '接受',
-		reject: '拒绝',
-		policy: '政策',
 	},
 	seo: {
 		defaultDescription: 'RANKMAKER：为您的事物排名。无层级，无噪音——只有精准的一对一排名。',
@@ -468,31 +463,13 @@ export const zh: LocaleDict = {
 			title: 'Cookie 政策 — RANKMAKER',
 			metaDescription: '我们关于 Cookie 使用的政策。',
 			heading: 'Cookie 政策',
-			body: `<p>欢迎使用 RANKMAKER！本 Cookie 政策解释了我们如何使用 Cookie 及类似技术在您访问网站时识别您。它说明了这些技术是什么、我们为何使用它们，以及您控制我们使用方式的权利。</p>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">1. 什么是 Cookie？</h2><p class="mb-4">Cookie 是您访问网站时放置在您的计算机或移动设备上的小型数据文件。网站所有者广泛使用 Cookie 来使其网站正常运行或更高效地运行，同时提供报告信息。</p><p>由网站所有者（此处为 RANKMAKER）设置的 Cookie 称为"第一方 Cookie"；由第三方设置的称为"第三方 Cookie"，用于通过网站提供第三方功能或服务（如广告、互动内容和分析）。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">2. 我们为什么使用 Cookie？</h2><p>我们出于多种原因使用第一方和第三方 Cookie。某些 Cookie 是网站正常运行所必需的技术性 Cookie，我们称之为"必要"或"严格必要"Cookie。其他 Cookie 帮助我们跟踪和定向用户兴趣以增强体验。第三方通过我们的网站提供 Cookie 用于分析等目的，详情如下。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">3. 我们使用的 Cookie 类型</h2><div class="space-y-4"><div><h3 class="text-lg font-medium text-text-primary mb-2">3.1. 严格必要 Cookie</h3><p>这些 Cookie 对于通过我们网站提供服务以及使您能够使用其某些功能（如访问安全区域）不可或缺。没有这些 Cookie，您所请求的服务（如购物车和安全账户）将无法提供。</p></div><div><h3 class="text-lg font-medium text-text-primary mb-2">3.2. 功能性 Cookie</h3><p>这些 Cookie 用于增强我们网站的功能，但对其使用并非必不可少。没有它们，某些功能（如记住您的登录信息或网站偏好设置）可能无法使用。</p></div><div><h3 class="text-lg font-medium text-text-primary mb-2">3.3. 分析和性能 Cookie</h3><p>这些 Cookie 收集的信息以汇总形式帮助我们了解网站的使用情况或营销活动的效果，或帮助我们为您定制网站，从而改善您的体验。</p></div></div></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">4. 我们安装的具体 Cookie</h2><p class="mb-4">以下是我们网站上使用的主要 Cookie 列表：</p><div class="overflow-x-auto rounded-xl border border-border"><table class="w-full text-sm text-left"><thead class="bg-surface-elevated text-text-primary font-semibold"><tr><th class="px-4 py-3 border-b border-border">Cookie 名称</th><th class="px-4 py-3 border-b border-border">用途</th><th class="px-4 py-3 border-b border-border">有效期</th><th class="px-4 py-3 border-b border-border">管理方</th><th class="px-4 py-3 border-b border-border">类型</th></tr></thead><tbody class="divide-y divide-border"><tr><td class="px-4 py-3 font-medium">PHPSESSID（或类似）</td><td class="px-4 py-3">跨页面请求维护您的会话状态。</td><td class="px-4 py-3">会话</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">严格必要</td></tr><tr><td class="px-4 py-3 font-medium">rankmaker_visited</td><td class="px-4 py-3">跟踪您是否曾经访问过本网站。</td><td class="px-4 py-3">30 天</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">功能性</td></tr><tr><td class="px-4 py-3 font-medium">remember_token</td><td class="px-4 py-3">记住您的登录信息以便自动登录。</td><td class="px-4 py-3">30 天</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">功能性</td></tr><tr><td class="px-4 py-3 font-medium">cookie_consent_status</td><td class="px-4 py-3">存储您的同意状态。</td><td class="px-4 py-3">1 年</td><td class="px-4 py-3">RANKMAKER</td><td class="px-4 py-3">功能性</td></tr><tr><td class="px-4 py-3 font-medium">_ga</td><td class="px-4 py-3">区分用户以进行统计。</td><td class="px-4 py-3">2 年</td><td class="px-4 py-3">Google</td><td class="px-4 py-3">分析</td></tr><tr><td class="px-4 py-3 font-medium">_gid</td><td class="px-4 py-3">区分用户以进行统计。</td><td class="px-4 py-3">24 小时</td><td class="px-4 py-3">Google</td><td class="px-4 py-3">分析</td></tr></tbody></table></div></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">5. 如何控制 Cookie？</h2><p class="mb-4">您有权决定是否接受或拒绝 Cookie。您可以通过以下方式行使您的 Cookie 偏好：</p><ul class="list-disc pl-5 space-y-2 mb-4"><li><strong class="text-text-primary">浏览器设置：</strong>大多数浏览器允许通过设置控制大多数 Cookie。</li><li><strong class="text-text-primary">第三方退出：</strong>对于 Google Analytics，您可以访问 <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Google Analytics 退出浏览器插件</a> 选择退出。</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">6. 如何撤销同意</h2><p class="mb-4">如果您之前已同意我们使用非必要 Cookie，可以通过清除浏览器中我们网站的 Cookie 来撤销同意。这将删除 <code>cookie_consent_status</code> Cookie。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">7. Cookie 政策的变更</h2><p>我们可能会不时更新本 Cookie 政策，以反映例如我们使用的 Cookie 变化或其他运营、法律或监管原因。请定期重新访问本 Cookie 政策，以了解我们对 Cookie 及相关技术的使用情况。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-4">8. 联系我们</h2><p>如果您对我们使用 Cookie 或其他技术有任何疑问，请发送电子邮件至 <a href="mailto:rankmaker.net@gmail.com" class="text-primary hover:underline">rankmaker.net@gmail.com</a>。</p></section>`,
+			body: legalContent.zh.cookiePolicy,
 		},
 		privacyPolicy: {
 			title: '隐私政策 — RANKMAKER',
 			metaDescription: '我们如何收集、使用和保护您的数据。',
 			heading: '隐私政策',
-			body: `<p>欢迎使用 RANKMAKER！本隐私政策解释了当您使用我们的网站和服务（统称"服务"）时，我们如何收集、使用和披露有关您的信息。使用服务即表示您同意本隐私政策的条款。</p>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">1. 我们收集的信息</h2><p class="mb-3">我们可能收集以下信息：</p><ul class="list-disc pl-5 space-y-2"><li><strong class="text-text-primary">个人信息：</strong>您的电子邮件地址、用户名及您在创建账号时提供的其他详细信息。</li><li><strong class="text-text-primary">使用信息：</strong>您访问的页面、在页面上花费的时间、与服务的互动。</li><li><strong class="text-text-primary">设备信息：</strong>IP 地址、浏览器类型、设备标识符及操作系统。</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">2. 我们如何使用您的信息</h2><p class="mb-3">我们使用您的信息来：</p><ul class="list-disc pl-5 space-y-2"><li>提供、维护和改进服务。</li><li>与您沟通。</li><li>确保安全并防止欺诈。</li><li>分析使用情况并改善用户体验。</li></ul><p class="mt-3"><strong class="text-text-primary">营销邮件。</strong>只有在您明确同意后，我们才会向您发送 RANKMAKER 的动态（新功能、精彩排行榜）——同意方式为创建账号时勾选相应选项，或在偏好设置页面开启“最新动态”开关。该开关默认关闭，与您自身活动触发的通知邮件相互独立，您可以随时通过同一开关撤回同意，这不会影响服务的其他部分。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. Cookie 和跟踪技术</h2><p>我们可能使用 Cookie 和类似技术来改善功能和性能。您可以通过浏览器设置管理您的 Cookie 偏好。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. 信息共享</h2><p class="mb-3">我们不出售您的个人数据。我们可能与以下方共享信息：</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>服务提供商（如托管、分析、广告）。</li><li>法律要求时的相关机构。</li></ul><p>具体而言，我们可能与以下方共享您的数据：</p><ul class="list-disc pl-5 space-y-2 mt-2"><li><strong>Hostinger：</strong>我们的网站托管提供商。</li><li><strong>Google（Analytics、Ads）：</strong>我们使用 Google Analytics 监控和分析网络流量，使用 Google Ads 进行广告投放。</li></ul></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. 数据保留</h2><p>我们在提供服务和履行法律义务所必需的时间内保留您的数据。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">6. 您的权利</h2><p class="mb-3">您可以：</p><ul class="list-disc pl-5 space-y-2 mb-3"><li>访问或更新您的个人信息。</li><li>请求删除您的数据。</li><li>反对处理您的数据。</li></ul><p class="mb-3">如果您是欧洲经济区（EEA）或西班牙居民，您在《通用数据保护条例》和西班牙法律下享有特定数据保护权利，包括：</p><ul class="list-disc pl-5 space-y-2"><li>访问、更新或删除您数据的权利。</li><li>更正权。</li><li>反对权。</li><li>限制处理权。</li><li>数据可携带权。</li><li>撤回同意的权利。</li></ul><p class="mt-3 text-sm text-text-muted">请注意，我们可能会要求您在回应此类请求之前验证您的身份。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">7. 儿童隐私</h2><p>我们的服务不针对 13 岁以下儿童。我们不会故意收集 13 岁以下儿童的个人信息。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">8. 数据安全</h2><p>您的数据安全对我们很重要，但请记住，互联网传输或电子存储方式均非 100% 安全。虽然我们努力使用商业上可接受的手段保护您的个人数据，但无法保证其绝对安全。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">9. 本政策的变更</h2><p>我们可能更新本隐私政策。重大变更将通过电子邮件或服务通知您。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">10. 联系我们</h2><p>如有关于本隐私政策的疑问，请联系 <a href="mailto:rankmaker.net@gmail.com" class="text-primary hover:underline">rankmaker.net@gmail.com</a>。</p></section>`,
+			body: legalContent.zh.privacyPolicy,
 		},
 		termsOfUse: {
 			title: '使用条款 — RANKMAKER',
@@ -504,7 +481,7 @@ export const zh: LocaleDict = {
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">3. 服务使用</h2><p>您同意合法使用服务并遵守本条款。服务旨在让用户通过比较系统创建、分享和管理排名列表。</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">4. 用户内容和行为</h2><p class="mb-3">您对上传的任何内容负责。您同意不发布违法、冒犯性、有害或侵犯他人权利的内容。</p><p>我们可能监控、删除或禁止访问违反本条款的内容。我们可能因违规而暂停或终止您的服务访问权限。</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">5. 第三方服务</h2><p>服务可能包含第三方网站的链接。我们对其内容、隐私实践或服务不承担责任。</p></section>
-<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">6. Cookie</h2><p>我们可能按照隐私政策所述使用 Cookie 和类似技术。</p></section>
+<section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">6. Cookie 与浏览器存储</h2><p>我们仅使用 Cookie 政策中说明的必要 Cookie 和浏览器存储。我们不使用第三方广告或分析 Cookie。</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">7. 年龄限制</h2><p>使用服务须年满 13 岁。</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">8. 免责声明</h2><p>服务按"现状"提供，不附带任何保证。我们在法律允许的最大范围内免除所有保证。</p></section>
 <section><h2 class="text-xl font-semibold text-text-primary mb-3 mt-6">9. 责任限制</h2><p>对于因使用服务而导致的任何间接、附带或后果性损害，我们不承担责任。</p></section>

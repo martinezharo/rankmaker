@@ -9,9 +9,6 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
 	await page.addInitScript(() => {
-		localStorage.setItem('rankmaker_cookie_consent', 'false');
-	});
-	await page.addInitScript(() => {
 		(window as unknown as { __swaps: number }).__swaps = 0;
 		document.addEventListener('astro:after-swap', () => {
 			(window as unknown as { __swaps: number }).__swaps++;
