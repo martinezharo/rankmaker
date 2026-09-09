@@ -6,9 +6,11 @@
  * a pick glows, then both cards slide out, and only then is it reported to the
  * session, so the animation and the state change can't race.
  *
- * Card entrance animations restart because the cards are keyed by the duel;
- * a new duel remounts them. The DOM version had to strip six animation classes
- * and force a reflow to get the same effect.
+ * Card entrance animations restart because the class carrying them changes
+ * name between phases, not because the card remounts — so a card is keyed by
+ * the option it shows and survives into the next duel when that option does.
+ * The DOM version had to strip six animation classes and force a reflow to get
+ * the same effect.
  */
 import { useEffect, useRef, useState } from 'preact/hooks';
 import DuelCard, { type CardMotion, type DuelSide } from './DuelCard';
@@ -69,6 +71,22 @@ export default function BattleView({
 
 	const duel = state.duel;
 	const duelKey = duel ? `${duel.a.id}-${duel.b.id}-${state.round}` : 'none';
+
+	/**
+	 * A card is identified by its option, not by the duel it appears in.
+	 *
+	 * Roughly half of all duels reuse an option from the one before — the
+	 * winner is usually carried into the next comparison — and keying by the
+	 * duel tore that card down and built it again anyway, image element
+	 * included. What the user saw was the picture they had just chosen blink
+	 * out and decode back in while it was still the thing being compared.
+	 *
+	 * Keyed by the option, that card is moved rather than rebuilt, even when it
+	 * changes side. The entrance still replays: the class it carries changes
+	 * from `animate-out-*` to `animate-slide-*`, and a new animation name
+	 * restarts the animation on its own.
+	 */
+	const cardKey = (item: RankingItem) => `card-${item.id}`;
 
 	/**
 	 * Which session update is on screen. Counted rather than read off the duel:
@@ -230,7 +248,7 @@ export default function BattleView({
 				<div class="w-full flex flex-col xs:flex-row items-center xs:items-stretch justify-center gap-4 xs:gap-3 sm:gap-6 relative">
 					{duel && (
 						<DuelCard
-							key={`a-${duelKey}`}
+							key={cardKey(duel.a)}
 							item={duel.a}
 							side="a"
 							motion={motion('a')}
@@ -244,7 +262,7 @@ export default function BattleView({
 						/>
 					)}
 
-					<div class="shrink-0 z-10 xs:absolute xs:left-1/2 xs:top-1/2 xs:-translate-x-1/2 xs:-translate-y-1/2">
+					<div key="vs" class="shrink-0 z-10 xs:absolute xs:left-1/2 xs:top-1/2 xs:-translate-x-1/2 xs:-translate-y-1/2">
 						<div class="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-surface border-2 border-primary/40 flex items-center justify-center animate-vs-pulse">
 							<span class="text-sm sm:text-lg font-black uppercase text-gradient-gold">
 								{t('ranking.vs')}
@@ -254,7 +272,7 @@ export default function BattleView({
 
 					{duel && (
 						<DuelCard
-							key={`b-${duelKey}`}
+							key={cardKey(duel.b)}
 							item={duel.b}
 							side="b"
 							motion={motion('b')}
