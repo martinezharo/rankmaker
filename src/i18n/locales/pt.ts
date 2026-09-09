@@ -389,6 +389,7 @@ export const pt: LocaleDict = {
 		voteDownAria: 'Votar contra este modelo',
 		roundProgress: 'Rodada {current} de ~{total}',
 		undo: 'Desfazer',
+		undoNamed: 'Desfazer: {name}',
 		skipForLater: 'Deixar para depois',
 		finishEarly: 'Terminar mais cedo',
 		rankingLabel: 'Ranking',

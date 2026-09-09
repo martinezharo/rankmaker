@@ -458,9 +458,8 @@ export const en = {
 		// Battle view
 		roundProgress: 'Round {current} of ~{total}',
 		undo: 'Undo',
-		// "What you just decided" — see LastBattleNotice.tsx.
-		lastBattlePicked: 'You picked {winner} over {loser}',
-		undoNamed: 'Undo {name}',
+		// Names the pick the button would take back — see BattleView.tsx.
+		undoNamed: 'Undo: {name}',
 		skipForLater: 'Skip for later',
 		finishEarly: 'Finish Early',
 		rankingLabel: 'Ranking',

@@ -433,6 +433,7 @@ export const es: LocaleDict = {
 		voteDownAria: 'Votar en contra de esta plantilla',
 		roundProgress: 'Ronda {current} de ~{total}',
 		undo: 'Deshacer',
+		undoNamed: 'Deshacer: {name}',
 		skipForLater: 'Dejar para después',
 		finishEarly: 'Terminar antes',
 		rankingLabel: 'Ranking',

@@ -379,6 +379,7 @@ export const zh: LocaleDict = {
 		voteDownAria: '为此模板点踩',
 		roundProgress: '第 {current} 轮，共约 {total} 轮',
 		undo: '撤销',
+		undoNamed: '撤销：{name}',
 		skipForLater: '稍后再决',
 		finishEarly: '提前结束',
 		rankingLabel: '排名',

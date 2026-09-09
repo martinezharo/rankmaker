@@ -1,7 +1,11 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BattleView from './BattleView';
-import type { RankingItem, SessionState } from '../../lib/ranking-session';
+import type {
+	BattleRecord,
+	RankingItem,
+	SessionState,
+} from '../../lib/ranking-session';
 import { advanceTimers, fireEvent, render } from '../../test/dom';
 import { useTranslations } from '../../i18n/server';
 
@@ -264,5 +268,49 @@ describe('BattleView', () => {
 		const { onSkip } = renderView({ state: state({ canSkip: false }) });
 		await advanceTimers(600);
 		expect(onSkip).not.toHaveBeenCalled();
+	});
+	describe('the undo button', () => {
+		const undoBtn = () => document.getElementById('battle-undo-btn')!;
+		const pick = (winner: RankingItem): BattleRecord => ({
+			a: option(1, 'Alien'),
+			b: option(2, 'Heat'),
+			winner,
+			roundNum: 2,
+		});
+
+		it('names the pick it would take back, so a misclick is visible', () => {
+			renderView({ state: state({ history: [pick(option(2, 'Heat'))] }) });
+			expect(undoBtn()).toHaveTextContent('Undo: Heat');
+		});
+
+		it('names the last pick, not the first, once several are behind it', () => {
+			renderView({
+				state: state({
+					history: [pick(option(1, 'Alien')), pick(option(2, 'Heat'))],
+				}),
+			});
+			expect(undoBtn()).toHaveTextContent('Undo: Heat');
+			expect(undoBtn()).not.toHaveTextContent('Alien');
+		});
+
+		it('stays the plain label when there is nothing to take back', () => {
+			renderView({ state: state({ history: [], canUndo: false }) });
+			expect(undoBtn()).toHaveTextContent('Undo');
+			expect(undoBtn().textContent).not.toContain(':');
+		});
+
+		it('refuses to undo an answer that is still animating', () => {
+			const { onUndo } = renderView({
+				state: state({ history: [pick(option(2, 'Heat'))] }),
+			});
+			expect(undoBtn()).toBeEnabled();
+
+			fireEvent.click(cardA());
+			// Mid-flight the pick has not reached the session yet, so the record
+			// the label names is not the one an undo would remove.
+			expect(undoBtn()).toBeDisabled();
+			fireEvent.click(undoBtn());
+			expect(onUndo).not.toHaveBeenCalled();
+		});
 	});
 });
