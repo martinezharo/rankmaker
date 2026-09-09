@@ -233,6 +233,71 @@ describe('BattleView', () => {
 		expect(cardA().className).toContain('animate-slide-left');
 	});
 
+	it('keeps the element of an option that carries into the next duel', async () => {
+		const { rerender } = renderView();
+		const carried = cardB();
+		fireEvent.click(cardA());
+		await advanceTimers(580);
+
+		// The winner of the duel just answered is compared again next round —
+		// here as side B once more.
+		rerender(
+			<BattleView
+				state={state({
+					duel: { a: option(3, 'Se7en'), b: option(2, 'Heat') },
+					round: 4,
+				})}
+				title="Best Movies"
+				t={t}
+				atMinimum={false}
+				onPick={vi.fn()}
+				onSkip={vi.fn()}
+				onUndo={vi.fn()}
+				onFinishEarly={vi.fn()}
+				onRemove={vi.fn()}
+			/>
+		);
+
+		// Rebuilt, the card would decode its image again and blink an option
+		// the user is still being asked about. It has to be the same node.
+		expect(cardB()).toBe(carried);
+		expect(document.getElementById('battle-name-b')).toHaveTextContent('Heat');
+		// The replaced side is a different option, so that one is rebuilt.
+		expect(document.getElementById('battle-name-a')).toHaveTextContent('Se7en');
+		// Both still play their entrance.
+		expect(cardB().className).toContain('animate-slide-right');
+		expect(cardA().className).toContain('animate-slide-left');
+	});
+
+	it('moves, rather than rebuilds, an option that changes side', async () => {
+		const { rerender } = renderView();
+		const carried = cardA();
+		fireEvent.click(cardA());
+		await advanceTimers(580);
+
+		// The winner is carried over, but the next duel puts it on the right.
+		rerender(
+			<BattleView
+				state={state({
+					duel: { a: option(3, 'Se7en'), b: option(1, 'Alien') },
+					round: 4,
+				})}
+				title="Best Movies"
+				t={t}
+				atMinimum={false}
+				onPick={vi.fn()}
+				onSkip={vi.fn()}
+				onUndo={vi.fn()}
+				onFinishEarly={vi.fn()}
+				onRemove={vi.fn()}
+			/>
+		);
+
+		expect(cardB()).toBe(carried);
+		expect(document.getElementById('battle-name-b')).toHaveTextContent('Alien');
+		expect(cardB().className).toContain('animate-slide-right');
+	});
+
 	it('an undo restoring the same pair does not revive the old answer', async () => {
 		const before = state();
 		const { rerender } = renderView({ state: before });
