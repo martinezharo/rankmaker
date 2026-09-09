@@ -18,10 +18,6 @@ export const test = base.extend<{
 	seedTemplateFor: typeof seedTemplate;
 }>({
 	signIn: async ({ context, baseURL }, use) => {
-		// The cookie banner otherwise covers the controls a test clicks.
-		await context.addInitScript(() => {
-			localStorage.setItem('rankmaker_cookie_consent', 'false');
-		});
 		await use(async (unique, overrides) => {
 			const user = seedUser(unique, overrides);
 			await addSessionCookie(context, user.sessionId, baseURL!);

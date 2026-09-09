@@ -7,7 +7,7 @@ import { isBlockedCrawler } from './lib/crawlers';
  * that renders user content (templates, search, profiles) plus the API routes.
  *
  * The CSP is intentionally permissive on inline script/style (the app ships
- * inline gtag bootstrap, inline JSON data islands and `style=` attributes, so a
+ * inline application scripts, JSON data islands and `style=` attributes, so a
  * strict nonce policy would break it), but it still locks down the things that
  * actually matter for this app: only known origins may serve scripts, the page
  * can't be framed (clickjacking), `base`/`form` targets are pinned to self, and
@@ -16,13 +16,13 @@ import { isBlockedCrawler } from './lib/crawlers';
  */
 const CSP = [
 	"default-src 'self'",
-	"script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com",
+	"script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
 	"style-src 'self' 'unsafe-inline'",
 	"font-src 'self'",
 	// blob: covers the optimistic local previews (URL.createObjectURL) shown
 	// in the template form while an upload re-encodes + moderates.
 	"img-src 'self' https: data: blob:",
-	"connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://cloudflareinsights.com",
+	"connect-src 'self' https://cloudflareinsights.com",
 	"frame-ancestors 'none'",
 	"base-uri 'self'",
 	"form-action 'self'",
