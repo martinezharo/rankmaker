@@ -138,11 +138,25 @@ jobs:
             exit 0
           fi
 
+          # stderr is folded in so the log holds the whole story, and the exit
+          # status is taken from wrangler rather than from tee.
+          set +e
           pnpm exec wrangler versions upload \
             --config dist/server/wrangler.json \
             --preview-alias "pr-${PR_NUMBER}" \
             --message "PR #${PR_NUMBER}: ${PR_TITLE}" \
-            --tag "pr-${PR_NUMBER}-${GITHUB_SHA:0:7}" | tee upload.log
+            --tag "pr-${PR_NUMBER}-${GITHUB_SHA:0:7}" 2>&1 | tee upload.log
+          status=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$status" -ne 0 ]; then
+            # By far the likeliest failure, and the one whose message from the
+            # API ("Authentication error") does not say what to actually do.
+            if grep -qE 'Authentication error|code: 10000' upload.log; then
+              echo "::error::CLOUDFLARE_API_TOKEN cannot upload Workers. It needs the \"Edit Cloudflare Workers\" permission template — a token scoped only for read checks (D1 migrations, secret listing) is not enough. Edit it at https://dash.cloudflare.com/profile/api-tokens and update the repo secret."
+            fi
+            exit "$status"
+          fi
 
           # Prefer the alias URL: it is the same for the life of the pull
           # request, so the comment stays correct across pushes.
