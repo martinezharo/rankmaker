@@ -42,9 +42,9 @@ describe('GET /api/counts', () => {
 		expect(((await (await counts()).json()) as any).counts).toEqual({});
 	});
 
-	it('is edge-cacheable — the answer is the same for everyone', async () => {
+	it('is edge-cacheable, and revalidates in the background — the answer is the same for everyone', async () => {
 		expect((await counts()).headers.get('Cache-Control')).toBe(
-			'public, max-age=60'
+			'public, max-age=60, s-maxage=60, stale-while-revalidate=600'
 		);
 	});
 });

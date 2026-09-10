@@ -84,10 +84,25 @@ export function filterMature<T extends { is_mature: boolean }>(
  *
  * A constant, not a function of the viewer: listings render the canonical
  * variant for everyone (see the module docstring), so every visitor may be
- * served the same cached copy. `max-age` is short because listings reorder as
- * templates are ranked and voted on.
+ * served the same cached copy.
+ *
+ * The three directives do different jobs, and the shared-cache ones only work
+ * at all because `cache.enabled` in wrangler.jsonc puts Cloudflare's cache in
+ * front of the Worker:
+ *
+ *   - `max-age=60` — the browser's own copy. Short, because a listing reorders
+ *     as templates are ranked and voted on.
+ *   - `s-maxage=300` — the edge copy. A render costs several D1 reads, and a
+ *     listing that is five minutes out of date is not wrong in any way a
+ *     visitor can perceive: the displayed numbers are refreshed client-side
+ *     from /api/counts on every page load.
+ *   - `stale-while-revalidate=86400` — the edge may keep serving the expired
+ *     copy while it refreshes in the background, so a cold listing never makes
+ *     a visitor wait on the Worker and a traffic spike cannot multiply into
+ *     one origin render per request.
  */
-export const LISTING_CACHE_CONTROL = 'public, max-age=60';
+export const LISTING_CACHE_CONTROL =
+	'public, max-age=60, s-maxage=300, stale-while-revalidate=86400';
 
 /**
  * Whether a template must be gated behind the blur + confirmation modal for

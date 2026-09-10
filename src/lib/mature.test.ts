@@ -115,7 +115,13 @@ describe('isMatureGated', () => {
 });
 
 describe('LISTING_CACHE_CONTROL', () => {
-	it('is public and short-lived — listings render one variant for everyone', () => {
-		expect(LISTING_CACHE_CONTROL).toBe('public, max-age=60');
+	it('is public — listings render one variant for everyone', () => {
+		expect(LISTING_CACHE_CONTROL).toMatch(/^public,/);
+	});
+
+	it('lets the edge hold a listing longer than the browser, and serve it stale while it refreshes', () => {
+		expect(LISTING_CACHE_CONTROL).toBe(
+			'public, max-age=60, s-maxage=300, stale-while-revalidate=86400'
+		);
 	});
 });

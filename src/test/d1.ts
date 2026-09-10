@@ -127,6 +127,10 @@ export function createTestDb(): TestD1 {
 	// asserts that nothing else arrives pre-populated, so a future migration
 	// that seeds data fails loudly instead of skewing unrelated tests.
 	db.exec('DELETE FROM rankings');
+	// The delete above runs through the 0021 triggers, which walk the seeded
+	// per-slug totals back down to zero but leave the (now meaningless) rows
+	// behind. Clear them too, so a test database really is empty.
+	db.exec('DELETE FROM template_stats');
 
 	const api = {
 		prepare: (sql: string) => new FakeStatement(db, sql),

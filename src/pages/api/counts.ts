@@ -14,7 +14,14 @@ export const GET: APIRoute = async () => {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'public, max-age=60',
+                // Fetched by every page load to refresh the numbers on cached
+                // HTML (see Layout.astro), so this is the most-requested route
+                // on the site. The payload is identical for every visitor, so
+                // let the edge serve it: `stale-while-revalidate` means a
+                // background refresh instead of a Worker invocation — and a
+                // D1 read — per request.
+                'Cache-Control':
+                    'public, max-age=60, s-maxage=60, stale-while-revalidate=600',
             },
         });
     } catch (error) {

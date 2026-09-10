@@ -5,8 +5,7 @@
  * Counts and follow-state are read live; the homepage "Following" row and the
  * profile follower/following modals are built from these queries.
  */
-import { getCounts } from './counts';
-import { getTemplateVotes } from './template-votes';
+import { getTemplateStats } from './template-stats';
 import { withLiveNumbers } from './listings';
 import { TEMPLATE_LIST_SELECT, mapTemplateRow, type Template } from './templates';
 import { matureSqlFilter } from './mature';
@@ -173,10 +172,7 @@ export async function listFollowingTemplates(
 
     let templates = results.map((r) => mapTemplateRow(r as any));
     try {
-        const [counts, votes] = await Promise.all([
-            getCounts(db),
-            getTemplateVotes(db),
-        ]);
+        const { counts, votes } = await getTemplateStats(db);
         templates = templates.map((t) =>
             withLiveNumbers(t, { counts, votes })
         );

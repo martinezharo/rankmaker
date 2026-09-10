@@ -21,6 +21,8 @@ import { getSessionUser } from "../../lib/auth";
 import { isMatureGated, readMaturePref } from "../../lib/mature";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n/server";
 import { getDb } from "../../lib/runtime";
+import { getTemplateStat } from "../../lib/template-stats";
+import { getTemplateVoteScore } from "../../lib/template-votes";
 
 const locale = Astro.locals.locale ?? defaultLocale;
 const t = useTranslations(locale);
@@ -108,11 +110,11 @@ if (isHidden) {
     // /api/counts excludes hidden slugs (it would leak them), so fetch the
     // real count here server-side instead of via the client counts script.
     try {
-        const row = await db
-            .prepare("SELECT COUNT(*) AS n FROM rankings WHERE slug = ? COLLATE NOCASE")
-            .bind(template.slug)
-            .first<{ n: number }>();
-        template.times_ranked = row?.n ?? 0;
+        template.times_ranked = await getTemplateStat(
+            db,
+            template.slug,
+            "times_ranked",
+        );
     } catch (err) {
         // Count is decorative — keep the existing value on a D1 blip.
         console.error("times-ranked count failed:", err);
@@ -125,13 +127,7 @@ if (isHidden) {
 // a transient D1 failure degrades to 0 rather than 500-ing the whole page.
 let voteScore = 0;
 try {
-    const voteRow = await db
-        .prepare(
-            "SELECT COALESCE(SUM(value), 0) AS score FROM votes WHERE subject_type = 'template' AND subject_id = ? COLLATE NOCASE",
-        )
-        .bind(template.slug)
-        .first<{ score: number }>();
-    voteScore = voteRow?.score ?? 0;
+    voteScore = await getTemplateVoteScore(db, template.slug);
 } catch (err) {
     console.error("vote score failed:", err);
 }

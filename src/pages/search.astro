@@ -6,14 +6,13 @@ import SearchResults from "../components/SearchResults";
 import Select from "../components/ui/Select.astro";
 import { CATEGORIES as categories } from "../lib/categories";
 import {
-    getOfficialTemplates,
+    officialBrowsePool,
     listBrowseTemplates,
     type Template,
 } from "../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../lib/mature";
 import { decorateListing } from "../lib/listings";
-import { getCounts } from "../lib/counts";
-import { getTemplateVotes } from "../lib/template-votes";
+import { getTemplateStats } from "../lib/template-stats";
 import type { SlugValues } from "../lib/slug";
 import { defaultLocale, useTranslations } from "../i18n/server";
 import { getDb } from "../lib/runtime";
@@ -29,16 +28,17 @@ const tr = useTranslations(locale);
 //
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
-let browse: Template[] = getOfficialTemplates();
+let browse: Template[] = officialBrowsePool();
 let counts: SlugValues | undefined;
 let votes: SlugValues = {};
 try {
     const db = getDb();
-    [browse, counts, votes] = await Promise.all([
+    const [list, stats] = await Promise.all([
         listBrowseTemplates(db, false),
-        getCounts(db),
-        getTemplateVotes(db),
+        getTemplateStats(db),
     ]);
+    browse = list;
+    ({ counts, votes } = stats);
 } catch {
     // official-only fallback
 }
