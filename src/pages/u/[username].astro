@@ -4,8 +4,7 @@ export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
 import Avatar from "../../components/Avatar";
 import ListingGrid from "../../components/ListingGrid";
-import { getCounts } from "../../lib/counts";
-import { getTemplateVotes } from "../../lib/template-votes";
+import { getTemplateStats } from "../../lib/template-stats";
 import { listTemplatesByUserId } from "../../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../../lib/mature";
 import { decorateListing } from "../../lib/listings";
@@ -49,7 +48,7 @@ const rows = await listTemplatesByUserId(db, user.id, { showMature: false });
 let counts: Record<string, number> | undefined;
 let votes: Record<string, number> = {};
 try {
-    [counts, votes] = await Promise.all([getCounts(db), getTemplateVotes(db)]);
+    ({ counts, votes } = await getTemplateStats(db));
 } catch {
     // keep fallback numbers
 }

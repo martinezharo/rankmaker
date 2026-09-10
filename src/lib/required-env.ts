@@ -104,6 +104,7 @@ export const EXPECTED_TABLES: string[] = [
     'templates',
     'template_options',
     'template_saves',
+    'template_stats',
     'follows',
     'ranking_results',
     'comments',

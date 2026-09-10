@@ -14,8 +14,7 @@ import {
     parseOptionImages,
 } from './covers';
 import { extractImageKey } from './images';
-import { getCounts } from './counts';
-import { getTemplateVotes } from './template-votes';
+import { getTemplateStats } from './template-stats';
 import { filterMature, matureSqlFilter } from './mature';
 import { withLiveNumbers } from './listings';
 import { recommendTemplates } from '../scripts/recommend';
@@ -49,7 +48,7 @@ export type Template = {
      */
     collage: string[];
     times_ranked: number;
-    /** Net up/down vote score — merged by pages via getTemplateVotes(db). */
+    /** Net up/down vote score — merged by pages via getTemplateStats(db). */
     votes?: number;
     created_at: string;
     updated_at: string;
@@ -93,7 +92,7 @@ function mapOfficial(t: any): Template {
         category: t.category ?? null,
         cover_image: t.cover_image ?? null,
         collage: collageFromOptions(options),
-        times_ranked: 0, // pages merge real counts via getCounts(db)
+        times_ranked: 0, // pages merge real counts via getTemplateStats(db)
         created_at: t.created_at,
         updated_at: t.updated_at,
         options,
@@ -165,7 +164,7 @@ function mapRow(row: TemplateRow, options: TemplateOption[] = []): Template {
         collage: options.length
             ? collageFromOptions(options)
             : collageImages(parseOptionImages(row.option_images)),
-        times_ranked: 0, // pages merge real counts via getCounts(db)
+        times_ranked: 0, // pages merge real counts via getTemplateStats(db)
         created_at: row.created_at,
         updated_at: row.updated_at,
         options,
@@ -410,10 +409,9 @@ export async function listSavedTemplates(
     const slugs = await listSavedSlugs(db, userId);
     if (slugs.length === 0) return [];
 
-    const [resolved, counts, votes] = await Promise.all([
+    const [resolved, { counts, votes }] = await Promise.all([
         Promise.all(slugs.map((s) => getTemplateBySlug(db, s))),
-        getCounts(db, true),
-        getTemplateVotes(db, true),
+        getTemplateStats(db, true),
     ]);
 
     // Hidden (private/unlisted) templates only show to their creator. Resolve
@@ -469,11 +467,12 @@ export async function getRecommendedTemplates(
     let counts: Record<string, number> | undefined;
     let votes: Record<string, number> | undefined;
     try {
-        [userTemplates, counts, votes] = await Promise.all([
+        const [list, stats] = await Promise.all([
             listUserTemplates(db, showMature),
-            getCounts(db),
-            getTemplateVotes(db),
+            getTemplateStats(db),
         ]);
+        userTemplates = list;
+        ({ counts, votes } = stats);
     } catch {
         // officials-only fallback
     }

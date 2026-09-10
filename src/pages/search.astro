@@ -12,8 +12,7 @@ import {
 } from "../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../lib/mature";
 import { decorateListing } from "../lib/listings";
-import { getCounts } from "../lib/counts";
-import { getTemplateVotes } from "../lib/template-votes";
+import { getTemplateStats } from "../lib/template-stats";
 import type { SlugValues } from "../lib/slug";
 import { defaultLocale, useTranslations } from "../i18n/server";
 import { getDb } from "../lib/runtime";
@@ -34,11 +33,12 @@ let counts: SlugValues | undefined;
 let votes: SlugValues = {};
 try {
     const db = getDb();
-    [browse, counts, votes] = await Promise.all([
+    const [list, stats] = await Promise.all([
         listBrowseTemplates(db, false),
-        getCounts(db),
-        getTemplateVotes(db),
+        getTemplateStats(db),
     ]);
+    browse = list;
+    ({ counts, votes } = stats);
 } catch {
     // official-only fallback
 }

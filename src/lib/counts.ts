@@ -1,33 +1,18 @@
-import { aggregateSlugValues } from './slug';
+import { getTemplateStats } from './template-stats';
+import type { SlugValues } from './slug';
 
 /**
- * Aggregate real ranking counts per template slug from D1.
- * Returns a `{ slug: count }` map. Shared by the /api/counts endpoint
- * and the SSR homepage so ordering and display stay consistent.
+ * Ranking counts per template slug — a `{ slug: count }` map.
  *
- * Slugs of non-public user templates are excluded by default: /api/counts is
- * a public endpoint, so listing them would leak unlisted URLs (which are only
- * protected by being unguessable) and private template slugs. Owner-facing
- * SSR views (/me) pass `includeHidden` to get the full map.
+ * Reads the denormalized `template_stats` table (see
+ * src/lib/template-stats.ts); it is no longer an aggregate over the event log.
+ * Kept as its own export because /api/counts and the saved list need only this
+ * half. A listing that also shows vote scores should call `getTemplateStats`
+ * once instead of pairing this with `getTemplateVotes`.
  */
 export async function getCounts(
-    db: D1Database,
-    includeHidden = false
-): Promise<Record<string, number>> {
-    const filter = includeHidden
-        ? ''
-        : `WHERE NOT EXISTS (
-               SELECT 1 FROM templates t
-               WHERE t.slug = rankings.slug COLLATE NOCASE
-                 AND t.visibility != 'public'
-           )`;
-    const { results } = await db
-        .prepare(
-            `SELECT slug, COUNT(*) AS n FROM rankings ${filter} GROUP BY slug`
-        )
-        .all<{ slug: string; n: number }>();
-
-    return aggregateSlugValues(
-        results.map((row) => ({ slug: row.slug, value: row.n }))
-    );
+	db: D1Database,
+	includeHidden = false
+): Promise<SlugValues> {
+	return (await getTemplateStats(db, includeHidden)).counts;
 }

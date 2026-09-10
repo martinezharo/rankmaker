@@ -6,8 +6,7 @@ import CategorySection from "../components/CategorySection.astro";
 import HeroDemo from "../components/HeroDemo.astro";
 import FollowingSection from "../components/FollowingSection.astro";
 import SEOContent from "../components/SEOContent.astro";
-import { getCounts } from "../lib/counts";
-import { getTemplateVotes } from "../lib/template-votes";
+import { getTemplateStats } from "../lib/template-stats";
 import { CATEGORIES as categories } from "../lib/categories";
 import { getOfficialTemplates, listBrowseTemplates } from "../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../lib/mature";
@@ -37,11 +36,12 @@ let votes: Record<string, number> = {};
 let browse = getOfficialTemplates();
 try {
 	const db = getDb();
-	[counts, browse, votes] = await Promise.all([
-		getCounts(db),
+	const [stats, list] = await Promise.all([
+		getTemplateStats(db),
 		listBrowseTemplates(db, false),
-		getTemplateVotes(db),
 	]);
+	({ counts, votes } = stats);
+	browse = list;
 } catch {
 	// keep JSON ordering / official-only as a safe fallback
 }

@@ -2,8 +2,7 @@ export const prerender = false;
 
 import type { APIRoute } from 'astro';
 import { json } from '../../../lib/auth';
-import { getCounts } from '../../../lib/counts';
-import { getTemplateVotes } from '../../../lib/template-votes';
+import { getTemplateStats } from '../../../lib/template-stats';
 import { decorateListing } from '../../../lib/listings';
 import { readMaturePref } from '../../../lib/mature';
 import { listBrowseTemplates, listTemplatesByUserId } from '../../../lib/templates';
@@ -43,10 +42,9 @@ export const GET: APIRoute = async (context) => {
 				.first<{ id: string }>();
 			if (!user) return json({ items: null }, 200, headers);
 
-			const [templates, counts, votes] = await Promise.all([
+			const [templates, { counts, votes }] = await Promise.all([
 				listTemplatesByUserId(db, user.id, { showMature: true }),
-				getCounts(db),
-				getTemplateVotes(db),
+				getTemplateStats(db),
 			]);
 			return json(
 				{ items: decorateListing(templates, { counts, votes }) },
@@ -55,10 +53,9 @@ export const GET: APIRoute = async (context) => {
 			);
 		}
 
-		const [templates, counts, votes] = await Promise.all([
+		const [templates, { counts, votes }] = await Promise.all([
 			listBrowseTemplates(db, true),
-			getCounts(db),
-			getTemplateVotes(db),
+			getTemplateStats(db),
 		]);
 		return json(
 			{ items: decorateListing(templates, { counts, votes }) },

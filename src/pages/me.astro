@@ -8,8 +8,7 @@ import TemplateCover from "../components/TemplateCover";
 import { getSessionUser } from "../lib/auth";
 import { MAX_BIO_LEN } from "./api/me/profile";
 import { categoryIcon } from "../lib/categories";
-import { getCounts } from "../lib/counts";
-import { getTemplateVotes } from "../lib/template-votes";
+import { getTemplateStats } from "../lib/template-stats";
 import { withLiveNumbers } from "../lib/listings";
 import { listTemplatesByUserId } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
@@ -45,10 +44,7 @@ if (user) {
         includeHidden: true,
     });
     try {
-        const [counts, votes] = await Promise.all([
-            getCounts(db, true),
-            getTemplateVotes(db, true),
-        ]);
+        const { counts, votes } = await getTemplateStats(db, true);
         templates = templates.map((t) =>
             withLiveNumbers(t, { counts, votes }),
         );

@@ -16,7 +16,7 @@ import {
 } from "../../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../../lib/mature";
 import { decorateListing, filterByCategory } from "../../lib/listings";
-import { getTemplateVotes } from "../../lib/template-votes";
+import { getTemplateStats } from "../../lib/template-stats";
 import { defaultLocale, localizePath, useTranslations } from "../../i18n/server";
 import { getDb } from "../../lib/runtime";
 
@@ -40,19 +40,25 @@ if (!categoryName) {
 // Official (JSON) + user-created (D1) templates, filtered to this category.
 // Same official-only fallback as /search if D1 is unavailable.
 let browse: Template[] = getOfficialTemplates();
+// The counts and the vote scores now arrive together in one read, so the
+// server can order this page by how much each template is actually ranked
+// instead of leaving every card at zero until the client refresh lands.
+let counts: Record<string, number> | undefined;
 let votes: Record<string, number> = {};
 try {
     const db = getDb();
-    [browse, votes] = await Promise.all([
+    const [list, stats] = await Promise.all([
         listBrowseTemplates(db, false),
-        getTemplateVotes(db),
+        getTemplateStats(db),
     ]);
+    browse = list;
+    ({ counts, votes } = stats);
 } catch {
     // official-only fallback
 }
 
 const templates = filterByCategory(
-    decorateListing(browse, { votes }),
+    decorateListing(browse, { counts, votes }),
     categoryName,
 );
 

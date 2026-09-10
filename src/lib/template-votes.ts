@@ -3,45 +3,30 @@
  *
  * Reuses the generic `votes` table from 0007_comments.sql with
  * subject_type='template', subject_id=slug (slug uniquely identifies both
- * official and user templates, like rankings/ranking_results). Unlike comments,
- * template scores have no row to denormalize a counter onto (officials live in
- * JSON), so the net score is aggregated live — mirroring src/lib/counts.ts.
+ * official and user templates, like rankings/ranking_results).
+ *
+ * This module owns the vote *rows*; the net score per slug is denormalized
+ * onto `template_stats` by database triggers and read back from there — see
+ * src/lib/template-stats.ts.
  */
 
-import { aggregateSlugValues } from './slug';
+import { getTemplateStat, getTemplateStats } from './template-stats';
+import type { SlugValues } from './slug';
 
 export const VOTE_SUBJECT_TEMPLATE = 'template';
 
 /**
  * Net vote score (sum of +1/-1) per template slug.
  *
- * Non-public user-template slugs are excluded by default (same exclusion as
- * getCounts in src/lib/counts.ts) so they don't leak through public endpoints.
- * Owner-facing SSR views pass `includeHidden` to get the full map.
+ * Reads the denormalized `template_stats` table rather than summing the vote
+ * log — see src/lib/template-stats.ts. A listing that also shows ranking counts
+ * should call `getTemplateStats` once instead of pairing this with `getCounts`.
  */
 export async function getTemplateVotes(
     db: D1Database,
     includeHidden = false
-): Promise<Record<string, number>> {
-    const filter = includeHidden
-        ? ''
-        : `AND NOT EXISTS (
-               SELECT 1 FROM templates t
-               WHERE t.slug = votes.subject_id COLLATE NOCASE
-                 AND t.visibility != 'public'
-           )`;
-    const { results } = await db
-        .prepare(
-            `SELECT subject_id AS slug, SUM(value) AS score
-             FROM votes
-             WHERE subject_type = 'template' ${filter}
-             GROUP BY subject_id`
-        )
-        .all<{ slug: string; score: number }>();
-
-    return aggregateSlugValues(
-        results.map((row) => ({ slug: row.slug, value: row.score }))
-    );
+): Promise<SlugValues> {
+    return (await getTemplateStats(db, includeHidden)).votes;
 }
 
 /** Net score for a single slug. */
@@ -49,14 +34,7 @@ export async function getTemplateVoteScore(
     db: D1Database,
     slug: string
 ): Promise<number> {
-    const row = await db
-        .prepare(
-            `SELECT COALESCE(SUM(value), 0) AS score FROM votes
-             WHERE subject_type = 'template' AND subject_id = ? COLLATE NOCASE`
-        )
-        .bind(slug)
-        .first<{ score: number }>();
-    return row?.score ?? 0;
+    return getTemplateStat(db, slug, 'votes');
 }
 
 /** This user's current vote on `slug` (1, -1, or 0 if none). */
