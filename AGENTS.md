@@ -9,5 +9,7 @@ This repository is a VERY EARLY WIP. Proposing sweeping changes that improve lon
 ## Product priorities
 * Rankings with transitivity that require as few matchups as possible to complete the ranking.
 * Users should be able to share their rankings and templates in an easy, intuitive way that favors virality on social media.
+## Database migrations
+* If a database migration is backward-compatible with the version deployed before the current PR, do not be afraid to run it when useful to validate the PR against the real database.
 ## Maintainability
 Long term maintainability is a core priority. If you add new functionality, first check if there is shared logic that can be extracted to a separate module. Duplicate logic across multiple files is a code smell and should be avoided. Don't be afraid to change existing code. Don't take shortcuts by just adding local logic to solve a problem.
