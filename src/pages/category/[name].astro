@@ -10,7 +10,7 @@ import {
     categorySlug,
 } from "../../lib/categories";
 import {
-    getOfficialTemplates,
+    officialBrowsePool,
     listBrowseTemplates,
     type Template,
 } from "../../lib/templates";
@@ -39,7 +39,7 @@ if (!categoryName) {
 //
 // Official (JSON) + user-created (D1) templates, filtered to this category.
 // Same official-only fallback as /search if D1 is unavailable.
-let browse: Template[] = getOfficialTemplates();
+let browse: Template[] = officialBrowsePool();
 // The counts and the vote scores now arrive together in one read, so the
 // server can order this page by how much each template is actually ranked
 // instead of leaving every card at zero until the client refresh lands.

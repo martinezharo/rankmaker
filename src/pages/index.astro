@@ -8,7 +8,7 @@ import FollowingSection from "../components/FollowingSection.astro";
 import SEOContent from "../components/SEOContent.astro";
 import { getTemplateStats } from "../lib/template-stats";
 import { CATEGORIES as categories } from "../lib/categories";
-import { getOfficialTemplates, listBrowseTemplates } from "../lib/templates";
+import { officialBrowsePool, listBrowseTemplates } from "../lib/templates";
 import { LISTING_CACHE_CONTROL } from "../lib/mature";
 import {
 	decorateListing,
@@ -33,7 +33,7 @@ const t = useTranslations(locale);
 // content re-derives their rows client-side (see src/lib/mature.ts).
 let counts: Record<string, number> | undefined;
 let votes: Record<string, number> = {};
-let browse = getOfficialTemplates();
+let browse = officialBrowsePool();
 try {
 	const db = getDb();
 	const [stats, list] = await Promise.all([

@@ -15,6 +15,7 @@ import {
 	listSavedTemplates,
 	listTemplatesByUserId,
 	listUserTemplates,
+	officialBrowsePool,
 	slugify,
 	templateExists,
 	validateTemplateInput,
@@ -293,6 +294,28 @@ describe('listBrowseTemplates', () => {
 		expect(
 			(await listBrowseTemplates(db, true)).map((t) => t.slug)
 		).toContain('spicy');
+	});
+});
+
+describe('officialBrowsePool', () => {
+	// The listing pages fall back to this when D1 is unavailable, and they are
+	// cached publicly under a cookie-free key — so an unfiltered fallback would
+	// put a mature template in a shared cache and serve it to visitors who
+	// never opted in. No official template is flagged today; flag one to prove
+	// the filter is what stands between that and the cache.
+	it('drops flagged officials, so the cached fallback is opt-in only', () => {
+		const officials = getOfficialTemplates();
+		officials[0].is_mature = true;
+		try {
+			expect(officialBrowsePool().map((t) => t.slug)).not.toContain(
+				officials[0].slug
+			);
+			expect(officialBrowsePool(true).map((t) => t.slug)).toContain(
+				officials[0].slug
+			);
+		} finally {
+			officials[0].is_mature = false;
+		}
 	});
 });
 

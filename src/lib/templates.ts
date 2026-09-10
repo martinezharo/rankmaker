@@ -346,9 +346,22 @@ export async function listBrowseTemplates(
     showMature = false
 ): Promise<Template[]> {
     return [
-        ...filterMature(getOfficialTemplates(), showMature),
+        ...officialBrowsePool(showMature),
         ...(await listUserTemplates(db, showMature)),
     ];
+}
+
+/**
+ * The official half of the browse pool, on its own — what a listing falls back
+ * to when D1 is unavailable.
+ *
+ * Callers must not reach for `getOfficialTemplates()` directly for this: that
+ * list is unfiltered, and a listing page is cached publicly under one cache key
+ * for every visitor, so serving the unfiltered fallback would put mature
+ * templates in a shared cache and hand them to visitors who never opted in.
+ */
+export function officialBrowsePool(showMature = false): Template[] {
+    return filterMature(getOfficialTemplates(), showMature);
 }
 
 /**

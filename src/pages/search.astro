@@ -6,7 +6,7 @@ import SearchResults from "../components/SearchResults";
 import Select from "../components/ui/Select.astro";
 import { CATEGORIES as categories } from "../lib/categories";
 import {
-    getOfficialTemplates,
+    officialBrowsePool,
     listBrowseTemplates,
     type Template,
 } from "../lib/templates";
@@ -28,7 +28,7 @@ const tr = useTranslations(locale);
 //
 // Official (JSON) + user-created (D1) templates. Fall back to official-only
 // if the D1 binding/query is unavailable so the page never breaks.
-let browse: Template[] = getOfficialTemplates();
+let browse: Template[] = officialBrowsePool();
 let counts: SlugValues | undefined;
 let votes: SlugValues = {};
 try {
