@@ -52,6 +52,10 @@ describe('analytics integration', () => {
 		const shippedSource = `${layout}\n${middleware}`;
 
 		expect(shippedSource).toContain('static.cloudflareinsights.com');
+		// Every environment ships this layout with the same beacon token, so
+		// the host check is the only thing keeping dev servers, the e2e suite
+		// and preview deployments out of the production figures.
+		expect(layout).toContain('location.hostname !== analyticsHost');
 		expect(shippedSource).not.toMatch(
 			/googletagmanager|google-analytics\.com|G-LER7ZFV5BV|\bgtag\b/
 		);

@@ -17,6 +17,16 @@ import { DEFAULT_SITE_URL } from './required-env';
 export const SITE_URL = DEFAULT_SITE_URL;
 
 /**
+ * Hostname of the production site.
+ *
+ * Derived from SITE_URL rather than written out again, so the two cannot
+ * disagree. Used to decide whether a page should report to analytics: every
+ * other host running this code — a dev server, the e2e suite on
+ * localhost:4321, a per-PR preview deployment — is not the live site.
+ */
+export const SITE_HOST = new URL(SITE_URL).hostname;
+
+/**
  * The square cover rendered on the home page (see SEOContent.astro) and declared
  * there as the page's primary image: a 1v1 duel resolving into a top 3.
  *
