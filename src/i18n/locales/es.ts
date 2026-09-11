@@ -608,6 +608,14 @@ export const es: LocaleDict = {
 		formLockedHint:
 			'Un moderador ha marcado esta plantilla como contenido adulto, así que ya no se puede quitar la marca.',
 	},
+	suspension: {
+		badge: 'suspendida',
+		whyAria: 'Por qué se ha suspendido esta plantilla',
+		tipPrefix: 'Un moderador ha suspendido esta plantilla:',
+		reasons: {
+			low_quality: 'su contenido no aporta nada útil o es demasiado pobre para rankear.',
+		},
+	},
 	notifications: {
 		title: 'Notificaciones — RANKMAKER',
 		heading: 'Notificaciones',

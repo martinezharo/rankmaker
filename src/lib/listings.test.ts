@@ -29,6 +29,7 @@ function template(overrides: Partial<Template> = {}): Template {
 		visibility: 'public',
 		is_mature: false,
 		mature_locked: false,
+		suspension: null,
 		...overrides,
 	};
 }

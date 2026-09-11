@@ -168,6 +168,10 @@ describe('listFollowingTemplates', () => {
 			slug: 'unlisted-one',
 			visibility: 'unlisted',
 		});
+		await insertTemplate(db, bob.id, {
+			slug: 'suspended-one',
+			suspensionReason: 'low_quality',
+		});
 		expect(await listFollowingTemplates(db, alice.id)).toEqual([]);
 	});
 

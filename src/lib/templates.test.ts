@@ -216,6 +216,19 @@ describe('listUserTemplates', () => {
 		expect(slugs).toEqual(['shown']);
 	});
 
+	it('drops suspended templates, whatever their visibility says', async () => {
+		const alice = await insertUser(db, { username: 'alice' });
+		await insertTemplate(db, alice.id, { slug: 'shown' });
+		await insertTemplate(db, alice.id, {
+			slug: 'suspended',
+			suspensionReason: 'low_quality',
+		});
+
+		expect((await listUserTemplates(db)).map((t) => t.slug)).toEqual([
+			'shown',
+		]);
+	});
+
 	it('hides mature templates unless the viewer opted in', async () => {
 		const alice = await insertUser(db, { username: 'alice' });
 		await insertTemplate(db, alice.id, { slug: 'tame' });
@@ -352,6 +365,21 @@ describe('listTemplatesByUserId', () => {
 				.map((t) => t.slug)
 				.sort()
 		).toEqual(['mature-one', 'private-one', 'public-one']);
+	});
+
+	it('shows the owner their suspended templates, and visitors none', async () => {
+		const alice = await insertUser(db, { username: 'alice' });
+		await insertTemplate(db, alice.id, {
+			slug: 'suspended-one',
+			suspensionReason: 'low_quality',
+		});
+
+		expect(await listTemplatesByUserId(db, alice.id)).toEqual([]);
+		const own = await listTemplatesByUserId(db, alice.id, {
+			includeHidden: true,
+		});
+		expect(own.map((t) => t.slug)).toEqual(['suspended-one']);
+		expect(own[0].suspension).toBe('low_quality');
 	});
 
 	it('never leaks another user’s templates', async () => {

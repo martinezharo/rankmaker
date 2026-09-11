@@ -1,0 +1,87 @@
+---
+// TemplateStatusBadges.astro — the "this template is not on public display"
+// badges, shared by every surface that shows a template to its creator or to
+// someone who opened its link: /me, the template page.
+//
+// Two things can take a template off the public listings, and they stack:
+//   - the creator's own `visibility` (private / unlisted), and
+//   - a moderator's suspension, which the creator cannot lift and which
+//     therefore explains itself: an info button opens the reason (it uses the
+//     click-triggered tooltip, so the reason is reachable by tap too).
+//
+// `variant` only picks the skin: "chip" is the standalone pill used on the
+// template page, "meta" the plain inline row used in the /me card footer.
+import { defaultLocale, useTranslations } from "../i18n/server";
+import type { Visibility } from "../lib/templates";
+import {
+    suspensionReasonKey,
+    type SuspensionReason,
+} from "../lib/suspension";
+
+interface Props {
+    visibility: Visibility;
+    suspension: SuspensionReason | null;
+    variant?: "chip" | "meta";
+    /** Tooltip placement, so a badge near the top of the page points down. */
+    tipPlacement?: "top" | "bottom";
+}
+
+const {
+    visibility,
+    suspension,
+    variant = "meta",
+    tipPlacement = "top",
+} = Astro.props;
+
+const locale = Astro.locals.locale ?? defaultLocale;
+const t = useTranslations(locale);
+
+const badgeClass =
+    variant === "chip"
+        ? "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border text-text-muted text-xs font-semibold uppercase tracking-wider"
+        : "inline-flex items-center gap-1.5 whitespace-nowrap uppercase tracking-wider font-semibold text-text-muted";
+
+const suspendedClass =
+    variant === "chip"
+        ? "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider"
+        : "inline-flex items-center gap-1.5 whitespace-nowrap uppercase tracking-wider font-semibold text-amber-400";
+
+const isPrivate = visibility === "private";
+---
+
+{
+    visibility !== "public" && (
+        <span
+            class={badgeClass}
+            data-rm-tip={
+                isPrivate
+                    ? t("tooltip.visibilityPrivate")
+                    : t("tooltip.visibilityUnlisted")
+            }
+            data-rm-tip-placement={tipPlacement}
+        >
+            <i
+                class={`fa-solid ${isPrivate ? "fa-lock" : "fa-link"} text-[10px]`}
+            />
+            {isPrivate ? t("me.visibilityPrivate") : t("me.visibilityUnlisted")}
+        </span>
+    )
+}
+{
+    suspension && (
+        <span class={suspendedClass}>
+            <i class="fa-solid fa-ban text-[10px]" />
+            {t("suspension.badge")}
+            <button
+                type="button"
+                class="inline-flex items-center text-amber-400/80 hover:text-amber-300 transition-colors duration-200 cursor-pointer"
+                aria-label={t("suspension.whyAria")}
+                data-rm-tip={`${t("suspension.tipPrefix")} ${t(suspensionReasonKey(suspension))}`}
+                data-rm-tip-trigger="click"
+                data-rm-tip-placement={tipPlacement}
+            >
+                <i class="fa-solid fa-circle-info text-[11px]" />
+            </button>
+        </span>
+    )
+}
