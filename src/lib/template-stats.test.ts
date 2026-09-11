@@ -137,6 +137,19 @@ describe('getTemplateStats', () => {
 		expect(counts).toEqual({ 'public-one': 1 });
 	});
 
+	it('drops a suspended template from the public maps too', async () => {
+		await insertTemplate(db, alice.id, {
+			slug: 'suspended-one',
+			suspensionReason: 'low_quality',
+		});
+		await insertTemplate(db, alice.id, { slug: 'public-one' });
+		await insertRankingEvents(db, 'suspended-one');
+		await insertRankingEvents(db, 'public-one');
+
+		const { counts } = await getTemplateStats(db);
+		expect(counts).toEqual({ 'public-one': 1 });
+	});
+
 	it('gives the owner view every slug, hidden ones included', async () => {
 		await insertTemplate(db, alice.id, {
 			slug: 'private-one',

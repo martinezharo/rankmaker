@@ -566,6 +566,14 @@ export const fr: LocaleDict = {
 		formLockedHint:
 			'Un modérateur a signalé ce modèle comme contenu pour adultes ; la marque ne peut plus être retirée.',
 	},
+	suspension: {
+		badge: 'suspendu',
+		whyAria: 'Pourquoi ce modèle a été suspendu',
+		tipPrefix: 'Un modérateur a suspendu ce modèle :',
+		reasons: {
+			low_quality: "son contenu n'apporte rien d'utile ou est trop pauvre pour être classé.",
+		},
+	},
 	notifications: {
 		title: 'Notifications — RANKMAKER',
 		heading: 'Notifications',

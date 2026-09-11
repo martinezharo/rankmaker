@@ -549,6 +549,14 @@ export const zh: LocaleDict = {
 			'将此模板标记为成人内容。公开后，除非访客开启成人内容，否则它不会出现在列表中。',
 		formLockedHint: '管理员已将此模板标记为成人内容，因此无法再移除该标记。',
 	},
+	suspension: {
+		badge: '已停用',
+		whyAria: '这个模板为何被停用',
+		tipPrefix: '管理员停用了这个模板：',
+		reasons: {
+			low_quality: '内容没有提供有价值的信息，或质量太低，不适合排名。',
+		},
+	},
 	notifications: {
 		title: '通知 — RANKMAKER',
 		heading: '通知',

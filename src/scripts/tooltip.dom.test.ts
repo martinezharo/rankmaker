@@ -30,6 +30,7 @@ function page() {
 		<button id="described" data-rm-tip="A tip" aria-describedby="elsewhere">D</button>
 		<button id="empty" data-rm-tip="   ">E</button>
 		<span id="wrapper" data-rm-tip="Wrapped"><i id="inner"></i></span>
+		<button id="info" data-rm-tip="Why it was suspended" data-rm-tip-trigger="click">i</button>
 		<button id="plain">No tip</button>
 	`);
 	return {
@@ -39,6 +40,7 @@ function page() {
 		described: document.getElementById('described')!,
 		empty: document.getElementById('empty')!,
 		inner: document.getElementById('inner')!,
+		info: document.getElementById('info')!,
 		plain: document.getElementById('plain')!,
 	};
 }
@@ -298,6 +300,51 @@ describe('dismissal', () => {
 		vi.advanceTimersByTime(500);
 
 		expect(bubble()?.hidden ?? true).toBe(true);
+	});
+});
+
+describe('a click-triggered tip', () => {
+	/** A tap: the delegated listener only reads the event's target. */
+	const tap = (element: Element) =>
+		element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+
+	it('opens on tap, where hover never happens', async () => {
+		const parts = page();
+		coarse = true;
+		loadModule();
+
+		tap(parts.info);
+		expect(bubble()!.hidden).toBe(false);
+		expect(label()).toBe('Why it was suspended');
+	});
+
+	it('closes on a second tap of the same control', async () => {
+		const parts = page();
+		loadModule();
+
+		tap(parts.info);
+		tap(parts.info);
+		expect(bubble()!.hidden).toBe(true);
+	});
+
+	it('closes when something else is tapped', async () => {
+		const parts = page();
+		loadModule();
+
+		tap(parts.info);
+		tap(parts.plain);
+		expect(bubble()!.hidden).toBe(true);
+	});
+
+	it('survives the focus change the tap itself causes', async () => {
+		const parts = page();
+		loadModule();
+		parts.undo.focus();
+
+		tap(parts.info);
+		// The blur of whatever was focused lands after pointerdown.
+		parts.undo.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+		expect(bubble()!.hidden).toBe(false);
 	});
 });
 

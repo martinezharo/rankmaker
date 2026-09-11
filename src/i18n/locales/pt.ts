@@ -566,6 +566,14 @@ export const pt: LocaleDict = {
 		formLockedHint:
 			'Um moderador marcou este modelo como conteúdo adulto, pelo que a marca já não pode ser removida.',
 	},
+	suspension: {
+		badge: 'suspenso',
+		whyAria: 'Por que este modelo foi suspenso',
+		tipPrefix: 'Um moderador suspendeu este modelo:',
+		reasons: {
+			low_quality: 'o conteúdo não acrescenta nada útil ou é pobre demais para ranquear.',
+		},
+	},
 	notifications: {
 		title: 'Notificações — RANKMAKER',
 		heading: 'Notificações',

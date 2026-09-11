@@ -72,6 +72,21 @@ pnpm preview
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow and
 available database commands.
 
+## Moderation
+
+There is no moderation UI: a template is suspended straight from the
+Cloudflare D1 dashboard (or `wrangler d1 execute`). A suspended template drops
+out of every public listing while its URL keeps working, and its creator sees a
+"suspended" badge with the reason behind the info icon — they cannot lift it.
+
+```bash
+pnpm exec wrangler d1 execute rankmaker --remote \
+  --command "UPDATE templates SET suspension_reason = 'low_quality' WHERE slug = 'the-slug'"
+```
+
+Set `suspension_reason` back to `NULL` to lift it. The valid reasons live in
+[src/lib/suspension.ts](src/lib/suspension.ts).
+
 ## Deployment
 
 RANKMAKER is deployed to Cloudflare Workers. Bindings and the D1 migration

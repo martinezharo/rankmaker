@@ -16,6 +16,11 @@ import {
 import { extractImageKey } from './images';
 import { getTemplateStats } from './template-stats';
 import { filterMature, matureSqlFilter } from './mature';
+import {
+    LISTED_SQL,
+    parseSuspensionReason,
+    type SuspensionReason,
+} from './suspension';
 import { withLiveNumbers } from './listings';
 import { recommendTemplates } from '../scripts/recommend';
 
@@ -64,6 +69,12 @@ export type Template = {
     is_mature: boolean;
     /** The flag was decided by an admin; the creator can no longer clear it. */
     mature_locked: boolean;
+    /**
+     * Set by a moderator: the template is held out of every public listing
+     * (like unlisted) and the creator cannot lift it. Null when it is not
+     * suspended. See src/lib/suspension.ts.
+     */
+    suspension: SuspensionReason | null;
     /** Space-joined option names — only populated by list queries for search. */
     optionNames?: string;
 };
@@ -101,6 +112,7 @@ function mapOfficial(t: any): Template {
         visibility: 'public',
         is_mature: t.is_mature === true,
         mature_locked: false,
+        suspension: null,
         optionNames: (t.options || []).map((o: any) => o.name).join(' '),
     };
 }
@@ -139,6 +151,7 @@ type TemplateRow = {
     visibility: string;
     is_mature?: number;
     mature_locked?: number;
+    suspension_reason?: string | null;
     option_names?: string | null;
     /** Newline-joined option images, from list queries — see parseOptionImages. */
     option_images?: string | null;
@@ -179,6 +192,7 @@ function mapRow(row: TemplateRow, options: TemplateOption[] = []): Template {
             : 'public',
         is_mature: row.is_mature === 1,
         mature_locked: row.mature_locked === 1,
+        suspension: parseSuspensionReason(row.suspension_reason),
         optionNames: row.option_names ?? undefined,
     };
 }
@@ -186,6 +200,7 @@ function mapRow(row: TemplateRow, options: TemplateOption[] = []): Template {
 const TEMPLATE_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
            t.created_at, t.updated_at, t.visibility, t.is_mature, t.mature_locked,
+           t.suspension_reason,
            u.username, u.avatar, u.is_verified
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
@@ -205,7 +220,7 @@ const TEMPLATE_SELECT = `
 export const TEMPLATE_LIST_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
            t.created_at, t.updated_at, t.visibility, t.is_mature, t.mature_locked,
-           t.option_names, t.option_images,
+           t.suspension_reason, t.option_names, t.option_images,
            u.username, u.avatar, u.is_verified
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
@@ -299,6 +314,21 @@ export function canAccessTemplate(
 }
 
 /**
+ * Whether a loaded template may appear on public surfaces — the in-memory
+ * counterpart of `LISTED_SQL`, for the paths that resolve templates first and
+ * filter afterwards (saved lists, the detail page's noindex/no-cache
+ * decision). Official templates are always listed.
+ */
+export function isPubliclyListed(
+    template: Pick<Template, 'source' | 'visibility' | 'suspension'>
+): boolean {
+    return (
+        template.source !== 'user' ||
+        (template.visibility === 'public' && template.suspension === null)
+    );
+}
+
+/**
  * The user id that owns a template (for notifications). Official templates are
  * owned by the RANKMAKER account; user templates resolve to their creator_id.
  * Returns null when the slug doesn't exist.
@@ -326,7 +356,7 @@ export async function listUserTemplates(
 ): Promise<Template[]> {
     const { results } = await db
         .prepare(
-            `${TEMPLATE_LIST_SELECT} WHERE t.visibility = 'public'
+            `${TEMPLATE_LIST_SELECT} WHERE ${LISTED_SQL}
              ${matureSqlFilter(showMature)}
              ORDER BY t.created_at DESC`
         )
@@ -379,7 +409,7 @@ export async function listTemplatesByUserId(
     const { results } = await db
         .prepare(
             `${TEMPLATE_LIST_SELECT} WHERE t.creator_id = ?
-             ${includeHidden ? '' : "AND t.visibility = 'public'"}
+             ${includeHidden ? '' : `AND ${LISTED_SQL}`}
              ${matureSqlFilter(showMature)}
              ORDER BY t.created_at DESC`
         )
@@ -410,8 +440,8 @@ export async function listSavedSlugs(
 
 /**
  * Full templates a user has saved, newest first. Resolves each slug from either
- * source. Slugs that no longer exist, or that are hidden (private/unlisted) and
- * not owned by this user, are dropped. Live times_ranked + vote scores merged.
+ * source. Slugs that no longer exist, or that are hidden (private/unlisted or
+ * suspended) and not owned by this user, are dropped. Live times_ranked + vote scores merged.
  */
 export async function listSavedTemplates(
     db: D1Database,
@@ -425,11 +455,11 @@ export async function listSavedTemplates(
         getTemplateStats(db, true),
     ]);
 
-    // Hidden (private/unlisted) templates only show to their creator. Resolve
-    // ownership for all of them in one query rather than one round-trip per
-    // hidden slug (the previous N+1).
+    // Hidden templates (private/unlisted, or suspended by a moderator) only
+    // show to their creator. Resolve ownership for all of them in one query
+    // rather than one round-trip per hidden slug (the previous N+1).
     const hiddenSlugs = resolved
-        .filter((t): t is Template => t !== null && t.visibility !== 'public')
+        .filter((t): t is Template => t !== null && !isPubliclyListed(t))
         .map((t) => t.slug);
     let ownedHidden = new Set<string>();
     if (hiddenSlugs.length > 0) {
@@ -447,7 +477,7 @@ export async function listSavedTemplates(
     const out: Template[] = [];
     for (const t of resolved) {
         if (!t) continue;
-        if (t.visibility !== 'public' && !ownedHidden.has(t.slug.toLowerCase())) {
+        if (!isPubliclyListed(t) && !ownedHidden.has(t.slug.toLowerCase())) {
             continue;
         }
         out.push(withLiveNumbers(t, { counts, votes }));

@@ -642,6 +642,14 @@ export const en = {
 		formLockedHint:
 			'A moderator flagged this template as mature content, so the flag can no longer be removed.',
 	},
+	suspension: {
+		badge: 'suspended',
+		whyAria: 'Why this template was suspended',
+		tipPrefix: 'A moderator suspended this template:',
+		reasons: {
+			low_quality: "its content doesn't add anything useful, or is too poor to rank.",
+		},
+	},
 	notifications: {
 		title: 'Notifications — RANKMAKER',
 		heading: 'Notifications',

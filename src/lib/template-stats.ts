@@ -15,12 +15,14 @@
  * single statement.
  */
 import { aggregateSlugValues, type SlugValues } from './slug';
+import { NOT_LISTED_SQL } from './suspension';
 
 /** The live aggregates a listing is decorated with. */
 export type TemplateStats = { counts: SlugValues; votes: SlugValues };
 
 /**
- * Slugs of non-public user templates are excluded by default: listings and
+ * Slugs of user templates that are not publicly listed (private, unlisted or
+ * suspended) are excluded by default: listings and
  * /api/counts are public surfaces, so including them would leak unlisted URLs
  * (which are only protected by being unguessable) and private template slugs.
  * Owner-facing SSR views (/me) pass `includeHidden` to get the full picture.
@@ -37,7 +39,7 @@ export async function getTemplateStats(
 		: `WHERE NOT EXISTS (
                SELECT 1 FROM templates t
                WHERE t.slug = template_stats.slug_key COLLATE NOCASE
-                 AND t.visibility != 'public'
+                 AND ${NOT_LISTED_SQL}
            )`;
 	const { results } = await db
 		.prepare(

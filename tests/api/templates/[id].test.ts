@@ -356,6 +356,33 @@ describe('PUT /api/templates/:id — the mature flag', () => {
 	});
 });
 
+describe('PUT /api/templates/:id — a suspension', () => {
+	it('survives an edit: the creator cannot lift what a moderator decided', async () => {
+		const template = await alicesTemplate({
+			suspensionReason: 'low_quality',
+		});
+		const response = await PUT(
+			context({
+				id: template.id,
+				method: 'PUT',
+				// Both the honest edit and an invented field trying to clear it.
+				body: {
+					...validBody({ visibility: 'public' }),
+					suspension_reason: null,
+				},
+				cookies: await signIn(db, alice.id),
+			})
+		);
+		expect(response.status).toBe(200);
+
+		const row = await db
+			.prepare('SELECT suspension_reason FROM templates WHERE id = ?')
+			.bind(template.id)
+			.first<{ suspension_reason: string | null }>();
+		expect(row?.suspension_reason).toBe('low_quality');
+	});
+});
+
 describe('PUT /api/templates/:id — going unlisted', () => {
 	it('issues a fresh unguessable slug, because the old one is public knowledge', async () => {
 		const template = await alicesTemplate();

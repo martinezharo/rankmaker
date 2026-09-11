@@ -5,12 +5,13 @@ import Layout from "../layouts/Layout.astro";
 import Avatar from "../components/Avatar";
 import LocalTemplates from "../components/LocalTemplates.astro";
 import TemplateCover from "../components/TemplateCover";
+import TemplateStatusBadges from "../components/TemplateStatusBadges.astro";
 import { getSessionUser } from "../lib/auth";
 import { MAX_BIO_LEN } from "./api/me/profile";
 import { categoryIcon } from "../lib/categories";
 import { getTemplateStats } from "../lib/template-stats";
 import { withLiveNumbers } from "../lib/listings";
-import { listTemplatesByUserId } from "../lib/templates";
+import { isPubliclyListed, listTemplatesByUserId } from "../lib/templates";
 import { defaultLocale, localizePath, useTranslations } from "../i18n/server";
 import { getDb } from "../lib/runtime";
 
@@ -296,7 +297,15 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                                 <span
                                                     class="inline-flex items-center gap-1.5 whitespace-nowrap"
                                                     data-count-slug={
-                                                        t.visibility === "public"
+                                                        // /api/counts only
+                                                        // carries publicly
+                                                        // listed slugs, so
+                                                        // asking it about a
+                                                        // hidden or suspended
+                                                        // one would overwrite
+                                                        // the real count with
+                                                        // a zero.
+                                                        isPubliclyListed(t)
                                                             ? t.slug
                                                             : undefined
                                                     }
@@ -313,16 +322,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
                                                         n: (t.votes ?? 0).toLocaleString(),
                                                     })}
                                                 </span>
-                                                {t.visibility !== "public" && (
-                                                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap uppercase tracking-wider font-semibold text-text-muted">
-                                                        <i
-                                                            class={`fa-solid ${t.visibility === "private" ? "fa-lock" : "fa-link"} text-[10px]`}
-                                                        />
-                                                        {t.visibility === "private"
-                                                            ? tr("me.visibilityPrivate")
-                                                            : tr("me.visibilityUnlisted")}
-                                                    </span>
-                                                )}
+                                                <TemplateStatusBadges
+                                                    visibility={t.visibility}
+                                                    suspension={t.suspension}
+                                                />
                                             </div>
                                         </div>
                                     </div>

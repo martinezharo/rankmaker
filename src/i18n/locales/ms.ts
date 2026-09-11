@@ -564,6 +564,14 @@ export const ms: LocaleDict = {
 		formLockedHint:
 			'Seorang moderator menanda templat ini sebagai kandungan dewasa, jadi tanda itu tidak boleh dibuang lagi.',
 	},
+	suspension: {
+		badge: 'digantung',
+		whyAria: 'Sebab templat ini digantung',
+		tipPrefix: 'Moderator menggantung templat ini:',
+		reasons: {
+			low_quality: 'kandungannya tidak menyumbang apa-apa yang berguna atau terlalu lemah untuk diberi ranking.',
+		},
+	},
 	notifications: {
 		title: 'Pemberitahuan — RANKMAKER',
 		heading: 'Pemberitahuan',

@@ -85,6 +85,7 @@ export async function insertTemplate(
 		visibility: 'public' | 'private' | 'unlisted';
 		isMature: boolean;
 		matureLocked: boolean;
+		suspensionReason: string | null;
 		createdAt: string;
 		options: { name: string; image?: string | null }[];
 	}> = {}
@@ -96,8 +97,9 @@ export async function insertTemplate(
 		.prepare(
 			`INSERT INTO templates
 			   (id, creator_id, slug, title, description, category, cover_image,
-			    created_at, updated_at, visibility, is_mature, mature_locked)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			    created_at, updated_at, visibility, is_mature, mature_locked,
+			    suspension_reason)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			id,
@@ -111,7 +113,8 @@ export async function insertTemplate(
 			createdAt,
 			overrides.visibility ?? 'public',
 			overrides.isMature ? 1 : 0,
-			overrides.matureLocked ? 1 : 0
+			overrides.matureLocked ? 1 : 0,
+			overrides.suspensionReason ?? null
 		)
 		.run();
 

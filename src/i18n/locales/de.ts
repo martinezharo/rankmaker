@@ -566,6 +566,14 @@ export const de: LocaleDict = {
 		formLockedHint:
 			'Ein Moderator hat diese Vorlage als nicht jugendfrei markiert; die Markierung kann nicht mehr entfernt werden.',
 	},
+	suspension: {
+		badge: 'gesperrt',
+		whyAria: 'Warum diese Vorlage gesperrt wurde',
+		tipPrefix: 'Ein Moderator hat diese Vorlage gesperrt:',
+		reasons: {
+			low_quality: 'Der Inhalt bringt nichts Nützliches oder ist zu dürftig für ein Ranking.',
+		},
+	},
 	notifications: {
 		title: 'Benachrichtigungen — RANKMAKER',
 		heading: 'Benachrichtigungen',

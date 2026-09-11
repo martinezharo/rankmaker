@@ -10,6 +10,7 @@
  *
  *   <button data-rm-tip="Undo your last pick">…</button>
  *   <button data-rm-tip="Save" data-rm-tip-placement="bottom">…</button>
+ *   <button data-rm-tip="Why this was suspended" data-rm-tip-trigger="click">…</button>
  *
  * Because it works off an attribute and a delegated listener, markup built at
  * runtime as an HTML string (template cards, comment rows, the header auth
@@ -20,13 +21,24 @@
  *   but only when the tip says something the control's own accessible name
  *   doesn't already say — otherwise screen readers would hear it twice.
  * - Keyboard focus opens it with no delay; Escape closes it.
- * - Coarse pointers (touch) never open it: there is no hover there, and a
- *   bubble on tap would fight the control it describes. Every tooltip is
- *   therefore an enhancement — never the only place information lives.
+ * - Coarse pointers (touch) never open it *on hover*: there is no hover there,
+ *   and a bubble on tap would fight the control it describes. Every hover
+ *   tooltip is therefore an enhancement — never the only place information
+ *   lives. A control that opts into `data-rm-tip-trigger="click"` is the
+ *   exception: it opens on tap too, so it may carry information of its own.
  */
 
 const ATTR = 'data-rm-tip';
 const PLACEMENT_ATTR = 'data-rm-tip-placement';
+/**
+ * `data-rm-tip-trigger="click"` also opens the tip on click/tap and keeps it
+ * up until the next tap elsewhere (or Escape). Hover and focus still work.
+ *
+ * Reach for it when the tip is the *only* place some information lives and the
+ * control exists to reveal it — an info icon next to a badge, say. Ordinary
+ * tooltips must stay enhancements, because hover never happens on touch.
+ */
+const TRIGGER_ATTR = 'data-rm-tip-trigger';
 const TOOLTIP_ID = 'rm-tooltip';
 
 /** Hover dwell before showing, so pointer traffic doesn't flash bubbles. */
@@ -225,10 +237,36 @@ export function initTooltips(): void {
 		},
 		true
 	);
-	document.addEventListener('focusout', hideTooltip, true);
+	// Only the open tooltip's own anchor losing focus closes it: a tap moves
+	// focus around before `pointerdown` has finished opening a click-triggered
+	// tip, and that blur must not close what the tap just opened.
+	document.addEventListener(
+		'focusout',
+		(event) => {
+			const el = target(event);
+			if (!anchor || el === anchor) hideTooltip();
+		},
+		true
+	);
 
-	// Acting on the control answers the question the tooltip was answering.
-	document.addEventListener('pointerdown', hideTooltip, true);
+	// Acting on the control answers the question the tooltip was answering —
+	// unless the control *is* the tooltip's trigger, which toggles instead.
+	document.addEventListener(
+		'pointerdown',
+		(event) => {
+			const el = target(event);
+			if (el?.getAttribute(TRIGGER_ATTR) === 'click') {
+				if (anchor === el) hideTooltip();
+				else {
+					hideTooltip();
+					show(el);
+				}
+				return;
+			}
+			hideTooltip();
+		},
+		true
+	);
 	document.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape') hideTooltip();
 	});
