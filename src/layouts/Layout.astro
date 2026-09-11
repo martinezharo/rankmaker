@@ -17,7 +17,7 @@ import {
     useTranslations,
 } from "../i18n/server";
 import { serializeJsonForScript } from "../lib/safe-json";
-import { SITE_URL } from "../lib/site";
+import { SITE_HOST, SITE_URL } from "../lib/site";
 
 interface Props {
     title: string;
@@ -273,8 +273,15 @@ const ogImageHeight =
              host is allow-listed in the CSP. Cloudflare documents the service
              as collecting no personal data, so it needs no analytics-cookie
              consent gate and loads for every visitor. -->
-        <script is:inline>
+        <script is:inline define:vars={{ analyticsHost: SITE_HOST }}>
             (() => {
+                // Only the live site reports. The dev server, the e2e suite
+                // (localhost:4321) and the per-PR preview deployments all ship
+                // this same layout with the same beacon token, so their page
+                // loads were landing in the production figures — 19% of every
+                // reported page load in the week of 2026-09-11, which is a lot
+                // of noise in the numbers the product is steered by.
+                if (location.hostname !== analyticsHost) return;
                 const loadBeacon = () => {
                     if (document.querySelector("script[data-cf-beacon]")) return;
                     const script = document.createElement("script");
