@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
     COLLAGE_TILES,
     canBuildCollage,
@@ -116,5 +118,24 @@ describe('collageHtml', () => {
 
     it('renders nothing without a full set of tiles', () => {
         expect(collageHtml(images.slice(0, 3), 'x')).toBe('');
+    });
+});
+
+
+describe('the denormalized collage column', () => {
+    // `option_images` is built by SQL triggers, and SQL cannot import a TS
+    // constant — the tile count is baked into their LIMIT. If COLLAGE_TILES
+    // moves without a migration to match, every collage silently renders with
+    // the wrong number of tiles, so pin them together here.
+    it('stores exactly COLLAGE_TILES images per template', () => {
+        const sql = readFileSync(
+            join(process.cwd(), 'migrations/0022_template_listing_columns.sql'),
+            'utf8'
+        );
+        const limits = sql.match(/LIMIT \d+/g) ?? [];
+        expect(limits.length).toBeGreaterThan(0);
+        for (const limit of limits) {
+            expect(limit).toBe(`LIMIT ${COLLAGE_TILES}`);
+        }
     });
 });
