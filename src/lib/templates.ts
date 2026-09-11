@@ -190,25 +190,23 @@ const TEMPLATE_SELECT = `
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
 /**
- * List views never load option rows, but they still need the first few option
- * images to paint a collage cover for templates without one — fetched here as
- * a newline-joined column so the list stays a single statement.
+ * List views never load option rows, but they still need the option names
+ * (/search's text filter matches against them) and the first few option images
+ * (to paint a collage cover for a template without one).
+ *
+ * Both are read straight off the template row: they are denormalized there by
+ * the triggers in migrations/0022_template_listing_columns.sql. They used to be
+ * GROUP_CONCAT subqueries over `template_options` right here, which meant
+ * listing ~100 templates walked all ~2.5k option rows on every render.
+ *
  * Exported so follows.ts can extend it with its own JOIN instead of keeping a
  * near-copy of the projection.
  */
 export const TEMPLATE_LIST_SELECT = `
     SELECT t.id, t.slug, t.title, t.description, t.category, t.cover_image,
            t.created_at, t.updated_at, t.visibility, t.is_mature, t.mature_locked,
-           u.username, u.avatar, u.is_verified,
-           (SELECT GROUP_CONCAT(o.name, ' ') FROM template_options o
-             WHERE o.template_id = t.id) AS option_names,
-           (SELECT GROUP_CONCAT(img, char(10)) FROM (
-                SELECT o.image AS img FROM template_options o
-                 WHERE o.template_id = t.id
-                   AND o.image IS NOT NULL AND o.image != ''
-                 ORDER BY o.position, o.id
-                 LIMIT ${COLLAGE_TILES}
-            )) AS option_images
+           t.option_names, t.option_images,
+           u.username, u.avatar, u.is_verified
     FROM templates t JOIN users u ON u.id = t.creator_id`;
 
 export async function loadOptions(
