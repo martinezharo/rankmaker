@@ -25,4 +25,8 @@
 --
 --   UPDATE templates SET suspension_reason = 'low_quality' WHERE slug = '…';
 --   UPDATE templates SET suspension_reason = NULL WHERE slug = '…';  -- lift
-ALTER TABLE templates ADD COLUMN suspension_reason TEXT;
+ALTER TABLE templates ADD COLUMN suspension_reason TEXT
+  CHECK (
+    suspension_reason IS NULL
+    OR suspension_reason IN ('low_quality')
+  );
