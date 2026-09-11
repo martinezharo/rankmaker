@@ -1,6 +1,35 @@
+# Commercial SEO-tool crawlers. They index the site to sell backlink and
+# keyword data to their own subscribers — they send no visitors and their
+# crawling is not what gets rankings shared. SemrushBot alone was 60% of the
+# traffic reaching the Worker when this was measured (2026-09-11).
+#
+# These are asked, not blocked: they honour robots.txt, and a Worker-side
+# block costs an invocation to serve the 403. SERankingBacklinksBot is the
+# exception — it is in src/lib/crawlers.ts as well because it ignored this.
 User-agent: SERankingBacklinksBot
 Disallow: /
 
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: Barkrowler
+Disallow: /
+
+# Search engines are welcome: discovery is the point. Cloudflare injects its
+# own managed section above this one, which carries the content signals and
+# the opt-out list for AI training crawlers.
 User-agent: *
 Allow: /
 
