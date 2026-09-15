@@ -16,6 +16,7 @@
     "astro": "astro",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "gen:brand-cover": "node .github/scripts/generate-brand-cover.mjs",
+    "gen:flags": "node .github/scripts/generate-flags.mjs",
     "check:deploy": "npx --yes tsx .github/scripts/check-deploy-readiness.ts",
     "wrangler": "wrangler",
     "db:create": "wrangler d1 create rankmaker",

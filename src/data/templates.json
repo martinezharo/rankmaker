@@ -13910,5 +13910,417 @@
         "template_id": "50a13163-dd4a-4fd6-9e7d-682066a178ed"
       }
     ]
+  },
+  {
+    "id": "8061198b-aa8d-477c-a0a5-fb616244431d",
+    "title": "🌍 European Countries Ranking",
+    "description": "Battle 50 countries commonly included in Europe — including transcontinental states and Kosovo — in head-to-head matchups and build your personal ranking from least to most preferred.",
+    "category": "Geography",
+    "cover_image": "https://img.rankmaker.net/covers/f86578b7f6ee2b4d3e5bb187a2f8bce9.webp",
+    "created_at": "2026-09-15T00:00:00+00:00",
+    "updated_at": "2026-09-15T00:00:00+00:00",
+    "slug": "european-countries-ranking",
+    "options": [
+      {
+        "id": 2456,
+        "name": "Albania",
+        "image": "https://img.rankmaker.net/options/7d2671caa2460ae573f7278e7cb15da3.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2457,
+        "name": "Andorra",
+        "image": "https://img.rankmaker.net/options/94fdfe3f00fa932ad377d0027486264c.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2458,
+        "name": "Armenia",
+        "image": "https://img.rankmaker.net/options/7dbcb92ecf5258905813abfedec1360b.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2459,
+        "name": "Austria",
+        "image": "https://img.rankmaker.net/options/94099040562414293b77d7e84698f99d.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2460,
+        "name": "Azerbaijan",
+        "image": "https://img.rankmaker.net/options/8e6c0fb98a74c43cfa6982b2cf58ad09.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2461,
+        "name": "Belarus",
+        "image": "https://img.rankmaker.net/options/690729168bca254c4ffc301475547d10.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2462,
+        "name": "Belgium",
+        "image": "https://img.rankmaker.net/options/21e3b9c12e1a8d29818d499f130da270.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2463,
+        "name": "Bosnia and Herzegovina",
+        "image": "https://img.rankmaker.net/options/0362e971374d3700edf300af8f2a9c8a.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2464,
+        "name": "Bulgaria",
+        "image": "https://img.rankmaker.net/options/3af74c834f0fdbd497b84ed28ec2c907.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2465,
+        "name": "Croatia",
+        "image": "https://img.rankmaker.net/options/c2d621837ef6f39e722d10c26e13838c.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2466,
+        "name": "Cyprus",
+        "image": "https://img.rankmaker.net/options/b59e177a58c3215c42cf6b4b1b8468a5.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2467,
+        "name": "Czechia",
+        "image": "https://img.rankmaker.net/options/a853fb5ec9d4941e6a9cf1ba23751ad9.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2468,
+        "name": "Denmark",
+        "image": "https://img.rankmaker.net/options/d44afcf15b1726f35abf728c4bc97f6b.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2469,
+        "name": "Estonia",
+        "image": "https://img.rankmaker.net/options/52080675e7aed9fda4647198666b9411.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2470,
+        "name": "Finland",
+        "image": "https://img.rankmaker.net/options/4eac880899f5dae1989c1f8079c981f0.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2471,
+        "name": "France",
+        "image": "https://img.rankmaker.net/options/0c42d1cb318385649a5269fe39cd2b5e.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2472,
+        "name": "Georgia",
+        "image": "https://img.rankmaker.net/options/0ed1adad9e4b8d0eb11246f07b0ea5a0.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2473,
+        "name": "Germany",
+        "image": "https://img.rankmaker.net/options/4f5b4ae04fceea952c38a38f02540c28.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2474,
+        "name": "Greece",
+        "image": "https://img.rankmaker.net/options/3dd6e097e2400f244f84a17726e2e937.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2475,
+        "name": "Hungary",
+        "image": "https://img.rankmaker.net/options/a5ee14891db57db0a7e3ec2f3cfb30ce.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2476,
+        "name": "Iceland",
+        "image": "https://img.rankmaker.net/options/cac841090a29ea9058c2d6490307e28d.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2477,
+        "name": "Ireland",
+        "image": "https://img.rankmaker.net/options/9ba81ad9b6a7615399951b8418588542.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2478,
+        "name": "Italy",
+        "image": "https://img.rankmaker.net/options/69a1082d7a0a95f8fa4afd76a1f3602a.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2479,
+        "name": "Kosovo",
+        "image": "https://img.rankmaker.net/options/554e7fe0cb6c755d06a17b6838d36886.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2480,
+        "name": "Latvia",
+        "image": "https://img.rankmaker.net/options/7598196a8bd1b4ed36acb1a6a07598c9.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2481,
+        "name": "Liechtenstein",
+        "image": "https://img.rankmaker.net/options/9af55313419d7b864a8d8411a05e2a41.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2482,
+        "name": "Lithuania",
+        "image": "https://img.rankmaker.net/options/de2279631345e5dffb646c2f8d6c1a92.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2483,
+        "name": "Luxembourg",
+        "image": "https://img.rankmaker.net/options/530024f406c0c6667a5d9cc95c1d3cbe.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2484,
+        "name": "Malta",
+        "image": "https://img.rankmaker.net/options/5096647abe0bf5a78a1e69b281c7d832.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2485,
+        "name": "Moldova",
+        "image": "https://img.rankmaker.net/options/9595e19d00befb1f5e3573a0913d798e.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2486,
+        "name": "Monaco",
+        "image": "https://img.rankmaker.net/options/7f62e8e4449e619d8d5396ad4e5f2908.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2487,
+        "name": "Montenegro",
+        "image": "https://img.rankmaker.net/options/70e95cdfb30b55be862ec4e38f1436a6.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2488,
+        "name": "Netherlands",
+        "image": "https://img.rankmaker.net/options/4090de829bace1d4cab404c51aeec330.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2489,
+        "name": "North Macedonia",
+        "image": "https://img.rankmaker.net/options/68d9e17a3ade48da50af5adf726e4ec2.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2490,
+        "name": "Norway",
+        "image": "https://img.rankmaker.net/options/433ae2c6dd472083ea34c1668d236072.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2491,
+        "name": "Poland",
+        "image": "https://img.rankmaker.net/options/51cb25f30f118960c690c18e2fd5f741.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2492,
+        "name": "Portugal",
+        "image": "https://img.rankmaker.net/options/aabe39b07aec347cce0482b02cb74540.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2493,
+        "name": "Romania",
+        "image": "https://img.rankmaker.net/options/5168609174a8e11aff63cbb6ca1a33fc.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2494,
+        "name": "Russia",
+        "image": "https://img.rankmaker.net/options/647c8a278760c361f4c1da4814dfae98.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2495,
+        "name": "San Marino",
+        "image": "https://img.rankmaker.net/options/9a937a36f608ddaabf705cd2c0c62c1e.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2496,
+        "name": "Serbia",
+        "image": "https://img.rankmaker.net/options/10cc491c992495e15dadbe3cd18eff31.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2497,
+        "name": "Slovakia",
+        "image": "https://img.rankmaker.net/options/51d3ceecd16e1ec82ef22d06bc27440e.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2498,
+        "name": "Slovenia",
+        "image": "https://img.rankmaker.net/options/b882d913b1147be1a022803702fbaaab.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2499,
+        "name": "Spain",
+        "image": "https://img.rankmaker.net/options/c08e49a387c820670a378a4bda969354.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2500,
+        "name": "Sweden",
+        "image": "https://img.rankmaker.net/options/23feee789a9cc9ac2989ee741aae15d3.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2501,
+        "name": "Switzerland",
+        "image": "https://img.rankmaker.net/options/c624060c5057bb4785664a1130b978bc.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2502,
+        "name": "Turkey",
+        "image": "https://img.rankmaker.net/options/558a99fe98a816a6467b83608d6a95ff.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2503,
+        "name": "Ukraine",
+        "image": "https://img.rankmaker.net/options/3ca76ac573d84ae5b75e1051b63937eb.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2504,
+        "name": "United Kingdom",
+        "image": "https://img.rankmaker.net/options/09f0b1e157d244ac5947a6f0c5f76977.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      },
+      {
+        "id": 2505,
+        "name": "Vatican City",
+        "image": "https://img.rankmaker.net/options/6f02ad4f4364880715be966d8efb85ad.webp",
+        "created_at": "2026-09-15T00:00:00+00:00",
+        "updated_at": "2026-09-15T00:00:00+00:00",
+        "template_id": "8061198b-aa8d-477c-a0a5-fb616244431d"
+      }
+    ]
   }
 ]
