@@ -41,3 +41,6 @@ test-results/
 playwright-report/
 /blob-report/
 playwright/.cache/
+
+# generated official assets, uploaded to R2 (pnpm gen:flags)
+.flags/
