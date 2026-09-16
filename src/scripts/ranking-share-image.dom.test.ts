@@ -11,6 +11,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	computeCanvasHeight,
 	downloadRankingImage,
+	gridPosition,
+	restLayout,
 	truncate,
 	type RankedItem,
 } from './ranking-share-image';
@@ -130,6 +132,99 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
+describe('restLayout', () => {
+	it('has no grid at all for 3 or fewer items', () => {
+		for (const count of [0, 1, 2, 3]) {
+			expect(restLayout(count), String(count)).toMatchObject({
+				count: 0,
+				cols: 0,
+				rows: 0,
+				height: 0,
+			});
+		}
+	});
+
+	it('keeps two roomy columns while they stay short', () => {
+		// 20 below the podium is 10 rows, the point where a third column pays off.
+		for (const count of [4, 7, 23]) {
+			const layout = restLayout(count);
+			expect(layout.cols, String(count)).toBe(2);
+			expect(layout.rowH, String(count)).toBe(100);
+			expect(layout.imgSize, String(count)).toBe(50);
+		}
+		expect(restLayout(23).rows).toBe(10);
+	});
+
+	it('adds the third column, and tightens the row, once past ten rows', () => {
+		const layout = restLayout(24);
+		expect(layout.cols).toBe(3);
+		expect(layout.rows).toBe(7);
+		expect(layout.rowH).toBe(84);
+		expect(layout.imgSize).toBe(44);
+	});
+
+	it('never goes past three columns, however long the ranking', () => {
+		// A narrower column would truncate most option names.
+		expect(restLayout(50).cols).toBe(3);
+		expect(restLayout(200).cols).toBe(3);
+	});
+
+	it('splits the width evenly, gaps included', () => {
+		const two = restLayout(10);
+		expect(two.colWidth * 2 + 24).toBe(1080 - 100);
+		const three = restLayout(50);
+		expect(three.colWidth * 3 + 24 * 2).toBeCloseTo(1080 - 100);
+	});
+
+	it('keeps a full ranking of 50 close to feed-shaped', () => {
+		// The point of the third column: 1080×3140 (1:2.9) was unshareable.
+		expect(computeCanvasHeight(50)).toBeLessThan(1080 * 2);
+	});
+});
+
+describe('gridPosition', () => {
+	/** Ranks in drawing order, read back out of the grid column by column. */
+	const columns = (count: number) => {
+		const layout = restLayout(count);
+		const grid: number[][] = Array.from({ length: layout.cols }, () => []);
+		for (let i = 0; i < layout.count; i++) {
+			const { col, row } = gridPosition(i, layout);
+			expect(grid[col][row]).toBeUndefined(); // no two items share a cell
+			grid[col][row] = i;
+		}
+		return grid;
+	};
+
+	it('fills each column top to bottom before starting the next', () => {
+		expect(columns(9)).toEqual([
+			[0, 1, 2],
+			[3, 4, 5],
+		]);
+	});
+
+	it('gives the odd item out to the leftmost column', () => {
+		expect(columns(8)).toEqual([
+			[0, 1, 2],
+			[3, 4],
+		]);
+	});
+
+	it('balances the three-column grid to within one row', () => {
+		const grid = columns(50);
+		expect(grid.map((c) => c.length)).toEqual([16, 16, 15]);
+		expect(grid[0][0]).toBe(0); // rank 4 opens the first column
+	});
+
+	it('never leaves a hole inside a column', () => {
+		for (const count of [4, 5, 6, 17, 24, 37, 50]) {
+			const grid = columns(count);
+			const drawn = grid.flat();
+			expect(drawn, String(count)).toHaveLength(restLayout(count).count);
+			expect(drawn.some((i) => i === undefined), String(count)).toBe(false);
+		}
+	});
+});
+
 describe('computeCanvasHeight', () => {
 	const BASE = 110 + 460 + 60 + 50;
 
@@ -139,14 +234,19 @@ describe('computeCanvasHeight', () => {
 		}
 	});
 
-	it('adds one 2-column row band for items 4–5', () => {
+	it('adds one row band for items 4–5', () => {
 		expect(computeCanvasHeight(4)).toBe(BASE + 100 + 60);
 		expect(computeCanvasHeight(5)).toBe(BASE + 100 + 60);
 	});
 
-	it('grows by a row every two extra items', () => {
+	it('grows by a row every two extra items while in two columns', () => {
 		expect(computeCanvasHeight(7)).toBe(BASE + 200 + 60);
 		expect(computeCanvasHeight(9)).toBe(BASE + 300 + 60);
+	});
+
+	it('shrinks when the third column takes over', () => {
+		// Same item, one more column: the image gets shorter, not taller.
+		expect(computeCanvasHeight(24)).toBeLessThan(computeCanvasHeight(23));
 	});
 });
 
