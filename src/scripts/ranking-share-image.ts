@@ -8,6 +8,8 @@
  * `truncate`) are unit-tested.
  */
 
+import crownSvg from '@fortawesome/fontawesome-free/svgs/solid/crown.svg?raw';
+
 import { graphemesOf } from '../lib/text';
 
 export type RankedItem = {
@@ -49,6 +51,25 @@ const FONT_STACK =
 /** `font('bold', 32)` → a canvas font shorthand on the shared stack. */
 const font = (weight: string, size: number) =>
 	`${weight} ${size}px ${FONT_STACK}`;
+
+/**
+ * The winner's crown, taken from the same Font Awesome icon the on-page podium
+ * renders (`fa-solid fa-crown`, see Podium.tsx). Reading the shipped SVG keeps
+ * the image and the site on one silhouette, and keeps following the icon when
+ * the package updates it; hand-drawing a second crown did not.
+ */
+const CROWN = (() => {
+	const box = crownSvg.match(/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/);
+	const path = crownSvg.match(/\sd="([^"]+)"/);
+	return {
+		path: path?.[1] ?? '',
+		width: Number(box?.[1] ?? 0),
+		height: Number(box?.[2] ?? 0),
+	};
+})();
+
+/** Gold shared with the winner's ring, and with `text-amber-400` on the page. */
+const CROWN_GOLD = '#FBBF24';
 
 /** Geometry of the "Full Ranking" grid that renders the items below the podium. */
 export interface RestLayout {
@@ -276,26 +297,18 @@ export async function downloadRankingImage(
 	}
 
 	/**
-	 * The winner's crown — drawn, not typed. The on-page podium uses the Font
-	 * Awesome crown (see Podium.tsx), while this used to print the 👑 emoji,
-	 * whose shape is different on every platform and which renders as tofu
-	 * wherever no emoji font is installed. A path looks the same everywhere.
+	 * Stamp the crown icon, scaled to `w` and sitting on `bottomY`. Typing the
+	 * 👑 emoji instead left its shape to the browser's emoji font — different
+	 * on every platform, and tofu wherever none is installed.
 	 */
 	function drawCrown(cx: number, bottomY: number, w: number) {
-		const h = w * 0.72;
-		const top = bottomY - h;
-		const half = w / 2;
-		ctx!.beginPath();
-		ctx!.moveTo(cx - half, bottomY);
-		ctx!.lineTo(cx - half, top + h * 0.18);
-		ctx!.lineTo(cx - w * 0.25, top + h * 0.6);
-		ctx!.lineTo(cx, top);
-		ctx!.lineTo(cx + w * 0.25, top + h * 0.6);
-		ctx!.lineTo(cx + half, top + h * 0.18);
-		ctx!.lineTo(cx + half, bottomY);
-		ctx!.closePath();
-		ctx!.fillStyle = '#FBBF24';
-		ctx!.fill();
+		const scale = w / CROWN.width;
+		ctx!.save();
+		ctx!.translate(cx - w / 2, bottomY - CROWN.height * scale);
+		ctx!.scale(scale, scale);
+		ctx!.fillStyle = CROWN_GOLD;
+		ctx!.fill(new Path2D(CROWN.path));
+		ctx!.restore();
 	}
 
 	const truncText = (text: string, maxW: number) =>
@@ -385,7 +398,7 @@ export async function downloadRankingImage(
 		const imgY = podiumBaseY - h - imgSize - 50 - crownH;
 
 		if (medal.crown) {
-			drawCrown(x + w / 2, imgY + crownH - 4, 38);
+			drawCrown(x + w / 2, imgY + crownH - 2, 34);
 		}
 
 		// Image

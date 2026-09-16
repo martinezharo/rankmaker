@@ -7,6 +7,7 @@
  * option image that never loads, or a download whose filename the OS refuses.
  * The 2D context is a recorder, so those are what the assertions read.
  */
+import crownSvg from '@fortawesome/fontawesome-free/svgs/solid/crown.svg?raw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	computeCanvasHeight,
@@ -138,6 +139,12 @@ beforeEach(() => {
 		}
 	}
 	vi.stubGlobal('Image', FakeImage);
+
+	// happy-dom has no Path2D; keep the path string it was handed.
+	class FakePath2D {
+		constructor(public d: string) {}
+	}
+	vi.stubGlobal('Path2D', FakePath2D);
 });
 
 afterEach(() => {
@@ -417,14 +424,21 @@ describe('downloadRankingImage', () => {
 		expect(drawnText(context)).toContain('Alien');
 	});
 
-	it('draws the winner crown as a path, never as an emoji', async () => {
+	it('stamps the winner crown with the Font Awesome icon, not an emoji', async () => {
 		// The emoji needs an OS emoji font, which a browser may not have, and
-		// looks different on every platform that does have one.
+		// looks different on every platform that does have one. The icon is the
+		// same one the page's podium renders.
 		await downloadRankingImage(ranking, 'Best Movies');
 		expect(drawnText(context).join('')).not.toContain('\u{1F451}');
-		expect(
-			context.calls.some((c) => c.method === 'fill' && c.fillStyle === '#FBBF24')
-		).toBe(true);
+
+		const crown = context.calls.find(
+			(c) => c.method === 'fill' && c.args.length > 0
+		);
+		expect(crown, 'the winner gets a crown').toBeDefined();
+		expect(crown!.fillStyle).toBe('#FBBF24');
+		const drawnPath = (crown!.args[0] as { d: string }).d;
+		expect(crownSvg).toContain(`d="${drawnPath}"`);
+		expect(drawnPath.startsWith('M')).toBe(true);
 	});
 
 	it('leaves the crown off a ranking with no winner podium', async () => {
