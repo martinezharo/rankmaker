@@ -37,6 +37,19 @@ const MAX_COLS = 3;
 /** Below the podium, every row is a card of `rowH - 12` px. */
 const CARD_INSET = 12;
 
+/**
+ * One stack for every string drawn on the canvas. The emoji families come last,
+ * the way the CSS stacks do: option names are user text and routinely contain
+ * emoji, and leaving the fallback implicit renders them differently — or as
+ * tofu — depending on what the browser happens to pick.
+ */
+const FONT_STACK =
+	"-apple-system, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'";
+
+/** `font('bold', 32)` → a canvas font shorthand on the shared stack. */
+const font = (weight: string, size: number) =>
+	`${weight} ${size}px ${FONT_STACK}`;
+
 /** Geometry of the "Full Ranking" grid that renders the items below the podium. */
 export interface RestLayout {
 	/** Items below the podium, i.e. `count - 3`. */
@@ -262,6 +275,29 @@ export async function downloadRankingImage(
 		ctx!.restore();
 	}
 
+	/**
+	 * The winner's crown — drawn, not typed. The on-page podium uses the Font
+	 * Awesome crown (see Podium.tsx), while this used to print the 👑 emoji,
+	 * whose shape is different on every platform and which renders as tofu
+	 * wherever no emoji font is installed. A path looks the same everywhere.
+	 */
+	function drawCrown(cx: number, bottomY: number, w: number) {
+		const h = w * 0.72;
+		const top = bottomY - h;
+		const half = w / 2;
+		ctx!.beginPath();
+		ctx!.moveTo(cx - half, bottomY);
+		ctx!.lineTo(cx - half, top + h * 0.18);
+		ctx!.lineTo(cx - w * 0.25, top + h * 0.6);
+		ctx!.lineTo(cx, top);
+		ctx!.lineTo(cx + w * 0.25, top + h * 0.6);
+		ctx!.lineTo(cx + half, top + h * 0.18);
+		ctx!.lineTo(cx + half, bottomY);
+		ctx!.closePath();
+		ctx!.fillStyle = '#FBBF24';
+		ctx!.fill();
+	}
+
 	const truncText = (text: string, maxW: number) =>
 		truncate(text, maxW, (t) => ctx!.measureText(t).width);
 
@@ -276,12 +312,12 @@ export async function downloadRankingImage(
 	// ─── Header ───
 	let curY = PAD;
 	ctx.fillStyle = 'rgba(255,255,255,0.35)';
-	ctx.font = "600 13px -apple-system, 'Segoe UI', sans-serif";
+	ctx.font = font('600', 13);
 	ctx.textAlign = 'center';
 	ctx.fillText(L.results, W / 2, curY + 16);
 
 	ctx.fillStyle = '#ffffff';
-	ctx.font = "bold 32px -apple-system, 'Segoe UI', sans-serif";
+	ctx.font = font('bold', 32);
 	ctx.fillText(title, W / 2, curY + 60);
 	curY += HEADER_H;
 
@@ -349,10 +385,7 @@ export async function downloadRankingImage(
 		const imgY = podiumBaseY - h - imgSize - 50 - crownH;
 
 		if (medal.crown) {
-			ctx.fillStyle = '#FBBF24';
-			ctx.font = 'bold 26px -apple-system, sans-serif';
-			ctx.textAlign = 'center';
-			ctx.fillText('👑', x + w / 2, imgY + crownH - 22);
+			drawCrown(x + w / 2, imgY + crownH - 4, 38);
 		}
 
 		// Image
@@ -366,7 +399,7 @@ export async function downloadRankingImage(
 
 		// Name
 		ctx.fillStyle = '#ffffff';
-		ctx.font = "bold 15px -apple-system, 'Segoe UI', sans-serif";
+		ctx.font = font('bold', 15);
 		ctx.textAlign = 'center';
 		const nameY = imgY + crownH + imgSize + 22;
 		ctx.fillText(truncText(item.name, w - 10), x + w / 2, nameY);
@@ -389,7 +422,7 @@ export async function downloadRankingImage(
 
 		// Label inside column
 		ctx.fillStyle = medal.text;
-		ctx.font = '900 13px -apple-system, sans-serif';
+		ctx.font = font('900', 13);
 		ctx.textAlign = 'center';
 		ctx.fillText(medal.label, x + w / 2, colY + 26);
 	});
@@ -400,7 +433,7 @@ export async function downloadRankingImage(
 	if (restItems.length > 0) {
 		// Section label
 		ctx.fillStyle = '#ffffff';
-		ctx.font = "bold 17px -apple-system, 'Segoe UI', sans-serif";
+		ctx.font = font('bold', 17);
 		ctx.textAlign = 'left';
 		ctx.fillText(L.fullRanking, PAD, curY + 20);
 
@@ -440,7 +473,7 @@ export async function downloadRankingImage(
 			ctx.fillStyle = 'rgba(255,255,255,0.06)';
 			ctx.fill();
 			ctx.fillStyle = 'rgba(255,255,255,0.4)';
-			ctx.font = '800 13px -apple-system, sans-serif';
+			ctx.font = font('800', 13);
 			ctx.textAlign = 'center';
 			ctx.fillText(
 				String(globalIdx + 1),
@@ -455,7 +488,7 @@ export async function downloadRankingImage(
 
 			// Name
 			ctx.fillStyle = '#e0e0e0';
-			ctx.font = "500 14px -apple-system, 'Segoe UI', sans-serif";
+			ctx.font = font('500', 14);
 			ctx.textAlign = 'left';
 			const nameX = imgX + imgSize + 10;
 			const nameMaxW = colWidth - (nameX - x) - 10;
@@ -466,7 +499,7 @@ export async function downloadRankingImage(
 	// ─── Watermark footer ───
 	const footerY = H - 30;
 	ctx.fillStyle = 'rgba(255,255,255,0.15)';
-	ctx.font = "500 12px -apple-system, 'Segoe UI', sans-serif";
+	ctx.font = font('500', 12);
 	ctx.textAlign = 'center';
 	ctx.fillText(L.madeWith, W / 2, footerY);
 

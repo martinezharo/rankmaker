@@ -17,19 +17,24 @@ import {
 	type RankedItem,
 } from './ranking-share-image';
 
-type Call = { method: string; args: unknown[] };
+type Call = { method: string; args: unknown[]; fillStyle?: string };
 
 /** A 2D context that records what was drawn. */
 function recordingContext() {
 	const calls: Call[] = [];
+	/** Every font shorthand the renderer set, in the order it set them. */
+	const fonts: string[] = [];
 	const gradient = { addColorStop: vi.fn() };
 	const record =
 		(method: string) =>
 		(...args: unknown[]) => {
-			calls.push({ method, args });
+			// The fill colour is a property, so a call only means something
+			// alongside the style that was in force when it was made.
+			calls.push({ method, args, fillStyle: context.fillStyle });
 		};
 	const context = {
 		calls,
+		fonts,
 		canvas: null as unknown,
 		createLinearGradient: vi.fn(() => gradient),
 		createRadialGradient: vi.fn(() => gradient),
@@ -64,6 +69,14 @@ function recordingContext() {
 		shadowColor: '',
 		shadowBlur: 0,
 	};
+	let font = '';
+	Object.defineProperty(context, 'font', {
+		get: () => font,
+		set: (value: string) => {
+			font = value;
+			fonts.push(value);
+		},
+	});
 	return context;
 }
 
@@ -402,5 +415,32 @@ describe('downloadRankingImage', () => {
 		await downloadRankingImage(ranking.slice(0, 2), 'Best Movies');
 		expect(clicked).toHaveLength(1);
 		expect(drawnText(context)).toContain('Alien');
+	});
+
+	it('draws the winner crown as a path, never as an emoji', async () => {
+		// The emoji needs an OS emoji font, which a browser may not have, and
+		// looks different on every platform that does have one.
+		await downloadRankingImage(ranking, 'Best Movies');
+		expect(drawnText(context).join('')).not.toContain('\u{1F451}');
+		expect(
+			context.calls.some((c) => c.method === 'fill' && c.fillStyle === '#FBBF24')
+		).toBe(true);
+	});
+
+	it('leaves the crown off a ranking with no winner podium', async () => {
+		await downloadRankingImage([], 'Best Movies');
+		expect(
+			context.calls.some((c) => c.method === 'fill' && c.fillStyle === '#FBBF24')
+		).toBe(false);
+	});
+
+	it('draws every string with an emoji fallback in the font stack', async () => {
+		// Option names are user text: emoji in them must not depend on whatever
+		// the browser falls back to on its own.
+		await downloadRankingImage(ranking, 'Best Movies');
+		expect(context.fonts.length).toBeGreaterThan(0);
+		for (const stack of context.fonts) {
+			expect(stack, stack).toContain("'Noto Color Emoji'");
+		}
 	});
 });
