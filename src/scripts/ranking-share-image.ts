@@ -1,11 +1,14 @@
 /**
- * Results share-image renderer — draws the ranking (podium + 2-column list) onto
+ * Results share-image renderer — draws the ranking (podium + column list) onto
  * a canvas and triggers a PNG download. Extracted from the template page so the
  * page stays focused on battle/UI control.
  *
  * The canvas drawing itself is exercised by the e2e download smoke test; the
- * pure layout helpers (`computeCanvasHeight`, `truncate`) are unit-tested.
+ * pure layout helpers (`restLayout`, `gridPosition`, `computeCanvasHeight`,
+ * `truncate`) are unit-tested.
  */
+
+import crownSvg from '@fortawesome/fontawesome-free/svgs/solid/crown.svg?raw';
 
 import { graphemesOf } from '../lib/text';
 
@@ -18,22 +21,135 @@ export type RankedItem = {
 // Canvas layout constants (px).
 const W = 1080;
 const PAD = 50;
-const ROW_H = 100;
 const COL_GAP = 24;
 const PODIUM_IMG = 120;
 const PODIUM_H = 460;
 const HEADER_H = 110;
 const FOOTER_H = 60;
+/** Height of the "Full Ranking" label band above the grid. */
+const REST_LABEL_H = 60;
 
 /**
- * Total canvas height for a ranking of `count` items. Items 4+ render in a
- * 2-column grid below the podium; the +60 is the "Full Ranking" label band.
+ * Columns grow instead of rows: a long single-file list makes the PNG far
+ * taller than any feed will show. A column narrower than ~300px truncates most
+ * option names, so at 1080px wide three is as far as this can go.
  */
-export function computeCanvasHeight(count: number): number {
+const MAX_ROWS_PER_COL = 10;
+const MAX_COLS = 3;
+/** Below the podium, every row is a card of `rowH - 12` px. */
+const CARD_INSET = 12;
+
+/**
+ * One stack for every string drawn on the canvas. The emoji families come last,
+ * the way the CSS stacks do: option names are user text and routinely contain
+ * emoji, and leaving the fallback implicit renders them differently — or as
+ * tofu — depending on what the browser happens to pick.
+ */
+const FONT_STACK =
+	"-apple-system, 'Segoe UI', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'";
+
+/** `font('bold', 32)` → a canvas font shorthand on the shared stack. */
+const font = (weight: string, size: number) =>
+	`${weight} ${size}px ${FONT_STACK}`;
+
+/**
+ * The winner's crown, taken from the same Font Awesome icon the on-page podium
+ * renders (`fa-solid fa-crown`, see Podium.tsx). Reading the shipped SVG keeps
+ * the image and the site on one silhouette, and keeps following the icon when
+ * the package updates it; hand-drawing a second crown did not.
+ */
+const CROWN = (() => {
+	const box = crownSvg.match(/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/);
+	const path = crownSvg.match(/\sd="([^"]+)"/);
+	return {
+		path: path?.[1] ?? '',
+		width: Number(box?.[1] ?? 0),
+		height: Number(box?.[2] ?? 0),
+	};
+})();
+
+/** Gold shared with the winner's ring, and with `text-amber-400` on the page. */
+const CROWN_GOLD = '#FBBF24';
+
+/** Geometry of the "Full Ranking" grid that renders the items below the podium. */
+export interface RestLayout {
+	/** Items below the podium, i.e. `count - 3`. */
+	count: number;
+	cols: number;
+	/** Rows in the tallest column. */
+	rows: number;
+	colWidth: number;
+	rowH: number;
+	/** Thumbnail edge, shrunk along with the row when the grid gets dense. */
+	imgSize: number;
+	/** Band height including the label, or 0 when there is nothing to draw. */
+	height: number;
+}
+
+/**
+ * Lay out the items below the podium. Column count follows the item count so
+ * the image stays roughly feed-shaped, and the densest grid trades a little
+ * row height for the extra column it needs.
+ */
+export function restLayout(count: number): RestLayout {
 	const restCount = Math.max(0, count - 3);
-	const restRows = Math.ceil(restCount / 2);
-	const REST_H = restRows > 0 ? restRows * ROW_H + 60 : 0;
-	return HEADER_H + PODIUM_H + REST_H + FOOTER_H + PAD;
+	if (restCount === 0) {
+		return {
+			count: 0,
+			cols: 0,
+			rows: 0,
+			colWidth: 0,
+			rowH: 0,
+			imgSize: 0,
+			height: 0,
+		};
+	}
+
+	const cols = Math.min(
+		MAX_COLS,
+		Math.max(2, Math.ceil(restCount / MAX_ROWS_PER_COL))
+	);
+	const rows = Math.ceil(restCount / cols);
+	const dense = cols >= MAX_COLS;
+	const rowH = dense ? 84 : 100;
+
+	return {
+		count: restCount,
+		cols,
+		rows,
+		colWidth: (W - PAD * 2 - COL_GAP * (cols - 1)) / cols,
+		rowH,
+		imgSize: dense ? 44 : 50,
+		height: rows * rowH + REST_LABEL_H,
+	};
+}
+
+/**
+ * Where the `index`-th item below the podium sits in the grid. Filling is
+ * column-major — a whole column top to bottom, then the next one — because a
+ * ranking is read in sequence, and row-major order makes the eye cross the
+ * image for every step. Columns differ by at most one row, the extra rows
+ * going to the leftmost columns.
+ */
+export function gridPosition(
+	index: number,
+	layout: RestLayout
+): { col: number; row: number } {
+	const base = Math.floor(layout.count / layout.cols);
+	const extra = layout.count % layout.cols;
+	let col = 0;
+	let offset = index;
+	for (;;) {
+		const colRows = base + (col < extra ? 1 : 0);
+		if (offset < colRows) return { col, row: offset };
+		offset -= colRows;
+		col++;
+	}
+}
+
+/** Total canvas height for a ranking of `count` items. */
+export function computeCanvasHeight(count: number): number {
+	return HEADER_H + PODIUM_H + restLayout(count).height + FOOTER_H + PAD;
 }
 
 /** Never trim a label below this many characters, however narrow the column. */
@@ -92,6 +208,7 @@ export async function downloadRankingImage(
 	const L: ShareImageLabels = { ...DEFAULT_LABELS, ...labels };
 
 	const restItems = ranked.slice(3);
+	const rest = restLayout(ranked.length);
 	const H = computeCanvasHeight(ranked.length);
 
 	const canvas = document.createElement('canvas');
@@ -179,6 +296,21 @@ export async function downloadRankingImage(
 		ctx!.restore();
 	}
 
+	/**
+	 * Stamp the crown icon, scaled to `w` and sitting on `bottomY`. Typing the
+	 * 👑 emoji instead left its shape to the browser's emoji font — different
+	 * on every platform, and tofu wherever none is installed.
+	 */
+	function drawCrown(cx: number, bottomY: number, w: number) {
+		const scale = w / CROWN.width;
+		ctx!.save();
+		ctx!.translate(cx - w / 2, bottomY - CROWN.height * scale);
+		ctx!.scale(scale, scale);
+		ctx!.fillStyle = CROWN_GOLD;
+		ctx!.fill(new Path2D(CROWN.path));
+		ctx!.restore();
+	}
+
 	const truncText = (text: string, maxW: number) =>
 		truncate(text, maxW, (t) => ctx!.measureText(t).width);
 
@@ -193,12 +325,12 @@ export async function downloadRankingImage(
 	// ─── Header ───
 	let curY = PAD;
 	ctx.fillStyle = 'rgba(255,255,255,0.35)';
-	ctx.font = "600 13px -apple-system, 'Segoe UI', sans-serif";
+	ctx.font = font('600', 13);
 	ctx.textAlign = 'center';
 	ctx.fillText(L.results, W / 2, curY + 16);
 
 	ctx.fillStyle = '#ffffff';
-	ctx.font = "bold 32px -apple-system, 'Segoe UI', sans-serif";
+	ctx.font = font('bold', 32);
 	ctx.fillText(title, W / 2, curY + 60);
 	curY += HEADER_H;
 
@@ -266,10 +398,7 @@ export async function downloadRankingImage(
 		const imgY = podiumBaseY - h - imgSize - 50 - crownH;
 
 		if (medal.crown) {
-			ctx.fillStyle = '#FBBF24';
-			ctx.font = 'bold 26px -apple-system, sans-serif';
-			ctx.textAlign = 'center';
-			ctx.fillText('👑', x + w / 2, imgY + crownH - 22);
+			drawCrown(x + w / 2, imgY + crownH - 2, 34);
 		}
 
 		// Image
@@ -283,7 +412,7 @@ export async function downloadRankingImage(
 
 		// Name
 		ctx.fillStyle = '#ffffff';
-		ctx.font = "bold 15px -apple-system, 'Segoe UI', sans-serif";
+		ctx.font = font('bold', 15);
 		ctx.textAlign = 'center';
 		const nameY = imgY + crownH + imgSize + 22;
 		ctx.fillText(truncText(item.name, w - 10), x + w / 2, nameY);
@@ -306,18 +435,18 @@ export async function downloadRankingImage(
 
 		// Label inside column
 		ctx.fillStyle = medal.text;
-		ctx.font = '900 13px -apple-system, sans-serif';
+		ctx.font = font('900', 13);
 		ctx.textAlign = 'center';
 		ctx.fillText(medal.label, x + w / 2, colY + 26);
 	});
 
 	curY = podiumBaseY + 20;
 
-	// ─── Full Ranking (rest, 2 columns) ───
+	// ─── Full Ranking (rest, column-major grid) ───
 	if (restItems.length > 0) {
 		// Section label
 		ctx.fillStyle = '#ffffff';
-		ctx.font = "bold 17px -apple-system, 'Segoe UI', sans-serif";
+		ctx.font = font('bold', 17);
 		ctx.textAlign = 'left';
 		ctx.fillText(L.fullRanking, PAD, curY + 20);
 
@@ -331,20 +460,20 @@ export async function downloadRankingImage(
 		ctx.stroke();
 		curY += 50;
 
-		const colWidth = (W - PAD * 2 - COL_GAP) / 2;
+		const { colWidth, rowH, imgSize } = rest;
+		const cardH = rowH - CARD_INSET;
 
 		restItems.forEach((item, i) => {
 			const globalIdx = i + 3; // actual rank index
-			const col = i % 2;
-			const row = Math.floor(i / 2);
+			const { col, row } = gridPosition(i, rest);
 			const x = PAD + col * (colWidth + COL_GAP);
-			const y = curY + row * ROW_H;
+			const y = curY + row * rowH;
 
 			// Card background
-			roundRect(x, y, colWidth, ROW_H - 12, 14);
+			roundRect(x, y, colWidth, cardH, 14);
 			ctx.fillStyle = 'rgba(255,255,255,0.03)';
 			ctx.fill();
-			roundRect(x, y, colWidth, ROW_H - 12, 14);
+			roundRect(x, y, colWidth, cardH, 14);
 			ctx.strokeStyle = 'rgba(255,255,255,0.06)';
 			ctx.lineWidth = 1;
 			ctx.stroke();
@@ -352,12 +481,12 @@ export async function downloadRankingImage(
 			// Rank number badge
 			const badgeSize = 32;
 			const badgeX = x + 14;
-			const badgeY = y + (ROW_H - 12 - badgeSize) / 2;
+			const badgeY = y + (cardH - badgeSize) / 2;
 			roundRect(badgeX, badgeY, badgeSize, badgeSize, 8);
 			ctx.fillStyle = 'rgba(255,255,255,0.06)';
 			ctx.fill();
 			ctx.fillStyle = 'rgba(255,255,255,0.4)';
-			ctx.font = '800 13px -apple-system, sans-serif';
+			ctx.font = font('800', 13);
 			ctx.textAlign = 'center';
 			ctx.fillText(
 				String(globalIdx + 1),
@@ -367,26 +496,23 @@ export async function downloadRankingImage(
 
 			// Image
 			const imgX = badgeX + badgeSize + 12;
-			const imgY2 = y + (ROW_H - 12 - 50) / 2;
-			drawRoundedImg(allImages[item.id], imgX, imgY2, 50, 10);
+			const imgY2 = y + (cardH - imgSize) / 2;
+			drawRoundedImg(allImages[item.id], imgX, imgY2, imgSize, 10);
 
 			// Name
 			ctx.fillStyle = '#e0e0e0';
-			ctx.font = "500 14px -apple-system, 'Segoe UI', sans-serif";
+			ctx.font = font('500', 14);
 			ctx.textAlign = 'left';
-			const nameMaxW = colWidth - (imgX - x + 50 + 20);
-			ctx.fillText(
-				truncText(item.name, nameMaxW),
-				imgX + 60,
-				y + (ROW_H - 12) / 2 + 5
-			);
+			const nameX = imgX + imgSize + 10;
+			const nameMaxW = colWidth - (nameX - x) - 10;
+			ctx.fillText(truncText(item.name, nameMaxW), nameX, y + cardH / 2 + 5);
 		});
 	}
 
 	// ─── Watermark footer ───
 	const footerY = H - 30;
 	ctx.fillStyle = 'rgba(255,255,255,0.15)';
-	ctx.font = "500 12px -apple-system, 'Segoe UI', sans-serif";
+	ctx.font = font('500', 12);
 	ctx.textAlign = 'center';
 	ctx.fillText(L.madeWith, W / 2, footerY);
 
