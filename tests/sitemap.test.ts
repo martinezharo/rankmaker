@@ -69,6 +69,11 @@ describe('GET /sitemap.xml', () => {
 		expect(locs).toContain('https://rankmaker.net/u/alice');
 	});
 
+	it('omits profiles without an indexable template', async () => {
+		const { locs } = await sitemap();
+		expect(locs).not.toContain('https://rankmaker.net/u/alice');
+	});
+
 	it('never leaks a template that is not public', async () => {
 		await insertTemplate(db, alice.id, {
 			slug: 'private-one',
@@ -78,9 +83,10 @@ describe('GET /sitemap.xml', () => {
 			slug: 'unlisted-one',
 			visibility: 'unlisted',
 		});
-		const { xml } = await sitemap();
+		const { xml, locs } = await sitemap();
 		expect(xml).not.toContain('private-one');
 		expect(xml).not.toContain('unlisted-one');
+		expect(locs).not.toContain('https://rankmaker.net/u/alice');
 	});
 
 	it('never lists a template flagged as mature', async () => {
@@ -113,7 +119,8 @@ describe('GET /sitemap.xml', () => {
 	});
 
 	it('percent-encodes a username so it cannot break the XML', async () => {
-		await insertUser(db, { username: 'a-b_c' });
+		const creator = await insertUser(db, { username: 'a-b_c' });
+		await insertTemplate(db, creator.id, { slug: 'encoded-creator' });
 		const { locs } = await sitemap();
 		expect(locs).toContain('https://rankmaker.net/u/a-b_c');
 	});

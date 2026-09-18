@@ -31,6 +31,38 @@ test.describe('the header', () => {
 	});
 });
 
+test.describe('public profiles', () => {
+	test('keeps a profile without public templates out of search indexes', async ({
+		page,
+	}) => {
+		const user = seedUser('empty-profile');
+		const response = await page.goto(`/u/${user.username}`);
+
+		expect(response?.status()).toBe(200);
+		await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+			'content',
+			'noindex, nofollow'
+		);
+		expect(response?.headers()['x-robots-tag']).toBe('noindex, nofollow');
+	});
+
+	test('leaves a profile with a public template indexable', async ({
+		page,
+		seedTemplateFor,
+	}) => {
+		const user = seedUser('public-profile');
+		seedTemplateFor(user.id, 'public-profile-template');
+		const response = await page.goto(`/u/${user.username}`);
+
+		expect(response?.status()).toBe(200);
+		await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+			'content',
+			'index, follow, max-image-preview:large, max-snippet:-1'
+		);
+		expect(response?.headers()['x-robots-tag']).toBeUndefined();
+	});
+});
+
 test.describe('creating a template', () => {
 	test('measures guest creation, play and import once across retries', async ({
 		page,
