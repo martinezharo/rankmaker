@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { defaultLocale, isLocale } from './i18n/config';
-import { isBlockedCrawler } from './lib/crawlers';
+import { isApiPath, isBlockedCrawler } from './lib/crawlers';
 
 /**
  * Security headers for all on-demand (SSR) responses — which is every page
@@ -69,11 +69,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 	const { pathname } = context.url;
 	const seg = pathname.split('/')[1];
+	const prefixed = isLocale(seg) && seg !== defaultLocale;
+	const rest = prefixed ? pathname.slice(seg.length + 1) || '/' : pathname;
 
 	let response: Response;
-	if (isLocale(seg) && seg !== defaultLocale) {
+	// A locale prefix translates a *page*. The JSON surface has no language,
+	// so `/es/api/counts` is not a translation of `/api/counts` — rewriting it
+	// would mint a second URL for one endpoint, which is a second thing for a
+	// crawler to walk (and `/de/api/auth/login` really did answer 302, handing
+	// a bot an OAuth flow). Let it fall through to a 404 instead.
+	if (prefixed && !isApiPath(rest)) {
 		context.locals.locale = seg;
-		const rest = pathname.slice(seg.length + 1) || '/';
 		// Preserve the query string; rewrite to the unprefixed route.
 		response = await context.rewrite(rest + context.url.search);
 	} else {
@@ -82,6 +88,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		// resolved on the first pass.
 		if (!context.locals.locale) context.locals.locale = defaultLocale;
 		response = await next();
+	}
+
+	// The JSON surface is not content. robots.txt asks crawlers not to fetch
+	// it; this is what keeps it out of an index when one fetches it anyway.
+	if (isApiPath(pathname)) {
+		response.headers.set('X-Robots-Tag', 'noindex');
 	}
 
 	return applySecurityHeaders(response);

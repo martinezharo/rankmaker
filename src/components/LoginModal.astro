@@ -96,6 +96,7 @@ const BENEFITS = [
                     href={`/api/auth/login?provider=${primary.id}`}
                     data-login-provider={primary.id}
                     data-astro-reload
+                    rel="nofollow"
                     class="flex items-center justify-center gap-2.5 w-full px-5 py-3.5 rounded-xl text-sm font-bold text-[#1a1205] bg-gradient-to-r from-gold-start to-gold-end hover:opacity-90 transition-opacity"
                 >
                     <i class={`${primary.icon} text-base`}></i>
@@ -107,6 +108,7 @@ const BENEFITS = [
                             href={`/api/auth/login?provider=${provider.id}`}
                             data-login-provider={provider.id}
                             data-astro-reload
+                            rel="nofollow"
                             class="flex items-center justify-center gap-2.5 w-full px-5 py-3 rounded-xl text-sm font-semibold text-text-secondary hover:text-text-primary bg-surface border border-border hover:border-border-hover transition-all"
                         >
                             <i class={`${provider.icon} text-base`} />

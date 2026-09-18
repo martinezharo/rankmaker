@@ -30,7 +30,27 @@ Disallow: /
 # Search engines are welcome: discovery is the point. Cloudflare injects its
 # own managed section above this one, which carries the content signals and
 # the opt-out list for AI training crawlers.
+#
+# /api/ is the exception. It answers the app's own JavaScript with JSON, so
+# nothing under it can be a search result, but crawlers execute the page and
+# queue the fetch() targets and the sign-in link anyway: Googlebot spent about
+# 970 requests there over 14 days (measured 2026-09-18), 53 of them starting an
+# OAuth flow it can never finish. Every one is a Worker invocation serving a
+# bot. Longest-match wins, so this overrides the Allow above for /api/ only.
+#
+# The per-locale lines cover the paths the i18n prefix used to alias. The
+# middleware now 404s those instead of rewriting them, but a 404 still costs
+# the invocation this file exists to avoid, so they are still asked to stay
+# out. Matching is literal, so every locale needs its own line — crawlers.test
+# .ts derives the list from src/i18n/config.ts and fails if one goes missing.
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /es/api/
+Disallow: /fr/api/
+Disallow: /zh/api/
+Disallow: /ms/api/
+Disallow: /de/api/
+Disallow: /pt/api/
 
 Sitemap: https://rankmaker.net/sitemap.xml
