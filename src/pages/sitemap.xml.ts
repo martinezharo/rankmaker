@@ -87,28 +87,27 @@ export const GET: APIRoute = async () => {
         path: `/category/${c.slug}`,
     }));
 
-    // Official + user-created templates and creator profiles.
+    // Official + user-created templates and the profiles that own them.
     let userTemplates: Awaited<ReturnType<typeof listUserTemplates>> = [];
-    let profiles: SitemapEntry[] = [{ path: '/u/RANKMAKER' }];
     try {
         const db = getDb();
         userTemplates = await listUserTemplates(db);
-        const { results } = await db
-            .prepare('SELECT username FROM users')
-            .all<{ username: string }>();
-        profiles = results.map((r) => ({
-            path: `/u/${encodeURIComponent(r.username)}`,
-        }));
     } catch {
         // official-only fallback
     }
 
-    const templatePages: SitemapEntry[] = [
+    const indexableTemplates = [
         ...getOfficialTemplates(),
         ...userTemplates,
-    ].map((t) => ({
+    ];
+    const templatePages: SitemapEntry[] = indexableTemplates.map((t) => ({
         path: `/template/${t.slug}`,
         lastmod: toLastmod(t.updated_at ?? t.created_at),
+    }));
+    const profiles: SitemapEntry[] = [
+        ...new Set(indexableTemplates.map((t) => t.creator.username)),
+    ].map((username) => ({
+        path: `/u/${encodeURIComponent(username)}`,
     }));
 
     const allPages = [

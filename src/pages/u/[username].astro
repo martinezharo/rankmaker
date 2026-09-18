@@ -53,6 +53,7 @@ try {
     // keep fallback numbers
 }
 const templates = decorateListing(rows, { counts, votes });
+const hasIndexableTemplates = templates.length > 0;
 
 // Follower/following counts are public — render them SSR. The follow button's
 // per-viewer state (follow/unfollow/self) is hydrated client-side because the
@@ -77,6 +78,7 @@ Astro.response.headers.set("Cache-Control", LISTING_CACHE_CONTROL);
 <Layout
     title={t("profile.title", { username: user.username })}
     description={t("profile.metaDescription", { username: user.username })}
+    noindex={!hasIndexableTemplates}
 >
     <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 pb-20">
         <!-- Profile header -->
