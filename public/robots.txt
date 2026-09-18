@@ -37,9 +37,20 @@ Disallow: /
 # 970 requests there over 14 days (measured 2026-09-18), 53 of them starting an
 # OAuth flow it can never finish. Every one is a Worker invocation serving a
 # bot. Longest-match wins, so this overrides the Allow above for /api/ only.
-# Kept in step with NOINDEX_PATH_PREFIXES in src/lib/crawlers.ts.
+#
+# The per-locale lines cover the paths the i18n prefix used to alias. The
+# middleware now 404s those instead of rewriting them, but a 404 still costs
+# the invocation this file exists to avoid, so they are still asked to stay
+# out. Matching is literal, so every locale needs its own line — crawlers.test
+# .ts derives the list from src/i18n/config.ts and fails if one goes missing.
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /es/api/
+Disallow: /fr/api/
+Disallow: /zh/api/
+Disallow: /ms/api/
+Disallow: /de/api/
+Disallow: /pt/api/
 
 Sitemap: https://rankmaker.net/sitemap.xml

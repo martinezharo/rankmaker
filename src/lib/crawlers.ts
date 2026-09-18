@@ -18,21 +18,30 @@ export const BLOCKED_CRAWLER_USER_AGENTS = ['SERankingBacklinksBot'];
  * /api/comments, 219 on /api/templates/vote and 53 starting an OAuth flow it
  * can never finish — each one a Worker invocation serving a bot.
  *
- * Two layers, because a crawler honours at most one of them: public/robots.txt
- * asks them not to fetch (which is what actually saves the invocation), and
- * `X-Robots-Tag: noindex` on the response keeps the JSON out of an index when
- * something fetches it regardless. `src/middleware.ts` applies the header;
- * crawlers.test.ts holds robots.txt to the same list.
+ * Three consequences, because a crawler honours at most one of them:
+ *   - `src/middleware.ts` does not apply the locale rewrite here, so the
+ *     surface has no `/es/api/…` aliases to crawl in the first place,
+ *   - public/robots.txt asks crawlers not to fetch it (the layer that
+ *     actually saves the invocation) — crawlers.test.ts holds the file to
+ *     this list, prefixes included,
+ *   - `X-Robots-Tag: noindex` keeps the JSON out of an index when something
+ *     fetches it regardless.
  *
  * Safe to cover the whole prefix: /api/counts only overwrites numbers the page
  * already rendered server-side, and uploaded images are served from
  * img.rankmaker.net in production — /api/images is a dev-only fallback.
  */
-export const NOINDEX_PATH_PREFIXES = ['/api/'];
+export const API_PATH_PREFIXES = ['/api/'];
 
-/** Whether a response for `pathname` should be kept out of search indexes. */
-export function isNoindexPath(pathname: string): boolean {
-	return NOINDEX_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+/**
+ * Whether `pathname` addresses the JSON surface rather than a page.
+ *
+ * Takes the path as written, so it is false for `/es/api/counts` — that is a
+ * locale-prefixed *page* path, and the middleware is what refuses to turn it
+ * into a second URL for the same endpoint.
+ */
+export function isApiPath(pathname: string): boolean {
+	return API_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 export function isBlockedCrawler(userAgent: string | null): boolean {
