@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { defaultLocale, isLocale } from './i18n/config';
-import { isBlockedCrawler } from './lib/crawlers';
+import { isBlockedCrawler, isNoindexPath } from './lib/crawlers';
 
 /**
  * Security headers for all on-demand (SSR) responses — which is every page
@@ -82,6 +82,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		// resolved on the first pass.
 		if (!context.locals.locale) context.locals.locale = defaultLocale;
 		response = await next();
+	}
+
+	// The JSON surface is not content. robots.txt asks crawlers not to fetch
+	// it; this is what keeps it out of an index when one fetches it anyway.
+	if (isNoindexPath(pathname)) {
+		response.headers.set('X-Robots-Tag', 'noindex');
 	}
 
 	return applySecurityHeaders(response);
