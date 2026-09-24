@@ -1,0 +1,32 @@
+name: Suggest an idea
+description: Share an idea or an improvement for RANKMAKER.
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are very welcome — big or small. Describe what you would like to
+        see and why.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What is your idea?
+      placeholder: It would be great if RANKMAKER could...
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would it improve?
+      description: Tell us what feels hard, missing, or annoying today.
+      placeholder: Today I have to..., and this would make it...
+    validations:
+      required: false
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Examples, mockups, or links are welcome.
+    validations:
+      required: false
